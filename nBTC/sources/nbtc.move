@@ -26,9 +26,9 @@ const DWALLET: vector<u8> = b"btc_address";
 public struct NBTC has drop {}
 
 /// ERRROS
-    const ETxAlreadyUsed: u64 = 0;
-    const EMintAmountIsZero: u64 = 1;
-    const EUntrustedLightClient: u64 = 2;
+const ETxAlreadyUsed: u64 = 0;
+const EMintAmountIsZero: u64 = 1;
+const EUntrustedLightClient: u64 = 2;
 
 
 /// STRUCTS
