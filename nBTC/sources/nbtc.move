@@ -73,11 +73,17 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
 // PUBLIC ENTRY FUNCTIONS
 //
 
+/// * `input_count`: number of input objects
+/// * `inputs`: all tx inputs encoded as a single list of bytes.
+/// * `output_count`: number of output objects
+/// * `outputs`: all tx outputs encoded as a single list of bytes.
 public fun mint(
     treasury: &mut WrappedTreasuryCap,
     light_client: &LightClient,
     version: vector<u8>,
+    input_count: u32,
     inputs: vector<u8>,
+    output_count: u32,
     outputs: vector<u8>,
     lock_time: vector<u8>,
     proof: vector<vector<u8>>,
@@ -91,7 +97,7 @@ public fun mint(
             EUntrustedLightClient
         );
 
-    let tx = make_transaction(version, inputs.length() as u256, inputs, outputs.length() as u256, outputs, lock_time);
+    let tx = make_transaction(version, input_count as u256, inputs, output_count as u256, outputs, lock_time);
     let (amount_satoshi, op_return, tx_id) = prove_payment(light_client, height, proof, tx_index, &tx, treasury.btc_treasury);
 
      assert!(!treasury.tx_ids.contains(tx_id), ETxAlreadyUsed);
