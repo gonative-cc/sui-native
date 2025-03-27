@@ -19,8 +19,7 @@ const ICON_URL: vector<u8> = b"icon.url";
 /// --CONFIG--
 const TRUSTED_LIGHT_CLIENT_ID: address =@0xCA;
 const FALLBACK_ADDRESS: address = @0xCF;
-const DWALLET: vector<u8> = b"btc_address"; 
-
+const BTC_TREASURY: vector<u8> = b"btc_address";
 
 /// OTW
 public struct NBTC has drop {}
@@ -30,15 +29,14 @@ const ETxAlreadyUsed: u64 = 0;
 const EMintAmountIsZero: u64 = 1;
 const EUntrustedLightClient: u64 = 2;
 
-
 /// STRUCTS
 public struct WrappedTreasuryCap has key, store {
     id: UID,
     cap: TreasuryCap<NBTC>,
-    tx_ids: Table<vector<u8>, bool>,
+    tx_ids: Table<vector<u8>, bool>, //TODO: consider using dynamic fields if we dont need anything
     trusted_lc_id: ID,
     fallback_address: address,
-    dwallet: vector<u8>,
+    btc_treasury: vector<u8>,
 }
 
 fun init(witness: NBTC, ctx: &mut TxContext) {
@@ -56,11 +54,11 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
     let treasury =
      WrappedTreasuryCap {
          id: object::new(ctx),
-         cap: treasury_cap, 
+         cap: treasury_cap,
          tx_ids: table::new<vector<u8>, bool>(ctx),
          trusted_lc_id: TRUSTED_LIGHT_CLIENT_ID.to_id(),
          fallback_address: FALLBACK_ADDRESS,
-         dwallet: DWALLET,
+         btc_treasury: BTC_TREASURY,
          };
     transfer::public_share_object(treasury);
 
@@ -87,8 +85,8 @@ public fun mint(
             EUntrustedLightClient
         );
 
-    let tx = make_transaction(version, input_count, inputs, output_count, outputs, lock_time); 
-    let (amount_satoshi, op_return, tx_id) = prove_payment(light_client, height, proof, tx_index, &tx, treasury.dwallet);
+    let tx = make_transaction(version, input_count, inputs, output_count, outputs, lock_time);
+    let (amount_satoshi, op_return, tx_id) = prove_payment(light_client, height, proof, tx_index, &tx, treasury.btc_treasury);
 
      assert!(!treasury.tx_ids.contains(tx_id), ETxAlreadyUsed);
      assert!(amount_satoshi > 0, EMintAmountIsZero);
@@ -102,6 +100,7 @@ public fun mint(
     treasury.tx_ids.add(tx_id, true);
 
     coin::mint_and_transfer(&mut treasury.cap, amount_satoshi as u64, recipient_address, ctx);
+    //TODO: consider adding an event
 }
 
 public entry fun burn(
@@ -109,6 +108,7 @@ public entry fun burn(
     coin_to_burn: Coin<NBTC>,
     _ctx: &mut TxContext,
 ) {
+    //TODO: implement logic to guard burning
     coin::burn(&mut treasury.cap, coin_to_burn);
 }
 
