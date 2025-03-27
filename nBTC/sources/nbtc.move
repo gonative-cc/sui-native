@@ -9,7 +9,9 @@ use bitcoin_spv::light_client::prove_payment;
 use sui::table::{Self, Table};
 use sui::address;
 
-/// CONSTANTS
+//
+// CONSTANTS
+//
 /// --COIN METADATA--
 const DECIMALS: u8 = 8;
 const SYMBOL: vector<u8> = b"NBTC";
@@ -21,7 +23,7 @@ const TRUSTED_LIGHT_CLIENT_ID: address =@0xCA;
 const FALLBACK_ADDRESS: address = @0xCF;
 const BTC_TREASURY: vector<u8> = b"btc_address";
 
-/// OTW
+/// One Time Witness
 public struct NBTC has drop {}
 
 /// ERRROS
@@ -29,7 +31,10 @@ const ETxAlreadyUsed: u64 = 0;
 const EMintAmountIsZero: u64 = 1;
 const EUntrustedLightClient: u64 = 2;
 
-/// STRUCTS
+//
+// STRUCTS
+//
+
 public struct WrappedTreasuryCap has key, store {
     id: UID,
     cap: TreasuryCap<NBTC>,
@@ -64,14 +69,15 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
 
 }
 
-/// PUBLIC ENTRY FUNCTIONS
+//
+// PUBLIC ENTRY FUNCTIONS
+//
+
 public fun mint(
     treasury: &mut WrappedTreasuryCap,
     light_client: &LightClient,
     version: vector<u8>,
-    input_count: u256,
     inputs: vector<u8>,
-    output_count: u256,
     outputs: vector<u8>,
     lock_time: vector<u8>,
     proof: vector<vector<u8>>,
@@ -85,7 +91,7 @@ public fun mint(
             EUntrustedLightClient
         );
 
-    let tx = make_transaction(version, input_count, inputs, output_count, outputs, lock_time);
+    let tx = make_transaction(version, inputs.length() as u256, inputs, outputs.length() as u256, outputs, lock_time);
     let (amount_satoshi, op_return, tx_id) = prove_payment(light_client, height, proof, tx_index, &tx, treasury.btc_treasury);
 
      assert!(!treasury.tx_ids.contains(tx_id), ETxAlreadyUsed);
@@ -112,7 +118,10 @@ public entry fun burn(
     coin::burn(&mut treasury.cap, coin_to_burn);
 }
 
-/// VIEW FUNCTIONS
+//
+// VIEW FUNCTIONS
+//
+
 public fun total_supply(treasury: &WrappedTreasuryCap): u64 {
     coin::total_supply(&treasury.cap)
 }
