@@ -4,6 +4,9 @@
 
 This Sui Move smart contract implements `NBTC`, a Native's synthetic representation of Bitcoin on the Sui network. It allows users to mint `NBTC` tokens by providing proof of a corresponding Bitcoin deposit transaction, verified using an on-chain SPV (Simple Payment Verification) light client.
 
+## Light client:
+https://github.com/gonative-cc/move-bitcoin-spv/tree/devnet-0.1
+
 ## Features
 
 1. Minting: Creates new `NBTC` tokens based on verified Bitcoin deposits.
@@ -19,8 +22,8 @@ This Sui Move smart contract implements `NBTC`, a Native's synthetic representat
 
 ## Events
 
-* **`TreasuryCreated { treasury_id: ID }`**: Emitted when the `WrappedTreasuryCap` is created in `init`.
-* **`NBTCMited { minted_to: address, amount_in_satoshi: u64 }`**: Emitted upon successful minting.
+- `TreasuryCreated { treasury_id: ID }`: Emitted when the `WrappedTreasuryCap` is created in `init`.
+- `NBTCMited { minted_to: address, amount_in_satoshi: u64 }`: Emitted upon successful minting.
 
 ## Disclaimer
 
