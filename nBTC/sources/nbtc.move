@@ -8,28 +8,32 @@ use bitcoin_spv::transaction::make_transaction;
 use bitcoin_spv::light_client::prove_payment;
 use sui::table::{Self, Table};
 use sui::address;
+use sui::event;
 
-/// CONSTANTS
-/// --COIN METADATA--
+// CONSTANTS
+// --COIN METADATA--
 const DECIMALS: u8 = 8;
 const SYMBOL: vector<u8> = b"NBTC";
 const NAME: vector<u8> = b"Native BTC";
-const DESCRIPTION: vector<u8> = b"Natvie synthetic BTC powered by IKA.";
-const ICON_URL: vector<u8> = b"icon.url";
-/// --CONFIG--
-const TRUSTED_LIGHT_CLIENT_ID: address =@0xCA;
-const FALLBACK_ADDRESS: address = @0xCF;
-const BTC_TREASURY: vector<u8> = b"btc_address";
+const DESCRIPTION: vector<u8> = b"Natvie synthetic BTC";
+const ICON_URL: vector<u8> = b"https://lh3.googleusercontent.com/chat_attachment/AP1Ws4tOuasP0rKH6AALQiDH7LuvHKabEIpxz4FV8MLcJlPmSiu2RZK6FTOojJ5bE5y6wb4p5Fzs9tQtyZ1zAQomAIdK0f4MQIP5ucr9et3l80Jve9LNuYyRMKUOpOfUkVm-1qEWqYHA0nFtNmSWhwaDjoKQpYbVSoEGDXGUxcZAPc_HZLOM4EGSWCkoO11IpeaA-j3TpcM_6ux0ZR0cwK-03gHP3Z8sKGrApturTiL_isVIQy_zMItUxPZ8CCXugzuO9h_qSk5mP04MKROaVlkqeXN8ohNteKjKgyWBpslifAMG1kEiGcGAhRpbRiJKircGVnI=w512";
+// --CONFIG--
+const TRUSTED_LIGHT_CLIENT_ID: address =@0x5b3229dc8c60ab8975bcdc9eeeef48ff129a0cf6e533c6ba2258d9fae44b26c6;
+const FALLBACK_ADDRESS: address = @0x267066d32f675885fd30438e1ce3efb050d3846470b4cd0d0ca4b6c588f551c8;
+const BTC_TREASURY: vector<u8> = x"509a651dd392e1bc125323f629b67d65cca3d4bb";
 
-/// OTW
+// OTW
 public struct NBTC has drop {}
 
-/// ERRROS
-const ETxAlreadyUsed: u64 = 0;
-const EMintAmountIsZero: u64 = 1;
-const EUntrustedLightClient: u64 = 2;
+// ERRROS
+#[error]
+const ETxAlreadyUsed: vector<u8> = b"nBTC for this transaction has already been minted";
+#[error]
+const EMintAmountIsZero: vector<u8> = b"Mint amount is zero";
+#[error]
+const EUntrustedLightClient: vector<u8> = b"Light light used is not the trusted one. Use trused light client";
 
-/// STRUCTS
+// STRUCTS
 public struct WrappedTreasuryCap has key, store {
     id: UID,
     cap: TreasuryCap<NBTC>,
@@ -38,6 +42,17 @@ public struct WrappedTreasuryCap has key, store {
     fallback_address: address,
     btc_treasury: vector<u8>,
 }
+
+// EVENTS
+public struct TreasuryCreated has copy, drop {
+    treasury_id: ID,
+}
+
+public struct NBTCMited has copy, drop {
+    minted_to: address,
+    amount_in_satoshi: u64,
+}
+
 
 fun init(witness: NBTC, ctx: &mut TxContext) {
     let (treasury_cap, metadata) = coin::create_currency<NBTC>(
@@ -60,6 +75,11 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
          fallback_address: FALLBACK_ADDRESS,
          btc_treasury: BTC_TREASURY,
          };
+
+    event::emit(TreasuryCreated {
+        treasury_id: object::id(&treasury),
+    });
+
     transfer::public_share_object(treasury);
 
 }
@@ -100,7 +120,12 @@ public fun mint(
     treasury.tx_ids.add(tx_id, true);
 
     coin::mint_and_transfer(&mut treasury.cap, amount_satoshi as u64, recipient_address, ctx);
-    //TODO: consider adding an event
+
+    event::emit(NBTCMited {
+        minted_to: recipient_address,
+        amount_in_satoshi: amount_satoshi as u64 }
+    );
+
 }
 
 public entry fun burn(
