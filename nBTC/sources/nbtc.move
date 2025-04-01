@@ -17,7 +17,7 @@ const NAME: vector<u8> = b"Native BTC";
 const DESCRIPTION: vector<u8> = b"Natvie synthetic BTC powered by IKA.";
 const ICON_URL: vector<u8> = b"icon.url";
 
-/// Configuration
+// Configuration
 /// The Object ID of the trusted Bitcoin SPV Light Client.
 const TRUSTED_LIGHT_CLIENT_ID: address = @0xCA;
 /// The fallback Sui address to receive nBTC if OP_RETURN data is invalid or missing.
