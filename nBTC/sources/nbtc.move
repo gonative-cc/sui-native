@@ -56,17 +56,16 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
     );
 
     transfer::public_freeze_object(metadata);
-    let treasury =
-     WrappedTreasuryCap {
-         id: object::new(ctx),
-         cap: treasury_cap,
-         tx_ids: table::new<vector<u8>, bool>(ctx),
-         trusted_lc_id: TRUSTED_LIGHT_CLIENT_ID.to_id(),
-         fallback_address: FALLBACK_ADDRESS,
-         btc_treasury: BTC_TREASURY,
-         };
-    transfer::public_share_object(treasury);
+    let treasury = WrappedTreasuryCap {
+        id: object::new(ctx),
+        cap: treasury_cap,
+        tx_ids: table::new<vector<u8>, bool>(ctx),
+        trusted_lc_id: TRUSTED_LIGHT_CLIENT_ID.to_id(),
+        fallback_address: FALLBACK_ADDRESS,
+        btc_treasury: BTC_TREASURY,
+    };
 
+    transfer::public_share_object(treasury);
 }
 
 //
@@ -92,18 +91,18 @@ public fun mint(
     ctx: &mut TxContext,
 ) {
     let provided_lc_id = object::id(light_client);
-        assert!(
-            provided_lc_id == treasury.trusted_lc_id,
-            EUntrustedLightClient
-        );
+    assert!(
+        provided_lc_id == treasury.trusted_lc_id,
+        EUntrustedLightClient
+    );
 
     let tx = make_transaction(version, input_count as u256, inputs, output_count as u256, outputs, lock_time);
     let (amount_satoshi, op_return, tx_id) = prove_payment(light_client, height, proof, tx_index, &tx, treasury.btc_treasury);
 
-     assert!(!treasury.tx_ids.contains(tx_id), ETxAlreadyUsed);
-     assert!(amount_satoshi > 0, EMintAmountIsZero);
-     let recipient_address: address;
-     if (op_return.length() == 32) {
+    assert!(!treasury.tx_ids.contains(tx_id), ETxAlreadyUsed);
+    assert!(amount_satoshi > 0, EMintAmountIsZero);
+    let recipient_address: address;
+    if (op_return.length() == 32) {
         //TODO: we need more advanced parsing. For PoC we just check the length, else use fallback
         recipient_address = address::from_bytes(op_return);
     } else {
@@ -138,4 +137,30 @@ public fun get_trusted_light_client_id(treasury: &WrappedTreasuryCap): ID {
 
 public fun get_fallback_address(treasury: &WrappedTreasuryCap): address {
     treasury.fallback_address
+}
+
+
+#[test_only]
+public(package) fun init_for_testing(btc_lc_id: ID, ctx: &mut TxContext): WrappedTreasuryCap  {
+    let witness = NBTC {};
+    let (treasury_cap, metadata) = coin::create_currency<NBTC>(
+        witness,
+        DECIMALS,
+        SYMBOL,
+        NAME,
+        DESCRIPTION,
+        option::some(url::new_unsafe_from_bytes(ICON_URL)),
+        ctx
+    );
+    transfer::public_freeze_object(metadata);
+    let treasury = WrappedTreasuryCap {
+        id: object::new(ctx),
+        cap: treasury_cap,
+        tx_ids: table::new<vector<u8>, bool>(ctx),
+        trusted_lc_id: btc_lc_id,
+        fallback_address: FALLBACK_ADDRESS,
+        btc_treasury: BTC_TREASURY,
+    };
+
+    treasury
 }
