@@ -8,7 +8,9 @@ use sui::coin::{Self, Coin, TreasuryCap};
 use sui::table::{Self, Table};
 use sui::url;
 
+//
 // Constans
+//
 
 /// Coin Metadata
 const DECIMALS: u8 = 8;
@@ -36,7 +38,9 @@ const EMintAmountIsZero: vector<u8> = b"The amount from the Bitcoin transaction 
 #[error]
 const EUntrustedLightClient: vector<u8> = b"The provided Light Client object ID does not match the trusted one."
 
+//
 // Structs
+//
 
 /// WrappedTreasuryCap holds the TreasuryCap as well as configuration and state.
 /// It should be a shared object to enable anyone to interact with the contract.
@@ -82,7 +86,9 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
     transfer::public_share_object(treasury);
 }
 
+//
 // Public functions
+//
 
 /// Mints nBTC tokens after verifying a Bitcoin transaction proof.
 /// * `input_count`: number of input objects
@@ -152,7 +158,9 @@ public fun burn(treasury: &mut WrappedTreasuryCap, coin_to_burn: Coin<NBTC>, _ct
     coin::burn(&mut treasury.cap, coin_to_burn);
 }
 
+//
 // View functions
+//
 
 public fun total_supply(treasury: &WrappedTreasuryCap): u64 {
     coin::total_supply(&treasury.cap)
