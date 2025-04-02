@@ -1,11 +1,12 @@
 #[test_only]
 module nbtc::nbtc_tests;
 
-use nbtc::nbtc::{Self, WrappedTreasuryCap, EMintAmountIsZero, ETxAlreadyUsed};
+use nbtc::nbtc::{Self, WrappedTreasuryCap, EMintAmountIsZero, ETxAlreadyUsed, NBTC};
 use bitcoin_spv::light_client::{new_light_client_with_params_without_share, LightClient};
 use bitcoin_spv::params;
-
-use sui::test_scenario;
+use sui::address;
+use sui::coin::Coin;
+use sui::test_scenario::{Self, take_from_address};
 
 #[test_only]
 fun new_lc_for_test(ctx: &mut TxContext) : LightClient {
@@ -41,7 +42,13 @@ fun test_nbtc_mint() {
     let lock_time = x"00000000";
     let height = 0;
     let tx_index = 1;
+    let owner_address = address::from_bytes(x"bbad40ecca892cf0d54ba0b9c986454be0695ce29642223a02c37e3b87a4499c");
     nbtc::mint(&mut cap, &lc, version, input_count, inputs, output_count, outputs, lock_time, proof, height, tx_index, ctx);
+    test_scenario::next_tx(&mut scenario, sender);
+    let coin = take_from_address<Coin<NBTC>>(&scenario, owner_address);
+    let value = coin.value();
+    assert!(value == 100000000);
+    sui::test_utils::destroy(coin);
     sui::test_utils::destroy(lc);
     sui::test_utils::destroy(cap);
     scenario.end();
@@ -77,7 +84,7 @@ fun test_nbtc_mint_fail_tx_already_used() {
     let sender = @0x01;
     let mut scenario = test_scenario::begin(sender);
     let ctx = scenario.ctx();
-    let btc_treasury = x"509a651dd392e1bc125323f629b67d65cca3d4bb"; // modified address
+    let btc_treasury = x"509a651dd392e1bc125323f629b67d65cca3d4bb";
     let (lc, mut cap) = init_nbtc(btc_treasury, ctx);
     let proof = vector[x"65dc93e9c743430f6218e367841b87efc14d773bb03268be49ad98b9c2f51ef6"];
     let version = x"01000000";
