@@ -13,21 +13,25 @@ It's the first ever synthetic BTC (BTC that is represented on other chain) that 
 
 ## How it Works
 
-1.  A user sends BTC to a specific Bitcoin address (`BTC_TREASURY`). They include their target Sui address in the transaction's `OP_RETURN` field.
-2.  The user calls the `mint` function, providing the BTC transaction details and the proof.
-3.  The `mint` function uses a configured Bitcoin SPV Light Client (identified by `TRUSTED_LIGHT_CLIENT_ID`) to verify the transaction proof. It checks that BTC was sent to the correct `BTC_TREASURY` address.
-4.  If the verification is successful and the BTC transaction hasn't been used before, the module creates (`mints`) the corresponding amount of `NBTC`.
-5.  The new `NBTC` tokens are sent to the Sui address found in the `OP_RETURN` data, or to a default `FALLBACK_ADDRESS` if the `OP_RETURN` data is missing or invalid.
+1.  A user sends BTC to to the `nBTC` dwallet address (on Bitcoin network). They include their target Sui address in the transaction's `OP_RETURN` field.
+2.  The user calls the `mint` function of the `nBTC` Sui object, providing the BTC transaction details and the proof of the transaction. The proof is the traditional SPV Bitcoin proof.
+3.  The `mint` function uses a configured Bitcoin SPV Light Client (identified by `LIGHT_CLIENT_ID`) to verify the transaction proof. It checks that BTC was sent to the correct `nBTC` dwallet address.
+4.  Once the verification is successful and the BTC transaction hasn't been used before, the module mints the corresponding amount of `nBTC` Sui Coins.
+5.  The new `nBTC` Coins are sent to the Sui address found in the `OP_RETURN` data, or to the `FALLBACK_ADDRESS` if the `OP_RETURN` data is missing or is invalid.
 
-## Main Functions
+### Example
 
-- `init`: Run once to set up the `nBTC` token type and the TreasuryCap object (`WrappedTreasuryCap`).
-- `mint`: Takes BTC transaction proof, verifies it using the SPV light client, and mints new `nBTC` tokens.
-- `burn`: Takes `NBTC` tokens and destroys them. Note: NOT IMPLEMENTED!
+TODO: Add example Bitcoin transaction
+
+## Package Functions
+
+- `init`: Run once to set up the `nBTC` package, initializes the nBTC Coin type and the TreasuryCap object (`WrappedTreasuryCap`).
+- `mint`: Takes BTC transaction proof, verifies it using the SPV light client, and mints new `nBTC` Coins.
+- `burn`: Takes `nBTC` Coins and destroys them. Note: NOT IMPLEMENTED!
 - `total_supply`: Shows the total amount of `nBTC` currently in circulation.
-- `get_trusted_light_client_id`: Shows the Object ID of the SPV light client this contarct trusts.
+- `get_light_client_id`: Shows the Object ID of the SPV light client.
 - `get_fallback_address`: Shows the default Sui address used when `OP_RETURN` data isn't usable.
 
 ## Dependencies
 
-- `bitcoin-spv`: This contract relies on a Bitcoin SPV light client implementation for Sui to verify txs from Bitcoin https://github.com/gonative-cc/move-bitcoin-spv.
+- `bitcoin-spv`: This package relies on a Bitcoin SPV light client implementation for Sui to verify txs from Bitcoin https://github.com/gonative-cc/move-bitcoin-spv.
