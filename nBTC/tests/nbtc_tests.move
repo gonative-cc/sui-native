@@ -74,7 +74,7 @@ fun test_nbtc_mint_fallback() {
     let input_count = 1;
     let inputs = x"be8c30f6aa0d64b956b0612d02ece4297e66e8f31983c9c224f3775d058334e5000000008a47304402206e2f7b781b1cb06caae6ee597fa04f6893bc2fd4f6708779a4adb2e45a543a7002204bf2bc170288dd7e37b3fb9bc53b44bb95ae4bf5eb8744c94605b2478dc6b3df014104d73f6e48dc738187df764f8f8c996ff44235e62a24ab0a4959b3d02e913d8e390f4d54f30e2ddb3992e5a25eda5594550321e61a6ad5bac1adcc7a5100827602ffffffff";
     let output_count = 3;
-    // the op return message is invalid sui address
+    // the op return message is invalid sui address, the nBTC should be minted to the fallback address
     let outputs = x"00e1f505000000001976a914509a651dd392e1bc125323f629b67d65cca3d4bb88ac00e9a435000000001976a91451614157e1d735b7b65ad003cd4042ce501ede2388ac0000000000000000036a0101";
     let lock_time = x"00000000";
     let height = 0;
