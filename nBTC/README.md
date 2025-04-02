@@ -40,14 +40,14 @@ TODO: Add example Bitcoin transaction
 
 ```mermaid
 graph TD
-    A["User sends BTC to nBTC dwallet address <br> (adds OP_RETURN with Sui Address)"] --> B("User obtains BTC Transaction Proof (SPV)");
+    A["User sends BTC to nBTC dwallet address <br> including OP_RETURN with Sui Address"] --> B("User obtains BTC Transaction Proof (SPV)");
     B --> C{"User calls mint function on nBTC Sui object <br> (Provides Proof, TX Details)"};
-    C --> D("Module uses configured <br> Bitcoin SPV Light Client Object <br> (specified by LIGHT_CLIENT_ID)");
-    D --> E{"SPV Client verifies the transaction proof <br> (Checks inclusion, amount, target: nBTC dwallet address)"};
-    E -- Verification Successful --> F{"Internal Checks in nBTC module: <br> 1. Is BTC TX ID already used? <br> 2. Is verified Amount > 0?"};
-    F -- Checks Pass --> G{"Determine Recipient Sui Address <br> (Parse OP_RETURN data from proof)"};
-    G -- Valid OP_RETURN --> H("Mint nBTC Sui Coins <br> Transfer to Recipient Address");
-    G -- Invalid/No OP_RETURN --> I("Mint nBTC Sui Coins <br> Transfer to FALLBACK_ADDRESS");
+    C --> D("Module uses <br> Bitcoin SPV Light Client");
+    D --> E{"SPV Client verifies the transaction proof"};
+    E -- Verification Successful --> F{"Checks in nBTC module: <br> 1. Has BTC TX ID already used? <br> 2. Is the Amount to recipient > 0?"};
+    F -- Checks Pass --> G{"Check if OP_RETURN <br> contains a valid recipient Sui Address"};
+    G -- Valid OP_RETURN --> H("Mint nBTC Sui Coins to the recipient");
+    G -- Invalid/No OP_RETURN --> I("Mint nBTC Sui Coins to the FALLBACK_ADDRESS");
     H --> Z(["Success: nBTC Minted & Transferred"]);
     I --> Z;
     F -- Checks Fail --> Y(["Error: e.g., TxAlreadyUsed, AmountIsZero"]);
