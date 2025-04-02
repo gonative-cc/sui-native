@@ -41,10 +41,10 @@ TODO: Add example Bitcoin transaction
 ```mermaid
 graph TD
     A["User sends BTC to nBTC dwallet address <br> including OP_RETURN with Sui Address"] --> B("User obtains BTC Transaction Proof (SPV)");
-    B --> C{"User calls mint function on nBTC Sui object <br> (Provides Proof, TX Details)"};
+    B --> C["User calls mint function on nBTC Sui object <br> (Provides Proof, TX Details)"];
     C --> D("Module uses <br> Bitcoin SPV Light Client");
     D --> E{"SPV Client verifies the transaction proof"};
-    E -- Verification Successful --> F{"Checks in nBTC module: <br> 1. Has BTC TX ID already used? <br> 2. Is the Amount to recipient > 0?"};
+    E -- Verification Successful --> F{"Checks in nBTC module: <br> 1. Has BTC TX ID been already used? <br> 2. Is the Amount to recipient > 0?"};
     F -- Checks Pass --> G{"Check if OP_RETURN <br> contains a valid recipient Sui Address"};
     G -- Valid OP_RETURN --> H("Mint nBTC Sui Coins to the recipient");
     G -- Invalid/No OP_RETURN --> I("Mint nBTC Sui Coins to the FALLBACK_ADDRESS");
