@@ -3,6 +3,8 @@ module nbtc::nbtc;
 
 use bitcoin_spv::light_client::{LightClient, prove_payment};
 use bitcoin_spv::transaction::make_transaction;
+
+use sui::event;
 use sui::address;
 use sui::coin::{Self, Coin, TreasuryCap};
 use sui::table::{Self, Table};
@@ -36,7 +38,7 @@ const ETxAlreadyUsed: vector<u8> = b"The provided Bitcoin transaction ID has alr
 #[error]
 const EMintAmountIsZero: vector<u8> = b"The amount from the Bitcoin transaction to be minted is zero.";
 #[error]
-const EUntrustedLightClient: vector<u8> = b"The provided Light Client object ID does not match the trusted one."
+const EUntrustedLightClient: vector<u8> = b"The provided Light Client object ID does not match the trusted one.";
 
 //
 // Structs
@@ -54,9 +56,9 @@ public struct WrappedTreasuryCap has key, store {
 }
 
 /// MintEvent is emitted when nBTC is successfully minted.
-struct MintEvent has copy, drop, store {
-    minter: Address,
-    recipient: Address,
+public struct MintEvent has copy, drop, store {
+    minter: address,
+    recipient: address,
     amount: u64, // in satoshi
     btc_tx_id: vector<u8>,
     btc_block_height: u64,
@@ -141,13 +143,14 @@ public fun mint(
     };
     treasury.tx_ids.add(tx_id, true);
 
+    // TODO remove u64
     coin::mint_and_transfer(&mut treasury.cap, amount_satoshi as u64, recipient_address, ctx);
 
     event::emit(MintEvent {
         minter: tx_context::sender(ctx),
         recipient: recipient_address,
-        amount: amount_satoshi,
-        btc_tx_id: btc_tx_id,
+        amount: amount_satoshi as u64,
+        btc_tx_id: tx_id,
         btc_block_height: height,
         btc_tx_index: tx_index,
     });
