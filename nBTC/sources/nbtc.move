@@ -3,10 +3,9 @@ module nbtc::nbtc;
 
 use bitcoin_spv::light_client::{LightClient, prove_payment};
 use bitcoin_spv::transaction::make_transaction;
-
-use sui::event;
 use sui::address;
 use sui::coin::{Self, Coin, TreasuryCap};
+use sui::event;
 use sui::table::{Self, Table};
 use sui::url;
 
@@ -23,7 +22,7 @@ const ICON_URL: vector<u8> = b"icon.url";
 
 // Configuration
 /// The Object ID of the trusted Bitcoin SPV Light Client.
-const TRUSTED_LIGHT_CLIENT_ID: address = @0xCA;
+const LIGHT_CLIENT_ID: address = @0xCA;
 /// The fallback Sui address to receive nBTC if OP_RETURN data is invalid or missing.
 const FALLBACK_ADDRESS: address = @0xCF;
 /// The Bitcoin address where users must send BTC to mint nBTC.
@@ -34,11 +33,14 @@ public struct NBTC has drop {}
 
 // Errors
 #[error]
-const ETxAlreadyUsed: vector<u8> = b"The provided Bitcoin transaction ID has already been used for minting.";
+const ETxAlreadyUsed: vector<u8> =
+    b"The provided Bitcoin transaction ID has already been used for minting.";
 #[error]
-const EMintAmountIsZero: vector<u8> = b"The amount from the Bitcoin transaction to be minted is zero.";
+const EMintAmountIsZero: vector<u8> =
+    b"The amount from the Bitcoin transaction to be minted is zero.";
 #[error]
-const EUntrustedLightClient: vector<u8> = b"The provided Light Client object ID does not match the trusted one.";
+const EUntrustedLightClient: vector<u8> =
+    b"The provided Light Client object ID does not match the trusted one.";
 
 //
 // Structs
@@ -49,7 +51,7 @@ const EUntrustedLightClient: vector<u8> = b"The provided Light Client object ID 
 public struct WrappedTreasuryCap has key, store {
     id: UID,
     cap: TreasuryCap<NBTC>,
-    tx_ids: Table<vector<u8>, bool>, //TODO: consider using dynamic fields if we dont need anything
+    tx_ids: Table<vector<u8>, bool>, //TODO:consider using dynamic fields if we dont need anything
     trusted_lc_id: ID,
     fallback_address: address,
     btc_treasury: vector<u8>,
@@ -81,7 +83,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         id: object::new(ctx),
         cap: treasury_cap,
         tx_ids: table::new<vector<u8>, bool>(ctx),
-        trusted_lc_id: TRUSTED_LIGHT_CLIENT_ID.to_id(),
+        trusted_lc_id: LIGHT_CLIENT_ID.to_id(),
         fallback_address: FALLBACK_ADDRESS,
         btc_treasury: BTC_TREASURY,
     };
@@ -169,7 +171,7 @@ public fun total_supply(treasury: &WrappedTreasuryCap): u64 {
     coin::total_supply(&treasury.cap)
 }
 
-public fun get_trusted_light_client_id(treasury: &WrappedTreasuryCap): ID {
+public fun get_light_client_id(treasury: &WrappedTreasuryCap): ID {
     treasury.trusted_lc_id
 }
 
