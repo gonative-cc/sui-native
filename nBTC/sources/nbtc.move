@@ -3,6 +3,8 @@ module nbtc::nbtc;
 
 use bitcoin_spv::light_client::{LightClient, prove_payment};
 use bitcoin_spv::transaction::make_transaction;
+
+use sui::event;
 use sui::address;
 use sui::coin::{Self, Coin, TreasuryCap};
 use sui::table::{Self, Table};
@@ -141,6 +143,7 @@ public fun mint(
     };
     treasury.tx_ids.add(tx_id, true);
 
+    // TODO remove u64
     coin::mint_and_transfer(&mut treasury.cap, amount_satoshi as u64, recipient_address, ctx);
 
     sui::event::emit(MintEvent {

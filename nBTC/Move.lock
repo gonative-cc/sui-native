@@ -2,7 +2,7 @@
 
 [move]
 version = 3
-manifest_digest = "FF7E3ADC0CB3F1C2E3CF0DA189FB1FF9A70D46ACEEAC67040AC49A3FC54F6525"
+manifest_digest = "6EBC6F1530220FE4ACA3D1EC888EBE33B6F3AE10FBDA395E8791D6B82EE61525"
 deps_digest = "52B406A7A21811BEF51751CF88DA0E76DAEFFEAC888D4F4060B1A72BBE7D8D35"
 dependencies = [
   { id = "BitcoinSPV", name = "BitcoinSPV" },
@@ -15,7 +15,7 @@ dependencies = [
 
 [[move.package]]
 id = "BitcoinSPV"
-source = { git = "https://github.com/gonative-cc/move-bitcoin-spv.git", rev = "master", subdir = "./" }
+source = { git = "https://github.com/gonative-cc/move-bitcoin-spv.git", rev = "feat/prove-of-payment", subdir = "./" }
 
 dependencies = [
   { id = "Sui", name = "Sui" },
