@@ -22,7 +22,6 @@ BitcoinSPV = { git = "https://github.com/gonative-cc/move-bitcoin-spv.git", subd
 
 [addresses]
 nbtc = "0x0"
-# bitcoin_spv = "0x1"
 
 # Named addresses will be accessible in Move as `@name`. They're also exported:
 # for example, `std = "0x1"` is exported by the Standard Library.

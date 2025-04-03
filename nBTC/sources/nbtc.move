@@ -178,3 +178,29 @@ public fun get_light_client_id(treasury: &WrappedTreasuryCap): ID {
 public fun get_fallback_address(treasury: &WrappedTreasuryCap): address {
     treasury.fallback_address
 }
+
+
+#[test_only]
+public(package) fun init_for_testing(btc_lc_id: ID, btc_treasury: vector<u8>,  ctx: &mut TxContext): WrappedTreasuryCap  {
+    let witness = NBTC {};
+    let (treasury_cap, metadata) = coin::create_currency<NBTC>(
+        witness,
+        DECIMALS,
+        SYMBOL,
+        NAME,
+        DESCRIPTION,
+        option::some(url::new_unsafe_from_bytes(ICON_URL)),
+        ctx
+    );
+    transfer::public_freeze_object(metadata);
+    let treasury = WrappedTreasuryCap {
+        id: object::new(ctx),
+        cap: treasury_cap,
+        tx_ids: table::new<vector<u8>, bool>(ctx),
+        trusted_lc_id: btc_lc_id,
+        fallback_address: FALLBACK_ADDRESS,
+        btc_treasury
+    };
+
+    treasury
+}
