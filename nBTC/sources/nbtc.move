@@ -1,7 +1,7 @@
 /// Module: nbtc
 module nbtc::nbtc;
 
-use bitcoin_spv::light_client::{LightClient, prove_payment};
+use bitcoin_spv::light_client::{LightClient, verify_payment};
 use bitcoin_spv::transaction::make_transaction;
 use sui::address;
 use sui::coin::{Self, Coin, TreasuryCap};
@@ -119,13 +119,13 @@ public fun mint(
 
     let tx = make_transaction(
         version,
-        input_count as u256,
+        input_count,
         inputs,
-        output_count as u256,
+        output_count,
         outputs,
         lock_time,
     );
-    let (amount_satoshi, op_return, tx_id) = prove_payment(
+    let (amount_satoshi, op_return, tx_id) = verify_payment(
         light_client,
         height,
         proof,
