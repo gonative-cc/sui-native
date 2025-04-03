@@ -1,13 +1,13 @@
 [package]
 name = "nBTC"
-edition = "2024.beta" # edition = "legacy" to use legacy (pre-2024) Move
-# license = ""           # e.g., "MIT", "GPL", "Apache 2.0"
+edition = "2024.beta"
+license = "MPL-2.0"
 authors = [
     "Native",
-] # e.g., ["Joe Smith (joesmith@noemail.com)", "John Snow (johnsnow@noemail.com)"]
+]
 
 [dependencies]
-BitcoinSPV = { git = "https://github.com/gonative-cc/move-bitcoin-spv.git", subdir = "./", rev = "feat/prove-of-payment" }
+BitcoinSPV = { git = "https://github.com/gonative-cc/move-bitcoin-spv.git", subdir = "./", rev = "e180fb590f1205a7284d4ab8eae04c2586eef8bc" }
 
 # For remote import, use the `{ git = "...", subdir = "...", rev = "..." }`.
 # Revision can be a branch, a tag, and a commit hash.

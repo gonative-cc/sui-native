@@ -2,7 +2,7 @@
 module nbtc::nbtc_tests;
 
 use nbtc::nbtc::{Self, WrappedTreasuryCap, EMintAmountIsZero, ETxAlreadyUsed, NBTC};
-use bitcoin_spv::light_client::{new_light_client_with_params_without_share, LightClient};
+use bitcoin_spv::light_client::{new_light_client, LightClient};
 use bitcoin_spv::params;
 use sui::address;
 use sui::coin::Coin;
@@ -21,7 +21,7 @@ fun new_lc_for_test(ctx: &mut TxContext) : LightClient {
     let headers = vector[
         x"00000020a97594d6b5b9369535da225d464bde7e0ae3794e9b270a010000000000000000234edbf5d62a2790addd8d3fc85727c58c301ddbdebd2738c8f72fb6427ce722bb27e8585a330218b119eaee"
     ];
-    let lc = new_light_client_with_params_without_share(params::mainnet(), start_block, headers, 0, 8, ctx);
+    let lc = new_light_client(params::mainnet(), start_block, headers, 0, 8, ctx);
     return lc
 }
 
