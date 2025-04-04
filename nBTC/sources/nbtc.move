@@ -22,6 +22,10 @@ const NAME: vector<u8> = b"Native BTC";
 const DESCRIPTION: vector<u8> = b"Natvie synthetic BTC powered by IKA.";
 const ICON_URL: vector<u8> = b"icon.url";
 
+// ALPHA RELEASE: faucet
+const FAUCET: address = @0xFF;
+const BTC_IN_SATOSHI: u64 = 100_000_000;
+
 // Configuration
 /// The Object ID of the trusted Bitcoin SPV Light Client.
 const LIGHT_CLIENT_ID: address = @0xCA;
@@ -81,7 +85,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
     );
 
     transfer::public_freeze_object(metadata);
-    let treasury = WrappedTreasuryCap {
+    let mut treasury = WrappedTreasuryCap {
         id: object::new(ctx),
         cap: treasury_cap,
         tx_ids: table::new<vector<u8>, bool>(ctx),
@@ -89,6 +93,20 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         fallback_address: FALLBACK_ADDRESS,
         btc_treasury: BTC_TREASURY,
     };
+
+    // ALPHA RELEASE: pre-mint 10 million nBTC coins
+    let amount_satoshi = 10_000_000 * BTC_IN_SATOSHI;
+    coin::mint_and_transfer(&mut treasury.cap, amount_satoshi, FAUCET, ctx);
+
+    event::emit(MintEvent {
+        minter: tx_context::sender(ctx),
+        recipient: FAUCET,
+        amount: amount_satoshi,
+        btc_tx_id: b"pre-mint",
+        btc_block_height: 0,
+        btc_tx_index: 0,
+    });
+
     transfer::public_share_object(treasury);
 }
 
@@ -181,9 +199,12 @@ public fun get_fallback_address(treasury: &WrappedTreasuryCap): address {
     treasury.fallback_address
 }
 
-
 #[test_only]
-public(package) fun init_for_testing(btc_lc_id: ID, btc_treasury: vector<u8>,  ctx: &mut TxContext): WrappedTreasuryCap  {
+public(package) fun init_for_testing(
+    btc_lc_id: ID,
+    btc_treasury: vector<u8>,
+    ctx: &mut TxContext,
+): WrappedTreasuryCap {
     let witness = NBTC {};
     let (treasury_cap, metadata) = coin::create_currency<NBTC>(
         witness,
@@ -192,7 +213,7 @@ public(package) fun init_for_testing(btc_lc_id: ID, btc_treasury: vector<u8>,  c
         NAME,
         DESCRIPTION,
         option::some(url::new_unsafe_from_bytes(ICON_URL)),
-        ctx
+        ctx,
     );
     transfer::public_freeze_object(metadata);
     let treasury = WrappedTreasuryCap {
@@ -201,7 +222,7 @@ public(package) fun init_for_testing(btc_lc_id: ID, btc_treasury: vector<u8>,  c
         tx_ids: table::new<vector<u8>, bool>(ctx),
         trusted_lc_id: btc_lc_id,
         fallback_address: FALLBACK_ADDRESS,
-        btc_treasury
+        btc_treasury,
     };
 
     treasury
