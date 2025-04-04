@@ -7,7 +7,7 @@ authors = [
 ]
 
 [dependencies]
-BitcoinSPV = { git = "https://github.com/gonative-cc/move-bitcoin-spv.git", subdir = "./", rev = "e180fb590f1205a7284d4ab8eae04c2586eef8bc" }
+BitcoinSPV = { git = "https://github.com/gonative-cc/move-bitcoin-spv.git", subdir = "./", rev = "v0.3.0" }
 
 # For remote import, use the `{ git = "...", subdir = "...", rev = "..." }`.
 # Revision can be a branch, a tag, and a commit hash.
