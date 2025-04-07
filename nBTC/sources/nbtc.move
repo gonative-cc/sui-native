@@ -23,7 +23,7 @@ const DESCRIPTION: vector<u8> = b"Natvie synthetic BTC powered by IKA.";
 const ICON_URL: vector<u8> = b"icon.url";
 
 // ALPHA RELEASE: faucet
-const FAUCET: address = @0xFF;
+const FAUCET: address = @faucet;
 const BTC_IN_SATOSHI: u64 = 100_000_000;
 
 // Configuration

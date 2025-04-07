@@ -2,9 +2,7 @@
 name = "nBTC"
 edition = "2024.beta"
 license = "MPL-2.0"
-authors = [
-    "Native",
-]
+authors = ["Native"]
 
 [dependencies]
 BitcoinSPV = { git = "https://github.com/gonative-cc/move-bitcoin-spv.git", subdir = "./", rev = "v0.3.0" }
@@ -22,6 +20,7 @@ BitcoinSPV = { git = "https://github.com/gonative-cc/move-bitcoin-spv.git", subd
 
 [addresses]
 nbtc = "0x0"
+faucet = "0x8e12b6dbdc4e0a0fe838de7f1c3e18b72b4a84226be5164cc94c91c3c7cbc53e"
 
 # Named addresses will be accessible in Move as `@name`. They're also exported:
 # for example, `std = "0x1"` is exported by the Standard Library.
