@@ -1,4 +1,4 @@
-![nBTC Logo!](../assets/nBTC.png)
+![nBTC Logo!](../assets/nbtc-coin.png)
 
 # nBTC
 
