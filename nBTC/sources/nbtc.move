@@ -20,7 +20,6 @@ const DECIMALS: u8 = 8;
 const SYMBOL: vector<u8> = b"nBTC";
 const NAME: vector<u8> = b"Native BTC";
 const DESCRIPTION: vector<u8> = b"Natvie synthetic BTC";
-// TODO: upload final image
 const ICON_URL: vector<u8> = b"https://raw.githubusercontent.com/gonative-cc/sui-native/master/assets/nbtc.svg";
 
 // Configuration
