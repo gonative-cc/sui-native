@@ -27,6 +27,7 @@ const ICON_URL: vector<u8> = b"https://raw.githubusercontent.com/gonative-cc/sui
 const LIGHT_CLIENT_ID: address = @0xCA;
 /// The fallback Sui address to receive nBTC if OP_RETURN data is invalid or missing.
 const FALLBACK_ADDR: address = @0xCF;
+// TODO: convert to pub key hash
 /// The Bitcoin address where users must send BTC to mint nBTC.
 const NBTC_BITCOIN_ADDR: vector<u8> = b"tb1qe60n447jylrxa96y6pfgy8pq6x9zafu09ky7cq";
 
@@ -61,7 +62,7 @@ public struct WrappedTreasuryCap has key, store {
 }
 
 /// MintEvent is emitted when nBTC is successfully minted.
-public struct MintEvent has copy, drop, store {
+public struct MintEvent has copy, drop {
     minter: address,
     recipient: address,
     amount: u64, // in satoshi
