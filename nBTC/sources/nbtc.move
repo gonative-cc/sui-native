@@ -17,32 +17,34 @@ use sui::url;
 
 /// Coin Metadata
 const DECIMALS: u8 = 8;
-const SYMBOL: vector<u8> = b"NBTC";
+const SYMBOL: vector<u8> = b"nBTC";
 const NAME: vector<u8> = b"Native BTC";
-const DESCRIPTION: vector<u8> = b"Natvie synthetic BTC powered by IKA.";
-const ICON_URL: vector<u8> = b"icon.url";
+const DESCRIPTION: vector<u8> = b"Natvie synthetic BTC";
+const ICON_URL: vector<u8> = b"https://raw.githubusercontent.com/gonative-cc/sui-native/master/assets/nbtc.svg";
 
 // Configuration
-/// The Object ID of the trusted Bitcoin SPV Light Client.
+/// The Object ID of the Bitcoin SPV Light Client.
 const LIGHT_CLIENT_ID: address = @0xCA;
 /// The fallback Sui address to receive nBTC if OP_RETURN data is invalid or missing.
-const FALLBACK_ADDRESS: address = @0xCF;
+const FALLBACK_ADDR: address = @0xCF;
+// TODO: convert to pub key hash
 /// The Bitcoin address where users must send BTC to mint nBTC.
-const BTC_TREASURY: vector<u8> = b"btc_address";
+const NBTC_BITCOIN_ADDR: vector<u8> = b"tb1qe60n447jylrxa96y6pfgy8pq6x9zafu09ky7cq";
 
 /// One Time Witness
 public struct NBTC has drop {}
 
+//
 // Errors
+//
+
 #[error]
 const ETxAlreadyUsed: vector<u8> =
-    b"The provided Bitcoin transaction ID has already been used for minting.";
+    b"The Bitcoin transaction ID has been already used for minting";
 #[error]
-const EMintAmountIsZero: vector<u8> =
-    b"The amount from the Bitcoin transaction to be minted is zero.";
+const EMintAmountIsZero: vector<u8> = b"BTC deposit must not be zero";
 #[error]
-const EUntrustedLightClient: vector<u8> =
-    b"The provided Light Client object ID does not match the trusted one.";
+const EUntrustedLightClient: vector<u8> = b"Wrong Light Client object ID";
 
 //
 // Structs
@@ -53,14 +55,14 @@ const EUntrustedLightClient: vector<u8> =
 public struct WrappedTreasuryCap has key, store {
     id: UID,
     cap: TreasuryCap<NBTC>,
-    tx_ids: Table<vector<u8>, bool>, //TODO:consider using dynamic fields if we dont need anything
+    tx_ids: Table<vector<u8>, bool>,
     trusted_lc_id: ID,
-    fallback_address: address,
-    btc_treasury: vector<u8>,
+    fallback_addr: address,
+    nbtc_bitcoin_addr: vector<u8>,
 }
 
 /// MintEvent is emitted when nBTC is successfully minted.
-public struct MintEvent has copy, drop, store {
+public struct MintEvent has copy, drop {
     minter: address,
     recipient: address,
     amount: u64, // in satoshi
@@ -86,8 +88,8 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         cap: treasury_cap,
         tx_ids: table::new<vector<u8>, bool>(ctx),
         trusted_lc_id: LIGHT_CLIENT_ID.to_id(),
-        fallback_address: FALLBACK_ADDRESS,
-        btc_treasury: BTC_TREASURY,
+        fallback_addr: FALLBACK_ADDR,
+        nbtc_bitcoin_addr: NBTC_BITCOIN_ADDR,
     };
     transfer::public_share_object(treasury);
 }
@@ -133,7 +135,7 @@ public fun mint(
         proof,
         tx_index,
         &tx,
-        treasury.btc_treasury,
+        treasury.nbtc_bitcoin_addr,
     );
 
     assert!(!treasury.tx_ids.contains(tx_id), ETxAlreadyUsed);
@@ -143,17 +145,16 @@ public fun mint(
         //TODO: we need more advanced parsing. For PoC we just check the length, else use fallback
         recipient_address = address::from_bytes(op_return);
     } else {
-        recipient_address = treasury.fallback_address;
+        recipient_address = treasury.fallback_addr;
     };
     treasury.tx_ids.add(tx_id, true);
 
-    // TODO remove u64
-    coin::mint_and_transfer(&mut treasury.cap, amount_satoshi as u64, recipient_address, ctx);
+    coin::mint_and_transfer(&mut treasury.cap, amount_satoshi, recipient_address, ctx);
 
     event::emit(MintEvent {
         minter: tx_context::sender(ctx),
         recipient: recipient_address,
-        amount: amount_satoshi as u64,
+        amount: amount_satoshi,
         btc_tx_id: tx_id,
         btc_block_height: height,
         btc_tx_index: tx_index,
@@ -177,13 +178,13 @@ public fun get_light_client_id(treasury: &WrappedTreasuryCap): ID {
     treasury.trusted_lc_id
 }
 
-public fun get_fallback_address(treasury: &WrappedTreasuryCap): address {
-    treasury.fallback_address
+public fun get_fallback_addr(treasury: &WrappedTreasuryCap): address {
+    treasury.fallback_addr
 }
 
 
 #[test_only]
-public(package) fun init_for_testing(btc_lc_id: ID, btc_treasury: vector<u8>,  ctx: &mut TxContext): WrappedTreasuryCap  {
+public(package) fun init_for_testing(btc_lc_id: ID, nbtc_bitcoin_addr: vector<u8>,  ctx: &mut TxContext): WrappedTreasuryCap  {
     let witness = NBTC {};
     let (treasury_cap, metadata) = coin::create_currency<NBTC>(
         witness,
@@ -200,8 +201,8 @@ public(package) fun init_for_testing(btc_lc_id: ID, btc_treasury: vector<u8>,  c
         cap: treasury_cap,
         tx_ids: table::new<vector<u8>, bool>(ctx),
         trusted_lc_id: btc_lc_id,
-        fallback_address: FALLBACK_ADDRESS,
-        btc_treasury
+        fallback_addr: FALLBACK_ADDR,
+        nbtc_bitcoin_addr
     };
 
     treasury
