@@ -1,0 +1,20 @@
+{
+	"name": "sui-native",
+	"version": "0.1.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"type": "module",
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"packageManager": "pnpm@10.8.0",
+	"dependencies": {
+		"bip32": "5.0.0-rc.0",
+		"bip39": "^3.1.0",
+		"bitcoinjs-lib": "^6.1.7",
+		"tiny-secp256k1": "^2.2.3"
+	}
+}
