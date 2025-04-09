@@ -5,7 +5,7 @@ license = "MPL-2.0"
 authors = ["Native"]
 
 [dependencies]
-BitcoinSPV = { git = "https://github.com/gonative-cc/move-bitcoin-spv.git", subdir = "./", rev = "v0.3.0" }
+BitcoinSPV = { git = "https://github.com/gonative-cc/move-bitcoin-spv.git", subdir = "./", rev = "release/alpha" }
 
 # For remote import, use the `{ git = "...", subdir = "...", rev = "..." }`.
 # Revision can be a branch, a tag, and a commit hash.
@@ -21,6 +21,8 @@ BitcoinSPV = { git = "https://github.com/gonative-cc/move-bitcoin-spv.git", subd
 [addresses]
 nbtc = "0x0"
 faucet = "0x8e12b6dbdc4e0a0fe838de7f1c3e18b72b4a84226be5164cc94c91c3c7cbc53e"
+light_client = "0x4f989d395bb13b4913b483016641eb7c9cacfd88d2a1ba91523d0542a52af9e4"
+fallback = "0x5e82bf8ac0c378dcaf394819004b4e795adcb61efc932ea51a6b27776a131fff"
 
 # Named addresses will be accessible in Move as `@name`. They're also exported:
 # for example, `std = "0x1"` is exported by the Standard Library.

@@ -2,7 +2,7 @@
 
 [move]
 version = 3
-manifest_digest = "7A253EBF387ED70002BA77785E52683EC6734F815A22BDFAEE73401FC9E375FA"
+manifest_digest = "B5CA04FB70875C3C00F7F47AE2D1D6278C9B0EB7B2E27149E22FF1C977077FDE"
 deps_digest = "52B406A7A21811BEF51751CF88DA0E76DAEFFEAC888D4F4060B1A72BBE7D8D35"
 dependencies = [
   { id = "BitcoinSPV", name = "BitcoinSPV" },
@@ -15,7 +15,7 @@ dependencies = [
 
 [[move.package]]
 id = "BitcoinSPV"
-source = { git = "https://github.com/gonative-cc/move-bitcoin-spv.git", rev = "v0.3.0", subdir = "./" }
+source = { git = "https://github.com/gonative-cc/move-bitcoin-spv.git", rev = "release/alpha", subdir = "./" }
 
 dependencies = [
   { id = "Sui", name = "Sui" },
@@ -65,3 +65,11 @@ dependencies = [
 compiler-version = "1.46.0"
 edition = "2024.beta"
 flavor = "sui"
+
+[env]
+
+[env.local]
+chain-id = "37d891a1"
+original-published-id = "0x9a95547cde617077c852d8d94521f6a5016fc2116be2fc42ad801ecb0b79f138"
+latest-published-id = "0x9a95547cde617077c852d8d94521f6a5016fc2116be2fc42ad801ecb0b79f138"
+published-version = "1"
