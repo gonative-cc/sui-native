@@ -79,26 +79,26 @@ def read_byte_transaction(hex_str):
     tx_data = {
         "version": "",
         "input_count": 0,
-        "inputs": "",
+        "inputs": "0x",
         "output_count": 0,
-        "outputs": "",
-        "lock_time": ""
+        "outputs": "0x",
+        "lock_time": "0x"
     }
 
     i = 4;
-    tx_data["version"] = hex_str[:i * 2]
+    tx_data["version"] = "0x" + hex_str[:i * 2]
 
-    if (tx_data["version"] == "02000000"):
+    if (tx_data["version"] == "0x02000000"):
         i += 2
-    
+
     tx_data["input_count"] = int(hex_str[i * 2: (i + 1) * 2], 16)
     i += 1
     for j in range(tx_data["input_count"]):
         tx_data["inputs"] = tx_data["inputs"] + hex_str[i * 2 : (i + 32 + 4) * 2]
         i += 32 + 4
-        
+
         k = int(hex_str[i * 2: (i + 1) * 2], 16)
-        tx_data["inputs"] = tx_data["inputs"] + hex_str[i * 2: (i + 1) * 2]                
+        tx_data["inputs"] = tx_data["inputs"] + hex_str[i * 2: (i + 1) * 2]
         i += 1
         tx_data["inputs"] = tx_data["inputs"] + hex_str[i * 2 : (i + k + 4) * 2]
         i += k + 4
@@ -114,34 +114,34 @@ def read_byte_transaction(hex_str):
         i += 1
         tx_data["outputs"] = tx_data["outputs"] + hex_str[i * 2 : (i + k) * 2]
         i += k
-    tx_data["lock_time"] = hex_str[-8:]
-    
+    tx_data["lock_time"] = "0x" + hex_str[-8:]
+
     return tx_data
-    
+
 def main():
     parser = argparse.ArgumentParser(description="nBTC prepare data")
     parser.add_argument('block_filename', type=str, help='path to a JSON file with Bitcoin block data (can be created using "contrib/scripts/create_btc_mint_data.sh"')
     parser.add_argument('transaction_id', type=str, help='transaction id')
     args = parser.parse_args()
-    block_hash = args.block_hash
+    block_filename = args.block_filename
     transaction_id = args.transaction_id
     with open(
-            block_hash+".json"
+            block_filename+".json"
     ) as file:
         data = json.load(file)
         tx_hashes = data["tx"]
         tx_hashes = list(map(big_endian_to_little_endian, tx_hashes))
         # Compute Merkle root
     merkle_root_hash = merkle_root(tx_hashes)
-    print(f"Merkle root: {merkle_root_hash}")
+    # print(f"Merkle root: {merkle_root_hash}")
 
     tx_hash = big_endian_to_little_endian(transaction_id)
     proof = merkle_proof(tx_hash, tx_hashes)
     # print(f"Merkle Proof for {tx_hash}: {proof}")
 
-    proof_with_prefix = [f'x"{hash_value}"' for hash_value in proof]
+    proof_with_prefix = [f'0x{hash_value}' for hash_value in proof]
 
-    print(f"Merkle Proof for {tx_hash}: [{', '.join(proof_with_prefix)}]")
+    # print(f"Merkle Proof for {tx_hash}: [{', '.join(proof_with_prefix)}]")
     height = data["height"]
     print(f"Height = {height}")
     with open(
@@ -149,9 +149,14 @@ def main():
     ) as file:
         data = json.load(file)
         tx_hex = data['hex']
-        print(read_byte_transaction(tx_hex))
-        # Compute Merkle root
 
-    
+    result = read_byte_transaction(tx_hex)
+    result.update({
+        "height": height,
+        "proof": proof_with_prefix,
+        "tx_index": tx_hashes.index(tx_hash)
+    })
+    print(json.dumps(result, indent=4))
+
 if __name__ == "__main__":
     main()
