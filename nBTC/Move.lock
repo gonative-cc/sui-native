@@ -2,7 +2,7 @@
 
 [move]
 version = 3
-manifest_digest = "B5CA04FB70875C3C00F7F47AE2D1D6278C9B0EB7B2E27149E22FF1C977077FDE"
+manifest_digest = "C18B66624694FF5FA84544FA7CB60546CD9CF3900CD1A34E8123378C032BDBFD"
 deps_digest = "52B406A7A21811BEF51751CF88DA0E76DAEFFEAC888D4F4060B1A72BBE7D8D35"
 dependencies = [
   { id = "BitcoinSPV", name = "BitcoinSPV" },
@@ -72,4 +72,10 @@ flavor = "sui"
 chain-id = "37d891a1"
 original-published-id = "0x9a95547cde617077c852d8d94521f6a5016fc2116be2fc42ad801ecb0b79f138"
 latest-published-id = "0x9a95547cde617077c852d8d94521f6a5016fc2116be2fc42ad801ecb0b79f138"
+published-version = "1"
+
+[env.testnet]
+chain-id = "4c78adac"
+original-published-id = "0x5419f6e223f18a9141e91a42286f2783eee27bf2667422c2100afc7b2296731b"
+latest-published-id = "0x5419f6e223f18a9141e91a42286f2783eee27bf2667422c2100afc7b2296731b"
 published-version = "1"
