@@ -120,7 +120,7 @@ def read_byte_transaction(hex_str):
     
 def main():
     parser = argparse.ArgumentParser(description="nBTC prepare data")
-    parser.add_argument('block_hash', type=str, help='block hash')
+    parser.add_argument('block_filename', type=str, help='path to a JSON file with Bitcoin block data (can be created using "contrib/scripts/create_btc_mint_data.sh"')
     parser.add_argument('transaction_id', type=str, help='transaction id')
     args = parser.parse_args()
     block_hash = args.block_hash
