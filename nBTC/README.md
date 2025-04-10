@@ -1,6 +1,4 @@
-![nBTC Logo!](../assets/nbtc.svg)
-
-# nBTC
+# ![nBTC Logo!](../assets/nbtc.svg) nBTC
 
 `nBTC` is the synthetic Bitcoin on Sui, redeemable 1-1 for BTC.
 
