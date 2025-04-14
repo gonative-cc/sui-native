@@ -4,6 +4,7 @@ import hashlib
 import json
 import argparse
 
+
 def double_sha256(data):
     data_bytes = bytes.fromhex(data)
     return hashlib.sha256(hashlib.sha256(data_bytes).digest()).hexdigest()
@@ -41,7 +42,8 @@ def merkle_proof(transaction_hash, all_hashes):
             if index + 1 < len(all_hashes):
                 proof.append(all_hashes[index + 1])
             else:
-                proof.append(all_hashes[index])  # If odd number, duplicate the last
+                # If odd number, duplicate the last
+                proof.append(all_hashes[index])
                 # If the index is odd, get the previous hash as the sibling
         else:
             proof.append(all_hashes[index - 1])
@@ -69,7 +71,7 @@ def big_endian_to_little_endian(hex_str):
 
     # Reverse the order of bytes (pair of hex characters)
     little_endian = "".join(
-        [hex_str[i : i + 2] for i in range(0, len(hex_str), 2)][::-1]
+        [hex_str[i: i + 2] for i in range(0, len(hex_str), 2)][::-1]
     )
 
     return little_endian
@@ -85,7 +87,7 @@ def read_byte_transaction(hex_str):
         "lock_time": "0x"
     }
 
-    i = 4;
+    i = 4
     tx_data["version"] = "0x" + hex_str[:i * 2]
 
     if (tx_data["version"] == "0x02000000"):
@@ -94,33 +96,36 @@ def read_byte_transaction(hex_str):
     tx_data["input_count"] = int(hex_str[i * 2: (i + 1) * 2], 16)
     i += 1
     for j in range(tx_data["input_count"]):
-        tx_data["inputs"] = tx_data["inputs"] + hex_str[i * 2 : (i + 32 + 4) * 2]
+        tx_data["inputs"] = tx_data["inputs"] + \
+            hex_str[i * 2: (i + 32 + 4) * 2]
         i += 32 + 4
 
         k = int(hex_str[i * 2: (i + 1) * 2], 16)
         tx_data["inputs"] = tx_data["inputs"] + hex_str[i * 2: (i + 1) * 2]
         i += 1
-        tx_data["inputs"] = tx_data["inputs"] + hex_str[i * 2 : (i + k + 4) * 2]
+        tx_data["inputs"] = tx_data["inputs"] + hex_str[i * 2: (i + k + 4) * 2]
         i += k + 4
 
     tx_data["output_count"] = int(hex_str[i * 2: (i + 1) * 2], 16)
-    i += 1;
+    i += 1
 
     for j in range(tx_data["output_count"]):
-        tx_data["outputs"] = tx_data["outputs"] + hex_str[i * 2 : (i + 8) * 2]
+        tx_data["outputs"] = tx_data["outputs"] + hex_str[i * 2: (i + 8) * 2]
         i += 8
         k = int(hex_str[i * 2: (i + 1) * 2], 16)
         tx_data["outputs"] = tx_data["outputs"] + hex_str[i * 2: (i + 1) * 2]
         i += 1
-        tx_data["outputs"] = tx_data["outputs"] + hex_str[i * 2 : (i + k) * 2]
+        tx_data["outputs"] = tx_data["outputs"] + hex_str[i * 2: (i + k) * 2]
         i += k
     tx_data["lock_time"] = "0x" + hex_str[-8:]
 
     return tx_data
 
+
 def main():
     parser = argparse.ArgumentParser(description="nBTC prepare data")
-    parser.add_argument('block_filename', type=str, help='path to a JSON file with Bitcoin block data (can be created using "contrib/scripts/create_btc_mint_data.sh"')
+    parser.add_argument('block_filename', type=str,
+                        help='path to a JSON file with Bitcoin block data (can be created using "contrib/scripts/create_btc_mint_data.sh"')
     parser.add_argument('transaction_id', type=str, help='transaction id')
     args = parser.parse_args()
     block_filename = args.block_filename
@@ -143,7 +148,6 @@ def main():
 
     # print(f"Merkle Proof for {tx_hash}: [{', '.join(proof_with_prefix)}]")
     height = data["height"]
-    print(f"Height = {height}")
     with open(
             transaction_id+".json"
     ) as file:
@@ -157,6 +161,7 @@ def main():
         "tx_index": tx_hashes.index(tx_hash)
     })
     print(json.dumps(result, indent=4))
+
 
 if __name__ == "__main__":
     main()
