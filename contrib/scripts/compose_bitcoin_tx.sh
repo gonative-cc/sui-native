@@ -4,9 +4,16 @@ set -e
 #  "-testnet", "-regtest", "-rpcwallet=mywallet", etc.
 BITCOIN_CLI_ARGS="-testnet4"
 
-RECIPIENT_ADDRESS="tb1qe60n447jylrxa96y6pfgy8pq6x9zafu09ky7cq"
-AMOUNT_BTC="0.00006200"
-OP_RETURN_DATA_HEX="c76280db47f593b58118ac78c257f0bfa5bbfef6be2eff385f4e32a781f76945"
+if [ "$#" -ne 3 ]; then
+    echo "Error: Incorrect number of arguments." >&2
+    echo "Usage: $0 <recipient_address> <amount_btc> <op_return_hex>" >&2
+    echo "Example: $0 tb1qe60n447jylrxa96y6pfgy8pq6x9zafu09ky7cq 0.00006200 c76280db47f593b58118ac78c257f0bfa5bbfef6be2eff385f4e32a781f76945" >&2
+    exit 1
+fi
+
+RECIPIENT_ADDRESS="$1"
+AMOUNT_BTC="$2"
+OP_RETURN_DATA_HEX="$3"
 
 # 1. Create Raw Transaction (Outputs Only)
 OUTPUTS="{\"$RECIPIENT_ADDRESS\": $AMOUNT_BTC, \"data\": \"$OP_RETURN_DATA_HEX\"}"
