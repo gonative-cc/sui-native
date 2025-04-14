@@ -1,6 +1,6 @@
 #!/bin/bash
 # Constructs Bitcoin payment proof and sends Sui transaction nBTC mint transaction
- 
+
 if [ -z "$1" ]; then
   echo "Usage: $0 <bitcoin_nbtc_tx_id>"
   exit 1
@@ -42,9 +42,9 @@ ARGS=(
     "$BTC_TX_INDEX_IN_BLOCK"
 )
 
-echo sui client call \
-    --package "$PACKAGE_ID" \
-    --module "nbtc" \
-    --function "mint" \
-    --args "${ARGS[@]}" \
-    --gas-budget "$GAS_BUDGET"
+sui client call \
+  --package "$PACKAGE_ID" \
+  --module "nbtc" \
+  --function "mint" \
+  --args "${ARGS[@]}" \
+  --gas-budget "$GAS_BUDGET"

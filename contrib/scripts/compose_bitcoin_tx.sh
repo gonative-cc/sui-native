@@ -1,7 +1,9 @@
 #!/bin/bash
 set -e
 
-#  "-testnet", "-regtest", "-rpcwallet=mywallet", etc.
+# Creates, signs and brodcasts transaction to pre-defined bitcoin network. Choose the network you want to operate on below.
+
+# "-testnet", "-regtest", "-rpcwallet=mywallet", etc.
 BITCOIN_CLI_ARGS="-testnet4"
 
 if [ "$#" -ne 3 ]; then
@@ -32,5 +34,3 @@ TXID=$(bitcoin-cli $BITCOIN_CLI_ARGS sendrawtransaction "$SIGNED_TX_HEX")
 
 echo "Transaction Broadcasted."
 echo "TXID: $TXID"
-
-exit 0
