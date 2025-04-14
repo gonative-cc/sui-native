@@ -14,7 +14,8 @@ This guide shows how to create a Bitcoin transaction and use it to mint nBTC on 
 
 ### 1. Create Bitcoin Transaction
 
-Run `compose_bitcoin_tx.sh` with the recipient address, amount (in BTC), and your OP_RETURN data (hex representation of the Sui address you want the nBTC to be minted to).
+Run `compose_bitcoin_tx.sh` with the recipient address, amount (in BTC), and your OP_RETURN data (hex representation of the Sui address you want the nBTC to be minted to). 
+This script will create, sign (using TODO describe wallet) and send a Bitcoin nBTC deposit transaction.
 
 ```bash
 ./compose_bitcoin_tx.sh tb1q... 0.00005 c762...

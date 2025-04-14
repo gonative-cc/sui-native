@@ -1,13 +1,17 @@
 #!/bin/bash
+# Constructs Bitcoin payment proof and sends Sui transaction nBTC mint transaction
+ 
+if [ -z "$1" ]; then
+  echo "Usage: $0 <bitcoin_nbtc_tx_id>"
+  exit 1
+fi
+
 set -e
+
 PACKAGE_ID="0x5419f6e223f18a9141e91a42286f2783eee27bf2667422c2100afc7b2296731b"
 TREASURY_CAP_ID="0x47336d196275369fb52a200682a865a4bffdc9469d755d418d7e985c376ace35"
 LIGHT_CLIENT_ID="0x4f989d395bb13b4913b483016641eb7c9cacfd88d2a1ba91523d0542a52af9e4"
 
-if [ -z "$1" ]; then
-  echo "Usage: $0 <bitcoin_transaction_id>"
-  exit 1
-fi
 TX_ID="$1"
 
 JSON_DATA=$(./create_btc_mint_data.sh "$TX_ID")
