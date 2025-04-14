@@ -24,7 +24,7 @@ This script will print a TXID. Copy it.
 
 ### 2. Wait for Confirmations
 
-Wait until your Bitcoin transaction has enough confirmations (e.g., 6 confirmations) on the Bitcoin network. You can check this using a block explorer or bitcoin-cli.
+Wait until your Bitcoin transaction has enough confirmations (e.g., 8 confirmations) on the Bitcoin network. You can check this using a block explorer or bitcoin-cli.
 
 ### 3. Mint nBTC on Sui
 
