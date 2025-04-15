@@ -4,10 +4,14 @@
 
 It's the first ever synthetic BTC (BTC that is represented on other chain) that is
 
-- fully permissionless,
-- custodyless,
+- fully permission-less,
+- custody-less,
 - rightmost trust minimized (read about [nBTC trust model](https://x.com/goNativeCC/status/1899487861939806641))
 - keeps the true Web3 ethos.
+
+## Deployed contracts
+
+See the main [README](../README.md) file.
 
 ## How it Works
 
