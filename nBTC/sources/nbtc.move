@@ -162,9 +162,9 @@ public fun mint(
     });
 }
 
-public fun burn(treasury: &mut WrappedTreasuryCap, coin_to_burn: Coin<NBTC>, _ctx: &mut TxContext) {
-    //TODO: implement logic to guard burning
-    coin::burn(&mut treasury.cap, coin_to_burn);
+public fun redeem(treasury: &mut WrappedTreasuryCap, coins: vector<Coin<NBTC>>, _ctx: &mut TxContext) {
+    // TODO: implement logic to guard burning
+    coins.do!(|c| coin::burn(&mut treasury.cap, c));
 }
 
 //
