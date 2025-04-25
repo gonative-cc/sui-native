@@ -18,6 +18,8 @@ Packages:
 - Treasury Cap ID: `0x47336d196275369fb52a200682a865a4bffdc9469d755d418d7e985c376ace35`
 - uses [Bitcoin Light Client](https://github.com/gonative-cc/move-bitcoin-spv): `0x4f989d395bb13b4913b483016641eb7c9cacfd88d2a1ba91523d0542a52af9e4`
 
+BTC P2WPKH deposit address: `tb1qe60n447jylrxa96y6pfgy8pq6x9zafu09ky7cq` for `nBTC` minting.
+
 ## Contributing
 
 Participating in open source is often a highly collaborative experience. We’re encouraged to create in public view, and we’re incentivized to welcome contributions of all kinds from people around the world.
