@@ -162,9 +162,10 @@ public fun mint(
     });
 }
 
-public fun redeem(treasury: &mut WrappedTreasuryCap, coins: vector<Coin<NBTC>>, _ctx: &mut TxContext) {
+/// redeem returns total amount of redeemed balance
+public fun redeem(treasury: &mut WrappedTreasuryCap, coins: vector<Coin<NBTC>>, _ctx: &mut TxContext): u64 {
     // TODO: implement logic to guard burning
-    coins.do!(|c| coin::burn(&mut treasury.cap, c));
+    coins.fold!(0, |total, c| total + coin::burn(&mut treasury.cap, c))
 }
 
 //
