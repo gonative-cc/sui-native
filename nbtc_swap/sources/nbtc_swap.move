@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MPL-2.0
+
 module nbtc_swap::nbtc_swap;
 
 use nbtc::nbtc::NBTC;
