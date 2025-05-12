@@ -15,7 +15,7 @@ It operates with a fixed price set by the contract admin and requires the admin 
 
 ## Example 
 
-Below is an example of how to call a already deployed and initalized contract on Sui testnet
+Below is an example of how to call an already deployed and initialized contract on Sui testnet
 ```bash
 sui client call --package 0x4995e309e990a6a93224153108b26bf79197b234c51db6447bbae10b431c42fb --module nbtc_swap --function swap_sui_for_nbtc --args 0xf280477ca196a4bced5e1db4cd82fcdd647b55585b1d3838dcd8e1b829d263a4 0x4931a2cae0091c86776c571e1193025c19930aca30a4dc5f802011605eb34039 --gas-budget 100000000
 ```
