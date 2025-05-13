@@ -23,6 +23,12 @@ sui client call --package 0x4995e309e990a6a93224153108b26bf79197b234c51db6447bba
 - Module: `nbtc_swap`
 - VaultID: `0xf280477ca196a4bced5e1db4cd82fcdd647b55585b1d3838dcd8e1b829d263a4`
 
+## Documentation 
+
+Detailed code documentation
+
+- [nbtc_swap](docs/nbtc_swap.md)
+
 ## Disclaimer
 
 This is developed only for testing purposes. Use with caution.
