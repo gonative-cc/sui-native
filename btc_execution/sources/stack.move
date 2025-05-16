@@ -8,7 +8,7 @@ const MaximumElementSize: u64 = 520;
 #[error]
 const EReachMaximumSize: vector<u8> = b"Reach maximum element in stack";
 #[error]
-const EElementSizeInvalid: vector<u8> = b"Element size is greater htna 520";
+const EElementSizeInvalid: vector<u8> = b"Element size is greater than 520";
 #[error]
 const EPopStackEmpty: vector<u8> = b"Pop stack empty";
 
@@ -37,13 +37,13 @@ public fun is_empty(s: &Stack): bool {
 
 /// push new element to stack
 public fun push(s: &mut Stack, element: vector<u8>) {
-    assert!(s.size() <= MaximumStackSize, EReachMaximumSize);
+    assert!(s.size() < MaximumStackSize, EReachMaximumSize);
     assert!(element.length() <= MaximumElementSize, EElementSizeInvalid);
     s.internal.push_back(element);
 }
 
 /// pop top element from stack
 public fun pop(s: &mut Stack): vector<u8> {
-    assert!(s.is_empty(), EPopStackEmpty);
+    assert!(!s.is_empty(), EPopStackEmpty);
     s.internal.pop_back()
 }
