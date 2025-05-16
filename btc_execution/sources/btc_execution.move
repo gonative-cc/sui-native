@@ -16,7 +16,7 @@ public struct State has key, store {
 }
 
 fun store(_state: &mut State, _block: &Block) {
-
+    // TODO: Implement this.
 }
 
 public fun executeBlock(state: &mut State, block: &Block): bool {
@@ -27,7 +27,6 @@ public fun executeBlock(state: &mut State, block: &Block): bool {
         };
         i = i + 1;
     };
-
     state.store(block);
     return true
 }
