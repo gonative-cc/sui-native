@@ -7,10 +7,12 @@ fun init(_ctx: &mut tx_context::TxContext) {
 }
 
 
+/// A block is a collection of all transactions in the BTC block
 public struct Block has copy, drop {
     txns: vector<Tx>
 }
 
+/// State store all valid BTC blocks
 public struct State has key, store {
     id: UID
 }
