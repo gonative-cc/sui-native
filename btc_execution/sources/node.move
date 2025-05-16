@@ -1,6 +1,6 @@
 /// Module: btc_execution
 module btc_execution::btc_execution;
-use btc_execution::tx_execution::{Tx, executeTX};
+use btc_execution::tx::{Tx, Self};
 
 
 fun init(_ctx: &mut tx_context::TxContext) {
@@ -24,7 +24,7 @@ fun store(_state: &mut State, _block: &Block) {
 public fun executeBlock(state: &mut State, block: &Block): bool {
     let mut i = 0;
     while (i < block.txns.length()) {
-        if (executeTX(block.txns[i]) == false) {
+        if (tx::execute(block.txns[i]) == false) {
             return false
         };
         i = i + 1;
