@@ -1,4 +1,4 @@
-module btc_execution::tx_execution;
+module btc_execution::tx;
 use btc_execution::interpreter::run;
 
 
@@ -13,7 +13,7 @@ public struct Tx has copy, drop {
 }
 
 /// Validate BTC transaction
-public fun executeTX(tx: Tx) : bool {
+public fun execute(tx: Tx) : bool {
     let mut i = 0;
     while (i < tx.inputs.length()) {
         if (run(tx.inputs[i].data) == false) {
