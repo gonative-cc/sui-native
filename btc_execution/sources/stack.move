@@ -47,3 +47,8 @@ public fun pop(s: &mut Stack): vector<u8> {
     assert!(!s.is_empty(), EPopStackEmpty);
     s.internal.pop_back()
 }
+
+public fun top(s: &Stack): vector<u8> {
+    assert!(!s.is_empty(), EPopStackEmpty);
+    s.internal[s.internal.length() - 1]
+}
