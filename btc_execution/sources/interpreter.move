@@ -1,6 +1,6 @@
 module btc_execution::interpreter;
 use btc_execution::opcode::isOpSuccess;
-use btc_execution::stack::Stack;
+use btc_execution::stack::{Stack, Self};
 
 // TODO: Follow error in btc implemetation
 #[error]
@@ -19,15 +19,33 @@ public struct Interperter has copy, drop {
 }
 
 /// Execute btc script
-public fun run(interperter: &mut Interperter, script: vector<u8>) : bool {
-    return true
+
+public fun run(script: &vector<u8>): bool {
+    let mut interperter = Interperter {
+        stack : stack::create()
+    };
+
+    interperter.eval(script)
+}
+
+fun eval(interperter: &mut Interperter, script: &vector<u8>): bool {
+    // eval script and check result
+    interperter.isExecuteSuccess()
 }
 
 
+
+
+
+/// check evaluate is valid
+/// evaluation valid if the stack not empty
+/// and top element is non zero value
 public fun isExecuteSuccess(interperter: &Interperter): bool {
-    interperter.stack.size() == 1 &&
-        // TODO: this should not zero value
-        interperter.stack.top() != vector[0]
+    if (interperter.stack.is_empty()) {
+        return false
+    };
+    let top = interperter.stack.top();
+    return cast_to_bool(&top)
 }
 
 public fun nextOpcode(r: &mut ScriptReader): u8 {
@@ -38,8 +56,9 @@ public fun nextOpcode(r: &mut ScriptReader): u8 {
 
 
 fun read(r: &mut ScriptReader, cap: u64): vector<u8> {
-    let mut i = r.current_index;
     assert!(r.readable(cap), EBadReadData);
+
+    let mut i = r.current_index;
     let mut buf =vector[];
     while (i < cap) {
         buf.push_back(r.script[i]);
@@ -52,4 +71,18 @@ fun read(r: &mut ScriptReader, cap: u64): vector<u8> {
 
 fun readable(r: &ScriptReader, i: u64):  bool {
     r.current_index + i < r.script.length()
+}
+
+fun cast_to_bool(v: &vector<u8>): bool {
+     let mut i = 0;
+    while (i < v.length()) {
+        if (v[i] != 0) {
+            // Can be negetive zero
+             if (i == v.length()-1 && v[i] == 0x80)
+                return false;
+            return true;
+        };
+        i = i + 1;
+    };
+    return false
 }
