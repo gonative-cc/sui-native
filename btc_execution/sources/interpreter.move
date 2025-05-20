@@ -20,7 +20,7 @@ public struct ScriptReader has copy, drop {
     current_index: u64
 }
 
-public struct Interperter has copy, drop {
+public struct Interpreter has copy, drop {
     stack: Stack
 }
 
@@ -31,8 +31,8 @@ public fun reader(script: vector<u8>): ScriptReader {
     }
 }
 
-public fun create_interperter(stack: Stack): Interperter {
-    Interperter {
+public fun create_interperter(stack: Stack): Interpreter {
+    Interpreter {
         stack : stack
     }
 }
@@ -40,12 +40,12 @@ public fun create_interperter(stack: Stack): Interperter {
 /// Execute btc script
 public fun run(script: vector<u8>): bool {
     let st = stack::create();
-    let mut interperter = create_interperter(st);
+    let mut ip = create_interperter(st);
     let mut r = reader(script);
-    interperter.eval(&mut r)
+    ip.eval(&mut r)
 }
 
-fun eval(ip: &mut Interperter, r: &mut ScriptReader): bool {
+fun eval(ip: &mut Interpreter, r: &mut ScriptReader): bool {
 
     while(!r.end_stream()) {
         let op = r.nextOpcode();
@@ -62,7 +62,7 @@ fun eval(ip: &mut Interperter, r: &mut ScriptReader): bool {
 /// check evaluate is valid
 /// evaluation valid if the stack not empty
 /// and top element is non zero value
-public fun isExecuteSuccess(ip: &Interperter): bool {
+public fun isExecuteSuccess(ip: &Interpreter): bool {
     if (ip.stack.is_empty()) {
         return false
     };
@@ -115,7 +115,7 @@ fun cast_to_bool(v: &vector<u8>): bool {
 
 
 // OP_DUP eval
-fun op_dup(ip: &mut Interperter) {
+fun op_dup(ip: &mut Interpreter) {
     let value = ip.stack.top();
     ip.stack.push(value)
 }
