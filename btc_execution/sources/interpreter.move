@@ -2,11 +2,17 @@ module btc_execution::interpreter;
 use btc_execution::opcode::isOpSuccess;
 use btc_execution::stack::{Stack, Self};
 
+
 // TODO: Follow error in btc implemetation
 #[error]
 const EBadReadData: vector<u8> = b"Invalid read script";
 #[error]
 const EBadOpcode: vector<u8> = b"Bad opcode";
+
+
+// Opcodes
+
+const OP_DUP: u8 = 76;
 
 
 public struct ScriptReader has copy, drop {
@@ -38,19 +44,28 @@ public fun run(script: vector<u8>): bool {
     interperter.eval(&mut r)
 }
 
-fun eval(interperter: &mut Interperter, r: &mut ScriptReader): bool {
-    interperter.isExecuteSuccess()
+fun eval(ip: &mut Interperter, r: &mut ScriptReader): bool {
+
+    while(!r.end_stream()) {
+        let op = r.nextOpcode();
+
+        if (op == OP_DUP) {
+            ip.op_dup()
+        }
+    };
+
+    ip.isExecuteSuccess()
 }
 
 
 /// check evaluate is valid
 /// evaluation valid if the stack not empty
 /// and top element is non zero value
-public fun isExecuteSuccess(interperter: &Interperter): bool {
-    if (interperter.stack.is_empty()) {
+public fun isExecuteSuccess(ip: &Interperter): bool {
+    if (ip.stack.is_empty()) {
         return false
     };
-    let top = interperter.stack.top();
+    let top = ip.stack.top();
     return cast_to_bool(&top)
 }
 
@@ -79,6 +94,10 @@ fun readable(r: &ScriptReader, i: u64):  bool {
     r.current_index + i < r.script.length()
 }
 
+fun end_stream(r: &ScriptReader): bool {
+    r.current_index < r.script.length()
+}
+
 fun cast_to_bool(v: &vector<u8>): bool {
      let mut i = 0;
     while (i < v.length()) {
@@ -91,4 +110,11 @@ fun cast_to_bool(v: &vector<u8>): bool {
         i = i + 1;
     };
     return false
+}
+
+
+// OP_DUP eval
+fun op_dup(ip: &mut Interperter) {
+    let value = ip.stack.top();
+    ip.stack.push(value)
 }
