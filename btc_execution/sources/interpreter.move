@@ -96,7 +96,7 @@ fun readable(r: &ScriptReader, i: u64):  bool {
 }
 
 fun end_stream(r: &ScriptReader): bool {
-    r.current_index < r.script.length()
+    r.current_index >= r.script.length()
 }
 
 fun cast_to_bool(v: &vector<u8>): bool {
