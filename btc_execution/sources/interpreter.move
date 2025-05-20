@@ -95,7 +95,7 @@ fun read(r: &mut ScriptReader, cap: u64): vector<u8> {
 }
 
 fun readable(r: &ScriptReader, i: u64):  bool {
-    r.current_index + i < r.script.length()
+    r.current_index + i <= r.script.length()
 }
 
 fun end_stream(r: &ScriptReader): bool {
