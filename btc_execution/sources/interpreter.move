@@ -1,5 +1,5 @@
 module btc_execution::interpreter;
-use btc_execution::opcode::isOpSuccess;
+use btc_execution::opcode::isOpValid;
 use btc_execution::stack::{Stack, Self};
 
 
@@ -73,7 +73,7 @@ public fun isExecuteSuccess(ip: &Interpreter): bool {
 
 public fun nextOpcode(r: &mut ScriptReader): u8 {
     let opcode = r.read(1)[0];
-    assert!(isOpSuccess(opcode), EBadOpcode);
+    assert!(isOpValid(opcode), EBadOpcode);
     opcode
 }
 
