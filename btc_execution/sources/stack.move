@@ -3,7 +3,7 @@ module btc_execution::stack;
 
 // ============= Constants ===========
 const MaximumStackSize: u64 = 1000;
-const MaximumElementSize: u64 = 520;
+const MaximumElementSize: u64 = 520; // in bytes
 // ============= Errors =============
 #[error]
 const EReachMaximumSize: vector<u8> = b"Reach maximum element in stack";

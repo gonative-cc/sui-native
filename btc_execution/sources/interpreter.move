@@ -21,7 +21,8 @@ public struct ScriptReader has copy, drop {
 }
 
 public struct Interpreter has copy, drop {
-    stack: Stack
+    stack: Stack,
+    reader: ScriptReader
 }
 
 public fun reader(script: vector<u8>): ScriptReader {
@@ -33,7 +34,8 @@ public fun reader(script: vector<u8>): ScriptReader {
 
 public fun create_interpreter(stack: Stack): Interpreter {
     Interpreter {
-        stack : stack
+        stack : stack,
+        reader: reader(vector[]) // empty reader
     }
 }
 
@@ -41,14 +43,14 @@ public fun create_interpreter(stack: Stack): Interpreter {
 public fun run(script: vector<u8>): bool {
     let st = stack::create();
     let mut ip = create_interpreter(st);
-    let mut r = reader(script);
-    ip.eval(&mut r)
+    let r = reader(script);
+    ip.eval(r)
 }
 
-fun eval(ip: &mut Interpreter, r: &mut ScriptReader): bool {
-
+fun eval(ip: &mut Interpreter, r: ScriptReader): bool {
+    ip.reader = r; // init new  reader
     while(!r.end_stream()) {
-        let op = r.nextOpcode();
+        let op = ip.reader.nextOpcode();
 
         if (op == OP_DUP) {
             ip.op_dup();
