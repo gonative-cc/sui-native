@@ -51,8 +51,9 @@ fun eval(ip: &mut Interpreter, r: &mut ScriptReader): bool {
         let op = r.nextOpcode();
 
         if (op == OP_DUP) {
-            ip.op_dup()
-        }
+            ip.op_dup();
+            break
+        };
     };
 
     ip.isExecuteSuccess()
@@ -81,13 +82,15 @@ fun read(r: &mut ScriptReader, cap: u64): vector<u8> {
     assert!(r.readable(cap), EBadReadData);
 
     let mut i = r.current_index;
-    let mut buf =vector[];
-    while (i < cap) {
+    let mut j = 0;
+    let mut buf = vector[];
+    while (j < cap) {
         buf.push_back(r.script[i]);
+        j = j + 1;
         i = i + 1;
     };
 
-    r.current_index = r.current_index + cap;
+    r.current_index = j;
     buf
 }
 
