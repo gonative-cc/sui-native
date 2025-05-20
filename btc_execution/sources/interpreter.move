@@ -45,7 +45,7 @@ fun eval(ip: &mut Interpreter, r: ScriptReader): bool {
 /// check evaluate is valid
 /// evaluation valid if the stack not empty
 /// and top element is non zero value
-public fun isExecuteSuccess(ip: &Interpreter): bool {
+public fun isSuccess(ip: &Interpreter): bool {
     if (ip.stack.is_empty()) {
         return false
     };
