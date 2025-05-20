@@ -17,7 +17,7 @@ public fun execute(tx: Tx) : bool {
     let mut i = 0;
     while (i < tx.inputs.length()) {
 
-        if (run(&tx.inputs[i].data) == false) {
+        if (run(tx.inputs[i].data) == false) {
             return false
         };
         i = i + 1;

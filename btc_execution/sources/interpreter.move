@@ -18,23 +18,29 @@ public struct Interperter has copy, drop {
     stack: Stack
 }
 
-/// Execute btc script
-
-public fun run(script: &vector<u8>): bool {
-    let mut interperter = Interperter {
-        stack : stack::create()
-    };
-
-    interperter.eval(script)
+public fun reader(script: vector<u8>): ScriptReader {
+    ScriptReader {
+        script: script,
+        current_index: 0,
+    }
 }
 
-fun eval(interperter: &mut Interperter, script: &vector<u8>): bool {
-    // eval script and check result
+public fun create_interperter(): Interperter {
+    Interperter {
+        stack : stack::create()
+    }
+}
+
+/// Execute btc script
+public fun run(script: vector<u8>): bool {
+    let mut interperter = create_interperter();
+    let mut r = reader(script);
+    interperter.eval(&mut r)
+}
+
+fun eval(interperter: &mut Interperter, r: &mut ScriptReader): bool {
     interperter.isExecuteSuccess()
 }
-
-
-
 
 
 /// check evaluate is valid
