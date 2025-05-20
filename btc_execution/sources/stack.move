@@ -24,6 +24,12 @@ public fun create() : Stack {
     }
 }
 
+public fun create_with_data(data: vector<vector<u8>>) : Stack{
+    Stack {
+        internal: data
+    }
+}
+
 /// size of stack
 public fun size(s: &Stack): u64 {
     // u64 for type compatible
@@ -51,4 +57,9 @@ public fun pop(s: &mut Stack): vector<u8> {
 public fun top(s: &Stack): vector<u8> {
     assert!(!s.is_empty(), EPopStackEmpty);
     s.internal[s.internal.length() - 1]
+}
+
+#[test_only]
+public fun get_all_value(s: &Stack): vector<vector<u8>> {
+   s.internal
 }

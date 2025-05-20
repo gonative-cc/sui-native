@@ -31,15 +31,16 @@ public fun reader(script: vector<u8>): ScriptReader {
     }
 }
 
-public fun create_interperter(): Interperter {
+public fun create_interperter(stack: Stack): Interperter {
     Interperter {
-        stack : stack::create()
+        stack : stack
     }
 }
 
 /// Execute btc script
 public fun run(script: vector<u8>): bool {
-    let mut interperter = create_interperter();
+    let st = stack::create();
+    let mut interperter = create_interperter(st);
     let mut r = reader(script);
     interperter.eval(&mut r)
 }
@@ -117,4 +118,14 @@ fun cast_to_bool(v: &vector<u8>): bool {
 fun op_dup(ip: &mut Interperter) {
     let value = ip.stack.top();
     ip.stack.push(value)
+}
+
+
+#[test]
+fun test_op_dup() {
+    let stack = stack::create_with_data(vector[vector[10]]);
+    let mut ip = create_interperter(stack);
+    ip.op_dup();
+    assert!(ip.stack.get_all_value() == vector[vector[10], vector[10]]);
+    assert!(ip.stack.size() == 2);
 }
