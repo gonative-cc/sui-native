@@ -67,7 +67,7 @@ public fun isExecuteSuccess(ip: &Interperter): bool {
         return false
     };
     let top = ip.stack.top();
-    return cast_to_bool(&top)
+    cast_to_bool(&top)
 }
 
 public fun nextOpcode(r: &mut ScriptReader): u8 {
@@ -100,7 +100,7 @@ fun end_stream(r: &ScriptReader): bool {
 }
 
 fun cast_to_bool(v: &vector<u8>): bool {
-     let mut i = 0;
+    let mut i = 0;
     while (i < v.length()) {
         if (v[i] != 0) {
             // Can be negetive zero
@@ -110,7 +110,7 @@ fun cast_to_bool(v: &vector<u8>): bool {
         };
         i = i + 1;
     };
-    return false
+    false
 }
 
 

@@ -30,5 +30,5 @@ public fun executeBlock(state: &mut State, block: &Block): bool {
         i = i + 1;
     };
     state.store(block);
-    return true
+    true
 }

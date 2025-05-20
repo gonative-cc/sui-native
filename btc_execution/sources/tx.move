@@ -22,5 +22,5 @@ public fun execute(tx: Tx) : bool {
         };
         i = i + 1;
     };
-    return true
+    true
 }
