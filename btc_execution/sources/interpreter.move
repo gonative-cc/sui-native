@@ -106,7 +106,7 @@ fun cast_to_bool(v: &vector<u8>): bool {
     let mut i = 0;
     while (i < v.length()) {
         if (v[i] != 0) {
-            // Can be negetive zero
+        // Can be negative zero
              if (i == v.length()-1 && v[i] == 0x80)
                 return false;
             return true;
@@ -129,6 +129,6 @@ fun test_op_dup() {
     let stack = stack::create_with_data(vector[vector[10]]);
     let mut ip = create_interperter(stack);
     ip.op_dup();
-    assert!(ip.stack.get_all_value() == vector[vector[10], vector[10]]);
+    assert!(ip.stack.get_all_values() == vector[vector[10], vector[10]]);
     assert!(ip.stack.size() == 2);
 }

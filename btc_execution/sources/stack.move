@@ -60,6 +60,6 @@ public fun top(s: &Stack): vector<u8> {
 }
 
 #[test_only]
-public fun get_all_value(s: &Stack): vector<vector<u8>> {
+public fun get_all_values(s: &Stack): vector<vector<u8>> {
    s.internal
 }
