@@ -1,6 +1,6 @@
-/// Module: btc_execution
-module btc_execution::btc_execution;
-use btc_execution::tx::{Tx, Self};
+/// Module: bitcoin_executor
+module bitcoin_executor::bitcoin_executor;
+use bitcoin_executor::tx::{Tx, Self};
 
 
 fun init(_ctx: &mut tx_context::TxContext) {

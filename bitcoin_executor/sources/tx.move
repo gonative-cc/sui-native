@@ -1,5 +1,5 @@
-module btc_execution::tx;
-use btc_execution::interpreter::run;
+module bitcoin_executor::tx;
+use bitcoin_executor::interpreter::run;
 
 
 /// Inputs in btc transaction

@@ -1,5 +1,5 @@
 [package]
-name = "btc_execution"
+name = "bitcoin_executor"
 edition = "2024.beta" # edition = "legacy" to use legacy (pre-2024) Move
 license = "MPL-2.0"
 authors = ["Native"]
@@ -18,7 +18,7 @@ authors = ["Native"]
 # Override = { local = "../conflicting/version", override = true }
 
 [addresses]
-btc_execution = "0x0"
+bitcoin_executor = "0x0"
 
 # Named addresses will be accessible in Move as `@name`. They're also exported:
 # for example, `std = "0x1"` is exported by the Standard Library.

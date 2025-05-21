@@ -1,6 +1,6 @@
-module btc_execution::reader;
+module bitcoin_executor::reader;
 
-use btc_execution::opcode::isValid;
+use bitcoin_executor::opcode::isValid;
 
 #[error]
 const EBadOpcode: vector<u8> = b"Bad opcode";
