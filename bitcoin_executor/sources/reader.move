@@ -59,9 +59,8 @@ public fun read_byte(r: &mut ScriptReader): u8 {
 }
 
 /// Return the next opcode
-public fun nextOpcode(r: &mut ScriptReader): u8 {
+public fun next_opcode(r: &mut ScriptReader): u8 {
     let opcode = r.read_byte();
-    assert!(isOpSuccess(opcode), EBadOpcode);
     opcode
 }
 
