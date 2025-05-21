@@ -96,7 +96,7 @@ fun op_equal(ip: &mut Interpreter) {
 
 fun op_equal_verify(ip:&mut Interpreter) {
     ip.op_equal();
-    assert!(ip.stack.pop() == vector[1], EEqualVerify);
+    assert_eq!(ip.stack.pop(), vector[1], EEqualVerify);
 }
 
 // OP_DUP eval
