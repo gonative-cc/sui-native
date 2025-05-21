@@ -49,8 +49,6 @@ public fun end_stream(r: &ScriptReader): bool {
     r.current_index >= r.script.length()
 }
 
-
-
 public fun nextOpcode(r: &mut ScriptReader): u8 {
     let opcode = r.read(1)[0];
     assert!(isValid(opcode), EBadOpcode);

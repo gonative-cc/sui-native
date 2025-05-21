@@ -6,6 +6,11 @@ use btc_execution::reader::{ScriptReader, Self};
 // Opcodes
 const OP_DUP: u8 = 76;
 
+
+// errors
+#[error]
+const EEqualVerify: vector<u8> = b"SCRIPT_ERR_EQUALVERIFY";
+
 public struct Interpreter has copy, drop {
     stack: Stack,
     reader: ScriptReader
@@ -80,6 +85,11 @@ fun op_equal(ip: &mut Interpreter) {
     ip.stack.push(ans);
 }
 
+fun op_equal_verify(ip:&mut Interpreter) {
+    ip.op_equal();
+    assert!(ip.stack.pop() == vector[1], EEqualVerify);
+}
+
 // OP_DUP eval
 fun op_dup(ip: &mut Interpreter) {
     let value = ip.stack.top();
@@ -97,6 +107,20 @@ fun test_op_equal() {
     let mut ip = new(stack);
     ip.op_equal();
     assert!(ip.stack.top() == vector[0]);
+}
+
+#[test]
+fun test_op_equal_verify() {
+    let stack = stack::create_with_data(vector[vector[10], vector[10]]);
+    let mut ip = new(stack);
+    ip.op_equal_verify();
+}
+
+#[test, expected_failure(abort_code = EEqualVerify)]
+fun test_op_equal_verify_fail() {
+    let stack = stack::create_with_data(vector[vector[10], vector[12]]);
+    let mut ip = new(stack);
+    ip.op_equal_verify();
 }
 
 #[test, expected_failure(abort_code = stack::EPopStackEmpty)]
