@@ -3,6 +3,7 @@ module bitcoin_executor::opcode;
 /// These constants are the values of the official opcodes used on the btc wiki,
 /// in bitcoin core and in most if not all other references and software related
 /// to handling BTC scripts.
+/// https://github.com/btcsuite/btcd/blob/master/txscript/opcode.go
 const OP_0                   : u8 = 0x00; // 0
 const OP_FALSE               : u8 = 0x00; // 0 - AKA OP_0
 const OP_DATA_1              : u8 = 0x01; // 1
@@ -271,10 +272,9 @@ const CondTrue  : u8 = 1;
 const CondSkip  : u8 = 2;
 
 
-
-
-/// isValid checks if opcode is valid
-public fun isValid(opcode: u8): bool {
+/// isSuccess tracks the set of op codes that are to be interpreted as op
+/// codes that cause execution to automatically succeed.
+public fun isSuccess(opcode: u8): bool {
     // https://github.com/bitcoin/bitcoin/blob/master/src/script/script.cpp#L358
     opcode == 80 || opcode == 98 || (opcode >= 126 && opcode <= 129) ||
         (opcode >= 131 && opcode <= 134) || (opcode >= 137 && opcode <= 138) ||
