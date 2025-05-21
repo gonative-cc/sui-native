@@ -38,7 +38,7 @@ fun eval(ip: &mut Interpreter, r: ScriptReader): bool {
         };
     };
 
-    ip.isExecuteSuccess()
+    ip.isSuccess()
 }
 
 
