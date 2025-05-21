@@ -1,4 +1,4 @@
-module btc_execution::stack;
+module bitcoin_executor::stack;
 
 
 // ============= Constants ===========

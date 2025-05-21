@@ -1,7 +1,7 @@
-module btc_execution::interpreter;
+module bitcoin_executor::interpreter;
 
-use btc_execution::reader::{Self, ScriptReader};
-use btc_execution::stack::{Self, Stack};
+use bitcoin_executor::reader::{Self, ScriptReader};
+use bitcoin_executor::stack::{Self, Stack};
 use std::unit_test::assert_eq;
 
 // Opcodes
