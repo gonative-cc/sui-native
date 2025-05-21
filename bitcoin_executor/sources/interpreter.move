@@ -2,8 +2,7 @@ module bitcoin_executor::interpreter;
 
 use bitcoin_executor::reader::{Self, ScriptReader};
 use bitcoin_executor::stack::{Self, Stack};
-use bitcoin_executor::utils::{Self, u64_to_cscriptnum};
-use std::u64::try_as_u8;
+use bitcoin_executor::utils;
 
 #[test_only]
 use std::unit_test::assert_eq;
