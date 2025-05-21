@@ -25,8 +25,8 @@ public struct Vault has key, store {
     id: UID,
     nbtc_balance: Balance<NBTC>,
     sui_balance: Balance<SUI>,
-    /// 1 nano nBTC price in MIST
-    nnbtc_price: u64,
+    /// 1 satoshi BTC price in MIST
+    satoshi_price: u64,
     admin: address,
     is_paused: bool,
 }
@@ -39,7 +39,7 @@ fun init(ctx: &mut TxContext) {
         id: object::new(ctx),
         nbtc_balance: coin::zero<NBTC>(ctx).into_balance(),
         sui_balance: coin::zero<SUI>(ctx).into_balance(),
-        nnbtc_price: calculate_price(initial_price),
+        satoshi_price: calculate_price(initial_price),
         admin: sender,
         is_paused: false,
     };
@@ -62,7 +62,7 @@ public fun buy_nbtc(vault: &mut Vault, coin: Coin<SUI>, ctx: &mut TxContext) {
 
     let sender = tx_context::sender(ctx);
     let sui_paid = coin.into_balance();
-    let nbtc_to_receive = sui_paid.value() / vault.nnbtc_price;
+    let nbtc_to_receive = sui_paid.value() / vault.satoshi_price;
     assert!(nbtc_to_receive > 0, EInsufficientSuiPayment);
     let vault_nbtc_balance = vault.nbtc_balance.value();
     assert!(vault_nbtc_balance >= nbtc_to_receive, EInsufficientLiquidity);
@@ -101,7 +101,7 @@ public entry fun set_price(
     _ctx: &mut TxContext,
 ) {
     assert!(new_price > 0, EInvalidPrice);
-    vault.nnbtc_price = calculate_price(new_price);
+    vault.satoshi_price = calculate_price(new_price);
 }
 
 public entry fun set_paused(_cap: &AdminCap, vault: &mut Vault, pause: bool, _ctx: &mut TxContext) {
@@ -110,7 +110,7 @@ public entry fun set_paused(_cap: &AdminCap, vault: &mut Vault, pause: bool, _ct
 
 /// returns price of 1 nano nBTC in MIST
 public fun price(vault: &Vault): u64 {
-    vault.nnbtc_price
+    vault.satoshi_price
 }
 
 public fun nbtc_liquidity(vault: &Vault): u64 {
