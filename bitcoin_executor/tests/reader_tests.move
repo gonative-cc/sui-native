@@ -51,14 +51,12 @@ fun next_opcode() {
 fun read_fail() {
     let mut r = reader::new(vector[1, 2, 3]);
     r.read(10);
-    abort
 }
 
 #[test, expected_failure(abort_code = reader::EBadReadData)]
 fun read_fail_empty_script() {
     let mut r = reader::new(vector[]);
     r.read(10);
-    abort
 }
 
 #[test, expected_failure(abort_code = reader::EBadReadData)]
@@ -72,5 +70,4 @@ fun read_endstream_script() {
     assert!(!r.readable(1));
     // read more to ensure this must be return error
     r.read(10);
-    abort
 }
