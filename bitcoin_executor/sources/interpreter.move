@@ -2,6 +2,9 @@ module bitcoin_executor::interpreter;
 use bitcoin_executor::stack::{Stack, Self};
 use bitcoin_executor::reader::{ScriptReader, Self};
 
+//=============== Opcodes =============================================
+
+
 
 /// These constants are the values of the official opcodes used on the btc wiki,
 /// in bitcoin core and in most if not all other references and software related
@@ -127,6 +130,7 @@ const OP_2SWAP               : u8 = 0x72; // 114
 const OP_IFDUP               : u8 = 0x73; // 115
 const OP_DEPTH               : u8 = 0x74; // 116
 const OP_DROP                : u8 = 0x75; // 117
+/// Duplicate the top item on the stack.
 const OP_DUP                 : u8 = 0x76; // 118
 const OP_NIP                 : u8 = 0x77; // 119
 const OP_OVER                : u8 = 0x78; // 120
@@ -144,7 +148,9 @@ const OP_INVERT              : u8 = 0x83; // 131
 const OP_AND                 : u8 = 0x84; // 132
 const OP_OR                  : u8 = 0x85; // 133
 const OP_XOR                 : u8 = 0x86; // 134
+/// Compare the top two items on the stack and push 1 if they are equal, 0 otherwise.
 const OP_EQUAL               : u8 = 0x87; // 135
+/// Compare the top two items on the stack and halts the script if they are not equal.
 const OP_EQUALVERIFY         : u8 = 0x88; // 136
 const OP_RESERVED1           : u8 = 0x89; // 137
 const OP_RESERVED2           : u8 = 0x8a; // 138
@@ -275,6 +281,10 @@ const CondTrue  : u8 = 1;
 const CondSkip  : u8 = 2;
 
 
+// ============= Errors ================================
+#[error]
+const EEqualVerify: vector<u8> = b"SCRIPT_ERR_EQUALVERIFY";
+
 public struct Interpreter has copy, drop {
     stack: Stack,
     reader: ScriptReader
@@ -300,15 +310,20 @@ fun eval(ip: &mut Interpreter, r: ScriptReader): bool {
     ip.reader = r; // init new  reader
     while(!r.end_stream()) {
         let op = ip.reader.nextOpcode();
-
         if (op == OP_DUP) {
             ip.op_dup();
-            break
-        };
+        } else
+        if (op == OP_EQUAL) {
+            ip.op_equal();
+        } else
+        if (op == OP_EQUALVERIFY) {
+            ip.op_equal_verify();
+        }
     };
 
     ip.isSuccess()
 }
+
 
 
 /// check evaluate is valid
@@ -338,12 +353,61 @@ fun cast_to_bool(v: &vector<u8>): bool {
 }
 
 
+fun op_equal(ip: &mut Interpreter) {
+    let first_value = ip.stack.pop();
+    let second_value = ip.stack.pop();
+    let ans = if (first_value == second_value) {
+        vector[1]
+    } else {
+        vector[0]
+    };
+    ip.stack.push(ans);
+}
+
+fun op_equal_verify(ip:&mut Interpreter) {
+    ip.op_equal();
+    assert!(ip.stack.pop() == vector[1], EEqualVerify);
+}
+
 // OP_DUP eval
 fun op_dup(ip: &mut Interpreter) {
     let value = ip.stack.top();
     ip.stack.push(value)
 }
 
+#[test]
+fun test_op_equal() {
+    let stack = stack::create_with_data(vector[vector[10], vector[10]]);
+    let mut ip = new(stack);
+    ip.op_equal();
+    assert!(ip.stack.top() == vector[1]);
+
+    let stack = stack::create_with_data(vector[vector[20], vector[10]]);
+    let mut ip = new(stack);
+    ip.op_equal();
+    assert!(ip.stack.top() == vector[0]);
+}
+
+#[test]
+fun test_op_equal_verify() {
+    let stack = stack::create_with_data(vector[vector[10], vector[10]]);
+    let mut ip = new(stack);
+    ip.op_equal_verify();
+}
+
+#[test, expected_failure(abort_code = EEqualVerify)]
+fun test_op_equal_verify_fail() {
+    let stack = stack::create_with_data(vector[vector[10], vector[12]]);
+    let mut ip = new(stack);
+    ip.op_equal_verify();
+}
+
+#[test, expected_failure(abort_code = stack::EPopStackEmpty)]
+fun test_op_equal_fail() {
+    let stack = stack::create_with_data(vector[vector[10]]);
+    let mut ip = new(stack);
+    ip.op_equal();
+}
 
 #[test]
 fun test_op_dup() {
@@ -352,4 +416,11 @@ fun test_op_dup() {
     ip.op_dup();
     assert!(ip.stack.get_all_values() == vector[vector[10], vector[10]]);
     assert!(ip.stack.size() == 2);
+}
+
+#[test, expected_failure(abort_code = stack::EPopStackEmpty)]
+fun test_op_dup_fail() {
+    let stack = stack::create();
+    let mut ip = new(stack);
+    ip.op_dup();
 }
