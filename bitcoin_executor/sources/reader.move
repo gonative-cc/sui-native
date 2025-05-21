@@ -1,6 +1,5 @@
 module bitcoin_executor::reader;
 
-use bitcoin_executor::opcode::isValid;
 
 #[error]
 const EBadOpcode: vector<u8> = b"Bad opcode";
@@ -62,6 +61,16 @@ public fun read_byte(r: &mut ScriptReader): u8 {
 /// Return the next opcode
 public fun nextOpcode(r: &mut ScriptReader): u8 {
     let opcode = r.read_byte();
-    assert!(isValid(opcode), EBadOpcode);
+    assert!(isOpSuccess(opcode), EBadOpcode);
     opcode
+}
+
+/// isSuccess tracks the set of op codes that are to be interpreted as op
+/// codes that cause execution to automatically succeed.
+public fun isOpSuccess(opcode: u8): bool {
+    // https://github.com/bitcoin/bitcoin/blob/v29.0/src/script/script.cpp#L358
+    opcode == 80 || opcode == 98 || (opcode >= 126 && opcode <= 129) ||
+        (opcode >= 131 && opcode <= 134) || (opcode >= 137 && opcode <= 138) ||
+        (opcode >= 141 && opcode <= 142) || (opcode >= 149 && opcode <= 153) ||
+        (opcode >= 187 && opcode <= 254)
 }
