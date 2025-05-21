@@ -1,6 +1,6 @@
 module btc_execution::reader;
 
-use btc_execution::opcode::isOpValid;
+use btc_execution::opcode::isValid;
 
 #[error]
 const EBadOpcode: vector<u8> = b"Bad opcode";
@@ -24,14 +24,14 @@ public fun new(script: vector<u8>): ScriptReader {
 }
 
 
-/// read `len` amount of bytes from the ScriptReader 
+/// read `len` amount of bytes from the ScriptReader
 public fun read(r: &mut ScriptReader, len: u64): vector<u8> {
-    assert!(r.readable(cap), EBadReadData);
+    assert!(r.readable(len), EBadReadData);
 
     let mut i = r.current_index;
     let mut j = 0;
     let mut buf = vector[];
-    while (j < cap) {
+    while (j < len) {
         buf.push_back(r.script[i]);
         j = j + 1;
         i = i + 1;
@@ -53,6 +53,6 @@ public fun end_stream(r: &ScriptReader): bool {
 
 public fun nextOpcode(r: &mut ScriptReader): u8 {
     let opcode = r.read(1)[0];
-    assert!(isOpValid(opcode), EBadOpcode);
+    assert!(isValid(opcode), EBadOpcode);
     opcode
 }
