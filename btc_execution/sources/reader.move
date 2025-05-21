@@ -41,6 +41,11 @@ public fun read(r: &mut ScriptReader, len: u64): vector<u8> {
     buf
 }
 
+public fun read_byte(r: &mut ScriptReader, cap: u64): u8 {
+    let b = r.script[r.next_index];
+    r.next_index += 1;
+    return b;
+}
 public fun readable(r: &ScriptReader, i: u64):  bool {
     r.current_index + i <= r.script.length()
 }
@@ -52,7 +57,7 @@ public fun end_stream(r: &ScriptReader): bool {
 
 
 public fun nextOpcode(r: &mut ScriptReader): u8 {
-    let opcode = r.read(1)[0];
+    let opcode = r.read_byte();
     assert!(isValid(opcode), EBadOpcode);
     opcode
 }
