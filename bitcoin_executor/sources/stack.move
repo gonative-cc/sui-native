@@ -34,12 +34,12 @@ public fun size(s: &Stack): u64 {
     s.internal.length()
 }
 
-/// checks if is stack empty
+/// checks if the stack is empty
 public fun is_empty(s: &Stack): bool {
     s.internal.is_empty()
 }
 
-/// pushes new element to stack
+/// pushes new element to the stack
 public fun push(s: &mut Stack, element: vector<u8>) {
     assert!(s.size() < MaximumStackSize, EReachMaximumSize);
     assert!(element.length() <= MaximumElementSize, EElementSizeInvalid);
