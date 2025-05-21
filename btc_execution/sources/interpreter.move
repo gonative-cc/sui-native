@@ -3,9 +3,14 @@ use btc_execution::stack::{Stack, Self};
 use btc_execution::reader::{ScriptReader, Self};
 
 
-// Opcodes
-const OP_DUP: u8 = 76;
+//=============== Opcodes =============================================
 
+/// Duplicate the top item on the stack.
+const OP_DUP: u8 = 0x76; // 118
+/// Compare the top two items on the stack and push 1 if they are equal, 0 otherwise.
+const OP_EQUAL: u8 = 0x87; // 135
+/// Compare the top two items on the stack and halts the script if they are not equal.
+const OP_EQUALVERIFY: u8 = 0x88; // 136
 
 // errors
 #[error]
@@ -40,7 +45,11 @@ fun eval(ip: &mut Interpreter, r: ScriptReader): bool {
         if (op == OP_DUP) {
             ip.op_dup();
             break
-        };
+        } else if (op == OP_EQUAL) {
+            ip.op_equal();
+        } else if (op == OP_EQUALVERIFY) {
+            ip.op_equal_verify();
+        }
     };
 
     ip.isSuccess()
