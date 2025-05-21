@@ -1,6 +1,5 @@
 module bitcoin_executor::stack;
 
-
 // ============= Constants ===========
 const MaximumStackSize: u64 = 1000;
 const MaximumElementSize: u64 = 520; // in bytes
@@ -12,48 +11,54 @@ const EElementSizeInvalid: vector<u8> = b"Element size is greater than 520";
 #[error]
 const EPopStackEmpty: vector<u8> = b"Pop stack empty";
 
-
 public struct Stack has copy, drop {
-    internal: vector<vector<u8>>
+    internal: vector<vector<u8>>,
 }
 
 /// create stack
-public fun create() : Stack {
+public fun create(): Stack {
     Stack {
-        internal: vector[]
+        internal: vector[],
     }
 }
 
-public fun create_with_data(data: vector<vector<u8>>) : Stack{
+public fun create_with_data(data: vector<vector<u8>>): Stack {
     Stack {
-        internal: data
+        internal: data,
     }
 }
 
-/// size of stack
+/// returns size of stack
 public fun size(s: &Stack): u64 {
     // u64 for type compatible
     s.internal.length()
 }
 
-/// check stack empty
+/// checks if is stack empty
 public fun is_empty(s: &Stack): bool {
     s.internal.is_empty()
 }
 
-/// push new element to stack
+/// pushes new element to stack
 public fun push(s: &mut Stack, element: vector<u8>) {
     assert!(s.size() < MaximumStackSize, EReachMaximumSize);
     assert!(element.length() <= MaximumElementSize, EElementSizeInvalid);
     s.internal.push_back(element);
 }
 
-/// pop top element from stack
+/// pushes one byte to stack
+public fun push_byte(s: &mut Stack, byte: u8) {
+    assert!(s.size() < MaximumStackSize, EReachMaximumSize);
+    s.internal.push_back(vector[byte]);
+}
+
+/// pops top element from stack
 public fun pop(s: &mut Stack): vector<u8> {
     assert!(!s.is_empty(), EPopStackEmpty);
     s.internal.pop_back()
 }
 
+/// returns top element from stack
 public fun top(s: &Stack): vector<u8> {
     assert!(!s.is_empty(), EPopStackEmpty);
     s.internal[s.internal.length() - 1]
@@ -61,5 +66,5 @@ public fun top(s: &Stack): vector<u8> {
 
 #[test_only]
 public fun get_all_values(s: &Stack): vector<vector<u8>> {
-   s.internal
+    s.internal
 }

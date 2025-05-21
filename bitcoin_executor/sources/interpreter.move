@@ -2,6 +2,8 @@ module bitcoin_executor::interpreter;
 
 use bitcoin_executor::reader::{Self, ScriptReader};
 use bitcoin_executor::stack::{Self, Stack};
+
+#[test_only]
 use std::unit_test::assert_eq;
 
 // Opcodes
@@ -61,15 +63,12 @@ fun eval(ip: &mut Interpreter, r: ScriptReader): bool {
 
         if (op == OP_0) {
             ip.op_push_empty_vector();
-            break
         } else if (op >= OP_PUSHBYTES_1 && op <= OP_PUSHBYTES_75) {
             ip.op_push_n_bytes(op);
         } else if (op >= OP_1 && op <= OP_16) {
             ip.op_push_small_int(op);
-            break
         } else if (op == OP_DUP) {
             ip.op_dup();
-            break
         };
     };
 
@@ -110,10 +109,10 @@ fun op_push_n_bytes(ip: &mut Interpreter, num_bytes_to_push: u8) {
 }
 
 fun op_push_small_int(ip: &mut Interpreter, opcode: u8) {
-    // OP_1 (0x51) corresponds to 1  (0x51 - 0x50 = 0x01)
-    // OP_16 (0x60) corresponds to 16 (0x60 - 0x50 = 0x10)
+    // OP_1 (81) corresponds to 1  (81 - 81 + 1 = 1)
+    // OP_16 (96) corresponds to 16 (96 - 81 + 1 = 16)
     let numeric_value: u8 = opcode - OP_1 + 1;
-    ip.stack.push(vector[numeric_value]);
+    ip.stack.push_byte(numeric_value);
 }
 
 // OP_DUP eval
