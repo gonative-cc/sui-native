@@ -69,12 +69,42 @@ fun cast_to_bool(v: &vector<u8>): bool {
 }
 
 
+fun op_equal(ip: &mut Interpreter) {
+    let first_value = ip.stack.pop();
+    let second_value = ip.stack.pop();
+    let ans = if (first_value == second_value) {
+        vector[1]
+    } else {
+        vector[0]
+    };
+    ip.stack.push(ans);
+}
+
 // OP_DUP eval
 fun op_dup(ip: &mut Interpreter) {
     let value = ip.stack.top();
     ip.stack.push(value)
 }
 
+#[test]
+fun test_op_equal() {
+    let stack = stack::create_with_data(vector[vector[10], vector[10]]);
+    let mut ip = new(stack);
+    ip.op_equal();
+    assert!(ip.stack.top() == vector[1]);
+
+    let stack = stack::create_with_data(vector[vector[20], vector[10]]);
+    let mut ip = new(stack);
+    ip.op_equal();
+    assert!(ip.stack.top() == vector[0]);
+}
+
+#[test, expected_failure(abort_code = stack::EPopStackEmpty)]
+fun test_op_equal_fail() {
+    let stack = stack::create_with_data(vector[vector[10]]);
+    let mut ip = new(stack);
+    ip.op_equal();
+}
 
 #[test]
 fun test_op_dup() {
@@ -83,4 +113,11 @@ fun test_op_dup() {
     ip.op_dup();
     assert!(ip.stack.get_all_values() == vector[vector[10], vector[10]]);
     assert!(ip.stack.size() == 2);
+}
+
+#[test, expected_failure(abort_code = stack::EPopStackEmpty)]
+fun test_op_dup_fail() {
+    let stack = stack::create();
+    let mut ip = new(stack);
+    ip.op_dup();
 }
