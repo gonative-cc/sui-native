@@ -37,7 +37,7 @@ public fun read(r: &mut ScriptReader, len: u64): vector<u8> {
         i = i + 1;
     };
 
-    r.current_index = j;
+    r.current_index = i;
     buf
 }
 
