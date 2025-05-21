@@ -2,7 +2,6 @@ module btc_execution::interpreter;
 use btc_execution::stack::{Stack, Self};
 use btc_execution::reader::{ScriptReader, Self};
 
-
 //=============== Opcodes =============================================
 
 /// Duplicate the top item on the stack.
@@ -43,10 +42,10 @@ fun eval(ip: &mut Interpreter, r: ScriptReader): bool {
         let op = ip.reader.nextOpcode();
         if (op == OP_DUP) {
             ip.op_dup();
-        };
+        } else
         if (op == OP_EQUAL) {
             ip.op_equal();
-        };
+        } else
         if (op == OP_EQUALVERIFY) {
             ip.op_equal_verify();
         }
@@ -96,7 +95,7 @@ fun op_equal(ip: &mut Interpreter) {
 
 fun op_equal_verify(ip:&mut Interpreter) {
     ip.op_equal();
-    assert_eq!(ip.stack.pop(), vector[1], EEqualVerify);
+    assert!(ip.stack.pop() == vector[1], EEqualVerify);
 }
 
 // OP_DUP eval
@@ -144,7 +143,7 @@ fun test_op_dup() {
     let stack = stack::create_with_data(vector[vector[10]]);
     let mut ip = new(stack);
     ip.op_dup();
-    assert!(ip.stack.get_all_value() == vector[vector[10], vector[10]]);
+    assert!(ip.stack.get_all_values() == vector[vector[10], vector[10]]);
     assert!(ip.stack.size() == 2);
 }
 
