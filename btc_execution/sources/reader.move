@@ -24,7 +24,8 @@ public fun new(script: vector<u8>): ScriptReader {
 }
 
 
-public fun read(r: &mut ScriptReader, cap: u64): vector<u8> {
+/// read `len` amount of bytes from the ScriptReader 
+public fun read(r: &mut ScriptReader, len: u64): vector<u8> {
     assert!(r.readable(cap), EBadReadData);
 
     let mut i = r.current_index;
