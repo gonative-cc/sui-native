@@ -144,7 +144,7 @@ fun test_op_dup() {
     let stack = stack::create_with_data(vector[vector[10]]);
     let mut ip = new(stack);
     ip.op_dup();
-    assert!(ip.stack.get_all_values() == vector[vector[10], vector[10]]);
+    assert!(ip.stack.get_all_value() == vector[vector[10], vector[10]]);
     assert!(ip.stack.size() == 2);
 }
 
