@@ -308,7 +308,7 @@ public fun run(script: vector<u8>): bool {
 fun eval(ip: &mut Interpreter, r: ScriptReader): bool {
     ip.reader = r; // init new  reader
     while (!r.end_stream()) {
-        let op = ip.reader.nextOpcode();
+        let op = ip.reader.next_opcode();
 
         if (op == OP_0) {
             ip.op_push_empty_vector();
