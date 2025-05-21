@@ -41,13 +41,13 @@ fun eval(ip: &mut Interpreter, r: ScriptReader): bool {
     ip.reader = r; // init new  reader
     while(!r.end_stream()) {
         let op = ip.reader.nextOpcode();
-
         if (op == OP_DUP) {
             ip.op_dup();
-            break
-        } else if (op == OP_EQUAL) {
+        };
+        if (op == OP_EQUAL) {
             ip.op_equal();
-        } else if (op == OP_EQUALVERIFY) {
+        };
+        if (op == OP_EQUALVERIFY) {
             ip.op_equal_verify();
         }
     };
