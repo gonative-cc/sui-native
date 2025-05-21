@@ -112,7 +112,7 @@ fun op_push_n_bytes(ip: &mut Interpreter, num_bytes_to_push: u8) {
 fun op_push_small_int(ip: &mut Interpreter, opcode: u8) {
     // OP_1 (0x51) corresponds to 1  (0x51 - 0x50 = 0x01)
     // OP_16 (0x60) corresponds to 16 (0x60 - 0x50 = 0x10)
-    let numeric_value: u8 = opcode - 0x50;
+    let numeric_value: u8 = opcode - OP_1 + 1;
     ip.stack.push(vector[numeric_value]);
 }
 
