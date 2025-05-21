@@ -1,6 +1,6 @@
-module btc_execution::interpreter;
-use btc_execution::stack::{Stack, Self};
-use btc_execution::reader::{ScriptReader, Self};
+module bitcoin_executor::interpreter;
+use bitcoin_executor::stack::{Stack, Self};
+use bitcoin_executor::reader::{ScriptReader, Self};
 
 
 // Opcodes

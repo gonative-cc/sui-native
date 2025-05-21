@@ -1,4 +1,4 @@
-module btc_execution::opcode;
+module bitcoin_executor::opcode;
 
 
 /// isOpSuccess checks if opcode is valid
