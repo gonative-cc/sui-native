@@ -3,7 +3,7 @@ module btc_execution::stack;
 
 // ============= Constants ===========
 const MaximumStackSize: u64 = 1000;
-const MaximumElementSize: u64 = 520;
+const MaximumElementSize: u64 = 520; // in bytes
 // ============= Errors =============
 #[error]
 const EReachMaximumSize: vector<u8> = b"Reach maximum element in stack";
@@ -21,6 +21,12 @@ public struct Stack has copy, drop {
 public fun create() : Stack {
     Stack {
         internal: vector[]
+    }
+}
+
+public fun create_with_data(data: vector<vector<u8>>) : Stack{
+    Stack {
+        internal: data
     }
 }
 
@@ -46,4 +52,14 @@ public fun push(s: &mut Stack, element: vector<u8>) {
 public fun pop(s: &mut Stack): vector<u8> {
     assert!(!s.is_empty(), EPopStackEmpty);
     s.internal.pop_back()
+}
+
+public fun top(s: &Stack): vector<u8> {
+    assert!(!s.is_empty(), EPopStackEmpty);
+    s.internal[s.internal.length() - 1]
+}
+
+#[test_only]
+public fun get_all_values(s: &Stack): vector<vector<u8>> {
+   s.internal
 }
