@@ -13,7 +13,7 @@ const EInvalidPrice: u64 = 3;
 const EInsufficientSuiPayment: u64 = 4;
 
 // SUI has 9 decimals: 1 SUI = 10^9 MIST
-// NBTC has 8 decimals: 1 NBTC = 10^8 satoshi
+// nBTC has 8 decimals: 1 NBTC = 10^8 satoshi
 // The conversion factor for price = 10^9 / 10^8 = 10
 const PRICE_CONVERSION_FACTOR: u64 = 10;
 
@@ -57,7 +57,7 @@ fun calculate_price(price: u64): u64 {
     price  * PRICE_CONVERSION_FACTOR
 }
 
-public entry fun swap_sui_for_nbtc(vault: &mut Vault, coin: Coin<SUI>, ctx: &mut TxContext) {
+public entry fun buy_nbtc(vault: &mut Vault, coin: Coin<SUI>, ctx: &mut TxContext) {
     assert!(!vault.is_paused, EVaultPaused);
 
     let sender = tx_context::sender(ctx);
