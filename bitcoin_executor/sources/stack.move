@@ -15,7 +15,7 @@ public struct Stack has copy, drop {
     internal: vector<vector<u8>>,
 }
 
-/// create stack
+/// creates stack
 public fun create(): Stack {
     Stack {
         internal: vector[],
@@ -28,7 +28,7 @@ public fun create_with_data(data: vector<vector<u8>>): Stack {
     }
 }
 
-/// returns size of stack
+/// returns size of the stack
 public fun size(s: &Stack): u64 {
     // u64 for type compatible
     s.internal.length()
@@ -46,19 +46,19 @@ public fun push(s: &mut Stack, element: vector<u8>) {
     s.internal.push_back(element);
 }
 
-/// pushes one byte to stack
+/// pushes one byte to the stack
 public fun push_byte(s: &mut Stack, byte: u8) {
     assert!(s.size() < MaximumStackSize, EReachMaximumSize);
     s.internal.push_back(vector[byte]);
 }
 
-/// pops top element from stack
+/// pops top element from the stack
 public fun pop(s: &mut Stack): vector<u8> {
     assert!(!s.is_empty(), EPopStackEmpty);
     s.internal.pop_back()
 }
 
-/// returns top element from stack
+/// returns top element from the stack
 public fun top(s: &Stack): vector<u8> {
     assert!(!s.is_empty(), EPopStackEmpty);
     s.internal[s.internal.length() - 1]
