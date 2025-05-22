@@ -7,12 +7,12 @@ use std::unit_test::assert_eq;
 /// This is the format expected to be pushed onto the stack.
 /// https://github.com/bitcoin/bitcoin/blob/87ec923d3a7af7b30613174b41c6fb11671df466/src/script/script.h#L349
 public(package) fun u64_to_cscriptnum(n: u64): vector<u8> {
-    if (n == 0) {
-        return vector[] // 0 is represented by empty vector
-    };
-
-    let mut temp_n = n;
     let mut result_bytes = vector::empty<u8>();
+    if (n == 0) {
+        return result_bytes// 0 is represented by empty vector
+    };
+    
+    let mut n = n;
 
     // convert to little endian
     while (temp_n > 0) {
@@ -21,11 +21,11 @@ public(package) fun u64_to_cscriptnum(n: u64): vector<u8> {
     };
 
     // padding
-    if (vector::length(&result_bytes) > 0) {
+    if (result_bytes.length() > 0) {
         let last_byte_index = vector::length(&result_bytes) - 1;
         let last_byte = *vector::borrow(&result_bytes, last_byte_index);
         if ((last_byte & 0x80) != 0) {
-            vector::push_back(&mut result_bytes, 0x00);
+            result_bytes.push_back(0x00);
         }
     };
     result_bytes
