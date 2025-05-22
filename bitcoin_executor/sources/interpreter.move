@@ -2,10 +2,10 @@ module bitcoin_executor::interpreter;
 
 use bitcoin_executor::reader::{Self, ScriptReader};
 use bitcoin_executor::stack::{Self, Stack};
+use bitcoin_executor::utils;
 
 #[test_only]
 use std::unit_test::assert_eq;
-
 //=============== Opcodes =============================================
 
 /// These constants are the values of the official opcodes used on the btc wiki,
@@ -284,6 +284,8 @@ const CondSkip: u8 = 2;
 // ============= Errors ================================
 #[error]
 const EEqualVerify: vector<u8> = b"SCRIPT_ERR_EQUALVERIFY";
+#[error]
+const EInvalidStackOperation: vector<u8> = b"Invalid stack operation";
 
 public struct Interpreter has copy, drop {
     stack: Stack,
@@ -318,6 +320,12 @@ fun eval(ip: &mut Interpreter, r: ScriptReader): bool {
             ip.op_push_small_int(op);
         } else if (op == OP_DUP) {
             ip.op_dup();
+        } else if (op == OP_DROP) {
+            ip.op_drop();
+        } else if (op == OP_SWAP) {
+            ip.op_swap();
+        } else if (op == OP_SIZE) {
+            ip.op_size();
         } else if (op == OP_EQUAL) {
             ip.op_equal();
         } else if (op == OP_EQUALVERIFY) {
@@ -388,6 +396,24 @@ fun op_equal_verify(ip: &mut Interpreter) {
 fun op_dup(ip: &mut Interpreter) {
     let value = ip.stack.top();
     ip.stack.push(value)
+}
+
+fun op_drop(ip: &mut Interpreter) {
+    ip.stack.pop();
+}
+
+fun op_size(ip: &mut Interpreter) {
+    let top_element = ip.stack.top();
+    let size = top_element.length();
+    ip.stack.push(utils::u64_to_cscriptnum(size))
+}
+
+fun op_swap(ip: &mut Interpreter) {
+    assert!(ip.stack.size() >=2, EInvalidStackOperation);
+    let first_element = ip.stack.pop();
+    let second_element = ip.stack.pop();
+    ip.stack.push(first_element);
+    ip.stack.push(second_element);
 }
 
 #[test]
@@ -519,4 +545,56 @@ fun test_op_dup_fail() {
     let stack = stack::create();
     let mut ip = new(stack);
     ip.op_dup();
+}
+
+#[test]
+fun test_op_drop() {
+    let stack = stack::create_with_data(vector[vector[0x01]]);
+    let mut ip = new(stack);
+    ip.op_drop();
+    assert_eq!(ip.stack.get_all_values(), vector[]);
+    assert_eq!(ip.stack.size(), 0);
+}
+
+#[test, expected_failure(abort_code = stack::EPopStackEmpty)]
+fun test_op_drop_fail() {
+    let stack = stack::create();
+    let mut ip = new(stack);
+    ip.op_drop();
+}
+
+#[test]
+fun test_op_swap() {
+    let stack = stack::create_with_data(vector[vector[0x01], vector[0x02]]);
+    let mut ip = new(stack);
+    ip.op_swap();
+    assert_eq!(ip.stack.size(), 2);
+    assert_eq!(ip.stack.get_all_values(), vector[vector[0x02], vector[0x01]]);
+}
+
+#[test, expected_failure(abort_code = EInvalidStackOperation)]
+fun test_op_swap_fail() {
+    let stack = stack::create_with_data(vector[vector[0x01]]);
+    let mut ip = new(stack);
+    ip.op_swap();
+}
+
+#[test]
+fun test_op_size() {
+    let stack = stack::create_with_data(vector[vector[0x01], vector[0x01, 0x02, 0x03]]); // top element size = 3
+    let mut ip = new(stack);
+    ip.op_size();
+    assert_eq!(ip.stack.size(), 3);
+    assert_eq!(
+        ip.stack.get_all_values(),
+        vector[vector[0x01], vector[0x01, 0x02, 0x03], vector[0x03]],
+    );
+    assert_eq!(ip.stack.top(), vector[0x03]);
+}
+
+#[test, expected_failure(abort_code = stack::EPopStackEmpty)]
+fun test_op_size_fail() {
+    let stack = stack::create();
+    let mut ip = new(stack);
+    ip.op_size();
 }
