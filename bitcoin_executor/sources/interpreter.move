@@ -616,19 +616,25 @@ fun test_op_size_fail() {
 
 #[test]
 fun test_op_sha256() {
-    let stack = stack::create_with_data(vector[vector[10]]);
+    let stack = stack::create_with_data(vector[vector[0x01]]);
     let mut ip = new(stack);
     ip.op_sha256();
     assert_eq!(ip.stack.size(), 1);
     std::debug::print(&ip.stack.top());
     let expected_hash: vector<u8> =
-        x"4a44dc15364204a80fe80e9039455cc1608281820fe2b24f1e5233ade6af1dd5";
+        x"4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a";
     assert_eq!(ip.stack.top(), expected_hash);
+    assert_eq!(ip.stack.get_all_values(), vector[expected_hash]);
 }
 
-// #[test, expected_failure(abort_code = stack::EPopStackEmpty)]
-// fun test_sha256_fail() {
-//     let stack = stack::create();
-//     let mut ip = new(stack);
-//     ip.op_dup();
-// }
+#[test]
+fun test_op_hash256() {
+    let stack = stack::create_with_data(vector[vector[0x01]]);
+    let mut ip = new(stack);
+    ip.op_hash256();
+    assert_eq!(ip.stack.size(), 1);
+    let expected_hash: vector<u8> =
+        x"9c12cfdc04c74584d787ac3d23772132c18524bc7ab28dec4219b8fc5b425f70";
+    assert_eq!(ip.stack.top(), expected_hash);
+    assert_eq!(ip.stack.get_all_values(), vector[expected_hash]);
+}
