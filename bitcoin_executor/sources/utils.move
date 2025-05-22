@@ -9,15 +9,14 @@ use std::unit_test::assert_eq;
 public(package) fun u64_to_cscriptnum(n: u64): vector<u8> {
     let mut result_bytes = vector::empty<u8>();
     if (n == 0) {
-        return result_bytes// 0 is represented by empty vector
+        return result_bytes // 0 is represented by empty vector
     };
-    
-    let mut n = n;
 
+    let mut n = n;
     // convert to little endian
-    while (temp_n > 0) {
-        vector::push_back(&mut result_bytes, (temp_n & 0xff) as u8);
-        temp_n = temp_n >> 8;
+    while (n > 0) {
+        vector::push_back(&mut result_bytes, (n & 0xff) as u8);
+        n = n >> 8;
     };
 
     // padding

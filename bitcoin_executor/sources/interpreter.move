@@ -399,12 +399,10 @@ fun op_dup(ip: &mut Interpreter) {
 }
 
 fun op_drop(ip: &mut Interpreter) {
-    assert!(!ip.stack.is_empty(), EInvalidStackOperation);
     ip.stack.pop();
 }
 
 fun op_size(ip: &mut Interpreter) {
-    assert!(!ip.stack.is_empty(), EInvalidStackOperation);
     let top_element = ip.stack.top();
     let size = top_element.length();
     ip.stack.push(utils::u64_to_cscriptnum(size))
@@ -558,7 +556,7 @@ fun test_op_drop() {
     assert_eq!(ip.stack.size(), 0);
 }
 
-#[test, expected_failure(abort_code = EInvalidStackOperation)]
+#[test, expected_failure(abort_code = stack::EPopStackEmpty)]
 fun test_op_drop_fail() {
     let stack = stack::create();
     let mut ip = new(stack);
@@ -594,7 +592,7 @@ fun test_op_size() {
     assert_eq!(ip.stack.top(), vector[0x03]);
 }
 
-#[test, expected_failure(abort_code = EInvalidStackOperation)]
+#[test, expected_failure(abort_code = stack::EPopStackEmpty)]
 fun test_op_size_fail() {
     let stack = stack::create();
     let mut ip = new(stack);
