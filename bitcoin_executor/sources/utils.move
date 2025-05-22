@@ -15,14 +15,14 @@ public(package) fun u64_to_cscriptnum(n: u64): vector<u8> {
     let mut n = n;
     // convert to little endian
     while (n > 0) {
-        vector::push_back(&mut result_bytes, (n & 0xff) as u8);
+        result_bytes.push_back((n & 0xff) as u8);
         n = n >> 8;
     };
 
     // padding
     if (result_bytes.length() > 0) {
-        let last_byte_index = vector::length(&result_bytes) - 1;
-        let last_byte = *vector::borrow(&result_bytes, last_byte_index);
+        let last_index = result_bytes.length() -1;
+        let last_byte = *result_bytes.borrow(last_index);
         if ((last_byte & 0x80) != 0) {
             result_bytes.push_back(0x00);
         }
