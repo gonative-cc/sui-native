@@ -2,10 +2,10 @@ module bitcoin_executor::interpreter;
 
 use bitcoin_executor::reader::{Self, ScriptReader};
 use bitcoin_executor::stack::{Self, Stack};
+use std::hash::sha2_256;
 
 #[test_only]
 use std::unit_test::assert_eq;
-
 //=============== Opcodes =============================================
 
 /// These constants are the values of the official opcodes used on the btc wiki,
@@ -322,6 +322,10 @@ fun eval(ip: &mut Interpreter, r: ScriptReader): bool {
             ip.op_equal();
         } else if (op == OP_EQUALVERIFY) {
             ip.op_equal_verify();
+        } else if (op == OP_SHA256) {
+            ip.op_sha256();
+        } else if (op == OP_HASH256) {
+            ip.op_hash256();
         }
     };
 
@@ -388,6 +392,16 @@ fun op_equal_verify(ip: &mut Interpreter) {
 fun op_dup(ip: &mut Interpreter) {
     let value = ip.stack.top();
     ip.stack.push(value)
+}
+
+fun op_sha256(ip: &mut Interpreter) {
+    let value = ip.stack.pop();
+    ip.stack.push(sha2_256(value))
+}
+
+fun op_hash256(ip: &mut Interpreter) {
+    let value = ip.stack.pop();
+    ip.stack.push(sha2_256(sha2_256(value)))
 }
 
 #[test]
@@ -520,3 +534,22 @@ fun test_op_dup_fail() {
     let mut ip = new(stack);
     ip.op_dup();
 }
+
+#[test]
+fun test_op_sha256() {
+    let stack = stack::create_with_data(vector[vector[10]]);
+    let mut ip = new(stack);
+    ip.op_sha256();
+    assert_eq!(ip.stack.size(), 1);
+    std::debug::print(&ip.stack.top());
+    let expected_hash: vector<u8> =
+        x"4a44dc15364204a80fe80e9039455cc1608281820fe2b24f1e5233ade6af1dd5";
+    assert_eq!(ip.stack.top(), expected_hash);
+}
+
+// #[test, expected_failure(abort_code = stack::EPopStackEmpty)]
+// fun test_sha256_fail() {
+//     let stack = stack::create();
+//     let mut ip = new(stack);
+//     ip.op_dup();
+// }
