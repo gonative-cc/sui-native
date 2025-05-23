@@ -30,6 +30,10 @@ public(package) fun u64_to_cscriptnum(n: u64): vector<u8> {
     result_bytes
 }
 
+public fun vch_true(): vector<u8> { vector[0x01] }
+
+public fun vch_false(): vector<u8> { vector[] }
+
 #[test]
 fun test_u64_to_cscriptnum() {
     assert_eq!(u64_to_cscriptnum(0), vector[]); // 0 -> []
