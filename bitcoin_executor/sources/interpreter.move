@@ -287,16 +287,34 @@ const CondSkip: u8 = 2;
 const EEqualVerify: vector<u8> = b"SCRIPT_ERR_EQUALVERIFY";
 #[error]
 const EInvalidStackOperation: vector<u8> = b"Invalid stack operation";
+#[error]
+const EMissingTxCtx: vector<u8> = b"Missing transaction context";
+
+public struct TransactionContext has copy, drop {
+    // TODO: full transaction details to enable sighash generation
+    mock_sighash_data_to_be_signed: vector<u8>, // double sha256(data)
+}
 
 public struct Interpreter has copy, drop {
     stack: Stack,
     reader: ScriptReader,
+    tx_context: Option<TransactionContext>,
 }
 
 public fun new(stack: Stack): Interpreter {
     Interpreter {
         stack: stack,
         reader: reader::new(vector[]), // empty reader
+        tx_context: option::none(),
+    }
+}
+
+#[test_only]
+public fun new_with_context(stack: Stack, tx_ctx: TransactionContext): Interpreter {
+    Interpreter {
+        stack: stack,
+        reader: reader::new(vector[]),
+        tx_context: option::some(tx_ctx),
     }
 }
 
@@ -429,6 +447,48 @@ fun op_sha256(ip: &mut Interpreter) {
 fun op_hash256(ip: &mut Interpreter) {
     let value = ip.stack.pop();
     ip.stack.push(sha2_256(sha2_256(value)))
+}
+
+fun op_checksig(ip: &mut Interpreter) {
+    assert!(ip.stack.size() >= 2, EInvalidStackOperation);
+
+    let pubkey_bytes = ip.stack.pop();
+    let sig_bytes = ip.stack.pop();
+
+    if (vector::is_empty(&sig_bytes)) {
+        ip.stack.push(utils::vch_false());
+        return
+    };
+
+    //TODO: signature parsing https://learnmeabitcoin.com/technical/keys/signature/
+    let sig_to_verify = sig_bytes;
+
+    assert!(option::is_some(&ip.tx_context), EMissingTxCtx);
+    let tx_context = ip.tx_context.borrow();
+
+    let message_digest = create_sighash(tx_context, &pubkey_bytes);
+
+    let signature_is_valid = sui::ecdsa_k1::secp256k1_verify(
+        &sig_to_verify,
+        &pubkey_bytes,
+        &message_digest,
+        1, // SHA256
+    );
+
+    if (signature_is_valid) {
+        ip.stack.push(utils::vch_true());
+    } else {
+        ip.stack.push(utils::vch_false());
+    };
+}
+
+// TODO: implement
+fun create_sighash(
+    tx_context: &TransactionContext,
+    _pub_key: &vector<u8>,
+    // TODO: decide what is needed here
+): vector<u8> {
+    tx_context.mock_sighash_data_to_be_signed
 }
 
 #[test]
@@ -620,7 +680,6 @@ fun test_op_sha256() {
     let mut ip = new(stack);
     ip.op_sha256();
     assert_eq!(ip.stack.size(), 1);
-    std::debug::print(&ip.stack.top());
     let expected_hash: vector<u8> =
         x"4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a";
     assert_eq!(ip.stack.top(), expected_hash);
@@ -637,4 +696,27 @@ fun test_op_hash256() {
         x"9c12cfdc04c74584d787ac3d23772132c18524bc7ab28dec4219b8fc5b425f70";
     assert_eq!(ip.stack.top(), expected_hash);
     assert_eq!(ip.stack.get_all_values(), vector[expected_hash]);
+}
+
+#[test]
+fun test_op_checksig() {
+    let msg = x"01";
+    let pk = x"03afc354620e91f6e7db7c466909d72e4f0c3bc5cf21762000b98fb0e8f1bfb0ba";
+    // for now the sig is concatenated (r,s). Later we will need to use DER format
+    let sig =
+        x"7D303D8E51F534D489810378CD767A0E38D1D5657598BFFE9727F9F06D19C4EA4D166146387B251611F7C5C9EE48BFFA1AD957C704701F393DAB2636A00DBAC1";
+
+    let tx_context = TransactionContext {
+        mock_sighash_data_to_be_signed: msg,
+    };
+
+    let stack = stack::create();
+    let mut ip = new_with_context(stack, tx_context);
+
+    ip.stack.push(sig);
+    ip.stack.push(pk);
+    ip.op_checksig();
+
+    assert_eq!(ip.stack.size(), 1);
+    assert_eq!(ip.stack.top(), utils::vch_true());
 }
