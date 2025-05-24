@@ -1,5 +1,7 @@
 module bitcoin_executor::ripemd160;
 
+use std::u64::do;
+
 public struct Ripemd160 has copy, drop{
     s: vector<u32>, // len 5;
     buf: vector<u8>,
@@ -359,7 +361,9 @@ public fun write(h: &mut Ripemd160, data: vector<u8>, len: u64) {
     };
 
     while (end - data_index >= 64) {
-        transform(&mut h.s, data);
+        let mut v: vector<u8> = vector[];
+        do!(64, |i| v.push_back(data[i + data_index]));
+        transform(&mut h.s, v);
         h.bytes = h.bytes + 64;
         data_index = data_index + 64;
     };
