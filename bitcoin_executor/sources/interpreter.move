@@ -456,7 +456,7 @@ fun op_checksig(ip: &mut Interpreter) {
     let sig_bytes = ip.stack.pop();
 
     if (vector::is_empty(&sig_bytes)) {
-        ip.stack.push(utils::vch_false());
+        ip.stack.push(utils::vector_false());
         return
     };
 
@@ -476,9 +476,9 @@ fun op_checksig(ip: &mut Interpreter) {
     );
 
     if (signature_is_valid) {
-        ip.stack.push(utils::vch_true());
+        ip.stack.push(utils::vector_true());
     } else {
-        ip.stack.push(utils::vch_false());
+        ip.stack.push(utils::vector_false());
     };
 }
 
@@ -718,5 +718,5 @@ fun test_op_checksig() {
     ip.op_checksig();
 
     assert_eq!(ip.stack.size(), 1);
-    assert_eq!(ip.stack.top(), utils::vch_true());
+    assert_eq!(ip.stack.top(), utils::vector_true());
 }

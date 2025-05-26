@@ -3,6 +3,9 @@ module bitcoin_executor::utils;
 #[test_only]
 use std::unit_test::assert_eq;
 
+#[error]
+const EOutOfBounds: vector<u8> = b"Slice out of bounds";
+
 /// Converts u64 into the CScriptNum byte vector format.
 /// This is the format expected to be pushed onto the stack.
 /// https://github.com/bitcoin/bitcoin/blob/87ec923d3a7af7b30613174b41c6fb11671df466/src/script/script.h#L349
@@ -30,9 +33,26 @@ public(package) fun u64_to_cscriptnum(n: u64): vector<u8> {
     result_bytes
 }
 
-public fun vch_true(): vector<u8> { vector[0x01] }
+public fun vector_true(): vector<u8> { vector[0x01] }
 
-public fun vch_false(): vector<u8> { vector[] }
+public fun vector_false(): vector<u8> { vector[] }
+
+public fun vector_slice<T: copy + drop>(
+    source: &vector<T>,
+    start_index: u64,
+    end_index: u64,
+): vector<T> {
+    assert!(start_index <= end_index, EOutOfBounds);
+    assert!(end_index <= source.length(), EOutOfBounds);
+
+    let mut slice = vector::empty<T>();
+    let mut i = start_index;
+    while (i < end_index) {
+        slice.push_back(source[i]);
+        i = i + 1;
+    };
+    slice
+}
 
 #[test]
 fun test_u64_to_cscriptnum() {
@@ -42,4 +62,11 @@ fun test_u64_to_cscriptnum() {
     assert_eq!(u64_to_cscriptnum(255), vector[0xff, 0x00]); // 255 -> [0xff, 0x00] padding
     assert_eq!(u64_to_cscriptnum(256), vector[0x00, 0x01]); // 256 -> [0x00, 0x01]
     assert_eq!(u64_to_cscriptnum(520), vector[0x08, 0x02]); // 520 -> [0x08, 0x02]
+}
+
+//TODO: add more tests for slice
+#[test]
+fun test_vector_slice() {
+    let v = vector[1, 2, 3, 4, 5];
+    assert_eq!(vector_slice(&v, 1, 4), vector[2, 3, 4]); // [1, 2, 3, 4, 5] -> [2, 3, 4]
 }
