@@ -63,7 +63,7 @@ fun der_int_to_32_bytes(val_bytes: &vector<u8>): vector<u8> {
 
 /// Parses a DER encoded Bitcoin signature (r,s + sighash flag)
 /// Returns a ParsedSignature containing the 64-byte concat(r,s) and sighash_flag.
-public fun parse_bitcoin_signature(full_sig_from_stack: &mut vector<u8>): ParsedSignature {
+public fun parse_btc_sig(full_sig_from_stack: &mut vector<u8>): ParsedSignature {
     let total_len = full_sig_from_stack.length();
     assert!(total_len >= 8 && total_len <= 73, EBtcSigParsing);
 
@@ -163,7 +163,7 @@ fun der_int_to_32_bytes_integer_empty() {
 }
 
 #[test]
-fun test_parse_bitcoin_signature_valid() {
+fun test_parse_btc_sig_valid() {
     let mut full_sig_hex =
         x"3045022100d8a05a72f026dd543a287164d79f496901e8678866a23c9830695f5101add6080220236272d43be9da20ef7a9492510919081340221115420194134399811618199201";
     let expected_r = x"d8a05a72f026dd543a287164d79f496901e8678866a23c9830695f5101add608";
@@ -171,13 +171,13 @@ fun test_parse_bitcoin_signature_valid() {
     let mut expected_rs = expected_r;
     expected_rs.append(expected_s);
 
-    let parsed = parse_bitcoin_signature(&mut full_sig_hex);
+    let parsed = parse_btc_sig(&mut full_sig_hex);
     assert_eq!(parsed.r_and_s_64_bytes, expected_rs);
     assert_eq!(parsed.sighash_flag, 0x01);
 }
 
 #[test]
-fun test_parse_bitcoin_signature_another_valid() {
+fun test_parse_btc_sig_another_valid() {
     let mut full_sig_hex =
         x"3044022010720e86c81bc5ca0593d2a3029c090a6e358e01c7d7d37f77d47b05c3404c0e022012009144c8ef2c4fe5c8164fcc5602db88b549ee8b7f57ac217294bd593be2d001";
     let expected_r = x"10720E86C81BC5CA0593D2A3029C090A6E358E01C7D7D37F77D47B05C3404C0E";
@@ -185,19 +185,19 @@ fun test_parse_bitcoin_signature_another_valid() {
     let mut expected_rs = expected_r;
     expected_rs.append(expected_s);
 
-    let parsed = parse_bitcoin_signature(&mut full_sig_hex);
+    let parsed = parse_btc_sig(&mut full_sig_hex);
     assert_eq!(parsed.r_and_s_64_bytes, expected_rs);
     assert_eq!(parsed.sighash_flag, 0x01);
 }
 
 #[test, expected_failure(abort_code = EBtcSigParsing)]
-fun test_parse_bitcoin_signature_invalid_tag() {
+fun test_parse_btc_sig_invalid_tag() {
     let mut full_sig_hex = x"3145022001"; // Invalid sequence tag 0x31
-    parse_bitcoin_signature(&mut full_sig_hex);
+    parse_btc_sig(&mut full_sig_hex);
 }
 
 #[test, expected_failure(abort_code = EBtcSigParsing)]
-fun test_parse_bitcoin_signature_too_short() {
+fun test_parse_btc_sig_too_short() {
     let mut full_sig_hex = x"300502010002010001"; // Only 7 bytes DER + 1 sighash
-    parse_bitcoin_signature(&mut full_sig_hex);
+    parse_btc_sig(&mut full_sig_hex);
 }
