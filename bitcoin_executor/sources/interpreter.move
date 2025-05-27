@@ -650,12 +650,12 @@ fun test_op_hash256() {
 
 #[test]
 fun test_op_hash160() {
-    let stack = stack::create_with_data(vector[x"12345678"]);
+    let stack = stack::create_with_data(vector[x"03b95e7b69c0a3228aeb4d005a4004c48d8ecd66e7a91d1f626aeb3bb800670acf"]);
     let mut ip = new(stack);
     ip.op_hash160();
     assert_eq!(ip.stack.size(), 1);
     let expected_hash: vector<u8> =
-        x"82c12e3c770a95bd17fd1d983d6b2af2037b7a4b";
+        x"740827deff1736e831d8f9910a506e791641a0de";
     assert_eq!(ip.stack.top(), expected_hash);
     assert_eq!(ip.stack.get_all_values(), vector[expected_hash]);
 }
