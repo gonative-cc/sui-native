@@ -1,5 +1,7 @@
 module bitcoin_executor::utils;
 
+use std::u64::do;
+
 #[test_only]
 use std::unit_test::assert_eq;
 
@@ -54,6 +56,86 @@ public fun vector_slice<T: copy + drop>(
     slice
 }
 
+/// Encodes a u64 into VarInt format.
+/// Adapted from go_native/move_spv_light_client
+public fun u64_to_varint_bytes(n: u64): vector<u8> {
+    let mut ans = vector::empty<u8>();
+    let mut n = n;
+    if (n <= 252) {
+        ans.push_back(n as u8);
+    } else if (n <= 65535) {
+        ans.push_back(0xfd);
+        do!(2, |_i| {
+            ans.push_back((n & 0xff) as u8);
+            n = n >> 8;
+        });
+    } else if (n <= 4294967295) {
+        ans.push_back(0xfe);
+        do!(4, |_i| {
+            ans.push_back((n & 0xff) as u8);
+            n = n >> 8;
+        });
+    } else {
+        ans.push_back(0xff);
+        do!(8, |_i| {
+            ans.push_back((n & 0xff) as u8);
+            n = n >> 8;
+        });
+    };
+    ans
+}
+
+/// Converts a u32 integer to a 4-byte little-endian vector<u8>.
+public fun u32_to_le_bytes(val: u32): vector<u8> {
+    let mut bytes = vector::empty<u8>();
+    bytes.push_back(((val >> 0) & 0xFF) as u8);
+    bytes.push_back(((val >> 8) & 0xFF) as u8);
+    bytes.push_back(((val >> 16) & 0xFF) as u8);
+    bytes.push_back(((val >> 24) & 0xFF) as u8);
+    bytes
+}
+
+/// Converts a u64 integer to an 8-byte little-endian vector<u8>.
+public fun u64_to_le_bytes(val: u64): vector<u8> {
+    let mut bytes = vector::empty<u8>();
+    bytes.push_back(((val >> 0) & 0xFF) as u8);
+    bytes.push_back(((val >> 8) & 0xFF) as u8);
+    bytes.push_back(((val >> 16) & 0xFF) as u8);
+    bytes.push_back(((val >> 24) & 0xFF) as u8);
+    bytes.push_back(((val >> 32) & 0xFF) as u8);
+    bytes.push_back(((val >> 40) & 0xFF) as u8);
+    bytes.push_back(((val >> 48) & 0xFF) as u8);
+    bytes.push_back(((val >> 56) & 0xFF) as u8);
+    bytes
+}
+
+/// Prepends the VarInt encoding of the script len to the script.
+public fun script_to_var_bytes(script: &vector<u8>): vector<u8> {
+    let len = script.length();
+    let mut result = u64_to_varint_bytes(len);
+    result.append(*script);
+    result
+}
+
+#[test]
+fun test_u64_to_varint_bytes() {
+    assert_eq!(u64_to_varint_bytes(0), x"00");
+    assert_eq!(u64_to_varint_bytes(10), x"0a");
+    assert_eq!(u64_to_varint_bytes(252), x"fc");
+    assert_eq!(u64_to_varint_bytes(253), x"fdfd00");
+    assert_eq!(u64_to_varint_bytes(1000), x"fde803");
+    assert_eq!(u64_to_varint_bytes(65535), x"fdffff");
+    assert_eq!(u64_to_varint_bytes(65536), x"fe00000100");
+    assert_eq!(u64_to_varint_bytes(4294967295), x"feffffffff");
+    assert_eq!(u64_to_varint_bytes(4294967296), x"ff0000000001000000");
+}
+
+#[test]
+fun test_script_to_var_bytes() {
+    assert_eq!(1, 1)
+    //TODO: add test for it
+}
+
 #[test]
 fun test_u64_to_cscriptnum() {
     assert_eq!(u64_to_cscriptnum(0), vector[]); // 0 -> []
@@ -69,4 +151,16 @@ fun test_u64_to_cscriptnum() {
 fun test_vector_slice() {
     let v = vector[1, 2, 3, 4, 5];
     assert_eq!(vector_slice(&v, 1, 4), vector[2, 3, 4]); // [1, 2, 3, 4, 5] -> [2, 3, 4]
+}
+
+#[test]
+fun test_u32_to_le_bytes() {
+    assert_eq!(u32_to_le_bytes(0x12345678), x"78563412");
+    assert_eq!(u32_to_le_bytes(1), x"01000000");
+}
+
+#[test]
+fun test_u64_to_le_bytes() {
+    assert_eq!(u64_to_le_bytes(0x123456789abcdef0), x"f0debc9a78563412");
+    assert_eq!(u64_to_le_bytes(1), x"0100000000000000");
 }
