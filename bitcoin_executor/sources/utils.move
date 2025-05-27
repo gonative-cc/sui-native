@@ -117,6 +117,17 @@ public fun script_to_var_bytes(script: &vector<u8>): vector<u8> {
     result
 }
 
+/// Returns a vector with 32 zero bytes.
+public fun zerohash_32bytes(): vector<u8> {
+    let mut zeros = vector::empty<u8>();
+    let mut i = 0;
+    while (i < 32) {
+        zeros.push_back(0x00);
+        i = i + 1;
+    };
+    zeros
+}
+
 #[test]
 fun test_u64_to_varint_bytes() {
     assert_eq!(u64_to_varint_bytes(0), x"00");
@@ -163,4 +174,11 @@ fun test_u32_to_le_bytes() {
 fun test_u64_to_le_bytes() {
     assert_eq!(u64_to_le_bytes(0x123456789abcdef0), x"f0debc9a78563412");
     assert_eq!(u64_to_le_bytes(1), x"0100000000000000");
+}
+
+#[test]
+fun test_zerohash_32bytes() {
+    let expected = x"0000000000000000000000000000000000000000000000000000000000000000";
+    assert_eq!(zerohash_32bytes(), expected);
+    assert_eq!(zerohash_32bytes().length(), 32);
 }
