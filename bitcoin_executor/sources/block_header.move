@@ -23,3 +23,7 @@ public fun new(raw_block_header: vector<u8>): BlockHeader {
         block_hash: sha2_256(sha2_256(raw_block_header))
     }
 }
+
+public fun block_hash(h: &BlockHeader): vector<u8> {
+    h.block_hash
+}

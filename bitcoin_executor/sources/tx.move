@@ -19,8 +19,9 @@ public struct Output has copy, drop {
 }
 
 public struct Witness has copy, drop{
-
+    item: vector<u8>
 }
+
 /// BTC transaction
 public struct Transaction has copy, drop {
     version: vector<u8>,
@@ -89,6 +90,16 @@ public fun deserialize(r: &mut Reader) : Transaction {
 
     let mut witness = vector[];
 
+    if (segwit[0] == 0x00 && segwit[1] == 0x01) {
+        let stack_item = r.read_compact_size();
+        stack_item.do!(|_| {
+            let size = r.read_compact_size();
+            witness.push_back(Witness {
+                item: r.read(size)
+            })
+        })
+    };
+
     let locktime = r.read(4);
     raw_tx.append(locktime);
 
@@ -107,6 +118,10 @@ public fun deserialize(r: &mut Reader) : Transaction {
 }
 
 
+public fun tx_id(tx: &Transaction): vector<u8> {
+    tx.tx_id
+
+}
 /// Validate BTC transaction
 public fun execute(tx: Transaction) : bool {
     let mut i = 0;

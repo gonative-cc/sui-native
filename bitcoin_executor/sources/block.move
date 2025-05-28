@@ -3,6 +3,9 @@ use bitcoin_executor::block_header::{BlockHeader, Self};
 use bitcoin_executor::tx::{Transaction, Self};
 use bitcoin_executor::reader;
 
+
+use sui::test_utils::assert_eq;
+
 public struct Block has copy, drop{
     block_header: BlockHeader,
     transactions: vector<Transaction>
@@ -30,6 +33,18 @@ fun parse_block_test() {
 
     let block = new_block(data);
 
-    std::debug::print(&block);
+    assert_eq(block.block_header.block_hash(), x"06226e46111a0b59caaf126043eb5bbf28c34f3a5e332a1fc7b2b73cf188910f");
+    assert_eq(block.transactions[0].tx_id(), x"3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a");
 
+
+}
+
+#[test]
+fun parse_block_segwit_test() {
+    let data = x"0000003085bbc10dc8694fe36144c87f7737c35f9e3e8e304c61427a7cbce8b1e97004153fb8582bc04a0abb67965f6c139445bdc5d173ddc80008aa219929ab7285278f3f5b6167ffff7f200000000001020000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff0402c80000ffffffff0200f902950000000016001411b424162694c5111b0b742bd5cb5e08bf206b9b0000000000000000266a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf90120000000000000000000000000000000000000000000000000000000000000000000000000";
+
+    let block = &new_block(data);
+
+    assert_eq(block.block_header.block_hash(), x"516567e505288fe41b2fc6be9b96318c406418c7d338168fe75a26111490eb2f");
+    assert_eq(block.transactions[0].tx_id(), x"3fb8582bc04a0abb67965f6c139445bdc5d173ddc80008aa219929ab7285278f");
 }
