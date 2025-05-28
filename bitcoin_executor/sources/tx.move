@@ -104,3 +104,18 @@ public fun execute(tx: Transaction) : bool {
     };
     true
 }
+
+
+public fun coinbase_check(tx: &Transaction): bool {
+    if (tx.inputs.length() != 1) {
+        return false
+    };
+
+    let input = tx.inputs[0];
+    if (input.vout != x"ffffffffffffff") {
+        return false
+    };
+
+    // TODO: check BIP34 and BIP141
+    true
+}
