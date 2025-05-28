@@ -6,13 +6,13 @@ use bitcoin_executor::utils;
 use std::unit_test::assert_eq;
 
 #[error]
-const EDerIntParsing: vector<u8> = b"Error while parsing DER to Int";
+const EDerIntParsing: vector<u8> = b"Error parsing DER to Int";
 #[error]
-const EBtcSigParsing: vector<u8> = b"Error while parsing bitcoin signature";
+const EBtcSigParsing: vector<u8> = b"Error parsing bitcoin signature";
 
 /// Represents parsed Bitcoin ECDSA signature.
 public struct ParsedSignature has copy, drop {
-    r_and_s_64_bytes: vector<u8>, // concat(r,s)
+    r_and_s_bytes: vector<u8>, // concat(r,s) , total len = 64 bytes
     sighash_flag: u8,
 }
 
@@ -24,7 +24,7 @@ public fun sighash_flag(parsed_signature: &ParsedSignature): u8 {
     parsed_signature.sighash_flag
 }
 
-/// Parses a DER-encoded positvie integer value (r or s) to 32-byte vecto
+/// Parses a DER-encoded positvie integer value (r or s) to 32-byte vector
 fun der_int_to_32_bytes(val_bytes: &vector<u8>): vector<u8> {
     let len = val_bytes.length();
 
@@ -60,10 +60,10 @@ fun der_int_to_32_bytes(val_bytes: &vector<u8>): vector<u8> {
         i = i + 1;
     };
 
-    let mut j = 0;
-    while (j < value_len) {
-        result_32_bytes.push_back(val_bytes[offset+j]);
-        j = j + 1;
+    i = 0;
+    while (i < value_len) {
+        result_32_bytes.push_back(val_bytes[offset+i]);
+        i = i + 1;
     };
 
     result_32_bytes

@@ -467,7 +467,7 @@ fun op_checksig(ip: &mut Interpreter) {
     let pubkey_bytes = ip.stack.pop();
     let mut sig_bytes = ip.stack.pop();
 
-    if (vector::is_empty(&sig_bytes)) {
+    if (sig_bytes.is_empty()) {
         ip.stack.push(utils::vector_false());
         return
     };
