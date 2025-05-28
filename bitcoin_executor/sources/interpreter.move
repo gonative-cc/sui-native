@@ -1,6 +1,6 @@
 module bitcoin_executor::interpreter;
 
-use bitcoin_executor::reader::{Self, ScriptReader};
+use bitcoin_executor::reader::{Self, Reader};
 use bitcoin_executor::stack::{Self, Stack};
 use bitcoin_executor::utils;
 use std::hash::sha2_256;
@@ -290,7 +290,7 @@ const EInvalidStackOperation: vector<u8> = b"Invalid stack operation";
 
 public struct Interpreter has copy, drop {
     stack: Stack,
-    reader: ScriptReader,
+    reader: Reader,
 }
 
 public fun new(stack: Stack): Interpreter {
@@ -308,7 +308,7 @@ public fun run(script: vector<u8>): bool {
     ip.eval(r)
 }
 
-fun eval(ip: &mut Interpreter, r: ScriptReader): bool {
+fun eval(ip: &mut Interpreter, r: Reader): bool {
     ip.reader = r; // init new  reader
     while (!r.end_stream()) {
         let op = ip.reader.next_opcode();
