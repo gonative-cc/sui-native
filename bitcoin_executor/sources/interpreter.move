@@ -749,8 +749,8 @@ fun test_op_hash256() {
 fun test_create_p2wpkh_scriptcode_bytes() {
     // data taken from https://learnmeabitcoin.com/technical/keys/signature/
     let pkh = x"aa966f56de599b4094b61aa68a2b3df9e97e9c48";
-    let expected_scirpt_code = x"76a914aa966f56de599b4094b61aa68a2b3df9e97e9c4888ac";
-    assert_eq!(create_p2wpkh_scriptcode_bytes(pkh), expected_scirpt_code);
+    let expected_script_code = x"76a914aa966f56de599b4094b61aa68a2b3df9e97e9c4888ac";
+    assert_eq!(create_p2wpkh_scriptcode_bytes(pkh), expected_script_code);
 }
 
 #[test]

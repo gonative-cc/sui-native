@@ -95,7 +95,7 @@ public fun parse_btc_sig(full_sig_from_stack: &mut vector<u8>): ParsedSignature 
 
     let r_len = (der_bytes[cursor] as u64);
     cursor = cursor + 1;
-    assert!(cursor + r_len <= der_len, EBtcSigParsing); //make sure R value dosent extend DER bytes
+    assert!(cursor + r_len <= der_len, EBtcSigParsing); //make sure R value doesn't extend DER bytes
     let r_value_der = utils::vector_slice(der_bytes, cursor, cursor + r_len);
     cursor = cursor + r_len;
 
@@ -108,7 +108,7 @@ public fun parse_btc_sig(full_sig_from_stack: &mut vector<u8>): ParsedSignature 
 
     let s_len = (der_bytes[cursor] as u64);
     cursor = cursor + 1;
-    assert!(cursor + s_len <= der_len, EBtcSigParsing); //make sure S value dosent extend DER bytes
+    assert!(cursor + s_len <= der_len, EBtcSigParsing); //make sure S value doesn't extend DER bytes
     let s_value_der = utils::vector_slice(der_bytes, cursor, cursor + s_len);
     cursor = cursor + s_len;
 
