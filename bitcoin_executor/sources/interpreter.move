@@ -300,7 +300,6 @@ public struct TransactionContext has copy, drop {
     tx: Option<Tx>,
     input_index: u64,
     utxo_value: u64,
-    script_flags: u64,
     sig_version: u8, //TODO: maybe enum for it?
 }
 
@@ -497,6 +496,7 @@ fun op_checksig(ip: &mut Interpreter) {
 }
 
 fun create_p2wpkh_scriptcode_bytes(pkh: vector<u8>): vector<u8> {
+    assert!(pkh.length() == 20, EInvalidStackOperation);
     let mut script = vector::empty<u8>();
     script.push_back(OP_DUP);
     script.push_back(OP_HASH160);
@@ -510,8 +510,9 @@ fun create_p2wpkh_scriptcode_bytes(pkh: vector<u8>): vector<u8> {
 fun create_sighash_dispatch(ip: &Interpreter, pub_key: vector<u8>, sighash_flag: u8): vector<u8> {
     let ctx = ip.tx_context.borrow();
     if (ctx.sig_version == SIG_VERSION_WITNESS_V0) {
+        let sha = sha2_256(pub_key);
         let mut hash160 = ripemd160::new();
-        hash160.write(pub_key, pub_key.length());
+        hash160.write(sha, sha.length());
         let pkh = hash160.finalize();
         let script_code_to_use_for_sighash = create_p2wpkh_scriptcode_bytes(pkh);
 
@@ -752,29 +753,59 @@ fun test_create_p2wpkh_scriptcode_bytes() {
     assert_eq!(create_p2wpkh_scriptcode_bytes(pkh), expected_scirpt_code);
 }
 
-//TODO: finish test after merging hash160
 #[test]
 fun test_op_checksig() {
-    assert_eq!(1, 1)
-    // let msg = x"01";
-    // let pk = x"03afc354620e91f6e7db7c466909d72e4f0c3bc5cf21762000b98fb0e8f1bfb0ba";
-    // // for now the sig is concatenated (r,s). Later we will need to use DER format
-    // let sig =
-    //     x"7D303D8E51F534D489810378CD767A0E38D1D5657598BFFE9727F9F06D19C4EA4D166146387B251611F7C5C9EE48BFFA1AD957C704701F393DAB2636A00DBAC1";
+    // all the data for the test copied from the exmaple https://learnmeabitcoin.com/technical/keys/signature/
+    //preimage = 02000000cbfaca386d65ea7043aaac40302325d0dc7391a73b585571e28d3287d6b162033bb13029ce7b1f559ef5e747fcac439f1455a2ec7c5f09b72290795e70665044ac4994014aa36b7f53375658ef595b3cb2891e1735fe5b441686f5e53338e76a010000001976a914aa966f56de599b4094b61aa68a2b3df9e97e9c4888ac3075000000000000ffffffff900a6c6ff6cd938bf863e50613a4ed5fb1661b78649fe354116edaf5d4abb9520000000001000000
+    //preimage_hashed256 = d7b60220e1b9b2c1ab40845118baf515203f7b6f0ad83cbb68d3c89b5b3098a6
+    let signature_der_encoded =
+        x"3044022008f4f37e2d8f74e18c1b8fde2374d5f28402fb8ab7fd1cc5b786aa40851a70cb022032b1374d1a0f125eae4f69d1bc0b7f896c964cfdba329f38a952426cf427484c01";
+    let public_key = x"03eed0d937090cae6ffde917de8a80dc6156e30b13edd5e51e2e50d52428da1c87";
 
-    // let tx_context = TransactionContext {
-    //     mock_sighash_data_to_be_signed: msg,
-    // };
+    let input_tx_id_bytes = x"ac4994014aa36b7f53375658ef595b3cb2891e1735fe5b441686f5e53338e76a";
 
-    // let stack = stack::create();
-    // let mut ip = new_with_context(stack, tx_context);
+    let test_inputs = vector[
+        types::new_input(
+            input_tx_id_bytes,
+            1u32,
+            vector[], // empty script_sig for P2WPKH input
+            0xffffffffu32,
+        ),
+    ];
 
-    // ip.stack.push(sig);
-    // ip.stack.push(pk);
-    // ip.op_checksig();
+    let test_outputs = vector[
+        types::new_output(
+            20000u64,
+            x"76a914ce72abfd0e6d9354a660c18f2825eb392f060fdc88ac",
+        ),
+    ];
 
-    // assert_eq!(ip.stack.size(), 1);
-    // assert_eq!(ip.stack.top(), utils::vector_true());
+    let test_tx = types::new_tx(
+        2u32,
+        test_inputs,
+        test_outputs,
+        0u32,
+        vector[],
+    );
+
+    let input_idx_being_signed = 0u64;
+    let amount_spent_by_this_input = 30000u64;
+
+    let tx_context = TransactionContext {
+        tx: option::some(test_tx),
+        input_index: input_idx_being_signed,
+        utxo_value: amount_spent_by_this_input,
+        sig_version: SIG_VERSION_WITNESS_V0,
+    };
+    let stack = stack::create();
+    let mut ip = new_with_context(stack, tx_context);
+
+    ip.stack.push(signature_der_encoded);
+    ip.stack.push(public_key);
+    ip.op_checksig();
+
+    assert_eq!(ip.stack.size(), 1);
+    assert_eq!(ip.stack.top(), utils::vector_true());
 }
 
 #[test]
