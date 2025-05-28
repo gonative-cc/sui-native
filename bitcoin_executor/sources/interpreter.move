@@ -474,7 +474,7 @@ fun op_checksig(ip: &mut Interpreter) {
 
     // https://learnmeabitcoin.com/technical/keys/signature/
     let parsed_signature_data = encoding::parse_btc_sig(&mut sig_bytes);
-    let sig_to_verify = parsed_signature_data.r_and_s_64_bytes();
+    let sig_to_verify = parsed_signature_data.r_and_s_bytes();
     let sighash_flag = parsed_signature_data.sighash_flag();
 
     assert!(option::is_some(&ip.tx_context), EMissingTxCtx);

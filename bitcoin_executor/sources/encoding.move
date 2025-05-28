@@ -16,8 +16,8 @@ public struct ParsedSignature has copy, drop {
     sighash_flag: u8,
 }
 
-public fun r_and_s_64_bytes(parsed_signature: &ParsedSignature): &vector<u8> {
-    &parsed_signature.r_and_s_64_bytes
+public fun r_and_s_bytes(parsed_signature: &ParsedSignature): &vector<u8> {
+    &parsed_signature.r_and_s_bytes
 }
 
 public fun sighash_flag(parsed_signature: &ParsedSignature): u8 {
@@ -121,11 +121,11 @@ public fun parse_btc_sig(full_sig_from_stack: &mut vector<u8>): ParsedSignature 
     assert!(cursor == der_len, EBtcSigParsing);
 
     // concat (r,s)
-    let mut r_and_s_64_bytes = r_32_bytes;
-    r_and_s_64_bytes.append(s_32_bytes);
+    let mut r_and_s_bytes = r_32_bytes;
+    r_and_s_bytes.append(s_32_bytes);
 
     ParsedSignature {
-        r_and_s_64_bytes,
+        r_and_s_bytes,
         sighash_flag,
     }
 }
@@ -180,7 +180,7 @@ fun test_parse_btc_sig_valid() {
     expected_rs.append(expected_s);
 
     let parsed = parse_btc_sig(&mut full_sig_hex);
-    assert_eq!(parsed.r_and_s_64_bytes, expected_rs);
+    assert_eq!(parsed.r_and_s_bytes, expected_rs);
     assert_eq!(parsed.sighash_flag, 0x01);
 }
 
@@ -194,7 +194,7 @@ fun test_parse_btc_sig_another_valid() {
     expected_rs.append(expected_s);
 
     let parsed = parse_btc_sig(&mut full_sig_hex);
-    assert_eq!(parsed.r_and_s_64_bytes, expected_rs);
+    assert_eq!(parsed.r_and_s_bytes, expected_rs);
     assert_eq!(parsed.sighash_flag, 0x01);
 }
 
