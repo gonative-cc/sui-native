@@ -17,12 +17,15 @@ public struct State has key, store {
     id: UID
 }
 
+
 fun store(_state: &mut State, _block: &Block) {
     // TODO: Implement this.
 }
 
 public fun executeBlock(state: &mut State, block: &Block): bool {
-    let mut i = 0;
+    assert!(!block.txns.is_empty()); // block should empty;
+    assert!(block.txns[0].coinbase_check());
+    let mut i = 1;
     while (i < block.txns.length()) {
         if (tx::execute(block.txns[i]) == false) {
             return false
