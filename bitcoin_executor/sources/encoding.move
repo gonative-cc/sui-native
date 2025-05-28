@@ -31,7 +31,7 @@ fun der_int_to_32_bytes(val_bytes: &vector<u8>): vector<u8> {
     assert!(len > 0 && len <= 33, EDerIntParsing);
 
     let offset;
-    let mut value_len = len;
+    let mut value_len = 32;
     if (len == 33) {
         // prefix 0x00
         assert!(val_bytes[0] == 0x00, EDerIntParsing);
@@ -41,11 +41,11 @@ fun der_int_to_32_bytes(val_bytes: &vector<u8>): vector<u8> {
     } else if (len == 32) {
         // no prefix
         offset = 0;
-        value_len = 32;
     } else {
         // padding needed
         assert!(!(val_bytes[0] == 0x00 && len > 1), EDerIntParsing); // wrong leading 0x00 for short number
         offset = 0;
+        value_len = len;
     };
     let mut result_32_bytes = vector::empty<u8>();
     let num_padding_zeros = 32 - value_len;
