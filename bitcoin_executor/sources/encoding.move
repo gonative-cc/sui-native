@@ -16,6 +16,14 @@ public struct ParsedSignature has copy, drop {
     sighash_flag: u8,
 }
 
+public fun r_and_s_64_bytes(parsed_signature: &ParsedSignature): &vector<u8> {
+    &parsed_signature.r_and_s_64_bytes
+}
+
+public fun sighash_flag(parsed_signature: &ParsedSignature): u8 {
+    parsed_signature.sighash_flag
+}
+
 /// Parses a DER-encoded positvie integer value (r or s) to 32-byte vecto
 fun der_int_to_32_bytes(val_bytes: &vector<u8>): vector<u8> {
     let len = val_bytes.length();
