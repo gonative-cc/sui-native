@@ -1,7 +1,7 @@
 #[test_only]
 module bitcoin_executor::reader_tests;
 
-use bitcoin_executor::reader::{ScriptReader, Self};
+use bitcoin_executor::reader::{Reader, Self};
 use sui::test_utils::assert_eq;
 
 #[test]

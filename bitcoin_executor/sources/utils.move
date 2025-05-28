@@ -34,7 +34,7 @@ public(package) fun u64_to_cscriptnum(n: u64): vector<u8> {
 public(package) fun LEtoNumber(v: vector<u8>) : u64{
     let mut number: u64 = 0;
     v.length().do!(|i| {
-        number = number + (v[i] * (1 << ((i as u8) * 8)) as u64)
+        number = number + ((v[i] as u64) * ((1 as u64) << ((i as u8) * 8)) as u64)
     });
     number
 }

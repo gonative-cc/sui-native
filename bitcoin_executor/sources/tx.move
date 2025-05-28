@@ -35,6 +35,7 @@ public fun deserialize(r: &mut Reader) : Transaction {
     let mut raw_tx = vector[];
     let version = r.read(4);
     raw_tx.append(version);
+    // TODO: support segwit update
     if (version == x"02000000") {
 
     };
@@ -70,8 +71,8 @@ public fun deserialize(r: &mut Reader) : Transaction {
         let amount = r.read(8);
         raw_tx.append(amount);
         let script_pubkey_size = r.read_compact_size();
-        raw_tx.append(u64_to_varint_bytes(script_pubkey_size));
         let script_pubkey = r.read(script_pubkey_size);
+        raw_tx.append(u64_to_varint_bytes(script_pubkey_size));
         raw_tx.append(script_pubkey);
         outputs.push_back(Output {
             amount,
@@ -82,13 +83,14 @@ public fun deserialize(r: &mut Reader) : Transaction {
     let locktime = r.read(4);
     raw_tx.append(locktime);
 
+    std::debug::print(&raw_tx);
     Transaction {
         version,
         inputs,
         outputs,
         witness: vector[],
         locktime,
-        tx_id: std::hash::sha2_256(raw_tx),
+        tx_id: std::hash::sha2_256(std::hash::sha2_256(raw_tx)),
     }
 }
 
