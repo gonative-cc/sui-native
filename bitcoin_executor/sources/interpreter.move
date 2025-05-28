@@ -2,11 +2,11 @@ module bitcoin_executor::interpreter;
 
 use bitcoin_executor::encoding;
 use bitcoin_executor::reader::{Self, ScriptReader};
+use bitcoin_executor::ripemd160;
 use bitcoin_executor::sighash;
 use bitcoin_executor::stack::{Self, Stack};
 use bitcoin_executor::types::Tx;
 use bitcoin_executor::utils;
-use bitcoin_executor::ripemd160;
 use std::hash::sha2_256;
 
 #[test_only]
@@ -513,9 +513,10 @@ fun create_p2wpkh_scriptcode_bytes(pkh: vector<u8>): vector<u8> {
 fun create_sighash_dispatch(ip: &Interpreter, pub_key: vector<u8>, sighash_flag: u8): vector<u8> {
     let ctx = ip.tx_context.borrow();
     if (ctx.sig_version == SIG_VERSION_WITNESS_V0) {
-        //TODO: uncomment the code once hash160 is available
-        // let pkh = hash160(pub_key);
-        let script_code_to_use_for_sighash = create_p2wpkh_scriptcode_bytes(pub_key);
+        let mut hash160 = ripemd160::new();
+        hash160.write(pub_key, pub_key.length());
+        let pkh = hash160.finalize();
+        let script_code_to_use_for_sighash = create_p2wpkh_scriptcode_bytes(pkh);
 
         let bip143_preimage = sighash::create_bip143_sighash_preimage(
             ctx.tx.borrow(),
@@ -785,8 +786,7 @@ fun test_op_hash160() {
     let mut ip = new(stack);
     ip.op_hash160();
     assert_eq!(ip.stack.size(), 1);
-    let expected_hash: vector<u8> =
-        x"82c12e3c770a95bd17fd1d983d6b2af2037b7a4b";
+    let expected_hash: vector<u8> = x"82c12e3c770a95bd17fd1d983d6b2af2037b7a4b";
     assert_eq!(ip.stack.top(), expected_hash);
     assert_eq!(ip.stack.get_all_values(), vector[expected_hash]);
 }
