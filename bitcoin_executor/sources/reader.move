@@ -33,6 +33,13 @@ public fun end_stream(r: &Reader): bool {
 
 /// read `len` amount of bytes from the ScriptReader
 public fun read(r: &mut Reader, len: u64): vector<u8> {
+    let buf = r.peek(len);
+    r.next_index = r.next_index + len;
+    buf
+
+}
+
+public fun peek(r: &Reader, len: u64): vector<u8> {
     assert!(r.readable(len), EBadReadData);
 
     let mut i = r.next_index;
@@ -44,9 +51,7 @@ public fun read(r: &mut Reader, len: u64): vector<u8> {
         i = i + 1;
     };
 
-    r.next_index = i;
     buf
-
 }
 
 public fun read_u32(r: &mut Reader): u32 {
@@ -76,6 +81,7 @@ public fun read_byte(r: &mut Reader): u8 {
     r.next_index = r.next_index + 1;
     b
 }
+
 
 /// Return the next opcode
 public fun next_opcode(r: &mut Reader): u8 {

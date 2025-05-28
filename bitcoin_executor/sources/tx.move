@@ -2,6 +2,7 @@ module bitcoin_executor::tx;
 use bitcoin_executor::interpreter::run;
 use bitcoin_executor::reader::Reader;
 use bitcoin_executor::utils::u64_to_varint_bytes;
+use std::option::{Option, Self};
 
 /// Input in btc transaction
 public struct Input has copy, drop {
@@ -24,6 +25,8 @@ public struct Witness has copy, drop{
 public struct Transaction has copy, drop {
     version: vector<u8>,
     inputs: vector<Input>,
+    marker: Option<u8>,
+    flag: Option<u8>,
     outputs: vector<Output>,
     witness: vector<Witness>,
     locktime: vector<u8>,
@@ -35,11 +38,15 @@ public fun deserialize(r: &mut Reader) : Transaction {
     let mut raw_tx = vector[];
     let version = r.read(4);
     raw_tx.append(version);
-    // TODO: support segwit update
-    if (version == x"02000000") {
 
+    let segwit = r.peek(2);
+    let mut marker = option::none();
+    let mut flag = option::none();
+    if (segwit[0] == 0x00 && segwit[1] == 0x01) {
+    // TODO: Handle case marker and option is none
+        marker = option::some(r.read_byte());
+        flag = option::some(r.read_byte());
     };
-
     let number_inputs = r.read_compact_size();
     raw_tx.append(u64_to_varint_bytes(number_inputs));
 
@@ -80,15 +87,20 @@ public fun deserialize(r: &mut Reader) : Transaction {
         })
     });
 
+    let mut witness = vector[];
+
     let locktime = r.read(4);
     raw_tx.append(locktime);
+
 
     std::debug::print(&raw_tx);
     Transaction {
         version,
+        marker,
+        flag,
         inputs,
         outputs,
-        witness: vector[],
+        witness,
         locktime,
         tx_id: std::hash::sha2_256(std::hash::sha2_256(raw_tx)),
     }
