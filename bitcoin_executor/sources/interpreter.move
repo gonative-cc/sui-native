@@ -5,13 +5,12 @@ use bitcoin_executor::reader::{Self, ScriptReader};
 use bitcoin_executor::ripemd160;
 use bitcoin_executor::sighash;
 use bitcoin_executor::stack::{Self, Stack};
-use bitcoin_executor::types::Tx;
+use bitcoin_executor::types::{Self, Tx};
 use bitcoin_executor::utils;
 use std::hash::sha2_256;
 
 #[test_only]
 use std::unit_test::assert_eq;
-
 //=============== Opcodes =============================================
 
 /// These constants are the values of the official opcodes used on the btc wiki,
@@ -303,8 +302,6 @@ public struct TransactionContext has copy, drop {
     utxo_value: u64,
     script_flags: u64,
     sig_version: u8, //TODO: maybe enum for it?
-    last_codeseparator_pos: u64,
-    mock_sighash_data_to_be_signed: vector<u8>, // double sha256(data)
 }
 
 public struct Interpreter has copy, drop {
