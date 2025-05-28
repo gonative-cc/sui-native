@@ -6,6 +6,7 @@ use bitcoin_executor::sighash;
 use bitcoin_executor::stack::{Self, Stack};
 use bitcoin_executor::types::Tx;
 use bitcoin_executor::utils;
+use bitcoin_executor::ripemd160;
 use std::hash::sha2_256;
 
 #[test_only]
@@ -366,6 +367,8 @@ fun eval(ip: &mut Interpreter, r: ScriptReader): bool {
             ip.op_hash256();
         } else if (op == OP_CHECKSIG) {
             ip.op_checksig();
+        } else if (op == OP_HASH160) {
+            ip.op_hash160();
         }
     };
 
@@ -496,7 +499,7 @@ fun op_checksig(ip: &mut Interpreter) {
     };
 }
 
-public fun create_p2wpkh_scriptcode_bytes(pkh: vector<u8>): vector<u8> {
+fun create_p2wpkh_scriptcode_bytes(pkh: vector<u8>): vector<u8> {
     let mut script = vector::empty<u8>();
     script.push_back(OP_DUP);
     script.push_back(OP_HASH160);
@@ -526,6 +529,14 @@ fun create_sighash_dispatch(ip: &Interpreter, pub_key: vector<u8>, sighash_flag:
     } else {
         abort EUnsupportedSigVersionForChecksig
     }
+}
+
+fun op_hash160(ip: &mut Interpreter) {
+    let value = ip.stack.pop();
+    let sha = sha2_256(value);
+    let mut hasher = ripemd160::new();
+    hasher.write(sha, sha.length());
+    ip.stack.push(hasher.finalize())
 }
 
 #[test]
@@ -766,4 +777,16 @@ fun test_op_checksig() {
 
     // assert_eq!(ip.stack.size(), 1);
     // assert_eq!(ip.stack.top(), utils::vector_true());
+}
+
+#[test]
+fun test_op_hash160() {
+    let stack = stack::create_with_data(vector[x"12345678"]);
+    let mut ip = new(stack);
+    ip.op_hash160();
+    assert_eq!(ip.stack.size(), 1);
+    let expected_hash: vector<u8> =
+        x"82c12e3c770a95bd17fd1d983d6b2af2037b7a4b";
+    assert_eq!(ip.stack.top(), expected_hash);
+    assert_eq!(ip.stack.get_all_values(), vector[expected_hash]);
 }
