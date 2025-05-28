@@ -2,6 +2,7 @@ module bitcoin_executor::utils;
 
 #[test_only]
 use std::unit_test::assert_eq;
+use std::u64::do;
 
 /// Converts u64 into the CScriptNum byte vector format.
 /// This is the format expected to be pushed onto the stack.
@@ -28,6 +29,42 @@ public(package) fun u64_to_cscriptnum(n: u64): vector<u8> {
         }
     };
     result_bytes
+}
+
+public(package) fun LEtoNumber(v: vector<u8>) : u64{
+    let mut number: u64 = 0;
+    v.length().do!(|i| {
+        number = number + (v[i] * (1 << ((i as u8) * 8)) as u64)
+    });
+    number
+}
+
+
+public fun u64_to_varint_bytes(n: u64): vector<u8> {
+    let mut ans = vector::empty<u8>();
+    let mut n = n;
+    if (n <= 252) {
+        ans.push_back(n as u8);
+    } else if (n <= 65535) {
+        ans.push_back(0xfd);
+        do!(2, |_i| {
+            ans.push_back((n & 0xff) as u8);
+            n = n >> 8;
+        });
+    } else if (n <= 4294967295) {
+        ans.push_back(0xfe);
+        do!(4, |_i| {
+            ans.push_back((n & 0xff) as u8);
+            n = n >> 8;
+        });
+    } else {
+        ans.push_back(0xff);
+        do!(8, |_i| {
+            ans.push_back((n & 0xff) as u8);
+            n = n >> 8;
+        });
+    };
+    ans
 }
 
 #[test]
