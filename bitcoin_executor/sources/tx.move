@@ -203,7 +203,7 @@ public fun coinbase_check(tx: &Transaction): bool {
     };
 
     let input = tx.inputs[0];
-    if (input.vout != x"ffffffffffffff") {
+    if (input.vout != x"ffffffffffffffff") {
         return false
     };
 
