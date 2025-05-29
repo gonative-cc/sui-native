@@ -2,10 +2,7 @@
 module bitcoin_executor::bitcoin_executor;
 use bitcoin_executor::tx::{Transaction, Self};
 
-
-fun init(_ctx: &mut tx_context::TxContext) {
-}
-
+fun init(_ctx: &mut tx_context::TxContext) {}
 
 /// A block is a collection of all transactions in the BTC block
 public struct Block has copy, drop {
@@ -14,7 +11,7 @@ public struct Block has copy, drop {
 
 /// State stores all valid BTC blocks
 public struct State has key, store {
-    id: UID
+    id: UID,
 }
 
 
