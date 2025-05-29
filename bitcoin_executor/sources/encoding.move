@@ -10,20 +10,6 @@ const EDerIntParsing: vector<u8> = b"Error parsing DER to Int";
 #[error]
 const EBtcSigParsing: vector<u8> = b"Error parsing bitcoin signature";
 
-/// Represents parsed Bitcoin ECDSA signature.
-public struct ParsedSignature has copy, drop {
-    r_and_s_bytes: vector<u8>, // concat(r,s) , total len = 64 bytes
-    sighash_flag: u8,
-}
-
-public fun r_and_s_bytes(parsed_signature: &ParsedSignature): &vector<u8> {
-    &parsed_signature.r_and_s_bytes
-}
-
-public fun sighash_flag(parsed_signature: &ParsedSignature): u8 {
-    parsed_signature.sighash_flag
-}
-
 /// Parses a DER-encoded positvie integer value (r or s) to 32-byte vector
 fun der_int_to_32_bytes(val_bytes: &vector<u8>): vector<u8> {
     let len = val_bytes.length();
@@ -65,9 +51,29 @@ fun der_int_to_32_bytes(val_bytes: &vector<u8>): vector<u8> {
     result_32_bytes
 }
 
+/// Parses a single DER-encoded INT from der_bytes at the current cursor and modifies the cursor.
+fun parse_der_encoded_int_value(
+    der_bytes: &vector<u8>,
+    cursor: &mut u64,
+    der_len: u64,
+): vector<u8> {
+    assert!(*cursor < der_len && der_bytes[*cursor] == 0x02, EBtcSigParsing);
+    *cursor = *cursor + 1;
+    assert!(*cursor < der_len, EBtcSigParsing);
+
+    let component_len = (der_bytes[*cursor] as u64);
+    *cursor = *cursor + 1;
+    assert!(component_len > 0 && *cursor + component_len <= der_len, EBtcSigParsing);
+    let value_der_bytes = utils::vector_slice(der_bytes, *cursor, *cursor + component_len);
+    *cursor = *cursor + component_len;
+
+    value_der_bytes
+}
+
 /// Parses a DER encoded Bitcoin signature (r,s + sighash flag)
-/// Returns a ParsedSignature containing the 64-byte concat(r,s) and sighash_flag.
-public fun parse_btc_sig(full_sig_from_stack: &mut vector<u8>): ParsedSignature {
+/// Returns a tuple containing the 64-byte concat(r,s) and sighash_flag.
+public fun parse_btc_sig(full_sig_from_stack: &mut vector<u8>): (vector<u8>, u8) {
+    // TODO: use reader module
     let total_len = full_sig_from_stack.length();
     assert!(total_len >= 8 && total_len <= 73, EBtcSigParsing);
 
@@ -89,29 +95,11 @@ public fun parse_btc_sig(full_sig_from_stack: &mut vector<u8>): ParsedSignature 
     assert!(seq_len == der_len - cursor, EBtcSigParsing);
 
     // Parse R
-    assert!(cursor < der_len && der_bytes[cursor] == 0x02, EBtcSigParsing);
-    cursor = cursor + 1;
-    assert!(cursor < der_len, EBtcSigParsing);
-
-    let r_len = (der_bytes[cursor] as u64);
-    cursor = cursor + 1;
-    assert!(cursor + r_len <= der_len, EBtcSigParsing); //make sure R value doesn't extend DER bytes
-    let r_value_der = utils::vector_slice(der_bytes, cursor, cursor + r_len);
-    cursor = cursor + r_len;
-
+    let r_value_der = parse_der_encoded_int_value(der_bytes, &mut cursor, der_len);
     let r_32_bytes = der_int_to_32_bytes(&r_value_der);
 
     // Parse S
-    assert!(cursor < der_len && der_bytes[cursor] == 0x02, EBtcSigParsing);
-    cursor = cursor + 1;
-    assert!(cursor < der_len, EBtcSigParsing);
-
-    let s_len = (der_bytes[cursor] as u64);
-    cursor = cursor + 1;
-    assert!(cursor + s_len <= der_len, EBtcSigParsing); //make sure S value doesn't extend DER bytes
-    let s_value_der = utils::vector_slice(der_bytes, cursor, cursor + s_len);
-    cursor = cursor + s_len;
-
+    let s_value_der = parse_der_encoded_int_value(der_bytes, &mut cursor, der_len);
     let s_32_bytes = der_int_to_32_bytes(&s_value_der);
 
     assert!(cursor == der_len, EBtcSigParsing);
@@ -120,10 +108,7 @@ public fun parse_btc_sig(full_sig_from_stack: &mut vector<u8>): ParsedSignature 
     let mut r_and_s_bytes = r_32_bytes;
     r_and_s_bytes.append(s_32_bytes);
 
-    ParsedSignature {
-        r_and_s_bytes,
-        sighash_flag,
-    }
+    (r_and_s_bytes, sighash_flag)
 }
 
 #[test]
@@ -175,9 +160,9 @@ fun test_parse_btc_sig_valid() {
     let mut expected_rs = expected_r;
     expected_rs.append(expected_s);
 
-    let parsed = parse_btc_sig(&mut full_sig_hex);
-    assert_eq!(parsed.r_and_s_bytes, expected_rs);
-    assert_eq!(parsed.sighash_flag, 0x01);
+    let (r_and_s_bytes, sighash_flag) = parse_btc_sig(&mut full_sig_hex);
+    assert_eq!(r_and_s_bytes, expected_rs);
+    assert_eq!(sighash_flag, 0x01);
 }
 
 #[test]
@@ -189,9 +174,9 @@ fun test_parse_btc_sig_another_valid() {
     let mut expected_rs = expected_r;
     expected_rs.append(expected_s);
 
-    let parsed = parse_btc_sig(&mut full_sig_hex);
-    assert_eq!(parsed.r_and_s_bytes, expected_rs);
-    assert_eq!(parsed.sighash_flag, 0x01);
+    let (r_and_s_bytes, sighash_flag) = parse_btc_sig(&mut full_sig_hex);
+    assert_eq!(r_and_s_bytes, expected_rs);
+    assert_eq!(sighash_flag, 0x01);
 }
 
 #[test, expected_failure(abort_code = EBtcSigParsing)]

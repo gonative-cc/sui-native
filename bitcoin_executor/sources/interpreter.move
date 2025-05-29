@@ -6,7 +6,7 @@ use bitcoin_executor::ripemd160;
 use bitcoin_executor::sighash;
 use bitcoin_executor::stack::{Self, Stack};
 use bitcoin_executor::types::{Self, Tx};
-use bitcoin_executor::utils;
+use bitcoin_executor::utils::{Self, hash256};
 use std::hash::sha2_256;
 
 #[test_only]
@@ -300,7 +300,7 @@ const EUnsupportedSigVersionForChecksig: vector<u8> =
     b"Unsupported signature version for op_checksig";
 
 public struct TransactionContext has copy, drop {
-    tx: Option<Tx>,
+    tx: Tx,
     input_index: u64,
     utxo_value: u64,
     sig_version: u8, //TODO: maybe enum for it?
@@ -312,16 +312,30 @@ public struct Interpreter has copy, drop {
     tx_context: Option<TransactionContext>,
 }
 
-public fun new(stack: Stack): Interpreter {
-    Interpreter {
-        stack: stack,
-        reader: reader::new(vector[]), // empty reader
-        tx_context: option::none(),
+public fun new_tx_context(
+    tx: Tx,
+    input_index: u64,
+    utxo_value: u64,
+    sig_version: u8,
+): TransactionContext {
+    TransactionContext {
+        tx,
+        input_index,
+        utxo_value,
+        sig_version,
     }
 }
 
 #[test_only]
-public fun new_with_context(stack: Stack, tx_ctx: TransactionContext): Interpreter {
+public fun new_ip_for_test(stack: Stack): Interpreter {
+    Interpreter {
+        stack: stack,
+        reader: reader::new(vector[]),
+        tx_context: option::none(),
+    }
+}
+
+public fun new_ip_with_context(stack: Stack, tx_ctx: TransactionContext): Interpreter {
     Interpreter {
         stack: stack,
         reader: reader::new(vector[]),
@@ -332,7 +346,8 @@ public fun new_with_context(stack: Stack, tx_ctx: TransactionContext): Interpret
 /// Execute btc script
 public fun run(script: vector<u8>): bool {
     let st = stack::create();
-    let mut ip = new(st);
+    // TODO: add context here from the parser and use `new_ip_with_context`
+    let mut ip = new_ip_for_test(st);
     let r = reader::new(script);
     ip.eval(r)
 }
@@ -461,7 +476,7 @@ fun op_sha256(ip: &mut Interpreter) {
 
 fun op_hash256(ip: &mut Interpreter) {
     let value = ip.stack.pop();
-    ip.stack.push(sha2_256(sha2_256(value)))
+    ip.stack.push(hash256(value))
 }
 
 fun op_checksig(ip: &mut Interpreter) {
@@ -476,16 +491,14 @@ fun op_checksig(ip: &mut Interpreter) {
     };
 
     // https://learnmeabitcoin.com/technical/keys/signature/
-    let parsed_signature_data = encoding::parse_btc_sig(&mut sig_bytes);
-    let sig_to_verify = parsed_signature_data.r_and_s_bytes();
-    let sighash_flag = parsed_signature_data.sighash_flag();
+    let (sig_to_verify, sighash_flag) = encoding::parse_btc_sig(&mut sig_bytes);
 
     assert!(option::is_some(&ip.tx_context), EMissingTxCtx);
 
     let message_digest = create_sighash_dispatch(ip, pubkey_bytes, sighash_flag);
 
     let signature_is_valid = sui::ecdsa_k1::secp256k1_verify(
-        sig_to_verify,
+        &sig_to_verify,
         &pubkey_bytes,
         &message_digest,
         SHA256,
@@ -520,7 +533,7 @@ fun create_sighash_dispatch(ip: &Interpreter, pub_key: vector<u8>, sighash_flag:
         let script_code_to_use_for_sighash = create_p2wpkh_scriptcode_bytes(pkh);
 
         let bip143_preimage = sighash::create_bip143_sighash_preimage(
-            ctx.tx.borrow(),
+            &ctx.tx,
             ctx.input_index,
             &script_code_to_use_for_sighash,
             ctx.utxo_value,
@@ -544,7 +557,7 @@ fun op_hash160(ip: &mut Interpreter) {
 #[test]
 fun test_op_0() {
     let stack = stack::create();
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_push_empty_vector();
 
     assert!(ip.stack.size() == 1);
@@ -556,7 +569,7 @@ fun test_op_0() {
 #[test]
 fun test_op_push_n_bytes() {
     let stack = stack::create();
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     let script = vector[0x01, 0x02, 0x03, 0x04, 0x05, 0x06];
     let reader = reader::new(script);
     ip.reader = reader;
@@ -589,7 +602,7 @@ fun test_op_push_n_bytes() {
 #[test]
 fun test_op_1_push_small_int() {
     let stack = stack::create();
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_push_small_int(OP_1);
 
     assert_eq!(ip.stack.size(), 1);
@@ -601,7 +614,7 @@ fun test_op_1_push_small_int() {
 #[test]
 fun test_op_5_push_small_int() {
     let stack = stack::create();
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_push_small_int(OP_5);
 
     assert_eq!(ip.stack.size(), 1);
@@ -613,7 +626,7 @@ fun test_op_5_push_small_int() {
 #[test]
 fun test_op_16_push_small_int() {
     let stack = stack::create();
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_push_small_int(OP_16);
 
     assert_eq!(ip.stack.size(), 1);
@@ -625,12 +638,12 @@ fun test_op_16_push_small_int() {
 #[test]
 fun test_op_equal() {
     let stack = stack::create_with_data(vector[vector[10], vector[10]]);
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_equal();
     assert!(ip.stack.top() == vector[1]);
 
     let stack = stack::create_with_data(vector[vector[20], vector[10]]);
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_equal();
     assert!(ip.stack.top() == vector[0]);
 }
@@ -638,28 +651,28 @@ fun test_op_equal() {
 #[test]
 fun test_op_equal_verify() {
     let stack = stack::create_with_data(vector[vector[10], vector[10]]);
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_equal_verify();
 }
 
 #[test, expected_failure(abort_code = EEqualVerify)]
 fun test_op_equal_verify_fail() {
     let stack = stack::create_with_data(vector[vector[10], vector[12]]);
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_equal_verify();
 }
 
 #[test, expected_failure(abort_code = stack::EPopStackEmpty)]
 fun test_op_equal_fail() {
     let stack = stack::create_with_data(vector[vector[10]]);
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_equal();
 }
 
 #[test]
 fun test_op_dup() {
     let stack = stack::create_with_data(vector[vector[10]]);
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_dup();
     assert_eq!(ip.stack.get_all_values(), vector[vector[10], vector[10]]);
     assert_eq!(ip.stack.size(), 2);
@@ -668,14 +681,14 @@ fun test_op_dup() {
 #[test, expected_failure(abort_code = stack::EPopStackEmpty)]
 fun test_op_dup_fail() {
     let stack = stack::create();
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_dup();
 }
 
 #[test]
 fun test_op_drop() {
     let stack = stack::create_with_data(vector[vector[0x01]]);
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_drop();
     assert_eq!(ip.stack.get_all_values(), vector[]);
     assert_eq!(ip.stack.size(), 0);
@@ -684,14 +697,14 @@ fun test_op_drop() {
 #[test, expected_failure(abort_code = stack::EPopStackEmpty)]
 fun test_op_drop_fail() {
     let stack = stack::create();
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_drop();
 }
 
 #[test]
 fun test_op_swap() {
     let stack = stack::create_with_data(vector[vector[0x01], vector[0x02]]);
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_swap();
     assert_eq!(ip.stack.size(), 2);
     assert_eq!(ip.stack.get_all_values(), vector[vector[0x02], vector[0x01]]);
@@ -700,14 +713,14 @@ fun test_op_swap() {
 #[test, expected_failure(abort_code = EInvalidStackOperation)]
 fun test_op_swap_fail() {
     let stack = stack::create_with_data(vector[vector[0x01]]);
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_swap();
 }
 
 #[test]
 fun test_op_size() {
     let stack = stack::create_with_data(vector[vector[0x01], vector[0x01, 0x02, 0x03]]); // top element size = 3
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_size();
     assert_eq!(ip.stack.size(), 3);
     assert_eq!(
@@ -720,14 +733,14 @@ fun test_op_size() {
 #[test, expected_failure(abort_code = stack::EPopStackEmpty)]
 fun test_op_size_fail() {
     let stack = stack::create();
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_size();
 }
 
 #[test]
 fun test_op_sha256() {
     let stack = stack::create_with_data(vector[vector[0x01]]);
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_sha256();
     assert_eq!(ip.stack.size(), 1);
     let expected_hash: vector<u8> =
@@ -739,7 +752,7 @@ fun test_op_sha256() {
 #[test]
 fun test_op_hash256() {
     let stack = stack::create_with_data(vector[vector[0x01]]);
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_hash256();
     assert_eq!(ip.stack.size(), 1);
     let expected_hash: vector<u8> =
@@ -794,14 +807,14 @@ fun test_op_checksig() {
     let input_idx_being_signed = 0u64;
     let amount_spent_by_this_input = 30000u64;
 
-    let tx_context = TransactionContext {
-        tx: option::some(test_tx),
-        input_index: input_idx_being_signed,
-        utxo_value: amount_spent_by_this_input,
-        sig_version: SIG_VERSION_WITNESS_V0,
-    };
+    let tx_context = new_tx_context(
+        test_tx,
+        input_idx_being_signed,
+        amount_spent_by_this_input,
+        SIG_VERSION_WITNESS_V0,
+    );
     let stack = stack::create();
-    let mut ip = new_with_context(stack, tx_context);
+    let mut ip = new_ip_with_context(stack, tx_context);
 
     ip.stack.push(signature_der_encoded);
     ip.stack.push(public_key);
@@ -814,7 +827,7 @@ fun test_op_checksig() {
 #[test]
 fun test_op_hash160() {
     let stack = stack::create_with_data(vector[x"12345678"]);
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_hash160();
     assert_eq!(ip.stack.size(), 1);
     let expected_hash: vector<u8> = x"82c12e3c770a95bd17fd1d983d6b2af2037b7a4b";

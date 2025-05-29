@@ -1,5 +1,6 @@
 module bitcoin_executor::utils;
 
+use std::hash::sha2_256;
 use std::u64::do;
 
 #[test_only]
@@ -128,6 +129,11 @@ public fun zerohash_32bytes(): vector<u8> {
     zeros
 }
 
+/// Computes sha2_256(sha2_256(data)).
+public fun hash256(data: vector<u8>): vector<u8> {
+    sha2_256(sha2_256(data))
+}
+
 #[test]
 fun test_u64_to_varint_bytes() {
     assert_eq!(u64_to_varint_bytes(0), x"00");
@@ -181,4 +187,11 @@ fun test_zerohash_32bytes() {
     let expected = x"0000000000000000000000000000000000000000000000000000000000000000";
     assert_eq!(zerohash_32bytes(), expected);
     assert_eq!(zerohash_32bytes().length(), 32);
+}
+
+#[test]
+fun test_hash256() {
+    let data_to_hash = x"0011";
+    let expected = x"cbcf27657ceb69162a9f5153c6956d6fdd81f71d7bc0bca243bff54b405e4410";
+    assert_eq!(hash256(data_to_hash), expected);
 }

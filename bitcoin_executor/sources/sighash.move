@@ -1,8 +1,7 @@
 module bitcoin_executor::sighash;
 
 use bitcoin_executor::types::{Self, Tx};
-use bitcoin_executor::utils;
-use std::hash::sha2_256;
+use bitcoin_executor::utils::{Self, hash256};
 
 #[test_only]
 use std::unit_test::assert_eq;
@@ -22,24 +21,21 @@ public fun create_bip143_sighash_preimage(
     let mut preimage = vector[];
     preimage.append(utils::u32_to_le_bytes(transaction.version()));
 
-    // SHA256(SHA256(concatenation of all (input.tx_id + input.vout)))
-    let hash_prevouts: vector<u8>;
-    if ((sighash_type_byte & SIGHASH_ANYONECANPAY_FLAG) == 0) {
+    // HASH256(concatenation of all (input.tx_id + input.vout))
+    let hash_prevouts: vector<u8> = if ((sighash_type_byte & SIGHASH_ANYONECANPAY_FLAG) == 0) {
         let mut all_prevouts_concat = vector[];
-        let mut i = 0;
         transaction.inputs().length().do!(|i| {
             let input_ref = transaction.inputs()[i];
             all_prevouts_concat.append(*input_ref.tx_id()); //already a u32_le_bytes
             all_prevouts_concat.append(utils::u32_to_le_bytes(input_ref.vout()));
-        })
-        hash_prevouts = sha2_256(sha2_256(all_prevouts_concat));
+        });
+        hash256(all_prevouts_concat)
     } else {
-        hash_prevouts = utils::zerohash_32bytes(); // 32 zero bytes if ANYONECANPAY
+        utils::zerohash_32bytes() // 32 zero bytes if ANYONECANPAY
     };
     preimage.append(hash_prevouts);
 
-    // SHA256(SHA256(concatenation of all input.sequence))
-    let hash_sequence: vector<u8>;
+    // HASH256(concatenation of all input.sequence)
     let base_sighash_type = sighash_type_byte & 0x1f; // Mask off ANYONECANPAY bit
 
     let hash_sequence = if (
@@ -48,14 +44,12 @@ public fun create_bip143_sighash_preimage(
             base_sighash_type != SIGHASH_SINGLE
     ) {
         let mut all_sequences_concatenated = vector[];
-        let mut i = 0;
-        while (i < transaction.inputs().length()) {
+        transaction.inputs().length().do!(|i| {
             all_sequences_concatenated.append(
                 utils::u32_to_le_bytes(transaction.inputs()[i].sequence()),
             );
-            i = i + 1;
-        };
-        sha2_256(sha2_256(all_sequences_concatenated))
+        });
+        hash256(all_sequences_concatenated)
     } else {
         utils::zerohash_32bytes()
     };
@@ -70,28 +64,29 @@ public fun create_bip143_sighash_preimage(
     preimage.append(utils::u64_to_le_bytes(amount_spent_by_this_input));
     preimage.append(utils::u32_to_le_bytes(current_input.sequence()));
 
-    // SHA256(SHA256(concatenation of all (output.value + output.script_pub_key_with_len)))
-    let hash_outputs: vector<u8>;
-    if (base_sighash_type != SIGHASH_NONE && base_sighash_type != SIGHASH_SINGLE) {
+    // HASH256(concatenation of all (output.value + output.script_pub_key_with_len))
+    let hash_outputs: vector<u8> = if (
+        base_sighash_type != SIGHASH_NONE && base_sighash_type != SIGHASH_SINGLE
+    ) {
         let mut all_outputs_concat = vector[];
-        let mut i = 0;
-        while (i < transaction.outputs().length()) {
+        transaction.outputs().length().do!(|i| {
             let output_ref = transaction.outputs()[i];
             all_outputs_concat.append(utils::u64_to_le_bytes(output_ref.value()));
             all_outputs_concat.append(utils::script_to_var_bytes(output_ref.script_pub_key()));
-            i = i + 1;
-        };
-        hash_outputs = sha2_256(sha2_256(all_outputs_concat));
-    } else if (base_sighash_type == SIGHASH_SINGLE && input_idx_being_signed < transaction.outputs().length()) {
+        });
+        hash256(all_outputs_concat)
+    } else if (
+        base_sighash_type == SIGHASH_SINGLE && input_idx_being_signed < transaction.outputs().length()
+    ) {
         let output_to_sign = transaction.outputs()[input_idx_being_signed];
         let mut single_output_concatenated = vector[];
         single_output_concatenated.append(utils::u64_to_le_bytes(output_to_sign.value()));
         single_output_concatenated.append(
             utils::script_to_var_bytes(output_to_sign.script_pub_key()),
         );
-        hash_outputs = sha2_256(sha2_256(single_output_concatenated));
+        hash256(single_output_concatenated)
     } else {
-        hash_outputs = utils::zerohash_32bytes();
+        utils::zerohash_32bytes()
     };
     preimage.append(hash_outputs);
     preimage.append(utils::u32_to_le_bytes(transaction.lock_time()));
@@ -147,3 +142,4 @@ fun test_create_bip143_sighash_preimage_lmb_example() {
 
     assert_eq!(result_preimage, expected_preimage);
 }
+// TODO: add a test case where user spends two UTXOs
