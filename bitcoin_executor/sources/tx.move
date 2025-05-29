@@ -197,13 +197,13 @@ public fun execute(tx: Transaction) : bool {
 }
 
 
-public fun coinbase_check(tx: &Transaction): bool {
+public fun is_coinbase(tx: &Transaction): bool {
     if (tx.inputs.length() != 1) {
         return false
     };
 
     let input = tx.inputs[0];
-    if (input.vout != x"ffffffffffffffff") {
+    if (input.vout != x"ffffffff") {
         return false
     };
 
