@@ -18,7 +18,7 @@ public struct Output has copy, drop {
     script_pubkey: vector<u8>
 }
 
-public struct Witness has copy, drop{
+public struct InputWitness  has copy, drop{
     items: vector<vector<u8>>
 }
 
@@ -29,7 +29,7 @@ public struct Transaction has copy, drop {
     marker: Option<u8>,
     flag: Option<u8>,
     outputs: vector<Output>,
-    witness: vector<Witness>,
+    witness: vector<InputWitness>,
     locktime: vector<u8>,
     tx_id: vector<u8>
 }
@@ -58,7 +58,7 @@ public fun script_pubkey(output: &Output) : vector<u8> {
     output.script_pubkey
 }
 
-public fun items(w: &Witness) : vector<vector<u8>> {
+public fun items(w: &InputWitness) : vector<vector<u8>> {
     w.items
 }
 
@@ -74,7 +74,7 @@ public fun outputs(tx: &Transaction): vector<Output> {
     tx.outputs
 }
 
-public fun witness(tx: &Transaction): vector<Witness> {
+public fun witness(tx: &Transaction): vector<InputWitness> {
     tx.witness
 }
 
@@ -161,7 +161,7 @@ public fun deserialize(r: &mut Reader) : Transaction {
                 let size = r.read_compact_size();
                 items.push_back(r.read(size));
             });
-            witness.push_back(Witness {
+            witness.push_back(InputWitness{
                 items
             });
         })
