@@ -42,7 +42,7 @@ public fun create_bip143_sighash_preimage(
     let hash_sequence: vector<u8>;
     let base_sighash_type = sighash_type_byte & 0x1f; // Mask off ANYONECANPAY bit
 
-    if (
+    let hash_sequence = if (
         (sighash_type_byte & SIGHASH_ANYONECANPAY_FLAG) == 0 &&
             base_sighash_type != SIGHASH_NONE &&
             base_sighash_type != SIGHASH_SINGLE
@@ -55,9 +55,9 @@ public fun create_bip143_sighash_preimage(
             );
             i = i + 1;
         };
-        hash_sequence = sha2_256(sha2_256(all_sequences_concatenated));
+        sha2_256(sha2_256(all_sequences_concatenated))
     } else {
-        hash_sequence = utils::zerohash_32bytes();
+        utils::zerohash_32bytes()
     };
     preimage.append(hash_sequence);
 
