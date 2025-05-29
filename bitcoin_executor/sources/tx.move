@@ -3,7 +3,6 @@ module bitcoin_executor::tx;
 use bitcoin_executor::interpreter::run;
 use bitcoin_executor::reader::Reader;
 use bitcoin_executor::utils::u64_to_varint_bytes;
-use std::option::{Option, Self};
 
 /// Input in btc transaction
 public struct Input has copy, drop {
@@ -33,6 +32,65 @@ public struct Transaction has copy, drop {
     witness: vector<Witness>,
     locktime: vector<u8>,
     tx_id: vector<u8>
+}
+
+public fun tx_id(input: &Input): vector<u8> {
+    input.tx_id
+}
+
+public fun vout(input: &Input): vector<u8> {
+    input.vout
+}
+
+public fun script_sig(input: &Input): vector<u8> {
+    input.script_sig
+}
+
+public fun sequence(input: &Input): vector<u8> {
+    input.sequence
+}
+
+public fun amount(output: &Output): vector<u8> {
+    output.amount
+}
+
+public fun script_pubkey(output: &Output) : vector<u8> {
+    output.script_pubkey
+}
+
+public fun items(w: &Witness) : vector<vector<u8>> {
+    w.items
+}
+
+public fun version(tx: &Transaction): vector<u8> {
+    tx.version
+}
+
+public fun inputs(tx: &Transaction): vector<Input> {
+    tx.inputs
+}
+
+public fun outputs(tx: &Transaction): vector<Output> {
+    tx.outputs
+}
+
+public fun witness(tx: &Transaction): vector<Witness> {
+    tx.witness
+}
+
+public fun locktime(tx: &Transaction): vector<u8> {
+    tx.locktime
+}
+
+public fun is_witness(tx: &Transaction): bool {
+    if (tx.marker.is_none() || tx.flag.is_none()) {
+        return false;
+    };
+
+    let m = *tx.marker.borrow();
+    let f = *tx.marker.borrow();
+
+    m == 0x00 && f == 0x01
 }
 
 /// deseriablize transaction from bytes
