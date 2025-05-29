@@ -23,7 +23,7 @@ fun store(_state: &mut State, _block: &Block) {
 }
 
 public fun executeBlock(state: &mut State, block: &Block): bool {
-    assert!(!block.txns.is_empty()); // block should empty;
+    assert!(block.txns.is_empty()); // block should empty;
     assert!(block.txns[0].coinbase_check());
     let mut i = 1;
     while (i < block.txns.length()) {
