@@ -285,6 +285,9 @@ const OP_INVALIDOPCODE: u8 = 0xff; // 255 - bitcoin core internal
 const SIG_VERSION_BASE: u8 = 0;
 const SIG_VERSION_WITNESS_V0: u8 = 1; //SEGWIT
 
+/// Hash types
+const SHA256: u8 = 1;
+
 // ============= Errors ================================
 #[error]
 const EEqualVerify: vector<u8> = b"SCRIPT_ERR_EQUALVERIFY";
@@ -485,7 +488,7 @@ fun op_checksig(ip: &mut Interpreter) {
         sig_to_verify,
         &pubkey_bytes,
         &message_digest,
-        1, // SHA256
+        SHA256,
     );
 
     if (signature_is_valid) {
