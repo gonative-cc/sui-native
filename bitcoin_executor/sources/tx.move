@@ -1,4 +1,5 @@
 module bitcoin_executor::tx;
+
 use bitcoin_executor::interpreter::run;
 use bitcoin_executor::reader::Reader;
 use bitcoin_executor::utils::u64_to_varint_bytes;
@@ -19,7 +20,7 @@ public struct Output has copy, drop {
 }
 
 public struct Witness has copy, drop{
-    item: vector<u8>
+    items: vector<vector<u8>>
 }
 
 /// BTC transaction
@@ -34,7 +35,7 @@ public struct Transaction has copy, drop {
     tx_id: vector<u8>
 }
 
-
+/// deseriablize transaction from bytes
 public fun deserialize(r: &mut Reader) : Transaction {
     let mut raw_tx = vector[];
     let version = r.read(4);
@@ -90,21 +91,26 @@ public fun deserialize(r: &mut Reader) : Transaction {
 
     let mut witness = vector[];
 
+
     if (segwit[0] == 0x00 && segwit[1] == 0x01) {
-        let stack_item = r.read_compact_size();
-        stack_item.do!(|_| {
-            let size = r.read_compact_size();
+
+        number_inputs.do!(|_| {
+            let stack_item = r.read_compact_size();
+            let mut items = vector[];
+            stack_item.do!(|_| {
+                let size = r.read_compact_size();
+                items.push_back(r.read(size));
+            });
             witness.push_back(Witness {
-                item: r.read(size)
-            })
+                items
+            });
         })
+
     };
 
     let locktime = r.read(4);
     raw_tx.append(locktime);
 
-
-    std::debug::print(&raw_tx);
     Transaction {
         version,
         marker,

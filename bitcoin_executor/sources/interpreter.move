@@ -620,7 +620,6 @@ fun test_op_sha256() {
     let mut ip = new(stack);
     ip.op_sha256();
     assert_eq!(ip.stack.size(), 1);
-    std::debug::print(&ip.stack.top());
     let expected_hash: vector<u8> =
         x"4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a";
     assert_eq!(ip.stack.top(), expected_hash);
