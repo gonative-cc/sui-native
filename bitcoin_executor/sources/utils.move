@@ -36,6 +36,15 @@ public(package) fun u64_to_cscriptnum(n: u64): vector<u8> {
     result_bytes
 }
 
+public(package) fun LEtoNumber(v: vector<u8>) : u64{
+    let mut number: u64 = 0;
+    v.length().do!(|i| {
+        number = number + ((v[i] as u64) * ((1 as u64) << ((i as u8) * 8)) as u64)
+    });
+    number
+}
+
+
 public fun vector_true(): vector<u8> { vector[0x01] }
 
 public fun vector_false(): vector<u8> { vector[] }

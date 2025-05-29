@@ -1,10 +1,10 @@
 module bitcoin_executor::interpreter;
 
+use bitcoin_executor::reader::{Self, Reader};
+use bitcoin_executor::stack::{Self, Stack};
 use bitcoin_executor::encoding;
-use bitcoin_executor::reader::{Self, ScriptReader};
 use bitcoin_executor::ripemd160;
 use bitcoin_executor::sighash;
-use bitcoin_executor::stack::{Self, Stack};
 use bitcoin_executor::types::{Self, Tx};
 use bitcoin_executor::utils::{Self, hash256};
 use std::hash::sha2_256;
@@ -308,7 +308,7 @@ public struct TransactionContext has copy, drop {
 
 public struct Interpreter has copy, drop {
     stack: Stack,
-    reader: ScriptReader,
+    reader: Reader,
     tx_context: Option<TransactionContext>,
 }
 
@@ -352,7 +352,7 @@ public fun run(script: vector<u8>): bool {
     ip.eval(r)
 }
 
-fun eval(ip: &mut Interpreter, r: ScriptReader): bool {
+fun eval(ip: &mut Interpreter, r: Reader): bool {
     ip.reader = r; // init new  reader
     while (!r.end_stream()) {
         let op = ip.reader.next_opcode();
