@@ -27,12 +27,11 @@ public fun create_bip143_sighash_preimage(
     if ((sighash_type_byte & SIGHASH_ANYONECANPAY_FLAG) == 0) {
         let mut all_prevouts_concat = vector[];
         let mut i = 0;
-        while (i < transaction.inputs().length()) {
+        transaction.inputs().length().do!(|i| {
             let input_ref = transaction.inputs()[i];
             all_prevouts_concat.append(*input_ref.tx_id()); //already a u32_le_bytes
             all_prevouts_concat.append(utils::u32_to_le_bytes(input_ref.vout()));
-            i = i + 1;
-        };
+        })
         hash_prevouts = sha2_256(sha2_256(all_prevouts_concat));
     } else {
         hash_prevouts = utils::zerohash_32bytes(); // 32 zero bytes if ANYONECANPAY
