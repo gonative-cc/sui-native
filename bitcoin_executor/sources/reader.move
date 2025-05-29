@@ -13,7 +13,7 @@ public struct Reader has copy, drop {
     next_index: u64
 }
 
-/// create a new reader
+/// Creates a new reader
 public fun new(data: vector<u8>): Reader {
     Reader {
         data: data,
@@ -21,17 +21,17 @@ public fun new(data: vector<u8>): Reader {
     }
 }
 
-/// check can read next len bytes
+/// Checks if the next `len` bytes are readable
 public fun readable(r: &Reader, len: u64):  bool {
     r.next_index + len <= r.data.length()
 }
 
-/// check stream is end
+/// Checks if end of stream
 public fun end_stream(r: &Reader): bool {
     r.next_index >= r.data.length()
 }
 
-/// read `len` amount of bytes from the ScriptReader
+/// reads `len` amount of bytes from the Reader
 public fun read(r: &mut Reader, len: u64): vector<u8> {
     let buf = r.peek(len);
     r.next_index = r.next_index + len;
@@ -74,7 +74,7 @@ public fun read_compact_size(r: &mut Reader): u64 {
     let v = r.read(offset);
     LEtoNumber(v)
 }
-/// read the next byte of stream
+/// reads the next byte from the stream
 public fun read_byte(r: &mut Reader): u8 {
     let b = r.data[r.next_index];
     r.next_index = r.next_index + 1;
@@ -82,7 +82,7 @@ public fun read_byte(r: &mut Reader): u8 {
 }
 
 
-/// Return the next opcode
+/// Returns the next opcode
 public fun next_opcode(r: &mut Reader): u8 {
     let opcode = r.read_byte();
     opcode

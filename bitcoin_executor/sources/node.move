@@ -12,7 +12,7 @@ public struct Block has copy, drop {
     txns: vector<Transaction>
 }
 
-/// State store all valid BTC blocks
+/// State stores all valid BTC blocks
 public struct State has key, store {
     id: UID
 }
@@ -23,7 +23,7 @@ fun store(_state: &mut State, _block: &Block) {
 }
 
 public fun executeBlock(state: &mut State, block: &Block): bool {
-    assert!(block.txns.is_empty()); // block should empty;
+    assert!(block.txns.is_empty()); // block should be empty
     assert!(block.txns[0].is_coinbase());
     let mut i = 1;
     while (i < block.txns.length()) {
