@@ -11,4 +11,5 @@ fun segwit_tx_test() {
     let mut r = reader::new(data);
     let txn = tx::deserialize(&mut r);
     assert_eq(txn.tx_id(), x"ea5c8c3479f2e3d265b46781d605ab6b3aae943caae86ddd633779aed909673b");
+    assert!(txn.is_witness());
 }

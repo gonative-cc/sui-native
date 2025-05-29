@@ -34,7 +34,7 @@ public struct Transaction has copy, drop {
     tx_id: vector<u8>
 }
 
-public fun tx_id(input: &Input): vector<u8> {
+public fun output_tx_id(input: &Input): vector<u8> {
     input.tx_id
 }
 
@@ -84,15 +84,17 @@ public fun locktime(tx: &Transaction): vector<u8> {
 
 public fun is_witness(tx: &Transaction): bool {
     if (tx.marker.is_none() || tx.flag.is_none()) {
-        return false;
+        return false
     };
 
-    let m = *tx.marker.borrow();
-    let f = *tx.marker.borrow();
-
+    let m = tx.marker.borrow();
+    let f = tx.flag.borrow();
     m == 0x00 && f == 0x01
 }
 
+public fun tx_id(tx: &Transaction): vector<u8> {
+    tx.tx_id
+}
 /// deseriablize transaction from bytes
 public fun deserialize(r: &mut Reader) : Transaction {
     let mut raw_tx = vector[];
@@ -182,10 +184,6 @@ public fun deserialize(r: &mut Reader) : Transaction {
 }
 
 
-public fun tx_id(tx: &Transaction): vector<u8> {
-    tx.tx_id
-
-}
 /// Validate BTC transaction
 public fun execute(tx: Transaction) : bool {
     let mut i = 0;
