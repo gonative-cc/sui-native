@@ -4,6 +4,7 @@ use bitcoin_executor::tx::{Transaction, Self};
 use bitcoin_executor::reader;
 
 
+#[test_only]
 use sui::test_utils::assert_eq;
 
 public struct Block has copy, drop{

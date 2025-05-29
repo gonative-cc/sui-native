@@ -36,7 +36,6 @@ public fun read(r: &mut Reader, len: u64): vector<u8> {
     let buf = r.peek(len);
     r.next_index = r.next_index + len;
     buf
-
 }
 
 public fun peek(r: &Reader, len: u64): vector<u8> {
