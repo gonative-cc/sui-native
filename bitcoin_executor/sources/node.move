@@ -1,25 +1,22 @@
 /// Module: bitcoin_executor
 module bitcoin_executor::bitcoin_executor;
-use bitcoin_executor::tx::{Tx, Self};
 
+use bitcoin_executor::tx;
+use bitcoin_executor::types::Tx;
 
-fun init(_ctx: &mut tx_context::TxContext) {
-}
-
+fun init(_ctx: &mut tx_context::TxContext) {}
 
 /// A block is a collection of all transactions in the BTC block
 public struct Block has copy, drop {
-    txns: vector<Tx>
+    txns: vector<Tx>,
 }
 
 /// State store all valid BTC blocks
 public struct State has key, store {
-    id: UID
+    id: UID,
 }
 
-fun store(_state: &mut State, _block: &Block) {
-    // TODO: Implement this.
-}
+fun store(_state: &mut State, _block: &Block) {}
 
 public fun executeBlock(state: &mut State, block: &Block): bool {
     let mut i = 0;

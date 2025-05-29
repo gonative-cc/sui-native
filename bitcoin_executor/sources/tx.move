@@ -1,22 +1,13 @@
 module bitcoin_executor::tx;
+
 use bitcoin_executor::interpreter::run;
-
-
-/// Inputs in btc transaction
-public struct Input has copy, drop {
-    data: vector<u8>
-}
-
-/// BTC transaction
-public struct Tx has copy, drop {
-    inputs: vector<Input>
-}
+use bitcoin_executor::types::Tx;
 
 /// Validate BTC transaction
-public fun execute(tx: Tx) : bool {
+public fun execute(tx: Tx): bool {
     let mut i = 0;
-    while (i < tx.inputs.length()) {
-        if (run(tx.inputs[i].data) == false) {
+    while (i < tx.inputs().length()) {
+        if (run(*tx.inputs()[i].script_sig()) == false) {
             return false
         };
         i = i + 1;
