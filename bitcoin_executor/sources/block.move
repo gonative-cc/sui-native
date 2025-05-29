@@ -12,7 +12,7 @@ public struct Block has copy, drop{
 }
 
 
-public fun new_block(raw_block: vector<u8>): Block {
+public fun new(raw_block: vector<u8>): Block {
     let mut r = reader::new(raw_block);
     let block_header = block_header::new(r.read(80));
     let number_tx = r.read_compact_size();
