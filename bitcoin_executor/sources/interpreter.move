@@ -349,7 +349,7 @@ public fun new_ip_with_context(stack: Stack, tx_ctx: TransactionContext): Interp
 }
 
 /// Execute btc script
-public fun run(tx: Transaction, stack: Stack, script: vector<u8>, input_idx: u32, amount: u64): bool {
+public fun run(tx: Transaction, stack: Stack, script: vector<u8>, input_idx: u64, amount: u64): bool {
     let sig_version = if (tx.is_witness()) {
         SIG_VERSION_WITNESS_V0
     } else {

@@ -1,6 +1,5 @@
 module bitcoin_executor::tx;
 
-use bitcoin_executor::interpreter::run;
 use bitcoin_executor::reader::Reader;
 use bitcoin_executor::utils::u64_to_varint_bytes;
 
@@ -179,20 +178,6 @@ public fun deserialize(r: &mut Reader) : Transaction {
         tx_id,
     )
 }
-
-
-/// Validate BTC transaction
-public fun execute(tx: &Transaction) : bool {
-    // let mut i = 0;
-    // while (i < tx.inputs.length()) {
-    //    if (run(&tx) == false) {
-    //         return false
-    //     };
-    //     i = i + 1;
-    // };
-    true
-}
-
 
 public fun is_coinbase(tx: &Transaction): bool {
     if (tx.inputs.length() != 1) {
