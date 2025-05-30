@@ -1,7 +1,7 @@
 module bitcoin_executor::bitcoin_executor;
 
 use bitcoin_executor::tx::{Self, Transaction};
-use bitcoin_executor::utxo::{Self, OutPoint, Info};
+use bitcoin_executor::utxo::{Self, OutPoint, Data};
 use std::unit_test::assert_eq;
 use sui::table::{Self, Table};
 
@@ -12,7 +12,7 @@ const ECoinbaseNotMature: vector<u8> =
 fun init(ctx: &mut TxContext) {
     let state = State {
         id: object::new(ctx),
-        utxos: table::new<OutPoint, Info>(ctx),
+        utxos: table::new<OutPoint, Data>(ctx),
     };
     transfer::share_object(state);
 }
@@ -25,7 +25,7 @@ public struct Block has copy, drop {
 /// State stores the utxo set
 public struct State has key, store {
     id: UID,
-    utxos: Table<OutPoint, Info>,
+    utxos: Table<OutPoint, Data>,
 }
 
 fun store(_state: &mut State, _block: &Block) {}
@@ -46,12 +46,12 @@ public fun executeBlock(state: &mut State, block: &Block): bool {
 }
 
 /// Adds a new UTXO to the set
-public fun add_utxo(state: &mut State, outpoint: OutPoint, info: Info) {
+public fun add_utxo(state: &mut State, outpoint: OutPoint, info: Data) {
     state.utxos.add(outpoint, info);
 }
 
 /// Spends a UTXO checks for existence and coinbase maturity, removes it, and returns its Info
-public fun spend_utxo(state: &mut State, outpoint: OutPoint, current_block_height: u64): Info {
+public fun spend_utxo(state: &mut State, outpoint: OutPoint, current_block_height: u64): Data {
     let utxo_info = state.utxos.borrow(outpoint);
 
     if (utxo_info.is_coinbase()) {
@@ -73,7 +73,7 @@ fun test_add_utxo() {
 
     let mut state = State {
         id: object::new(&mut ctx),
-        utxos: table::new<OutPoint, Info>(&mut ctx),
+        utxos: table::new<OutPoint, Data>(&mut ctx),
     };
     add_utxo(&mut state, outpint, info);
     assert_eq!(state.utxos.length(), 1);
@@ -89,7 +89,7 @@ fun test_add_utxo_fail() {
 
     let mut state = State {
         id: object::new(&mut ctx),
-        utxos: table::new<OutPoint, Info>(&mut ctx),
+        utxos: table::new<OutPoint, Data>(&mut ctx),
     };
     add_utxo(&mut state, outpint, info);
     add_utxo(&mut state, outpint, info);
@@ -104,7 +104,7 @@ fun test_spend_utxo() {
 
     let mut state = State {
         id: object::new(&mut ctx),
-        utxos: table::new<OutPoint, Info>(&mut ctx),
+        utxos: table::new<OutPoint, Data>(&mut ctx),
     };
     add_utxo(&mut state, outpint, info);
     spend_utxo(&mut state, outpint, 2);
@@ -120,7 +120,7 @@ fun test_spend_utxo_is_coinbase() {
 
     let mut state = State {
         id: object::new(&mut ctx),
-        utxos: table::new<OutPoint, Info>(&mut ctx),
+        utxos: table::new<OutPoint, Data>(&mut ctx),
     };
     add_utxo(&mut state, outpint, info);
     spend_utxo(&mut state, outpint, 101);
@@ -136,7 +136,7 @@ fun test_spend_utxo_is_coinbase_fail() {
 
     let mut state = State {
         id: object::new(&mut ctx),
-        utxos: table::new<OutPoint, Info>(&mut ctx),
+        utxos: table::new<OutPoint, Data>(&mut ctx),
     };
     add_utxo(&mut state, outpint, info);
     spend_utxo(&mut state, outpint, 101);

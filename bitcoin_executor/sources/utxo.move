@@ -16,8 +16,8 @@ public fun new_outpoint(tx_id: vector<u8>, vout: u32): OutPoint {
     OutPoint { tx_id, vout }
 }
 
-public fun new_data(height: u64, is_coinbase: bool, value: u64, script_pub_key: vector<u8>): Info {
-    Info { height, is_coinbase, value, script_pub_key }
+public fun new_data(height: u64, is_coinbase: bool, value: u64, script_pub_key: vector<u8>): Data {
+    Data { height, is_coinbase, value, script_pub_key }
 }
 
 public fun new(
@@ -27,18 +27,18 @@ public fun new(
     is_coinbase: bool,
     value: u64,
     script_pub_key: vector<u8>,
-): (OutPoint, Info) {
-    (OutPoint { tx_id, vout }, Info { height, is_coinbase, value, script_pub_key })
+): (OutPoint, Data) {
+    (OutPoint { tx_id, vout }, Data { height, is_coinbase, value, script_pub_key })
 }
 
 public fun tx_id(outpoint: &OutPoint): vector<u8> { outpoint.tx_id }
 
 public fun vout(outpoint: &OutPoint): u32 { outpoint.vout }
 
-public fun value(info: &Info): u64 { info.value }
+public fun value(data: &Data): u64 { data.value }
 
-public fun script_pub_key(info: &Info): &vector<u8> { &info.script_pub_key }
+public fun script_pub_key(data: &Data): &vector<u8> { &data.script_pub_key }
 
-public fun height(info: &Info): u64 { info.height }
+public fun height(data: &Data): u64 { data.height }
 
-public fun is_coinbase(info: &Info): bool { info.is_coinbase }
+public fun is_coinbase(data: &Data): bool { data.is_coinbase }
