@@ -7,7 +7,7 @@ use sui::table::{Self, Table};
 
 #[error]
 const ECoinbaseNotMature: vector<u8> =
-    b"Coinbase tx is not spendable until it reaches maturnity of 100 blocks";
+    b"Coinbase tx is not spendable until it reaches maturity of 100 blocks";
 
 fun init(ctx: &mut TxContext) {
     let state = State {
