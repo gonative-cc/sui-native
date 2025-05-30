@@ -349,7 +349,7 @@ public fun new_ip_with_context(stack: Stack, tx_ctx: TransactionContext): Interp
 }
 
 /// Execute btc script
-public fun run(tx: Transaction, script: vector<u8>, input_idx: u32, amount: u64): bool {
+public fun run(tx: Transaction, stack: Stack, script: vector<u8>, input_idx: u32, amount: u64): bool {
     let sig_version = if (tx.is_witness()) {
         SIG_VERSION_WITNESS_V0
     } else {
@@ -363,15 +363,14 @@ public fun run(tx: Transaction, script: vector<u8>, input_idx: u32, amount: u64)
         sig_version
     );
 
-    let st = stack::create();
-    let mut ip = new_ip_with_context(st, ctx);
+    let mut ip = new_ip_with_context(stack, ctx);
     let r = reader::new(script);
     ip.eval(r)
 }
 
 fun eval(ip: &mut Interpreter, r: Reader): bool {
     ip.reader = r; // init new  reader
-    while (!r.end_stream()) {
+    while (!ip.reader.end_stream()) {
         let op = ip.reader.next_opcode();
 
         if (op == OP_0) {
@@ -528,7 +527,7 @@ fun op_checksig(ip: &mut Interpreter) {
     };
 }
 
-fun create_p2wpkh_scriptcode_bytes(pkh: vector<u8>): vector<u8> {
+public fun create_p2wpkh_scriptcode_bytes(pkh: vector<u8>): vector<u8> {
     assert!(pkh.length() == 20, EInvalidStackOperation);
     let mut script = vector::empty<u8>();
     script.push_back(OP_DUP);

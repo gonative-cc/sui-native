@@ -185,7 +185,7 @@ public fun deserialize(r: &mut Reader) : Transaction {
 public fun execute(tx: &Transaction) : bool {
     // let mut i = 0;
     // while (i < tx.inputs.length()) {
-    //     if (run(&tx) == false) {
+    //    if (run(&tx) == false) {
     //         return false
     //     };
     //     i = i + 1;
