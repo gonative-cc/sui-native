@@ -55,7 +55,7 @@ public fun executeBlock(state: &mut State, block: &Block) {
     };
 }
 
-public fun validate_execution(state: &State, tx: Transaction) : bool{
+fun validate_execution(state: &State, tx: Transaction) : bool{
     let number_input = tx.inputs().length();
     let mut i = 0;
     let mut result = true;
