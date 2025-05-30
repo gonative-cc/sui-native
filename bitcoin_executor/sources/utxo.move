@@ -1,5 +1,11 @@
 module bitcoin_executor::utxo;
 
+use bitcoin_executor::utils::vector_slice;
+
+const OP_0: u8 = 0x00;
+const OP_DATA_20: u8 = 0x14;
+
+
 public struct OutPoint has copy, drop, store {
     tx_id: vector<u8>,
     vout: u32,
@@ -42,3 +48,17 @@ public fun script_pub_key(data: &Data): &vector<u8> { &data.script_pub_key }
 public fun height(data: &Data): u64 { data.height }
 
 public fun is_coinbase(data: &Data): bool { data.is_coinbase }
+
+
+public fun pkh(data: &Data): vector<u8> {
+    let script = data.script_pub_key;
+    let is_wphk = script.length() == 22 &&
+        script[0] == OP_0 &&
+        script[1] == OP_DATA_20;
+
+    if (is_wphk) {
+        vector_slice(&script, 2, 22)
+    } else {
+        vector[]
+    }
+}
