@@ -1,13 +1,12 @@
 module bitcoin_executor::block;
 use bitcoin_executor::block_header::{BlockHeader, Self};
-use bitcoin_executor::output::{Self, Output};
 use bitcoin_executor::tx::{Transaction, Self};
 use bitcoin_executor::reader;
 
 #[test_only]
 use sui::test_utils::assert_eq;
 
-
+/// A block is a collection of all transactions in the BTC block
 public struct Block has copy, drop{
     block_header: BlockHeader,
     transactions: vector<Transaction>
@@ -26,6 +25,14 @@ public fun new(raw_block: vector<u8>): Block {
         block_header,
         transactions
     }
+}
+
+public fun txns(b: &Block): vector<Transaction> {
+    b.transactions
+}
+
+public fun header(b: &Block): BlockHeader {
+    b.block_header
 }
 
 #[test]
