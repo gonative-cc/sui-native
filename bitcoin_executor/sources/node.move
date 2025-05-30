@@ -5,8 +5,10 @@ use bitcoin_executor::stack;
 use bitcoin_executor::utils::LEtoNumber;
 
 use bitcoin_executor::utxo::{Self, OutPoint, Data};
-use std::unit_test::assert_eq;
 use sui::table::{Self, Table};
+
+#[test_only]
+use std::unit_test::assert_eq;
 
 #[error]
 const ECoinbaseNotMature: vector<u8> =
