@@ -305,6 +305,7 @@ const EUnsupportedSigVersionForChecksig: vector<u8> =
 
 public struct TransactionContext has copy, drop {
     tx: Transaction,
+    // we use u64 for query vector index in sui move easier.
     input_index: u64,
     utxo_value: u64,
     sig_version: u8, //TODO: maybe enum for it?
@@ -348,10 +349,22 @@ public fun new_ip_with_context(stack: Stack, tx_ctx: TransactionContext): Interp
 }
 
 /// Execute btc script
-public fun run(tx: &Transaction): bool {
-    let script = vector[];
+public fun run(tx: Transaction, script: vector<u8>, input_idx: u32, amount: u64): bool {
+    let sig_version = if (tx.is_witness()) {
+        SIG_VERSION_WITNESS_V0
+    } else {
+        SIG_VERSION_BASE
+    };
+
+    let ctx = new_tx_context(
+        tx,
+        input_idx as u64,
+        amount,
+        sig_version
+    );
+
     let st = stack::create();
-    let mut ip = new_ip_for_test(st);
+    let mut ip = new_ip_with_context(st, ctx);
     let r = reader::new(script);
     ip.eval(r)
 }
@@ -811,7 +824,7 @@ fun test_op_checksig() {
         vector[]
     );
 
-    let input_idx_being_signed = 0u64;
+    let input_idx_being_signed = 0;
     let amount_spent_by_this_input = 30000u64;
 
     let tx_context = new_tx_context(
