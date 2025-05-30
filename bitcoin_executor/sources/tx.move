@@ -4,19 +4,8 @@ use bitcoin_executor::interpreter::run;
 use bitcoin_executor::reader::Reader;
 use bitcoin_executor::utils::u64_to_varint_bytes;
 
-/// Input in btc transaction
-public struct Input has copy, drop {
-    tx_id: vector<u8>,
-    vout: vector<u8>,
-    script_sig: vector<u8>,
-    sequence: vector<u8>
-}
-
-/// Output in btc transaction
-public struct Output has copy, drop {
-    amount: vector<u8>,
-    script_pubkey: vector<u8>
-}
+use bitcoin_executor::input::{Self, Input};
+use bitcoin_executor::output::{Self, Output};
 
 public struct InputWitness  has copy, drop{
     items: vector<vector<u8>>
@@ -34,29 +23,28 @@ public struct Transaction has copy, drop {
     tx_id: vector<u8>
 }
 
-public fun output_tx_id(input: &Input): vector<u8> {
-    input.tx_id
+public fun new(
+    version: vector<u8>,
+    marker: Option<u8>,
+    flag: Option<u8>,
+    inputs: vector<Input>,
+    outputs: vector<Output>,
+    witness: vector<InputWitness>,
+    locktime: vector<u8>,
+    tx_id: vector<u8>
+) : Transaction {
+     Transaction {
+         version,
+         marker,
+         flag,
+         inputs,
+         outputs,
+         witness,
+         locktime,
+         tx_id
+     }
 }
 
-public fun vout(input: &Input): vector<u8> {
-    input.vout
-}
-
-public fun script_sig(input: &Input): vector<u8> {
-    input.script_sig
-}
-
-public fun sequence(input: &Input): vector<u8> {
-    input.sequence
-}
-
-public fun amount(output: &Output): vector<u8> {
-    output.amount
-}
-
-public fun script_pubkey(output: &Output) : vector<u8> {
-    output.script_pubkey
-}
 
 public fun items(w: &InputWitness) : vector<vector<u8>> {
     w.items
@@ -82,6 +70,14 @@ public fun locktime(tx: &Transaction): vector<u8> {
     tx.locktime
 }
 
+public fun input_at(tx: &Transaction, idx: u64): &Input {
+    &tx.inputs[idx]
+}
+
+public fun output_at(tx: &Transaction, idx: u64): &Output {
+    &tx.outputs[idx]
+}
+
 public fun is_witness(tx: &Transaction): bool {
     if (tx.marker.is_none() || tx.flag.is_none()) {
         return false
@@ -95,6 +91,7 @@ public fun is_witness(tx: &Transaction): bool {
 public fun tx_id(tx: &Transaction): vector<u8> {
     tx.tx_id
 }
+
 /// deseriablize transaction from bytes
 public fun deserialize(r: &mut Reader) : Transaction {
     let mut raw_tx = vector[];
@@ -102,8 +99,8 @@ public fun deserialize(r: &mut Reader) : Transaction {
     raw_tx.append(version);
 
     let segwit = r.peek(2);
-    let mut marker = option::none();
-    let mut flag = option::none();
+    let mut marker: Option<u8> = option::none();
+    let mut flag: Option<u8> = option::none();
     if (segwit[0] == 0x00 && segwit[1] == 0x01) {
     // TODO: Handle case marker and option is none
         marker = option::some(r.read_byte());
@@ -125,12 +122,14 @@ public fun deserialize(r: &mut Reader) : Transaction {
         let sequence = r.read(4);
         raw_tx.append(sequence);
 
-        inputs.push_back(Input {
-            tx_id,
-            vout,
-            script_sig,
-            sequence
-        });
+        inputs.push_back(
+            input::new(
+                tx_id,
+                vout,
+                script_sig,
+                sequence
+            )
+        );
     });
 
     let number_outputs = r.read_compact_size();
@@ -143,17 +142,15 @@ public fun deserialize(r: &mut Reader) : Transaction {
         let script_pubkey = r.read(script_pubkey_size);
         raw_tx.append(u64_to_varint_bytes(script_pubkey_size));
         raw_tx.append(script_pubkey);
-        outputs.push_back(Output {
-            amount,
-            script_pubkey
-        })
+        outputs.push_back(
+            output::new(
+                amount, script_pubkey
+            )
+        )
     });
 
     let mut witness = vector[];
-
-
     if (segwit[0] == 0x00 && segwit[1] == 0x01) {
-
         number_inputs.do!(|_| {
             let stack_item = r.read_compact_size();
             let mut items = vector[];
@@ -170,8 +167,8 @@ public fun deserialize(r: &mut Reader) : Transaction {
 
     let locktime = r.read(4);
     raw_tx.append(locktime);
-
-    Transaction {
+    let tx_id = std::hash::sha2_256(std::hash::sha2_256(raw_tx));
+    new(
         version,
         marker,
         flag,
@@ -179,20 +176,20 @@ public fun deserialize(r: &mut Reader) : Transaction {
         outputs,
         witness,
         locktime,
-        tx_id: std::hash::sha2_256(std::hash::sha2_256(raw_tx)),
-    }
+        tx_id,
+    )
 }
 
 
 /// Validate BTC transaction
-public fun execute(tx: Transaction) : bool {
-    let mut i = 0;
-    while (i < tx.inputs.length()) {
-        if (run(tx.inputs[i].script_sig) == false) {
-            return false
-        };
-        i = i + 1;
-    };
+public fun execute(tx: &Transaction) : bool {
+    // let mut i = 0;
+    // while (i < tx.inputs.length()) {
+    //     if (run(&tx) == false) {
+    //         return false
+    //     };
+    //     i = i + 1;
+    // };
     true
 }
 
@@ -203,7 +200,7 @@ public fun is_coinbase(tx: &Transaction): bool {
     };
 
     let input = tx.inputs[0];
-    if (input.vout != x"ffffffff") {
+    if (input.vout() != x"ffffffff") {
         return false
     };
 

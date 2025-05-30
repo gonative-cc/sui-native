@@ -5,7 +5,11 @@ use bitcoin_executor::stack::{Self, Stack};
 use bitcoin_executor::encoding;
 use bitcoin_executor::ripemd160;
 use bitcoin_executor::sighash;
-use bitcoin_executor::types::{Self, Tx};
+use bitcoin_executor::tx::{Self,Transaction};
+use bitcoin_executor::input::{Self, Input};
+use bitcoin_executor::output::{Self, Output};
+
+// use bitcoin_executor::types::{Tx, Self};
 use bitcoin_executor::utils::{Self, hash256};
 use std::hash::sha2_256;
 
@@ -300,7 +304,7 @@ const EUnsupportedSigVersionForChecksig: vector<u8> =
     b"Unsupported signature version for op_checksig";
 
 public struct TransactionContext has copy, drop {
-    tx: Tx,
+    tx: Transaction,
     input_index: u64,
     utxo_value: u64,
     sig_version: u8, //TODO: maybe enum for it?
@@ -313,7 +317,7 @@ public struct Interpreter has copy, drop {
 }
 
 public fun new_tx_context(
-    tx: Tx,
+    tx: Transaction,
     input_index: u64,
     utxo_value: u64,
     sig_version: u8,
@@ -326,7 +330,7 @@ public fun new_tx_context(
     }
 }
 
-#[test_only]
+// #[test_only]
 public fun new_ip_for_test(stack: Stack): Interpreter {
     Interpreter {
         stack: stack,
@@ -344,9 +348,9 @@ public fun new_ip_with_context(stack: Stack, tx_ctx: TransactionContext): Interp
 }
 
 /// Execute btc script
-public fun run(script: vector<u8>): bool {
+public fun run(tx: &Transaction): bool {
+    let script = vector[];
     let st = stack::create();
-    // TODO: add context here from the parser and use `new_ip_with_context`
     let mut ip = new_ip_for_test(st);
     let r = reader::new(script);
     ip.eval(r)
@@ -781,27 +785,30 @@ fun test_op_checksig() {
     let input_tx_id_bytes = x"ac4994014aa36b7f53375658ef595b3cb2891e1735fe5b441686f5e53338e76a";
 
     let test_inputs = vector[
-        types::new_input(
+        input::new(
             input_tx_id_bytes,
-            1u32,
+            x"01000000",
             vector[], // empty script_sig for P2WPKH input
-            0xffffffffu32,
+            x"ffffffff",
         ),
     ];
 
     let test_outputs = vector[
-        types::new_output(
-            20000u64,
+        output::new(
+            x"204e000000000000",
             x"76a914ce72abfd0e6d9354a660c18f2825eb392f060fdc88ac",
         ),
     ];
 
-    let test_tx = types::new_tx(
-        2u32,
+    let test_tx = tx::new(
+        x"02000000",
+        option::some(00u8),
+        option::some(01u8),
         test_inputs,
         test_outputs,
-        0u32,
         vector[],
+        x"00000000",
+        vector[]
     );
 
     let input_idx_being_signed = 0u64;

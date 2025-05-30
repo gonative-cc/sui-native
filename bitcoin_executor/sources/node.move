@@ -24,7 +24,7 @@ public fun executeBlock(state: &mut State, block: &Block): bool {
     assert!(block.txns[0].is_coinbase());
     let mut i = 1;
     while (i < block.txns.length()) {
-        if (tx::execute(block.txns[i]) == false) {
+        if (tx::execute(&block.txns[i]) == false) {
             return false
         };
         i = i + 1;
