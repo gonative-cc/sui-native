@@ -2,7 +2,7 @@
 
 # Bitcoin Executor
 
-Bitcoin Executor is set of Sui packages (smart contract) to process Bitcoin blocks and execute Bitcoin transactions.
+Bitcoin Executor is set of Sui packages (smart contracts) to process Bitcoin blocks and execute Bitcoin transactions.
 It's part of Bitcoin Execution Node powered by Sui and Walrus - it allows to trustlessly and permissionlessly execute Bitcoin on Sui. See Architecture section below for more details.
 
 This project is submitted to the [Kostas May Hackathon](https://x.com/kostascrypto/status/1918879265677819908)
@@ -112,11 +112,12 @@ erDiagram
 ```
 
 ## Deployed smart contracts
-- Env: Testnet 
+
+- Env: Testnet
 - Package ID: 0xb2d02e392491fc0ffe5216957518c536e426128cde6bcbd1fb56c714ab6edc2c
 - Node Object (Bitcoin Executor): 0x9a44c39c79521d57dc338e3e2a2b851f42fcb6704dca94c8ea405274084c1f04
 
-We have added the first two blocks from the BTC mainnet to the state object. The data in argument is block data in hex format. The sui transactions created by command below: 
+We have added the first two blocks from the BTC mainnet to the state object. The data in argument is block data in hex format. The sui transactions created by command below:
 
 ```bash
 export P_ID=0xb2d02e392491fc0ffe5216957518c536e426128cde6bcbd1fb56c714ab6edc2c
@@ -127,10 +128,10 @@ sui client call --function execute_block --module bitcoin_executor --package $P_
 sui client call --function execute_block --module bitcoin_executor --package $P_ID --gas-budget 100000000 --args $OBJ 0x010000006fe28c0ab6f1b372c1a6a246ae63f74f931e8365e15a089c68d6190000000000982051fd1e4ba744bbbe680e1fee14677ba1a3c3540bf7b1cdb606e857233e0e61bc6649ffff001d01e362990101000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0704ffff001d0104ffffffff0100f2052a0100000043410496b538e853519c726a2c91e61ec11600ae1390813a627c66fb8be7947be63c52da7589379515d4e0a604f8141781e62294721166bf621e73a82cbf2342c858eeac00000000
 ```
 
-Transaciton details: 
+Transaciton details:
+
 - https://suiscan.xyz/testnet/tx/E8iH6c5BxmSWUFmycicPc2ZNSLfg8DFhEjqE6cZfJwFu
 - https://suiscan.xyz/testnet/tx/BmUeQzZ1XAhjXEKmAxCUEP9tFdVoDc77NSMWj1TTo2MR
-
 
 ## About Native
 

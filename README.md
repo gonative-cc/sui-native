@@ -6,6 +6,8 @@ Move packages for Native Bitcoin Chain Abstraction on Sui.
 Packages:
 
 - [nBTC](./nBTC) - the synthetic 1-1 Bitcoin, fully permissionless, custodyless, and rightmost trust minimized.
+- [nBTC OTC] - simple marketplace to buy nBTC with SUI.
+- [Bitcoin Executor](./bitcoin_executor) - trustless Bitcoin execution node on Sui (part of the Trustless Sui Bitcoin Node).
 
 ## Deployed objects & packages
 
