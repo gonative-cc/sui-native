@@ -20,7 +20,7 @@ b"Coinbase tx is not spendable until it reaches maturity of 100 blocks";
 #[error]
 const EInvalidTransaction: vector<u8> = b"Invalid transaction";
 #[error]
-const EInvlaidCoinbase: vector<u8> = b"Invalid coinbase transaction";
+const EInvalidCoinbase: vector<u8> = b"Invalid coinbase transaction";
 #[error]
 const EBlockEmpty: vector<u8> = b"Block cannot empty";
 #[error]
@@ -66,7 +66,7 @@ fun spend(s: &mut State, tx: &Transaction) {
 public fun execute_block(state: &mut State, raw_block: vector<u8>) {
     let block = block::new(raw_block);
     assert!(!block.txns().is_empty(), EBlockEmpty); // block should be empty
-    assert!(block.txns()[0].is_coinbase(), EInvlaidCoinbase);
+    assert!(block.txns()[0].is_coinbase(), EInvalidCoinbase);
     // TODO: handle case tx_id is identical for coinbase
     state.store(&block.txns()[0], true);
     let mut i = 1;
