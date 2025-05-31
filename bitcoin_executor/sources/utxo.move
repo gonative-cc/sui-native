@@ -55,8 +55,9 @@ public fun height(data: &Data): u64 { data.height }
 
 public fun is_coinbase(data: &Data): bool { data.is_coinbase }
 
-
+/// Extract pkh from witness program.
 public fun pkh(data: &Data): vector<u8> {
+    // TODO: we should refactor data to Output friendly format.
     let script = data.script_pub_key;
     let is_wphk = script.length() == 22 &&
         script[0] == OP_0 &&
