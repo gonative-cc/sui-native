@@ -6,15 +6,14 @@ Bitcoin execution node implementation powered by Sui smart contract.
 
 This project is submitted to the [Kostas May Hackathon](https://x.com/kostascrypto/status/1918879265677819908)
 
-
-## Components
+## Architecture
 
 1. Bitcoin [Relayer](https://github.com/gonative-cc/relayer/tree/master/bitcoinspv): Go service listening for new blocks, validating and sending to SPV, Walrus and Executor
 2. Bitcoin [Executor](./) (this project): manages UTXO state and executes Bitcoin transactions.
 3. [Walrus](https://www.walrus.xyz/): data availability for Bitcoin blocks.
 4. Bitcoin [SPV](https://github.com/gonative-cc/move-bitcoin-spv/): light client validating Bitcoin block headers, checking proof of work and managing the heaviest chain.
 
-### Bitcoin Executor Components
+### Bitcoin Executor
 
 ```mermaid
 ---
@@ -23,6 +22,21 @@ title: Bitcoin Executor ER
 erDiagram
     Executor ||--|{ UTXO : manages
     Executor }|--|| Interpreter: uses
+```
+
+### Overall Architecture
+
+```mermaid
+---
+title: Bitcoin Decentralized Node
+---
+flowchart
+    Relayer -- send blocks ---> Walrus
+    Relayer -- send blocks ---> SPV_sui
+    SPV_sui -- verification result --> Relayer
+    Relayer -- send blocks --> Executor
+
+    Executor -- execute TXs --> Interpreter(Interpreter)
 ```
 
 ## Flow
@@ -48,24 +62,9 @@ erDiagram
 - Executor should use SPV to trustlessly verify blocks and independently handle reorgs.
 - Currently we only support `Segwit` transactions. Other type of transactions have to be implemented: Taproot, Legacy (P2PK).
 
-## Overall Architecture
-
-```mermaid
----
-title: Bitcoin Decentralized Node
----
-flowchart
-    Relayer -- send blocks ---> Walrus
-    Relayer -- send blocks ---> SPV_sui
-    SPV_sui -- verification result --> Relayer
-    Relayer -- send blocks --> Executor
-
-    Executor -- execute TXs --> Interpreter(Interpreter)
-```
-
 ### Executor Entity Relationship
 
-``` mermaid
+```mermaid
 erDiagram
     Executor {}
 
@@ -92,7 +91,7 @@ erDiagram
     }
     Output {
         integer amount
-        bytes   script_pubkey "locking script" 
+        bytes   script_pubkey "locking script"
     }
     InputWitness {
         bytes[] items "list of stack items to unlock inputs"
@@ -103,4 +102,3 @@ erDiagram
     Transaction ||--|{ InputWitness : "has"
     Executor    ||--|{ UTXO : "manages"
 ```
-
