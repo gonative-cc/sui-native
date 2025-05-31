@@ -30,7 +30,7 @@ erDiagram
 3. Relayer sends block header (or a whole branch if reorg is detected) to SPV to validate if the branch makes a heaviest chain. If not, `return`.
 4. Relayer sends new blocks of the extended branch (based on the SPV result) to Walrus for data availability.
 5. Relayer sends new blocks to Executor.
-6. Executor parses the block checks if it was processed, if yes, `return`.
+6. Executor parses the block, `return` if encounter errors.
 7. Executor extracts transactions and processes them. For each transaction:
    1. Checks if inputs are existing UTXOs
    2. For each input, call Interpreter to execute Bitcoin script.
@@ -43,6 +43,7 @@ erDiagram
 - SPV and Relayer handle reorgs, however the Executor doesn't handle reorgs
   - We need to update UTXO management to handle reorgs: add versioning and cleanups.
 - Executor should use SPV to trustlessly verify blocks and independently handle reorgs.
+- Currently we only support `Segwit` transactions. Other type of transactions have to be implemented: Taproot, Legacy (P2PK).
 
 ## Overall Architecture
 
