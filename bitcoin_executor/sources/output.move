@@ -4,8 +4,8 @@ use bitcoin_executor::utils::vector_slice;
 
 /// Output in btc transaction
 public struct Output has copy, drop {
-    script_pubkey: vector<u8>,
     amount: vector<u8>,
+    script_pubkey: vector<u8>,
 }
 
 public fun new(amount: vector<u8>, script_pubkey: vector<u8>): Output {
