@@ -2,7 +2,8 @@
 
 # Bitcoin Executor
 
-Bitcoin execution node implementation powered by Sui smart contract.
+Bitcoin Executor is set of Sui packages (smart contract) to process Bitcoin blocks and execute Bitcoin transactions.
+It's part of Bitcoin Execution Node powered by Sui and Walrus - it allows to trustlessly and permissionlessly execute Bitcoin on Sui. See Architecture section below for more details.
 
 This project is submitted to the [Kostas May Hackathon](https://x.com/kostascrypto/status/1918879265677819908)
 
@@ -57,9 +58,14 @@ flowchart
 
 ## TODO
 
-- SPV and Relayer handle reorgs, however the Executor doesn't handle reorgs
+Few things are missing to have a fully functioning trustless implementation of a Bitcoin Execution Node in Sui:
+
+- SPV and Relayer handle reorgs, however the Executor doesn't handle reorgs yet.
   - We need to update UTXO management to handle reorgs: add versioning and cleanups.
-- Executor should use SPV to trustlessly verify blocks and independently handle reorgs.
+- Executor should use SPV to trustlessly verify blocks and independently handle reorgs. We started the integration but didn't have time to test it and finish the setup.
+- Bitcoin block size limit is 4MB. This is way more than a Sui TX size limit. We could split Block into multiple PTBs, but then we have another problem -- theoretically Bitcoin transaction size is the size of the block, and TXs have to be handled atomically and operate on an interpreter stack.
+  - Today, the Bitcoin Executor is limited to handle blocks up to the Sui TX size limit.
+  - We could use clever locking system to firstly propagate the interpreter stack, and then execute it.
 - Currently we only support P2WPHK Segwit transactions. Other type of transactions have to be implemented: P2WSH, Taproot, Legacy (P2PK).
 
 ### Executor Entity Relationship
