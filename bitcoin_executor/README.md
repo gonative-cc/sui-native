@@ -11,6 +11,17 @@ Bitcoin execution node implementation powered by Sui smart contract.
 3. [Walrus](https://www.walrus.xyz/): data availability for Bitcoin blocks.
 4. Bitcoin [SPV](https://github.com/gonative-cc/move-bitcoin-spv/): light client validating Bitcoin block headers, checking proof of work and managing the heaviest chain.
 
+### Bitcoin Executor ER
+
+```mermaid
+---
+title: Bitcoin Executor ER
+---
+erDiagram
+    Executor ||--|{ UTXO : manages
+    Executor }|--|| Interpreter: uses
+```
+
 ## Flow
 
 1. Relayer listens for _new blocks_.
@@ -30,6 +41,20 @@ Bitcoin execution node implementation powered by Sui smart contract.
 ### TODO
 
 - SPV and Relayer handle reorgs, however the Executor doesn't handle reorgs
-  - We need to update UTXO management to handle reorgs: add versioning and cleanups. 
+  - We need to update UTXO management to handle reorgs: add versioning and cleanups.
+- Executor should use SPV to trustlessly verify blocks and independently handle reorgs.
 
-## ER diagram
+## Overall Architecture
+
+```mermaid
+---
+title: Bitcoin Decentralized Node
+---
+flowchart
+    Relayer -- send blocks ---> Walrus
+    Relayer -- send blocks ---> SPV_sui
+    SPV_sui -- verification result --> Relayer
+    Relayer -- send blocks --> Executor
+
+    Executor -- execute TXs --> Interpreter(Interpreter)
+```
