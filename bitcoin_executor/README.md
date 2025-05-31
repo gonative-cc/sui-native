@@ -109,10 +109,10 @@ erDiagram
     Executor    ||--|{ UTXO : "manages"
 ```
 
-# Smart contract 
+## Deployed smart contracts
 - Env: Testnet 
 - Package ID: 0xb2d02e392491fc0ffe5216957518c536e426128cde6bcbd1fb56c714ab6edc2c
-- State/Node Object: 0x9a44c39c79521d57dc338e3e2a2b851f42fcb6704dca94c8ea405274084c1f04
+- Node Object (Bitcoin Executor): 0x9a44c39c79521d57dc338e3e2a2b851f42fcb6704dca94c8ea405274084c1f04
 
 We have added the first two blocks from the BTC mainnet to the state object. The data in argument is block data in hex format. The sui transactions created by command below: 
 
