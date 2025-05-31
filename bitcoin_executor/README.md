@@ -56,6 +56,8 @@ erDiagram
 title: Trustless Bitcoin Node
 ---
 flowchart
+    Bitcoin1[Bitcoin Node] o--o Relayer[Decentralized Relayer]
+    Bitcoin2[Bitcoin Node] o--o Relayer[Decentralized Relayer]
     Relayer -- send blocks ---> Walrus
     Relayer -- send blocks ---> SPV_sui
     SPV_sui -- verification result --> Relayer
