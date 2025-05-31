@@ -21,6 +21,8 @@ const EInvalidTransaction: vector<u8> = b"Invalid transaction";
 const EInvlaidCoinbase: vector<u8> = b"Invalid coinbase transaction";
 #[error]
 const EBlockEmpty: vector<u8> = b"Block cannot empty";
+#[error]
+const EUTXOInvalid: vector<u8> = b"UTXO already spend";
 
 fun init(ctx: &mut TxContext) {
     let state = State {
@@ -76,6 +78,10 @@ fun validate_execution(state: &State, tx: Transaction) : bool{
             tx.input_at(i).tx_id(),
             LEtoNumber(tx.input_at(i).vout()) as u32
         );
+
+        let utxo_valid = state.utxo_exists(outpoint);
+        assert!(utxo_valid, EUTXOInvalid);
+
         let data = state.utxos.borrow(outpoint);
 
         let pk = data.pkh();
