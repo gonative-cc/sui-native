@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MPL-2.0
+
 module bitcoin_executor::bitcoin_executor;
 use bitcoin_executor::tx::{Transaction, Self};
 use bitcoin_executor::interpreter::{run, create_p2wpkh_scriptcode_bytes};

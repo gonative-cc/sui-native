@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MPL-2.0
+
 module bitcoin_executor::block_header;
 use bitcoin_executor::reader;
 use std::hash::sha2_256;
