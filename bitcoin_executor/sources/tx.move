@@ -182,15 +182,8 @@ public fun deserialize(r: &mut Reader) : Transaction {
 }
 
 public fun is_coinbase(tx: &Transaction): bool {
-    if (tx.inputs.length() != 1) {
-        return false
-    };
-
-    let input = tx.inputs[0];
-    if (input.vout() != x"ffffffff") {
-        return false
-    };
-
     // TODO: check BIP34 and BIP141
-    true
+    tx.inputs.length() == 1 && tx.inputs[0].vout() == x"ffffffff" &&
+        tx.inputs[0].tx_id() ==  x"0000000000000000000000000000000000000000000000000000000000000000"
+
 }
