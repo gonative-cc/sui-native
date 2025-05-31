@@ -10,6 +10,8 @@ This guide show the steps to run a demonstration of the Bitcoin Executor, which 
     - Ensure you can interact with it via `bitcoin-cli -regtest`.
     - For a clean state, you might want to stop `bitcoind`, remove your `regtest` data directory (e.g., `rm -rf ~/.bitcoin/regtest`), and restart `bitcoind -regtest -daemon`.
 
+    As an alternative you can use docker setup from `relayer/contrib`
+
 2.  Relayer Scripts https://github.com/gonative-cc/relayer
 
     - You will need the `btc_executor.sh` and `submit_blocks.sh` scripts from `demo_scripts` directory. (Or you can perform these actions manually).
