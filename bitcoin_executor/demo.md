@@ -2,6 +2,12 @@
 
 This guide show the steps to run a demonstration of the Bitcoin Executor, which operates as a Move smart contract on the Sui blockchain. The demo will show the execution of Bitcoin blocks and the management of the UTXO set on-chain.
 
+- [**Demo Video**](https://drive.google.com/file/d/1S-PR5aN2S24Q1HZmXregBqqAS4aZHR4h/view?usp=sharing)
+- [Documentation](./README.md)
+
+Overview:
+![Demo Diagram!](./assets/demo-diagram.png)
+
 ## Prerequisites
 
 1.  Bitcoin Core (`bitcoind`):

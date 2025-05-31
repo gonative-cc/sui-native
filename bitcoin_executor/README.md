@@ -7,6 +7,8 @@ It's part of Bitcoin Execution Node powered by Sui and Walrus - it allows to tru
 
 This project is submitted to the [Kostas May Hackathon](https://x.com/kostascrypto/status/1918879265677819908)
 
+- [DEMO](./demo.md)
+
 ## Architecture
 
 1. Bitcoin [Relayer](https://github.com/gonative-cc/relayer/tree/master/bitcoinspv): Go service listening for new blocks, validating and sending to SPV, Walrus and Executor
@@ -111,8 +113,8 @@ erDiagram
 
 ## About Native
 
-[Native](https://gonative.cc) is the most advanced Bitcoin interoperability protocol. Leveraging Zero Trust Architecture to enable non-collusive, decentralized, trust-minimized Bitcoin in DeFi.
+[Native](https://gonative.cc) is the most advanced Bitcoin interoperability protocol. Build on Zero Trust Architecture to enable BTCFi in a non-collusive, decentralized, trust-minimized way.
 
-We create protocols necessary to interact and program Bitcoin in the Web3 _native_ way!
+With us, you can program Bitcoin in the Web3 _native_ way!
 
 Follow us on X: [@goNativeCC](https://x.com/goNativeCC).
