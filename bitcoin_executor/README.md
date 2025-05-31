@@ -36,7 +36,7 @@ flowchart
     SPV_sui -- verification result --> Relayer
     Relayer -- send blocks --> Executor
 
-    Executor -- execute TXs --> Interpreter(Interpreter)
+    Executor -- execute TXs --> Interpreter[[Interpreter]]
 ```
 
 ## Flow
