@@ -333,7 +333,7 @@ public fun new_tx_context(
     }
 }
 
-// #[test_only]
+#[test_only]
 public fun new_ip_for_test(stack: Stack): Interpreter {
     Interpreter {
         stack: stack,
