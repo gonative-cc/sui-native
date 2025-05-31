@@ -8,6 +8,8 @@ const OP_0: u8 = 0x00;
 const OP_DATA_20: u8 = 0x14;
 
 
+/// Referenced to output by using the unique combination of TXID:VOUT
+/// We call this outpoint
 public struct OutPoint has copy, drop, store {
     tx_id: vector<u8>,
     vout: u32,
