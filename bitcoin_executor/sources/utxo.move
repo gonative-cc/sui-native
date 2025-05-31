@@ -2,16 +2,21 @@
 
 module bitcoin_executor::utxo;
 
-// We represent UTXOs as a map of {key: OutPoint, value: Data}
-// OutPoint is a name used to identify UTXO in bitcoind
+use bitcoin_executor::utils::vector_slice;
 
-// OutPoint is a UTXO ID
+const OP_0: u8 = 0x00;
+const OP_DATA_20: u8 = 0x14;
+
+
+/// We represent UTXOs as a map of {key: OutPoint, value: Data}
+/// OutPoint is a name used to identify UTXO in bitcoind
+/// OutPoint is a UTXO ID
 public struct OutPoint has copy, drop, store {
     tx_id: vector<u8>,
     vout: u32,
 }
 
-// Data is a UTXO value
+/// Data is a UTXO value
 public struct Data has copy, drop, store {
     height: u64, // The height of the block containing the UTXO.
     is_coinbase: bool, // Whether the UTXO is from a coinbase transaction or not.
@@ -49,3 +54,18 @@ public fun script_pub_key(data: &Data): &vector<u8> { &data.script_pub_key }
 public fun height(data: &Data): u64 { data.height }
 
 public fun is_coinbase(data: &Data): bool { data.is_coinbase }
+
+/// Extract pkh from witness program.
+public fun pkh(data: &Data): vector<u8> {
+    // TODO: we should refactor data to Output friendly format.
+    let script = data.script_pub_key;
+    let is_wphk = script.length() == 22 &&
+        script[0] == OP_0 &&
+        script[1] == OP_DATA_20;
+
+    if (is_wphk) {
+        vector_slice(&script, 2, 22)
+    } else {
+        vector[]
+    }
+}

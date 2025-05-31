@@ -16,7 +16,7 @@ fun segwit_tx_00() {
     assert_eq(txn.tx_id(), x"9ecedf01c545f5abf78fce749fd326e27ad3375d432405b736990ace73148d8b");
     let input = txn.inputs()[0];
 
-    assert_eq(input.output_tx_id(), x"9dafd815a150414d02047a22ab806dbd2f43d0e1ea5922dadd5396f6d6776920");
+    assert_eq(input.tx_id(), x"9dafd815a150414d02047a22ab806dbd2f43d0e1ea5922dadd5396f6d6776920");
     assert_eq(input.vout(), x"29000000");
     assert_eq(input.script_sig(), x"");
     assert_eq(txn.inputs().length(), 1);
