@@ -53,15 +53,30 @@ fun store(state: &mut State, tx: &Transaction, coinbase: bool) {
     })
 }
 
+fun spend(s: &mut State, tx: &Transaction) {
+    tx.inputs().do!(|input| {
+        let outpoint = utxo::new_outpoint(
+            input.tx_id(),
+            LEtoNumber(input.vout()) as u32
+        );
+
+        let height = s.height;
+        s.spend_utxo(outpoint, height);
+    });
+}
+
 public fun execute_block(state: &mut State, raw_block: vector<u8>) {
     let block = block::new(raw_block);
     assert!(!block.txns().is_empty(), EBlockEmpty); // block should be empty
     assert!(block.txns()[0].is_coinbase(), EInvlaidCoinbase);
+    // TODO: handle case tx_id is identical for coinbase
     state.store(&block.txns()[0], true);
     let mut i = 1;
     while (i < block.txns().length()) {
-        assert!(validate_execution(state, block.txns()[i]), EInvalidTransaction);
-        state.store(&block.txns()[i], false);
+        let txn = block.txns()[i];
+        assert!(validate_execution(state, txn), EInvalidTransaction);
+        state.store(&txn, false);
+        state.spend(&txn);
         i = i + 1;
     };
 
