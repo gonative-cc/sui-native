@@ -60,7 +60,7 @@ flowchart
 - SPV and Relayer handle reorgs, however the Executor doesn't handle reorgs
   - We need to update UTXO management to handle reorgs: add versioning and cleanups.
 - Executor should use SPV to trustlessly verify blocks and independently handle reorgs.
-- Currently we only support `Segwit` transactions. Other type of transactions have to be implemented: Taproot, Legacy (P2PK).
+- Currently we only support P2WPHK Segwit transactions. Other type of transactions have to be implemented: P2WSH, Taproot, Legacy (P2PK).
 
 ### Executor Entity Relationship
 
@@ -102,3 +102,11 @@ erDiagram
     Transaction ||--|{ InputWitness : "has"
     Executor    ||--|{ UTXO : "manages"
 ```
+
+## About Native
+
+[Native](https://gonative.cc) is the most advanced Bitcoin interoperability protocol. Leveraging Zero Trust Architecture to enable non-collusive, decentralized, trust-minimized Bitcoin in DeFi.
+
+We create protocols necessary to interact and program Bitcoin in the Web3 _native_ way!
+
+Follow us on X: [@goNativeCC](https://x.com/goNativeCC).
