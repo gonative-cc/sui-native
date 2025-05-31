@@ -11,9 +11,16 @@ use sui::table::{Self, Table};
 #[test_only]
 use std::unit_test::assert_eq;
 
+
 #[error]
 const ECoinbaseNotMature: vector<u8> =
-    b"Coinbase tx is not spendable until it reaches maturity of 100 blocks";
+b"Coinbase tx is not spendable until it reaches maturity of 100 blocks";
+#[error]
+const EInvalidTransaction: vector<u8> = b"Invalid transaction";
+#[error]
+const EInvlaidCoinbase: vector<u8> = b"Invalid coinbase transaction";
+#[error]
+const EBlockEmpty: vector<u8> = b"Block cannot empty";
 
 fun init(ctx: &mut TxContext) {
     let state = State {
@@ -44,15 +51,14 @@ fun store(state: &mut State, tx: &Transaction, coinbase: bool) {
     })
 }
 
-// TODO: integrate it with the parser and update the utxo set
 public fun execute_block(state: &mut State, raw_block: vector<u8>) {
     let block = block::new(raw_block);
-    assert!(!block.txns().is_empty()); // block should be empty
-    assert!(block.txns()[0].is_coinbase());
+    assert!(!block.txns().is_empty(), EBlockEmpty); // block should be empty
+    assert!(block.txns()[0].is_coinbase(), EInvlaidCoinbase);
     state.store(&block.txns()[0], true);
     let mut i = 1;
     while (i < block.txns().length()) {
-        assert!(validate_execution(state, block.txns()[i]));
+        assert!(validate_execution(state, block.txns()[i]), EInvalidTransaction);
         state.store(&block.txns()[i], false);
         i = i + 1;
     };
