@@ -2,11 +2,16 @@
 
 module bitcoin_executor::utxo;
 
+// We represent UTXOs as a map of {key: OutPoint, value: Data}
+// OutPoint is a name used to identify UTXO in bitcoind
+
+// OutPoint is a UTXO ID
 public struct OutPoint has copy, drop, store {
     tx_id: vector<u8>,
     vout: u32,
 }
 
+// Data is a UTXO value
 public struct Data has copy, drop, store {
     height: u64, // The height of the block containing the UTXO.
     is_coinbase: bool, // Whether the UTXO is from a coinbase transaction or not.
