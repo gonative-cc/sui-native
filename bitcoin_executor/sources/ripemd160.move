@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MPL-2.0
+
 module bitcoin_executor::ripemd160;
 
 use std::u64::do;

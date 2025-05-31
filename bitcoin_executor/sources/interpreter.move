@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MPL-2.0
+
 module bitcoin_executor::interpreter;
 
 use bitcoin_executor::reader::{Self, Reader};

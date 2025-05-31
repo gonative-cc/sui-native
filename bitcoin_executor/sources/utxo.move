@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MPL-2.0
+
 module bitcoin_executor::utxo;
 
 public struct OutPoint has copy, drop, store {
