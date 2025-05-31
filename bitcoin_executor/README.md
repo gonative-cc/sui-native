@@ -3,11 +3,33 @@
 # Bitcoin Executor
 
 Bitcoin Executor is set of Sui packages (smart contracts) to process Bitcoin blocks and execute Bitcoin transactions.
+
 It's part of Bitcoin Execution Node powered by Sui and Walrus - it allows to trustlessly and permissionlessly execute Bitcoin on Sui. See Architecture section below for more details.
 
 This project is submitted to the [Kostas May Hackathon](https://x.com/kostascrypto/status/1918879265677819908)
 
 - [DEMO](./demo.md)
+
+## Why Trustless Bitcoin Node is important?
+
+Most of the users observe a state of a remote chain through a service providers. They need to trust the service providers and their API.
+Wallets also have similar trust assumption - you have to trust the Wallet RPC providers.
+
+Finally smart contracts on Sui don't have full access to Bitcoin state, which makes difficult to reason about Bitcoin state. This can be done with light clients (notably Natives' [Bitcoin SPV](https://github.com/gonative-cc/move-bitcoin-spv/). However, this requires indirect operations to access Bitcoin state: users / dapps need to send Bitcoin state with a proof rather than simply querying it on Sui.
+
+Built on [**Native Zero Trust Architecture**](https://www.gonative.cc/post/trust-models-in-blockchain-architecture), and powered by [Ika](https://ika.xyz/) 2PC-MPC, Trustless Bitcoin Node provides:
+
+- 👉 Fully mirror the Bitcoin State on Sui - you can
+- 👉 Simulate transactions
+- 👉 Grant Bitcoin users access to Sui assets based on Bitcoin execution / state.
+- 👉 Use advanced programmability patterns to execute native Bitcoin transactions.
+- 👉 Compose multi contract calls based in Bitcoin state or TX result.
+- 👉 Execute sophisticated flows, that include Bitcoin UTXOs.
+
+📢 Thanks to Sui Network scalability and [Native](https://gonative.cc) tech, **Bitcoin finally is fully programmable and scalable!**
+👉 you can trustlessly program and transfer access to Bitcoin assets without executing Bitcoin TXs.
+
+This is **completely new paradigm**! The Zero Trust Architecture at it's best!
 
 ## Architecture
 
@@ -31,7 +53,7 @@ erDiagram
 
 ```mermaid
 ---
-title: Bitcoin Decentralized Node
+title: Trustless Bitcoin Node
 ---
 flowchart
     Relayer -- send blocks ---> Walrus
