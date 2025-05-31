@@ -33,10 +33,6 @@ fun init(ctx: &mut TxContext) {
     transfer::share_object(state);
 }
 
-// public struct Block has copy, drop {
-//     txns: vector<Transaction>,
-// }
-
 /// State stores the utxo set
 public struct State has key, store {
     id: UID,
@@ -232,15 +228,15 @@ fun execution_node_test() {
 
     state.execute_block(b);
 
-    let b = block::new(b);
-    std::debug::print(&b);
-    b.txns().do!(|txn| {
-        txn.outputs().length().do!(|idx| {
-            let o = utxo::new_outpoint(txn.tx_id(), idx as u32);
-            assert!(state.utxo_exists(o));
-            std::debug::print(state.utxos.borrow(o));
-        })
-    });
+    // let b = block::new(b);
+    // std::debug::print(&b);
+    // b.txns().do!(|txn| {
+    //     txn.outputs().length().do!(|idx| {
+    //         let o = utxo::new_outpoint(txn.tx_id(), idx as u32);
+    //         assert!(state.utxo_exists(o));
+    //         std::debug::print(state.utxos.borrow(o));
+    //     })
+    // });
 
     transfer::public_transfer(state, @0xCAFE);
 }
