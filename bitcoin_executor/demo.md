@@ -1,6 +1,6 @@
 # Bitcoin Execution Layer on Sui - Demo Guide
 
-This guide show the steps to run a demonstration of the Bitcoin Execution Layer, which operates as a Move smart contract on the Sui blockchain. The demo will show the execution of Bitcoin blocks and the management of the UTXO set on-chain.
+This guide show the steps to run a demonstration of the Bitcoin Executor, which operates as a Move smart contract on the Sui blockchain. The demo will show the execution of Bitcoin blocks and the management of the UTXO set on-chain.
 
 ## Prerequisites
 
@@ -15,14 +15,14 @@ This guide show the steps to run a demonstration of the Bitcoin Execution Layer,
     - You will need the `btc_executor.sh` and `submit_blocks.sh` scripts from `demo_scripts` directory. (Or you can perform these actions manually).
 
 3.  Sui Development Environment:
-    - Sui client installed and configured to connect to a local Sui network, Sui Devnet, or Sui Testnet.
+    - Sui client installed and configured to connect to a Sui network.
     - A Sui address with sufficient SUI gas tokens for deploying and interacting with the smart contract.
 
 ## Demo Steps
 
 ### Step 1: Deploy the Bitcoin Execution Layer Contract
 
-First, you need to deploy Move package containing the `bitcoin_executor` module to your target Sui network.
+First, you need to deploy the Move package containing the `bitcoin_executor` module to your target Sui network.
 
 1.  Navigate to your Move package directory.
 2.  Publish the contract using the Sui client:
@@ -60,7 +60,7 @@ This step involves creating wallets, generating addresses, and mining blocks on 
     6.  Output the raw hex of that transaction.
 
 - Option B: Manual Steps
-  Check the bitcoin-cli docks for it.
+  Check the bitcoin-cli docs for it.
 
 ### Step 3: Submit Bitcoin Blocks to the Sui Execution Layer
 
