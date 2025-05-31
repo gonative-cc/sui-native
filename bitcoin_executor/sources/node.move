@@ -223,7 +223,7 @@ fun execution_node_test() {
     let mut state = State {
         id: object::new(&mut ctx),
         utxos: table::new<OutPoint, Data>(&mut ctx),
-        height: 0,
+        height: 100,
     };
     add_utxo(&mut state, outpint, info);
 
