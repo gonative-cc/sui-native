@@ -97,6 +97,8 @@ fun validate_execution(state: &State, tx: Transaction) : bool{
 
         let data = state.utxos.borrow(outpoint);
 
+        // TODO: We only support P2WPKH now.
+        // We will support more standard scripts.
         let pk = data.pkh();
         let script = create_p2wpkh_scriptcode_bytes(pk);
         let valid = run(tx, stack, script, i, data.value());
