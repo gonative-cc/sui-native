@@ -7,7 +7,6 @@ use bitcoin_executor::utils::vector_slice;
 const OP_0: u8 = 0x00;
 const OP_DATA_20: u8 = 0x14;
 
-
 /// We represent UTXOs as a map of {key: OutPoint, value: Data}
 /// OutPoint is a name used to identify UTXO in bitcoind
 /// OutPoint is a UTXO ID
@@ -59,7 +58,8 @@ public fun is_coinbase(data: &Data): bool { data.is_coinbase }
 public fun pkh(data: &Data): vector<u8> {
     // TODO: we should refactor data to Output friendly format.
     let script = data.script_pub_key;
-    let is_wphk = script.length() == 22 &&
+    let is_wphk =
+        script.length() == 22 &&
         script[0] == OP_0 &&
         script[1] == OP_DATA_20;
 

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 module bitcoin_executor::reader;
+
 use bitcoin_executor::utils::LEtoNumber;
 
 #[error]
@@ -12,7 +13,7 @@ const EBadReadData: vector<u8> = b"Invalid read script";
 
 public struct Reader has copy, drop {
     data: vector<u8>,
-    next_index: u64
+    next_index: u64,
 }
 
 /// Creates a new reader
@@ -24,7 +25,7 @@ public fun new(data: vector<u8>): Reader {
 }
 
 /// Checks if the next `len` bytes are readable
-public fun readable(r: &Reader, len: u64):  bool {
+public fun readable(r: &Reader, len: u64): bool {
     r.next_index + len <= r.data.length()
 }
 
@@ -59,6 +60,7 @@ public fun read_u32(r: &mut Reader): u32 {
     let v = r.read(4);
     LEtoNumber(v) as u32
 }
+
 public fun read_compact_size(r: &mut Reader): u64 {
     let offset = r.read_byte();
     if (offset <= 0xfc) {
@@ -76,13 +78,13 @@ public fun read_compact_size(r: &mut Reader): u64 {
     let v = r.read(offset);
     LEtoNumber(v)
 }
+
 /// reads the next byte from the stream
 public fun read_byte(r: &mut Reader): u8 {
     let b = r.data[r.next_index];
     r.next_index = r.next_index + 1;
     b
 }
-
 
 /// Returns the next opcode
 public fun next_opcode(r: &mut Reader): u8 {

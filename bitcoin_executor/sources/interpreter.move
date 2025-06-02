@@ -2,16 +2,14 @@
 
 module bitcoin_executor::interpreter;
 
-use bitcoin_executor::reader::{Self, Reader};
-use bitcoin_executor::stack::{Self, Stack};
 use bitcoin_executor::encoding;
+use bitcoin_executor::input;
+use bitcoin_executor::output;
+use bitcoin_executor::reader::{Self, Reader};
 use bitcoin_executor::ripemd160;
 use bitcoin_executor::sighash;
-use bitcoin_executor::tx::{Self,Transaction};
-use bitcoin_executor::input::{Self, Input};
-use bitcoin_executor::output::{Self, Output};
-
-// use bitcoin_executor::types::{Tx, Self};
+use bitcoin_executor::stack::{Self, Stack};
+use bitcoin_executor::tx::{Self, Transaction};
 use bitcoin_executor::utils::{Self, hash256};
 use std::hash::sha2_256;
 
@@ -351,7 +349,13 @@ public fun new_ip_with_context(stack: Stack, tx_ctx: TransactionContext): Interp
 }
 
 /// Execute btc script
-public fun run(tx: Transaction, stack: Stack, script: vector<u8>, input_idx: u64, amount: u64): bool {
+public fun run(
+    tx: Transaction,
+    stack: Stack,
+    script: vector<u8>,
+    input_idx: u64,
+    amount: u64,
+): bool {
     let sig_version = if (tx.is_witness()) {
         SIG_VERSION_WITNESS_V0
     } else {
@@ -362,7 +366,7 @@ public fun run(tx: Transaction, stack: Stack, script: vector<u8>, input_idx: u64
         tx,
         input_idx as u64,
         amount,
-        sig_version
+        sig_version,
     );
 
     let mut ip = new_ip_with_context(stack, ctx);
@@ -822,7 +826,7 @@ fun test_op_checksig() {
         test_outputs,
         vector[],
         x"00000000",
-        vector[]
+        vector[],
     );
 
     let input_idx_being_signed = 0;
