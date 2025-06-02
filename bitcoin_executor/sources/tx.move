@@ -2,14 +2,13 @@
 
 module bitcoin_executor::tx;
 
+use bitcoin_executor::input::{Self, Input};
+use bitcoin_executor::output::{Self, Output};
 use bitcoin_executor::reader::Reader;
 use bitcoin_executor::utils::u64_to_varint_bytes;
 
-use bitcoin_executor::input::{Self, Input};
-use bitcoin_executor::output::{Self, Output};
-
-public struct InputWitness  has copy, drop{
-    items: vector<vector<u8>>
+public struct InputWitness has copy, drop {
+    items: vector<vector<u8>>,
 }
 
 /// BTC transaction
@@ -21,7 +20,7 @@ public struct Transaction has copy, drop {
     outputs: vector<Output>,
     witness: vector<InputWitness>,
     locktime: vector<u8>,
-    tx_id: vector<u8>
+    tx_id: vector<u8>,
 }
 
 public fun new(
@@ -32,22 +31,21 @@ public fun new(
     outputs: vector<Output>,
     witness: vector<InputWitness>,
     locktime: vector<u8>,
-    tx_id: vector<u8>
-) : Transaction {
-     Transaction {
-         version,
-         marker,
-         flag,
-         inputs,
-         outputs,
-         witness,
-         locktime,
-         tx_id
-     }
+    tx_id: vector<u8>,
+): Transaction {
+    Transaction {
+        version,
+        marker,
+        flag,
+        inputs,
+        outputs,
+        witness,
+        locktime,
+        tx_id,
+    }
 }
 
-
-public fun items(w: &InputWitness) : vector<vector<u8>> {
+public fun items(w: &InputWitness): vector<vector<u8>> {
     w.items
 }
 
@@ -94,7 +92,7 @@ public fun tx_id(tx: &Transaction): vector<u8> {
 }
 
 /// deseriablize transaction from bytes
-public fun deserialize(r: &mut Reader) : Transaction {
+public fun deserialize(r: &mut Reader): Transaction {
     let mut raw_tx = vector[];
     let version = r.read(4);
     raw_tx.append(version);
@@ -103,7 +101,7 @@ public fun deserialize(r: &mut Reader) : Transaction {
     let mut marker: Option<u8> = option::none();
     let mut flag: Option<u8> = option::none();
     if (segwit[0] == 0x00 && segwit[1] == 0x01) {
-    // TODO: Handle case marker and option is none
+        // TODO: Handle case marker and option is none
         marker = option::some(r.read_byte());
         flag = option::some(r.read_byte());
     };
@@ -128,8 +126,8 @@ public fun deserialize(r: &mut Reader) : Transaction {
                 tx_id,
                 vout,
                 script_sig,
-                sequence
-            )
+                sequence,
+            ),
         );
     });
 
@@ -145,8 +143,9 @@ public fun deserialize(r: &mut Reader) : Transaction {
         raw_tx.append(script_pubkey);
         outputs.push_back(
             output::new(
-                amount, script_pubkey
-            )
+                amount,
+                script_pubkey,
+            ),
         )
     });
 
@@ -159,11 +158,10 @@ public fun deserialize(r: &mut Reader) : Transaction {
                 let size = r.read_compact_size();
                 items.push_back(r.read(size));
             });
-            witness.push_back(InputWitness{
-                items
+            witness.push_back(InputWitness {
+                items,
             });
         })
-
     };
 
     let locktime = r.read(4);
@@ -185,5 +183,4 @@ public fun is_coinbase(tx: &Transaction): bool {
     // TODO: check BIP34 and BIP141
     tx.inputs.length() == 1 && tx.inputs[0].vout() == x"ffffffff" &&
         tx.inputs[0].tx_id() ==  x"0000000000000000000000000000000000000000000000000000000000000000"
-
 }

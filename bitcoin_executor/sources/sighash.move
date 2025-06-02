@@ -2,13 +2,10 @@
 
 module bitcoin_executor::sighash;
 
-// use bitcoin_executor::types::{Self, Tx};
+use bitcoin_executor::input;
+use bitcoin_executor::output;
 use bitcoin_executor::tx::{Self, Transaction};
 use bitcoin_executor::utils::{Self, hash256};
-
-use bitcoin_executor::input::{Self, Input};
-use bitcoin_executor::output::{Self, Output};
-
 
 #[test_only]
 use sui::test_utils::assert_eq;
@@ -52,9 +49,7 @@ public fun create_bip143_sighash_preimage(
     ) {
         let mut all_sequences_concatenated = vector[];
         transaction.inputs().length().do!(|i| {
-            all_sequences_concatenated.append(
-                transaction.input_at(i).sequence(),
-            );
+            all_sequences_concatenated.append(transaction.input_at(i).sequence());
         });
         hash256(all_sequences_concatenated)
     } else {
@@ -89,7 +84,7 @@ public fun create_bip143_sighash_preimage(
         let mut single_output_concatenated = vector[];
         single_output_concatenated.append(output_to_sign.amount());
         single_output_concatenated.append(
-            utils::script_to_var_bytes(&output_to_sign.script_pubkey())
+            utils::script_to_var_bytes(&output_to_sign.script_pubkey()),
         );
         hash256(single_output_concatenated)
     } else {
@@ -133,7 +128,7 @@ fun test_create_bip143_sighash_preimage_lmb_example() {
         test_outputs,
         vector[],
         x"00000000",
-        vector[]
+        vector[],
     );
 
     let input_idx_being_signed = 0u64;

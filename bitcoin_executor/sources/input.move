@@ -8,7 +8,12 @@ public struct Input has copy, drop {
     sequence: vector<u8>,
 }
 
-public fun new(tx_id: vector<u8>, vout: vector<u8>, script_sig: vector<u8>, sequence: vector<u8>): Input {
+public fun new(
+    tx_id: vector<u8>,
+    vout: vector<u8>,
+    script_sig: vector<u8>,
+    sequence: vector<u8>,
+): Input {
     Input {
         tx_id,
         vout,
