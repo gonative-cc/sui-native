@@ -6,6 +6,7 @@ use bitcoin_executor::input::{Self, Input};
 use bitcoin_executor::output::{Self, Output};
 use bitcoin_executor::reader::Reader;
 use bitcoin_executor::utils::u64_to_varint_bytes;
+use bitcoin_executor::utils::hash256;
 
 public struct InputWitness has copy, drop {
     items: vector<vector<u8>>,
@@ -23,6 +24,8 @@ public struct Transaction has copy, drop {
     tx_id: vector<u8>,
 }
 
+// TODO: `new` is not good name here.
+/// Create a btc data
 public fun new(
     version: vector<u8>,
     marker: Option<u8>,
@@ -93,10 +96,15 @@ public fun tx_id(tx: &Transaction): vector<u8> {
 
 /// deseriablize transaction from bytes
 public fun deserialize(r: &mut Reader): Transaction {
+    // transaction data without segwit.
+    // use for compute the tx_id
     let mut raw_tx = vector[];
+
+    // read transaction version
     let version = r.read(4);
     raw_tx.append(version);
 
+    // read marker and flag
     let segwit = r.peek(2);
     let mut marker: Option<u8> = option::none();
     let mut flag: Option<u8> = option::none();
@@ -105,9 +113,10 @@ public fun deserialize(r: &mut Reader): Transaction {
         marker = option::some(r.read_byte());
         flag = option::some(r.read_byte());
     };
+
+    // read output
     let number_inputs = r.read_compact_size();
     raw_tx.append(u64_to_varint_bytes(number_inputs));
-
     let mut inputs = vector[];
     number_inputs.do!(|_| {
         let tx_id = r.read(32);
@@ -131,6 +140,7 @@ public fun deserialize(r: &mut Reader): Transaction {
         );
     });
 
+    // read outputs
     let number_outputs = r.read_compact_size();
     raw_tx.append(u64_to_varint_bytes(number_outputs));
     let mut outputs = vector[];
@@ -164,9 +174,11 @@ public fun deserialize(r: &mut Reader): Transaction {
         })
     };
 
+    // 4 bytes
     let locktime = r.read(4);
     raw_tx.append(locktime);
-    let tx_id = std::hash::sha2_256(std::hash::sha2_256(raw_tx));
+
+    let tx_id = hash256(raw_tx);
     new(
         version,
         marker,

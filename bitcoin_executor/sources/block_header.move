@@ -3,7 +3,7 @@
 module bitcoin_executor::block_header;
 
 use bitcoin_executor::reader;
-use std::hash::sha2_256;
+use bitcoin_executor::utils::hash256;
 
 public struct BlockHeader has copy, drop {
     version: u32,
@@ -22,7 +22,7 @@ public fun new(raw_block_header: vector<u8>): BlockHeader {
         merkle_root: r.read(32),
         timestamp: r.read_u32(),
         bits: r.read_u32(),
-        block_hash: sha2_256(sha2_256(raw_block_header)),
+        block_hash: hash256(raw_block_header),
     }
 }
 
