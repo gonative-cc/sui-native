@@ -1,9 +1,16 @@
+// SPDX-License-Identifier: MPL-2.0
+
 module bitcoin_executor::interpreter;
 
-use bitcoin_executor::reader::{Self, ScriptReader};
-use bitcoin_executor::stack::{Self, Stack};
-use bitcoin_executor::utils;
+use bitcoin_executor::encoding;
+use bitcoin_executor::input;
+use bitcoin_executor::output;
+use bitcoin_executor::reader::{Self, Reader};
 use bitcoin_executor::ripemd160;
+use bitcoin_executor::sighash;
+use bitcoin_executor::stack::{Self, Stack};
+use bitcoin_executor::tx::{Self, Transaction};
+use bitcoin_executor::utils::{Self, hash256};
 use std::hash::sha2_256;
 
 #[test_only]
@@ -278,40 +285,98 @@ const OP_PUBKEYHASH: u8 = 0xfd; // 253 - bitcoin core internal
 const OP_PUBKEY: u8 = 0xfe; // 254 - bitcoin core internal
 const OP_INVALIDOPCODE: u8 = 0xff; // 255 - bitcoin core internal
 
-/// Conditional execution constants.
-const CondFalse: u8 = 0;
-const CondTrue: u8 = 1;
-const CondSkip: u8 = 2;
+/// Signature types
+const SIG_VERSION_BASE: u8 = 0;
+const SIG_VERSION_WITNESS_V0: u8 = 1; //SEGWIT
+
+/// Hash types
+const SHA256: u8 = 1;
 
 // ============= Errors ================================
 #[error]
 const EEqualVerify: vector<u8> = b"SCRIPT_ERR_EQUALVERIFY";
 #[error]
 const EInvalidStackOperation: vector<u8> = b"Invalid stack operation";
+#[error]
+const EMissingTxCtx: vector<u8> = b"Missing transaction context";
+#[error]
+const EUnsupportedSigVersionForChecksig: vector<u8> =
+    b"Unsupported signature version for op_checksig";
+
+public struct TransactionContext has copy, drop {
+    tx: Transaction,
+    // we use u64 for query vector index in sui move easier.
+    input_index: u64,
+    utxo_value: u64,
+    sig_version: u8, //TODO: maybe enum for it?
+}
 
 public struct Interpreter has copy, drop {
     stack: Stack,
-    reader: ScriptReader,
+    reader: Reader,
+    tx_context: Option<TransactionContext>,
 }
 
-public fun new(stack: Stack): Interpreter {
+public fun new_tx_context(
+    tx: Transaction,
+    input_index: u64,
+    utxo_value: u64,
+    sig_version: u8,
+): TransactionContext {
+    TransactionContext {
+        tx,
+        input_index,
+        utxo_value,
+        sig_version,
+    }
+}
+
+#[test_only]
+public fun new_ip_for_test(stack: Stack): Interpreter {
     Interpreter {
         stack: stack,
-        reader: reader::new(vector[]), // empty reader
+        reader: reader::new(vector[]),
+        tx_context: option::none(),
+    }
+}
+
+public fun new_ip_with_context(stack: Stack, tx_ctx: TransactionContext): Interpreter {
+    Interpreter {
+        stack: stack,
+        reader: reader::new(vector[]),
+        tx_context: option::some(tx_ctx),
     }
 }
 
 /// Execute btc script
-public fun run(script: vector<u8>): bool {
-    let st = stack::create();
-    let mut ip = new(st);
+public fun run(
+    tx: Transaction,
+    stack: Stack,
+    script: vector<u8>,
+    input_idx: u64,
+    amount: u64,
+): bool {
+    let sig_version = if (tx.is_witness()) {
+        SIG_VERSION_WITNESS_V0
+    } else {
+        SIG_VERSION_BASE
+    };
+
+    let ctx = new_tx_context(
+        tx,
+        input_idx as u64,
+        amount,
+        sig_version,
+    );
+
+    let mut ip = new_ip_with_context(stack, ctx);
     let r = reader::new(script);
     ip.eval(r)
 }
 
-fun eval(ip: &mut Interpreter, r: ScriptReader): bool {
+fun eval(ip: &mut Interpreter, r: Reader): bool {
     ip.reader = r; // init new  reader
-    while (!r.end_stream()) {
+    while (!ip.reader.end_stream()) {
         let op = ip.reader.next_opcode();
 
         if (op == OP_0) {
@@ -336,6 +401,8 @@ fun eval(ip: &mut Interpreter, r: ScriptReader): bool {
             ip.op_sha256();
         } else if (op == OP_HASH256) {
             ip.op_hash256();
+        } else if (op == OP_CHECKSIG) {
+            ip.op_checksig();
         } else if (op == OP_HASH160) {
             ip.op_hash160();
         }
@@ -431,7 +498,74 @@ fun op_sha256(ip: &mut Interpreter) {
 
 fun op_hash256(ip: &mut Interpreter) {
     let value = ip.stack.pop();
-    ip.stack.push(sha2_256(sha2_256(value)))
+    ip.stack.push(hash256(value))
+}
+
+fun op_checksig(ip: &mut Interpreter) {
+    assert!(ip.stack.size() >= 2, EInvalidStackOperation);
+
+    let pubkey_bytes = ip.stack.pop();
+    let mut sig_bytes = ip.stack.pop();
+
+    if (sig_bytes.is_empty()) {
+        ip.stack.push(utils::vector_false());
+        return
+    };
+
+    // https://learnmeabitcoin.com/technical/keys/signature/
+    let (sig_to_verify, sighash_flag) = encoding::parse_btc_sig(&mut sig_bytes);
+
+    assert!(option::is_some(&ip.tx_context), EMissingTxCtx);
+
+    let message_digest = create_sighash_dispatch(ip, pubkey_bytes, sighash_flag);
+
+    let signature_is_valid = sui::ecdsa_k1::secp256k1_verify(
+        &sig_to_verify,
+        &pubkey_bytes,
+        &message_digest,
+        SHA256,
+    );
+
+    if (signature_is_valid) {
+        ip.stack.push(utils::vector_true());
+    } else {
+        ip.stack.push(utils::vector_false());
+    };
+}
+
+public fun create_p2wpkh_scriptcode_bytes(pkh: vector<u8>): vector<u8> {
+    assert!(pkh.length() == 20, EInvalidStackOperation);
+    let mut script = vector::empty<u8>();
+    script.push_back(OP_DUP);
+    script.push_back(OP_HASH160);
+    script.push_back(OP_PUSHBYTES_20);
+    script.append(pkh);
+    script.push_back(OP_EQUALVERIFY);
+    script.push_back(OP_CHECKSIG);
+    script
+}
+
+fun create_sighash_dispatch(ip: &Interpreter, pub_key: vector<u8>, sighash_flag: u8): vector<u8> {
+    let ctx = ip.tx_context.borrow();
+    if (ctx.sig_version == SIG_VERSION_WITNESS_V0) {
+        let sha = sha2_256(pub_key);
+        let mut hash160 = ripemd160::new();
+        hash160.write(sha, sha.length());
+        let pkh = hash160.finalize();
+        let script_code_to_use_for_sighash = create_p2wpkh_scriptcode_bytes(pkh);
+
+        let bip143_preimage = sighash::create_bip143_sighash_preimage(
+            &ctx.tx,
+            ctx.input_index,
+            &script_code_to_use_for_sighash,
+            ctx.utxo_value,
+            sighash_flag,
+        );
+        // sui::ecdsa_k1::secp256k1_verify does the 2nd hash. We need to do the first here
+        sha2_256(bip143_preimage)
+    } else {
+        abort EUnsupportedSigVersionForChecksig
+    }
 }
 
 fun op_hash160(ip: &mut Interpreter) {
@@ -441,10 +575,11 @@ fun op_hash160(ip: &mut Interpreter) {
     hasher.write(sha, sha.length());
     ip.stack.push(hasher.finalize())
 }
+
 #[test]
 fun test_op_0() {
     let stack = stack::create();
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_push_empty_vector();
 
     assert!(ip.stack.size() == 1);
@@ -456,7 +591,7 @@ fun test_op_0() {
 #[test]
 fun test_op_push_n_bytes() {
     let stack = stack::create();
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     let script = vector[0x01, 0x02, 0x03, 0x04, 0x05, 0x06];
     let reader = reader::new(script);
     ip.reader = reader;
@@ -489,7 +624,7 @@ fun test_op_push_n_bytes() {
 #[test]
 fun test_op_1_push_small_int() {
     let stack = stack::create();
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_push_small_int(OP_1);
 
     assert_eq!(ip.stack.size(), 1);
@@ -501,7 +636,7 @@ fun test_op_1_push_small_int() {
 #[test]
 fun test_op_5_push_small_int() {
     let stack = stack::create();
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_push_small_int(OP_5);
 
     assert_eq!(ip.stack.size(), 1);
@@ -513,7 +648,7 @@ fun test_op_5_push_small_int() {
 #[test]
 fun test_op_16_push_small_int() {
     let stack = stack::create();
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_push_small_int(OP_16);
 
     assert_eq!(ip.stack.size(), 1);
@@ -525,12 +660,12 @@ fun test_op_16_push_small_int() {
 #[test]
 fun test_op_equal() {
     let stack = stack::create_with_data(vector[vector[10], vector[10]]);
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_equal();
     assert!(ip.stack.top() == vector[1]);
 
     let stack = stack::create_with_data(vector[vector[20], vector[10]]);
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_equal();
     assert!(ip.stack.top() == vector[0]);
 }
@@ -538,28 +673,28 @@ fun test_op_equal() {
 #[test]
 fun test_op_equal_verify() {
     let stack = stack::create_with_data(vector[vector[10], vector[10]]);
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_equal_verify();
 }
 
 #[test, expected_failure(abort_code = EEqualVerify)]
 fun test_op_equal_verify_fail() {
     let stack = stack::create_with_data(vector[vector[10], vector[12]]);
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_equal_verify();
 }
 
 #[test, expected_failure(abort_code = stack::EPopStackEmpty)]
 fun test_op_equal_fail() {
     let stack = stack::create_with_data(vector[vector[10]]);
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_equal();
 }
 
 #[test]
 fun test_op_dup() {
     let stack = stack::create_with_data(vector[vector[10]]);
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_dup();
     assert_eq!(ip.stack.get_all_values(), vector[vector[10], vector[10]]);
     assert_eq!(ip.stack.size(), 2);
@@ -568,14 +703,14 @@ fun test_op_dup() {
 #[test, expected_failure(abort_code = stack::EPopStackEmpty)]
 fun test_op_dup_fail() {
     let stack = stack::create();
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_dup();
 }
 
 #[test]
 fun test_op_drop() {
     let stack = stack::create_with_data(vector[vector[0x01]]);
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_drop();
     assert_eq!(ip.stack.get_all_values(), vector[]);
     assert_eq!(ip.stack.size(), 0);
@@ -584,14 +719,14 @@ fun test_op_drop() {
 #[test, expected_failure(abort_code = stack::EPopStackEmpty)]
 fun test_op_drop_fail() {
     let stack = stack::create();
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_drop();
 }
 
 #[test]
 fun test_op_swap() {
     let stack = stack::create_with_data(vector[vector[0x01], vector[0x02]]);
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_swap();
     assert_eq!(ip.stack.size(), 2);
     assert_eq!(ip.stack.get_all_values(), vector[vector[0x02], vector[0x01]]);
@@ -600,14 +735,14 @@ fun test_op_swap() {
 #[test, expected_failure(abort_code = EInvalidStackOperation)]
 fun test_op_swap_fail() {
     let stack = stack::create_with_data(vector[vector[0x01]]);
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_swap();
 }
 
 #[test]
 fun test_op_size() {
     let stack = stack::create_with_data(vector[vector[0x01], vector[0x01, 0x02, 0x03]]); // top element size = 3
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_size();
     assert_eq!(ip.stack.size(), 3);
     assert_eq!(
@@ -620,14 +755,14 @@ fun test_op_size() {
 #[test, expected_failure(abort_code = stack::EPopStackEmpty)]
 fun test_op_size_fail() {
     let stack = stack::create();
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_size();
 }
 
 #[test]
 fun test_op_sha256() {
     let stack = stack::create_with_data(vector[vector[0x01]]);
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_sha256();
     assert_eq!(ip.stack.size(), 1);
     let expected_hash: vector<u8> =
@@ -639,7 +774,7 @@ fun test_op_sha256() {
 #[test]
 fun test_op_hash256() {
     let stack = stack::create_with_data(vector[vector[0x01]]);
-    let mut ip = new(stack);
+    let mut ip = new_ip_for_test(stack);
     ip.op_hash256();
     assert_eq!(ip.stack.size(), 1);
     let expected_hash: vector<u8> =
@@ -649,13 +784,78 @@ fun test_op_hash256() {
 }
 
 #[test]
+fun test_create_p2wpkh_scriptcode_bytes() {
+    // data taken from https://learnmeabitcoin.com/technical/keys/signature/
+    let pkh = x"aa966f56de599b4094b61aa68a2b3df9e97e9c48";
+    let expected_script_code = x"76a914aa966f56de599b4094b61aa68a2b3df9e97e9c4888ac";
+    assert_eq!(create_p2wpkh_scriptcode_bytes(pkh), expected_script_code);
+}
+
+#[test]
+fun test_op_checksig() {
+    // all the data for the test copied from the exmaple https://learnmeabitcoin.com/technical/keys/signature/
+    //preimage = 02000000cbfaca386d65ea7043aaac40302325d0dc7391a73b585571e28d3287d6b162033bb13029ce7b1f559ef5e747fcac439f1455a2ec7c5f09b72290795e70665044ac4994014aa36b7f53375658ef595b3cb2891e1735fe5b441686f5e53338e76a010000001976a914aa966f56de599b4094b61aa68a2b3df9e97e9c4888ac3075000000000000ffffffff900a6c6ff6cd938bf863e50613a4ed5fb1661b78649fe354116edaf5d4abb9520000000001000000
+    //preimage_hashed256 = d7b60220e1b9b2c1ab40845118baf515203f7b6f0ad83cbb68d3c89b5b3098a6
+    let signature_der_encoded =
+        x"3044022008f4f37e2d8f74e18c1b8fde2374d5f28402fb8ab7fd1cc5b786aa40851a70cb022032b1374d1a0f125eae4f69d1bc0b7f896c964cfdba329f38a952426cf427484c01";
+    let public_key = x"03eed0d937090cae6ffde917de8a80dc6156e30b13edd5e51e2e50d52428da1c87";
+
+    let input_tx_id_bytes = x"ac4994014aa36b7f53375658ef595b3cb2891e1735fe5b441686f5e53338e76a";
+
+    let test_inputs = vector[
+        input::new(
+            input_tx_id_bytes,
+            x"01000000",
+            vector[], // empty script_sig for P2WPKH input
+            x"ffffffff",
+        ),
+    ];
+
+    let test_outputs = vector[
+        output::new(
+            x"204e000000000000",
+            x"76a914ce72abfd0e6d9354a660c18f2825eb392f060fdc88ac",
+        ),
+    ];
+
+    let test_tx = tx::new(
+        x"02000000",
+        option::some(00u8),
+        option::some(01u8),
+        test_inputs,
+        test_outputs,
+        vector[],
+        x"00000000",
+        vector[],
+    );
+
+    let input_idx_being_signed = 0;
+    let amount_spent_by_this_input = 30000u64;
+
+    let tx_context = new_tx_context(
+        test_tx,
+        input_idx_being_signed,
+        amount_spent_by_this_input,
+        SIG_VERSION_WITNESS_V0,
+    );
+    let stack = stack::create();
+    let mut ip = new_ip_with_context(stack, tx_context);
+
+    ip.stack.push(signature_der_encoded);
+    ip.stack.push(public_key);
+    ip.op_checksig();
+
+    assert_eq!(ip.stack.size(), 1);
+    assert_eq!(ip.stack.top(), utils::vector_true());
+}
+
+#[test]
 fun test_op_hash160() {
-    let stack = stack::create_with_data(vector[x"03b95e7b69c0a3228aeb4d005a4004c48d8ecd66e7a91d1f626aeb3bb800670acf"]);
-    let mut ip = new(stack);
+    let stack = stack::create_with_data(vector[x"12345678"]);
+    let mut ip = new_ip_for_test(stack);
     ip.op_hash160();
     assert_eq!(ip.stack.size(), 1);
-    let expected_hash: vector<u8> =
-        x"740827deff1736e831d8f9910a506e791641a0de";
+    let expected_hash: vector<u8> = x"82c12e3c770a95bd17fd1d983d6b2af2037b7a4b";
     assert_eq!(ip.stack.top(), expected_hash);
     assert_eq!(ip.stack.get_all_values(), vector[expected_hash]);
 }

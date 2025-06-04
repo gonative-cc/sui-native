@@ -1,15 +1,16 @@
+// SPDX-License-Identifier: MPL-2.0
+
 module bitcoin_executor::ripemd160;
 
 use std::u64::do;
 
-public struct Ripemd160 has copy, drop{
+public struct Ripemd160 has copy, drop {
     s: vector<u32>, // len 5;
     buf: vector<u8>,
-    bytes: u64
+    bytes: u64,
 }
 
-
-public fun new() : Ripemd160 {
+public fun new(): Ripemd160 {
     let s = vector[0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0];
     let mut buf = vector[];
 
@@ -22,7 +23,7 @@ public fun new() : Ripemd160 {
     Ripemd160 {
         s: s,
         buf: buf,
-        bytes: 0
+        bytes: 0,
     }
 }
 
@@ -50,12 +51,11 @@ fun f5(x: u32, y: u32, z: u32): u32 {
     x ^(y | bitnot(z))
 }
 
-fun rol(x: u32, i: u8) : u32{
+fun rol(x: u32, i: u8): u32 {
     return (x << i) | (x >> (32 - i))
 }
 
-
-fun Round(a: &mut u32, b: u32, c: &mut u32, d: u32, e: u32, f: u32, x: u32, k:u32, r: u8) {
+fun Round(a: &mut u32, b: u32, c: &mut u32, d: u32, e: u32, f: u32, x: u32, k: u32, r: u8) {
     let m = 0xffffffff;
     let mut tmp = *a as u64;
     tmp = (tmp + (f as u64)) & m;
@@ -67,22 +67,22 @@ fun Round(a: &mut u32, b: u32, c: &mut u32, d: u32, e: u32, f: u32, x: u32, k:u3
 }
 
 fun R11(a: &mut u32, b: u32, c: &mut u32, d: u32, e: u32, x: u32, r: u8) {
-    let t =f1(b, *c, d);
+    let t = f1(b, *c, d);
     Round(a, b, c, d, e, t, x, 0, r);
 }
 
 fun R21(a: &mut u32, b: u32, c: &mut u32, d: u32, e: u32, x: u32, r: u8) {
-    let t =f2(b, *c, d);
+    let t = f2(b, *c, d);
     Round(a, b, c, d, e, t, x, 0x5A827999, r);
 }
 
 fun R31(a: &mut u32, b: u32, c: &mut u32, d: u32, e: u32, x: u32, r: u8) {
-    let t =f3(b, *c, d);
+    let t = f3(b, *c, d);
     Round(a, b, c, d, e, t, x, 0x6ED9EBA1, r);
 }
 
 fun R41(a: &mut u32, b: u32, c: &mut u32, d: u32, e: u32, x: u32, r: u8) {
-    let t =f4(b, *c, d);
+    let t = f4(b, *c, d);
     Round(a, b, c, d, e, t, x, 0x8F1BBCDC, r);
 }
 
@@ -92,22 +92,22 @@ fun R51(a: &mut u32, b: u32, c: &mut u32, d: u32, e: u32, x: u32, r: u8) {
 }
 
 fun R12(a: &mut u32, b: u32, c: &mut u32, d: u32, e: u32, x: u32, r: u8) {
-    let t =f5(b, *c, d);
+    let t = f5(b, *c, d);
     Round(a, b, c, d, e, t, x, 0x50A28BE6, r);
 }
 
 fun R22(a: &mut u32, b: u32, c: &mut u32, d: u32, e: u32, x: u32, r: u8) {
-    let t =f4(b, *c, d);
+    let t = f4(b, *c, d);
     Round(a, b, c, d, e, t, x, 0x5C4DD124, r);
 }
 
 fun R32(a: &mut u32, b: u32, c: &mut u32, d: u32, e: u32, x: u32, r: u8) {
-    let t =f3(b, *c, d);
+    let t = f3(b, *c, d);
     Round(a, b, c, d, e, t, x, 0x6D703EF3, r);
 }
 
 fun R42(a: &mut u32, b: u32, c: &mut u32, d: u32, e: u32, x: u32, r: u8) {
-    let t =f2(b, *c, d);
+    let t = f2(b, *c, d);
     Round(a, b, c, d, e, t, x, 0x7A6D76E9, r);
 }
 
@@ -331,7 +331,6 @@ fun transform(s: &mut vector<u32>, chunk: vector<u8>) {
     // *b = t + b1 + c2;
 }
 
-
 public fun write(h: &mut Ripemd160, data: vector<u8>, len: u64) {
     let end = len;
     let mut data_index = 0;
@@ -352,9 +351,8 @@ public fun write(h: &mut Ripemd160, data: vector<u8>, len: u64) {
         data_index = data_index + 64;
     };
 
-    if(end> data_index) {
-        veccopy(&mut h.buf, bufsize, data, data_index,end-data_index);
-
+    if (end > data_index) {
+        veccopy(&mut h.buf, bufsize, data, data_index, end-data_index);
         h.bytes = h.bytes + end - data_index;
     };
 }
@@ -371,10 +369,8 @@ public fun finalize(h: &mut Ripemd160): vector<u8> {
 
     let mut sizedecs: vector<u8> = vector[0, 0, 0, 0, 0, 0, 0, 0];
     writeLE64(&mut sizedecs, 0, bytes << 3);
-
     h.write(pad, 1 + ((119 - (bytes % 64)) % 64));
     h.write(sizedecs, 8);
-
     let mut hash: vector<u8> = vector[];
     i = 0;
     while (i < 20) {
@@ -408,7 +404,8 @@ fun writeLE64(v: &mut vector<u8>, start_index: u64, x: u64) {
     let mut i = 0;
     let mut x = x;
     let mut index = start_index;
-    while (i < 8) { // 64 bits
+    while (i < 8) {
+        // 64 bits
         let b = v.borrow_mut(index);
         *b = (x % 256) as u8;
         x = x / 256;
@@ -421,7 +418,9 @@ fun writeLE32(v: &mut vector<u8>, start_index: u64, x: u32) {
     let mut i = 0;
     let mut x = x;
     let mut index = start_index;
-    while (i < 4) { // 32 bits
+    while (i < 4) {
+        // 32 bits
+
         let b = v.borrow_mut(index);
         *b = (x % 256) as u8;
         x = x / 256;

@@ -83,7 +83,7 @@ fun test_nbtc_mint_fallback() {
     let lock_time = x"00000000";
     let height = 0;
     let tx_index = 0;
-    let fallback_address = @0xCF;
+    let fallback_address = @fallback;
     nbtc::mint(&mut cap, &lc, version, input_count, inputs, output_count, outputs, lock_time, proof, height, tx_index, ctx);
     test_scenario::next_tx(&mut scenario, sender);
     let coin = take_from_address<Coin<NBTC>>(&scenario, fallback_address);
