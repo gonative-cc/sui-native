@@ -19,7 +19,7 @@ public fun create_bip143_sighash_preimage(
     transaction: &Transaction,
     input_idx_being_signed: u64,
     script_code_for_input: &vector<u8>, // For P2WPKH: 0x1976a914{PKH}88ac. For P2WSH: the witnessScript.
-    amount_spent_by_this_input: u64,
+    amount_spent_by_this_input: vector<u8>,
     sighash_type_byte: u8,
 ): vector<u8> {
     let mut preimage = vector[];
@@ -63,7 +63,7 @@ public fun create_bip143_sighash_preimage(
     preimage.append(current_input.vout());
 
     preimage.append(utils::script_to_var_bytes(script_code_for_input));
-    preimage.append(utils::u64_to_le_bytes(amount_spent_by_this_input));
+    preimage.append(amount_spent_by_this_input);
     preimage.append(current_input.sequence());
 
     // HASH256(concatenation of all (output.value + output.script_pub_key_with_len))
@@ -133,7 +133,7 @@ fun test_create_bip143_sighash_preimage_lmb_example() {
 
     let input_idx_being_signed = 0u64;
     let script_code_for_input = x"76a914aa966f56de599b4094b61aa68a2b3df9e97e9c4888ac";
-    let amount_spent_by_this_input = 30000u64;
+    let amount_spent_by_this_input = utils::u64_to_le_bytes(30000);
     let sighash_type_byte = SIGHASH_ALL; // 0x01
 
     let result_preimage = create_bip143_sighash_preimage(

@@ -307,7 +307,7 @@ public struct TransactionContext has copy, drop {
     tx: Transaction,
     // we use u64 for query vector index in sui move easier.
     input_index: u64,
-    utxo_value: u64,
+    amount: vector<u8>,
     sig_version: u8, //TODO: maybe enum for it?
 }
 
@@ -320,13 +320,13 @@ public struct Interpreter has copy, drop {
 public fun new_tx_context(
     tx: Transaction,
     input_index: u64,
-    utxo_value: u64,
+    amount: vector<u8>,
     sig_version: u8,
 ): TransactionContext {
     TransactionContext {
         tx,
         input_index,
-        utxo_value,
+        amount,
         sig_version,
     }
 }
@@ -354,7 +354,7 @@ public fun run(
     stack: Stack,
     script: vector<u8>,
     input_idx: u64,
-    amount: u64,
+    amount: vector<u8>,
 ): bool {
     let sig_version = if (tx.is_witness()) {
         SIG_VERSION_WITNESS_V0
@@ -558,7 +558,7 @@ fun create_sighash_dispatch(ip: &Interpreter, pub_key: vector<u8>, sighash_flag:
             &ctx.tx,
             ctx.input_index,
             &script_code_to_use_for_sighash,
-            ctx.utxo_value,
+            ctx.amount,
             sighash_flag,
         );
         // sui::ecdsa_k1::secp256k1_verify does the 2nd hash. We need to do the first here
@@ -830,7 +830,7 @@ fun test_op_checksig() {
     );
 
     let input_idx_being_signed = 0;
-    let amount_spent_by_this_input = 30000u64;
+    let amount_spent_by_this_input = utils::u64_to_le_bytes(30000u64);
 
     let tx_context = new_tx_context(
         test_tx,

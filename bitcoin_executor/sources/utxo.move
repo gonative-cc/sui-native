@@ -13,7 +13,7 @@ const OP_DATA_20: u8 = 0x14;
 /// OutPoint is a UTXO ID
 public struct OutPoint has copy, drop, store {
     tx_id: vector<u8>,
-    vout: u32,
+    vout: vector<u8>,
 }
 
 /// Data is a UTXO value
@@ -23,7 +23,7 @@ public struct Data has copy, drop, store {
     output: Output,
 }
 
-public fun new_outpoint(tx_id: vector<u8>, vout: u32): OutPoint {
+public fun new_outpoint(tx_id: vector<u8>, vout: vector<u8>): OutPoint {
     OutPoint { tx_id, vout }
 }
 
@@ -33,7 +33,7 @@ public fun new_data(height: u64, is_coinbase: bool, output: Output): Data {
 
 public fun new(
     tx_id: vector<u8>,
-    vout: u32,
+    vout: vector<u8>,
     height: u64,
     is_coinbase: bool,
     output: Output
@@ -43,7 +43,7 @@ public fun new(
 
 public fun tx_id(outpoint: &OutPoint): vector<u8> { outpoint.tx_id }
 
-public fun vout(outpoint: &OutPoint): u32 { outpoint.vout }
+public fun vout(outpoint: &OutPoint): vector<u8> { outpoint.vout }
 
 public fun output(data: &Data): &Output {
     &data.output
