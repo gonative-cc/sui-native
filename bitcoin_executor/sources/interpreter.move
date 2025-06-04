@@ -3,11 +3,8 @@ module bitcoin_executor::interpreter;
 use bitcoin_executor::reader::{Self, ScriptReader};
 use bitcoin_executor::stack::{Self, Stack};
 use bitcoin_executor::utils;
-<<<<<<< HEAD
 use bitcoin_executor::ripemd160;
 use std::hash::sha2_256;
-=======
->>>>>>> parent of 860b526 (feat: sha256 opcodes (#52))
 
 #[test_only]
 use std::unit_test::assert_eq;
@@ -335,15 +332,12 @@ fun eval(ip: &mut Interpreter, r: ScriptReader): bool {
             ip.op_equal();
         } else if (op == OP_EQUALVERIFY) {
             ip.op_equal_verify();
-<<<<<<< HEAD
         } else if (op == OP_SHA256) {
             ip.op_sha256();
         } else if (op == OP_HASH256) {
             ip.op_hash256();
         } else if (op == OP_HASH160) {
             ip.op_hash160();
-=======
->>>>>>> parent of 860b526 (feat: sha256 opcodes (#52))
         }
     };
 
@@ -430,7 +424,6 @@ fun op_swap(ip: &mut Interpreter) {
     ip.stack.push(second_element);
 }
 
-<<<<<<< HEAD
 fun op_sha256(ip: &mut Interpreter) {
     let value = ip.stack.pop();
     ip.stack.push(sha2_256(value))
@@ -448,8 +441,6 @@ fun op_hash160(ip: &mut Interpreter) {
     hasher.write(sha, sha.length());
     ip.stack.push(hasher.finalize())
 }
-=======
->>>>>>> parent of 860b526 (feat: sha256 opcodes (#52))
 #[test]
 fun test_op_0() {
     let stack = stack::create();

@@ -136,7 +136,7 @@ fun transform(s: &mut vector<u32>, chunk: vector<u8>) {
     let w6 = readLE32(&chunk, 24);
     let w7 = readLE32(&chunk, 28);
     let w8 = readLE32(&chunk, 32);
-    let w9 = readLE32(&chunk, 38);
+    let w9 = readLE32(&chunk, 36);
     let w10 = readLE32(&chunk, 40);
     let w11 = readLE32(&chunk, 44);
     let w12 = readLE32(&chunk, 48);
@@ -456,10 +456,9 @@ fun ripemd160_test() {
         b"message digest",
         b"secure hash algorithm",
         b"RIPEMD160 is considered to be safe",
-        // TODO: test below is not working
-        // b"abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
-        // b"For this sample, this 63-byte string will be used as input data",
-        // b"This is exactly 64 bytes long, not counting the terminating byte",
+        b"abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
+        b"For this sample, this 63-byte string will be used as input data",
+        b"This is exactly 64 bytes long, not counting the terminating byte",
 
     ];
 
@@ -470,9 +469,9 @@ fun ripemd160_test() {
         x"5d0689ef49d2fae572b881b123a85ffa21595f36",
         x"20397528223b6a5f4cbc2808aba0464e645544f9",
         x"a7d78608c7af8a8e728778e81576870734122b66",
-        // x"12a053384a9c0c88e405a06c27dcf49ada62eb2b",
-        // x"de90dbfee14b63fb5abf27c2ad4a82aaa5f27a11",
-        // x"eda31d51d3a623b81e19eb02e24ff65d27d67b37",
+        x"12a053384a9c0c88e405a06c27dcf49ada62eb2b",
+        x"de90dbfee14b63fb5abf27c2ad4a82aaa5f27a11",
+        x"eda31d51d3a623b81e19eb02e24ff65d27d67b37",
     ];
     data.length().do!(|index| {
         let mut hasher = new();
