@@ -100,11 +100,9 @@ public fun deserialize(r: &mut Reader): Transaction {
     // use for compute the tx_id
     let mut raw_tx = vector[];
 
-    // read transaction version
     let version = r.read(4);
     raw_tx.append(version);
 
-    // read marker and flag
     let segwit = r.peek(2);
     let mut marker: Option<u8> = option::none();
     let mut flag: Option<u8> = option::none();
@@ -114,7 +112,6 @@ public fun deserialize(r: &mut Reader): Transaction {
         flag = option::some(r.read_byte());
     };
 
-    // read output
     let number_inputs = r.read_compact_size();
     raw_tx.append(u64_to_varint_bytes(number_inputs));
     let mut inputs = vector[];
@@ -174,7 +171,6 @@ public fun deserialize(r: &mut Reader): Transaction {
         })
     };
 
-    // 4 bytes
     let locktime = r.read(4);
     raw_tx.append(locktime);
 
