@@ -1,7 +1,7 @@
 module bitcoin_executor::output;
 
 /// Output in btc transaction
-public struct Output has copy, drop {
+public struct Output has copy, drop, store {
     amount: vector<u8>,
     script_pubkey: vector<u8>,
 }
