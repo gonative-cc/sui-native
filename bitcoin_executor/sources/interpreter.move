@@ -216,8 +216,9 @@ const OP_NOP9: u8 = 0xb8; // 184
 const OP_NOP10: u8 = 0xb9; // 185
 const OP_CHECKSIGADD: u8 = 0xba; // 186
 
-/* NOT USED
+// Invalid opcodes
 const OP_UNKNOWN187: u8 = 0xbb; // 187
+/*
 const OP_UNKNOWN188: u8 = 0xbc; // 188
 const OP_UNKNOWN189: u8 = 0xbd; // 189
 const OP_UNKNOWN190: u8 = 0xbe; // 190
@@ -279,13 +280,12 @@ const OP_UNKNOWN245: u8 = 0xf5; // 245
 const OP_UNKNOWN246: u8 = 0xf6; // 246
 const OP_UNKNOWN247: u8 = 0xf7; // 247
 const OP_UNKNOWN248: u8 = 0xf8; // 248
-const OP_UNKNOWN249: u8 = 0xf9; // 249
 */
-
+const OP_UNKNOWN249: u8 = 0xf9; // 249
 const OP_SMALLINTEGER: u8 = 0xfa; // 250 - bitcoin core internal
 const OP_PUBKEYS: u8 = 0xfb; // 251 - bitcoin core internal
+const OP_UNKNOWN252: u8 = 0xfc; // 252
 
-// const OP_UNKNOWN252: u8 = 0xfc; // 252
 
 const OP_PUBKEYHASH: u8 = 0xfd; // 253 - bitcoin core internal
 const OP_PUBKEY: u8 = 0xfe; // 254 - bitcoin core internal
@@ -308,6 +308,10 @@ const EMissingTxCtx: vector<u8> = b"Missing transaction context";
 #[error]
 const EUnsupportedSigVersionForChecksig: vector<u8> =
     b"Unsupported signature version for op_checksig";
+#[error]
+const EInvalidOpcode: vector<u8> = b"Invalid Opcode";
+#[error]
+const EInternalBitcoinCoreOpcode: vector<u8> = b"Invalid Opcode: Bitcoin core internal";
 
 public struct TransactionContext has copy, drop {
     tx: Transaction,
@@ -385,7 +389,15 @@ fun eval(ip: &mut Interpreter, r: Reader): bool {
     while (!ip.reader.end_stream()) {
         let op = ip.reader.next_opcode();
 
-        if (op == OP_0) {
+        if (op == OP_UNKNOWN252 || op == OP_SMALLINTEGER ||
+            op == OP_PUBKEY || op == OP_PUBKEYS || op == OP_PUBKEYHASH) {
+	            // Bitcoin Core internal use opcode.  Defined here for completeness.
+	            // https://github.com/btcsuite/btcd/blob/v0.24.2/txscript/opcode.go#L581
+                abort EInternalBitcoinCoreOpcode
+        } else if (op == OP_INVALIDOPCODE ||
+            op >= OP_UNKNOWN187 && op <= OP_UNKNOWN249) {
+                abort EInvalidOpcode
+        } else if (op == OP_0) {
             ip.op_push_empty_vector();
         } else if (op >= OP_PUSHBYTES_1 && op <= OP_PUSHBYTES_75) {
             ip.op_push_n_bytes(op);
