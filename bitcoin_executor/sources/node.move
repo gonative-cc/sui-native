@@ -3,7 +3,7 @@
 module bitcoin_executor::bitcoin_executor;
 
 use bitcoin_executor::block;
-use bitcoin_executor::interpreter::{run, create_p2wpkh_scriptcode_bytes};
+use bitcoin_executor::interpreter::{run, create_p2wpkh_scriptcode};
 use bitcoin_executor::stack;
 use bitcoin_executor::tx::Transaction;
 use bitcoin_executor::utils::{Self, LEtoNumber, u32_to_le_bytes};
@@ -103,7 +103,7 @@ fun validate_execution(state: &State, tx: Transaction): bool {
         // TODO: We only support P2WPKH now.
         // We will support more standard scripts.
         let pk = data.pkh();
-        let script = create_p2wpkh_scriptcode_bytes(pk);
+        let script = create_p2wpkh_scriptcode(pk);
         let valid = run(tx, stack, script, i, data.output().amount_bytes());
         if (!valid) {
             result = false;

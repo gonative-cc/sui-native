@@ -15,10 +15,14 @@ BTC P2WPKH deposit address for `nBTC` minting: `tb1qe60n447jylrxa96y6pfgy8pq6x9z
 
 ### Deepbook
 
-TODO
+Permissionless SUI/NBTC pool on deepbook-v3.1 on testnet:
+
+- Tx Digest: `D3XixtGXcDpPtbjcXqxSvQEkYid7r5Casj68hs3rPRiN`
+- Pool Object ID: `0x369978a9e522cc322020ff3183ab1f97a883ccc0e1b31fc6965a901e0006c9b4`
 
 ### Magma
 
-Info: TODO
+Magma SUI/NBTC pool on testnet. You can check it out [here](https://testnet.magmafinance.io/). For details check the information below on any Sui explorer:
 
-- Pool Object ID: TODO
+- Tx Digest: `6aKs4KC3bN8nVmdrxuqD7r4SLqvukiduo88YGNUvphYE`
+- Pool Object ID: `0x7d965b3d3d50c3a0e59360c61dbcd5f4b7c4d7bf829c2478018fc805663dd4c1`
