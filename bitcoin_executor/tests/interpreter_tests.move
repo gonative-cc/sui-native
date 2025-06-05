@@ -1,6 +1,6 @@
 #[test_only]
 module bitcoin_executor::interpreter_tests;
-use bitcoin_executor::interpreter::{create_p2wpkh_scriptcode_bytes, run};
+use bitcoin_executor::interpreter::{create_p2wpkh_scriptcode, run};
 use bitcoin_executor::tx::deserialize;
 use bitcoin_executor::reader;
 use bitcoin_executor::stack::create_with_data;
@@ -14,7 +14,7 @@ fun run_segwit_script() {
     let index = 0;
     let stack = create_with_data(tx.witness()[0].items());
     let pk = x"5c2dc82f606be66506b7403f9b304f5e0908b652";
-    let script = create_p2wpkh_scriptcode_bytes(pk);
+    let script = create_p2wpkh_scriptcode(pk);
     let ans = run(tx, stack, script, index, amount);
     assert!(ans)
 }

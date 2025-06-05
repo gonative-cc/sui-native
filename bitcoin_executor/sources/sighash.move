@@ -15,7 +15,7 @@ const SIGHASH_NONE: u8 = 0x02;
 const SIGHASH_SINGLE: u8 = 0x03;
 const SIGHASH_ANYONECANPAY_FLAG: u8 = 0x80;
 
-public fun create_bip143_sighash_preimage(
+public fun create_bip143_sighash(
     transaction: &Transaction,
     input_idx_being_signed: u64,
     script_code_for_input: &vector<u8>, // For P2WPKH: 0x1976a914{PKH}88ac. For P2WSH: the witnessScript.
@@ -97,7 +97,7 @@ public fun create_bip143_sighash_preimage(
 }
 
 #[test]
-fun test_create_bip143_sighash_preimage_lmb_example() {
+fun test_create_bip143_sighash_lmb_example() {
     // all the data for the test copied from the exmaple https://learnmeabitcoin.com/technical/keys/signature/
     let expected_preimage =
         x"02000000cbfaca386d65ea7043aaac40302325d0dc7391a73b585571e28d3287d6b162033bb13029ce7b1f559ef5e747fcac439f1455a2ec7c5f09b72290795e70665044ac4994014aa36b7f53375658ef595b3cb2891e1735fe5b441686f5e53338e76a010000001976a914aa966f56de599b4094b61aa68a2b3df9e97e9c4888ac3075000000000000ffffffff900a6c6ff6cd938bf863e50613a4ed5fb1661b78649fe354116edaf5d4abb9520000000001000000";
@@ -136,7 +136,7 @@ fun test_create_bip143_sighash_preimage_lmb_example() {
     let amount_spent_by_this_input = 30000u64;
     let sighash_type_byte = SIGHASH_ALL; // 0x01
 
-    let result_preimage = create_bip143_sighash_preimage(
+    let result_preimage = create_bip143_sighash(
         &test_tx,
         input_idx_being_signed,
         &script_code_for_input,

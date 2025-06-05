@@ -4,9 +4,6 @@ module bitcoin_executor::reader;
 
 use bitcoin_executor::utils::LEtoNumber;
 
-#[error]
-const EBadOpcode: vector<u8> = b"Bad opcode";
-
 // TODO: Follow error in btc implemetation
 #[error]
 const EBadReadData: vector<u8> = b"Invalid read script";
