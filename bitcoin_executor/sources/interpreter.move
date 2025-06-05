@@ -389,15 +389,7 @@ fun eval(ip: &mut Interpreter, r: Reader): bool {
     while (!ip.reader.end_stream()) {
         let op = ip.reader.next_opcode();
 
-        if (op == OP_UNKNOWN252 || op == OP_SMALLINTEGER ||
-            op == OP_PUBKEY || op == OP_PUBKEYS || op == OP_PUBKEYHASH) {
-	            // Bitcoin Core internal use opcode.  Defined here for completeness.
-	            // https://github.com/btcsuite/btcd/blob/v0.24.2/txscript/opcode.go#L581
-                abort EInternalBitcoinCoreOpcode
-        } else if (op == OP_INVALIDOPCODE ||
-            op >= OP_UNKNOWN187 && op <= OP_UNKNOWN249) {
-                abort EInvalidOpcode
-        } else if (op == OP_0) {
+        if (op == OP_0) {
             ip.op_push_empty_vector();
         } else if (op >= OP_PUSHBYTES_1 && op <= OP_PUSHBYTES_75) {
             ip.op_push_n_bytes(op);
@@ -423,11 +415,28 @@ fun eval(ip: &mut Interpreter, r: Reader): bool {
             ip.op_checksig();
         } else if (op == OP_HASH160) {
             ip.op_hash160();
+        } else if (isBitcoinCoreInternalOpCode(op)) {
+	        // Bitcoin Core internal use opcode.  Defined here for completeness.
+	        // https://github.com/btcsuite/btcd/blob/v0.24.2/txscript/opcode.go#L581
+            abort EInternalBitcoinCoreOpcode
+        } else if (isInvalidOptCode(op)) {
+            abort EInvalidOpcode
         }
     };
 
     ip.isSuccess()
 }
+
+fun isInvalidOptCode(op: u8): bool {
+    op == OP_INVALIDOPCODE ||
+        op >= OP_UNKNOWN187 && op <= OP_UNKNOWN249
+}
+
+fun isBitcoinCoreInternalOpCode(op: u8): bool {
+    op == OP_UNKNOWN252 || op == OP_SMALLINTEGER ||
+        op == OP_PUBKEY || op == OP_PUBKEYS || op == OP_PUBKEYHASH
+}
+
 
 /// check evaluate is valid
 /// evaluation valid if the stack not empty
