@@ -31,26 +31,6 @@ fun bitnot(x: u32): u32 {
     0xffffffff - x
 }
 
-// end <> lil for 32 bits
-fun bswap_32(x: u32): u32 {
-    (
-        ((x & 0xff000000) >> 24) | ((x & 0x00ff0000) >>  8) |
-            ((x & 0x0000ff00) <<  8) | ((x & 0x000000ff) << 24),
-    )
-}
-
-fun bswap_64(x: u64): u64 {
-    (
-        ((x & 0xff00000000000000) >> 56)
-          | ((x & 0x00ff000000000000) >> 40)
-          | ((x & 0x0000ff0000000000) >> 24)
-          | ((x & 0x000000ff00000000) >> 8)
-          | ((x & 0x00000000ff000000) << 8)
-          | ((x & 0x0000000000ff0000) << 24)
-          | ((x & 0x000000000000ff00) << 40)
-          | ((x & 0x00000000000000ff) << 56),
-    )
-}
 
 fun f1(x: u32, y: u32, z: u32): u32 {
     x^y^z
@@ -157,7 +137,7 @@ fun transform(s: &mut vector<u32>, chunk: vector<u8>) {
     let w6 = readLE32(&chunk, 24);
     let w7 = readLE32(&chunk, 28);
     let w8 = readLE32(&chunk, 32);
-    let w9 = readLE32(&chunk, 38);
+    let w9 = readLE32(&chunk, 36);
     let w10 = readLE32(&chunk, 40);
     let w11 = readLE32(&chunk, 44);
     let w12 = readLE32(&chunk, 48);
@@ -469,9 +449,54 @@ fun readLE32(v: &vector<u8>, start_index: u64): u32 {
 
 #[test]
 fun ripemd160_test() {
-    let data: vector<u8> = std::hash::sha2_256(x"0102");
-    let mut h = new();
-    h.write(data, data.length());
-    let hash = h.finalize();
-    sui::test_utils::assert_eq(hash, x"15cc49e191cbc520d91944600a5cb77af6aa3291");
+    // test vector from: https://homes.esat.kuleuven.be/~bosselae/ripemd160.html
+    let data = vector[
+        b"",
+        b"a",
+        b"abc",
+        b"message digest",
+        b"secure hash algorithm",
+        b"RIPEMD160 is considered to be safe",
+        b"abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
+        b"For this sample, this 63-byte string will be used as input data",
+        b"This is exactly 64 bytes long, not counting the terminating byte",
+        b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
+        b"12345678901234567890123456789012345678901234567890123456789012345678901234567890",
+        b"abc def ghi jkl mno pqrs tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !\"§ $%& /() =?* '<> #|; ²³~ @`´ ©«» ¤¼× {} abc def ghi jkl mno pqrs tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !\"§ $%& /() =?* '<> #|; ²³~ @`´ ©«» ¤¼× {} abc def ghi jkl mno pqrs tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !\"§ $%& /() =?* '<> #|; ²³~ @`´ ©«» ¤¼× {} abc def ghi jkl mno pqrs tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !\"§ $%& /() =?* '<> #|; ²³~ @`´ ©«» ¤¼× {} abc def ghi jkl mno pqrs tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !\"§ $%& /() =?* '<> #|; ²³~ @`´ ©«» ¤¼× {} abc def ghi jkl mno pqrs tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !\"§ $%& /() =?* '<> #|; ²³~ @`´ ©«» ¤¼× {} abc def ghi jkl mno pqrs tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !\"§ $%& /() =?* '<> #|; ²³~ @`´ ©«» ¤¼× {} abc def ghi jkl mno pqrs tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !\"§ $%& /() =?* '<> #|; ²³~ @`´ ©«» ¤¼× {} abc def ghi jkl mno pqrs tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !\"§ $%& /() =?* '<> #|; ²³~ @`´ ©«» ¤¼× {} a"
+    ];
+
+    let result = vector[
+        x"9c1185a5c5e9fc54612808977ee8f548b2258d31",
+        x"0bdc9d2d256b3ee9daae347be6f4dc835a467ffe",
+        x"8eb208f7e05d987a9b044a8e98c6b087f15a0bfc",
+        x"5d0689ef49d2fae572b881b123a85ffa21595f36",
+        x"20397528223b6a5f4cbc2808aba0464e645544f9",
+        x"a7d78608c7af8a8e728778e81576870734122b66",
+        x"12a053384a9c0c88e405a06c27dcf49ada62eb2b",
+        x"de90dbfee14b63fb5abf27c2ad4a82aaa5f27a11",
+        x"eda31d51d3a623b81e19eb02e24ff65d27d67b37",
+        x"b0e20b6e3116640286ed3a87a5713079b21f5189",
+        x"9b752e45573d4b39f4dbd3323cab82bf63326bfb",
+        x"d7f58a0edac854df9f7962d081e2131c88509314"
+    ];
+
+    data.length().do!(|index| {
+        let mut hasher = new();
+        let e = data[index];
+        hasher.write(e, e.length());
+        let h = hasher.finalize();
+        assert!(h == result[index]);
+    });
+}
+
+#[test]
+fun test_ripemd160_long_message() {
+    // More than 4000 we get timeout when run test.
+    // This maybe not extractly on your machine.
+    // data = a....a, data.length() = 4000, 'a' = 97 in ASCII
+    let data = vector::tabulate!(4000, |_| 97);
+    let mut hasher = new();
+    hasher.write(data, data.length());
+    let h = hasher.finalize();
+    assert!(h == x"b832c9debdca3a368a1ece8b03f634c932c08379");
 }
