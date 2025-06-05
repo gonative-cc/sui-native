@@ -461,7 +461,8 @@ fun ripemd160_test() {
         b"For this sample, this 63-byte string will be used as input data",
         b"This is exactly 64 bytes long, not counting the terminating byte",
         b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
-        b"12345678901234567890123456789012345678901234567890123456789012345678901234567890"
+        b"12345678901234567890123456789012345678901234567890123456789012345678901234567890",
+        b"abc def ghi jkl mno pqrs tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !\"§ $%& /() =?* '<> #|; ²³~ @`´ ©«» ¤¼× {} abc def ghi jkl mno pqrs tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !\"§ $%& /() =?* '<> #|; ²³~ @`´ ©«» ¤¼× {} abc def ghi jkl mno pqrs tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !\"§ $%& /() =?* '<> #|; ²³~ @`´ ©«» ¤¼× {} abc def ghi jkl mno pqrs tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !\"§ $%& /() =?* '<> #|; ²³~ @`´ ©«» ¤¼× {} abc def ghi jkl mno pqrs tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !\"§ $%& /() =?* '<> #|; ²³~ @`´ ©«» ¤¼× {} abc def ghi jkl mno pqrs tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !\"§ $%& /() =?* '<> #|; ²³~ @`´ ©«» ¤¼× {} abc def ghi jkl mno pqrs tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !\"§ $%& /() =?* '<> #|; ²³~ @`´ ©«» ¤¼× {} abc def ghi jkl mno pqrs tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !\"§ $%& /() =?* '<> #|; ²³~ @`´ ©«» ¤¼× {} abc def ghi jkl mno pqrs tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !\"§ $%& /() =?* '<> #|; ²³~ @`´ ©«» ¤¼× {} a"
     ];
 
     let result = vector[
@@ -475,7 +476,8 @@ fun ripemd160_test() {
         x"de90dbfee14b63fb5abf27c2ad4a82aaa5f27a11",
         x"eda31d51d3a623b81e19eb02e24ff65d27d67b37",
         x"b0e20b6e3116640286ed3a87a5713079b21f5189",
-        x"9b752e45573d4b39f4dbd3323cab82bf63326bfb"
+        x"9b752e45573d4b39f4dbd3323cab82bf63326bfb",
+        x"d7f58a0edac854df9f7962d081e2131c88509314"
     ];
 
     data.length().do!(|index| {
