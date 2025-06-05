@@ -560,7 +560,7 @@ fun create_sighash(ip: &Interpreter, pub_key: vector<u8>, sighash_flag: u8): vec
         let pkh = hash160.finalize();
         let script_code_to_use_for_sighash = create_p2wpkh_scriptcode(pkh);
 
-        let bip143_preimage = sighash::create_bip143_sighash(
+        let bip143_preimage = sighash::create_segwit_preimage(
             &ctx.tx,
             ctx.input_index,
             &script_code_to_use_for_sighash,
