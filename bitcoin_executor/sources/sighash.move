@@ -10,23 +10,26 @@ use bitcoin_executor::utils::{Self, hash256};
 #[test_only]
 use sui::test_utils::assert_eq;
 
+/// Sighash types
 const SIGHASH_ALL: u8 = 0x01;
 const SIGHASH_NONE: u8 = 0x02;
 const SIGHASH_SINGLE: u8 = 0x03;
 const SIGHASH_ANYONECANPAY_FLAG: u8 = 0x80;
 
-public fun create_bip143_sighash_preimage(
+/// Constructs the BIP143 preimage for the Segwit hash signature.
+/// https://learnmeabitcoin.com/technical/keys/signature/ -> Segwit Algorithm
+public fun create_segwit_preimage(
     transaction: &Transaction,
-    input_idx_being_signed: u64,
-    script_code_for_input: &vector<u8>, // For P2WPKH: 0x1976a914{PKH}88ac. For P2WSH: the witnessScript.
+    input_idx_to_sign: u64,
+    input_script: &vector<u8>, // For P2WPKH: 0x1976a914{PKH}88ac. For P2WSH: the witnessScript.
     amount_spent_by_this_input: u64,
-    sighash_type_byte: u8,
+    sighash_type: u8,
 ): vector<u8> {
     let mut preimage = vector[];
     preimage.append(transaction.version());
 
     // HASH256(concatenation of all (input.tx_id + input.vout))
-    let hash_prevouts: vector<u8> = if ((sighash_type_byte & SIGHASH_ANYONECANPAY_FLAG) == 0) {
+    let hash_prevouts: vector<u8> = if ((sighash_type & SIGHASH_ANYONECANPAY_FLAG) == 0) {
         let mut all_prevouts_concat = vector[];
         transaction.inputs().length().do!(|i| {
             let input_ref = transaction.input_at(i);
@@ -40,10 +43,10 @@ public fun create_bip143_sighash_preimage(
     preimage.append(hash_prevouts);
 
     // HASH256(concatenation of all input.sequence)
-    let base_sighash_type = sighash_type_byte & 0x1f; // Mask off ANYONECANPAY bit
+    let base_sighash_type = sighash_type & 0x1f; // Mask off ANYONECANPAY bit
 
     let hash_sequence = if (
-        (sighash_type_byte & SIGHASH_ANYONECANPAY_FLAG) == 0 &&
+        (sighash_type & SIGHASH_ANYONECANPAY_FLAG) == 0 &&
             base_sighash_type != SIGHASH_NONE &&
             base_sighash_type != SIGHASH_SINGLE
     ) {
@@ -58,11 +61,11 @@ public fun create_bip143_sighash_preimage(
     preimage.append(hash_sequence);
 
     // Serialize the TXID and VOUT for the input were signing
-    let current_input = transaction.input_at(input_idx_being_signed);
+    let current_input = transaction.input_at(input_idx_to_sign);
     preimage.append(current_input.tx_id());
     preimage.append(current_input.vout());
 
-    preimage.append(utils::script_to_var_bytes(script_code_for_input));
+    preimage.append(utils::script_to_var_bytes(input_script));
     preimage.append(utils::u64_to_le_bytes(amount_spent_by_this_input));
     preimage.append(current_input.sequence());
 
@@ -78,9 +81,9 @@ public fun create_bip143_sighash_preimage(
         });
         hash256(all_outputs_concat)
     } else if (
-        base_sighash_type == SIGHASH_SINGLE && input_idx_being_signed < transaction.outputs().length()
+        base_sighash_type == SIGHASH_SINGLE && input_idx_to_sign < transaction.outputs().length()
     ) {
-        let output_to_sign = transaction.output_at(input_idx_being_signed);
+        let output_to_sign = transaction.output_at(input_idx_to_sign);
         let mut single_output_concatenated = vector[];
         single_output_concatenated.append(output_to_sign.amount());
         single_output_concatenated.append(
@@ -92,12 +95,12 @@ public fun create_bip143_sighash_preimage(
     };
     preimage.append(hash_outputs);
     preimage.append(transaction.locktime());
-    preimage.append(utils::u32_to_le_bytes((sighash_type_byte as u32)));
+    preimage.append(utils::u32_to_le_bytes((sighash_type as u32)));
     preimage //Complete preimage data to be hashed (Once and later edcsa::verify will hash second time)
 }
 
 #[test]
-fun test_create_bip143_sighash_preimage_lmb_example() {
+fun test_create_segwit_preimage_lmb_example() {
     // all the data for the test copied from the exmaple https://learnmeabitcoin.com/technical/keys/signature/
     let expected_preimage =
         x"02000000cbfaca386d65ea7043aaac40302325d0dc7391a73b585571e28d3287d6b162033bb13029ce7b1f559ef5e747fcac439f1455a2ec7c5f09b72290795e70665044ac4994014aa36b7f53375658ef595b3cb2891e1735fe5b441686f5e53338e76a010000001976a914aa966f56de599b4094b61aa68a2b3df9e97e9c4888ac3075000000000000ffffffff900a6c6ff6cd938bf863e50613a4ed5fb1661b78649fe354116edaf5d4abb9520000000001000000";
@@ -131,17 +134,17 @@ fun test_create_bip143_sighash_preimage_lmb_example() {
         vector[],
     );
 
-    let input_idx_being_signed = 0u64;
-    let script_code_for_input = x"76a914aa966f56de599b4094b61aa68a2b3df9e97e9c4888ac";
+    let input_idx_to_sign = 0u64;
+    let input_script = x"76a914aa966f56de599b4094b61aa68a2b3df9e97e9c4888ac";
     let amount_spent_by_this_input = 30000u64;
-    let sighash_type_byte = SIGHASH_ALL; // 0x01
+    let sighash_type = SIGHASH_ALL; // 0x01
 
-    let result_preimage = create_bip143_sighash_preimage(
+    let result_preimage = create_segwit_preimage(
         &test_tx,
-        input_idx_being_signed,
-        &script_code_for_input,
+        input_idx_to_sign,
+        &input_script,
         amount_spent_by_this_input,
-        sighash_type_byte,
+        sighash_type,
     );
 
     assert_eq(result_preimage, expected_preimage);

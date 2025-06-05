@@ -215,6 +215,8 @@ const OP_NOP8: u8 = 0xb7; // 183
 const OP_NOP9: u8 = 0xb8; // 184
 const OP_NOP10: u8 = 0xb9; // 185
 const OP_CHECKSIGADD: u8 = 0xba; // 186
+
+/* NOT USED
 const OP_UNKNOWN187: u8 = 0xbb; // 187
 const OP_UNKNOWN188: u8 = 0xbc; // 188
 const OP_UNKNOWN189: u8 = 0xbd; // 189
@@ -278,9 +280,13 @@ const OP_UNKNOWN246: u8 = 0xf6; // 246
 const OP_UNKNOWN247: u8 = 0xf7; // 247
 const OP_UNKNOWN248: u8 = 0xf8; // 248
 const OP_UNKNOWN249: u8 = 0xf9; // 249
+*/
+
 const OP_SMALLINTEGER: u8 = 0xfa; // 250 - bitcoin core internal
 const OP_PUBKEYS: u8 = 0xfb; // 251 - bitcoin core internal
-const OP_UNKNOWN252: u8 = 0xfc; // 252
+
+// const OP_UNKNOWN252: u8 = 0xfc; // 252
+
 const OP_PUBKEYHASH: u8 = 0xfd; // 253 - bitcoin core internal
 const OP_PUBKEY: u8 = 0xfe; // 254 - bitcoin core internal
 const OP_INVALIDOPCODE: u8 = 0xff; // 255 - bitcoin core internal
@@ -517,7 +523,7 @@ fun op_checksig(ip: &mut Interpreter) {
 
     assert!(option::is_some(&ip.tx_context), EMissingTxCtx);
 
-    let message_digest = create_sighash_dispatch(ip, pubkey_bytes, sighash_flag);
+    let message_digest = create_sighash(ip, pubkey_bytes, sighash_flag);
 
     let signature_is_valid = sui::ecdsa_k1::secp256k1_verify(
         &sig_to_verify,
@@ -533,7 +539,7 @@ fun op_checksig(ip: &mut Interpreter) {
     };
 }
 
-public fun create_p2wpkh_scriptcode_bytes(pkh: vector<u8>): vector<u8> {
+public fun create_p2wpkh_scriptcode(pkh: vector<u8>): vector<u8> {
     assert!(pkh.length() == 20, EInvalidStackOperation);
     let mut script = vector::empty<u8>();
     script.push_back(OP_DUP);
@@ -545,16 +551,16 @@ public fun create_p2wpkh_scriptcode_bytes(pkh: vector<u8>): vector<u8> {
     script
 }
 
-fun create_sighash_dispatch(ip: &Interpreter, pub_key: vector<u8>, sighash_flag: u8): vector<u8> {
+fun create_sighash(ip: &Interpreter, pub_key: vector<u8>, sighash_flag: u8): vector<u8> {
     let ctx = ip.tx_context.borrow();
     if (ctx.sig_version == SIG_VERSION_WITNESS_V0) {
         let sha = sha2_256(pub_key);
         let mut hash160 = ripemd160::new();
         hash160.write(sha, sha.length());
         let pkh = hash160.finalize();
-        let script_code_to_use_for_sighash = create_p2wpkh_scriptcode_bytes(pkh);
+        let script_code_to_use_for_sighash = create_p2wpkh_scriptcode(pkh);
 
-        let bip143_preimage = sighash::create_bip143_sighash_preimage(
+        let bip143_preimage = sighash::create_segwit_preimage(
             &ctx.tx,
             ctx.input_index,
             &script_code_to_use_for_sighash,
@@ -784,11 +790,11 @@ fun test_op_hash256() {
 }
 
 #[test]
-fun test_create_p2wpkh_scriptcode_bytes() {
+fun test_create_p2wpkh_scriptcode() {
     // data taken from https://learnmeabitcoin.com/technical/keys/signature/
     let pkh = x"aa966f56de599b4094b61aa68a2b3df9e97e9c48";
     let expected_script_code = x"76a914aa966f56de599b4094b61aa68a2b3df9e97e9c4888ac";
-    assert_eq!(create_p2wpkh_scriptcode_bytes(pkh), expected_script_code);
+    assert_eq!(create_p2wpkh_scriptcode(pkh), expected_script_code);
 }
 
 #[test]
