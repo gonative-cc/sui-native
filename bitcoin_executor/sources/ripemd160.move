@@ -449,6 +449,7 @@ fun readLE32(v: &vector<u8>, start_index: u64): u32 {
 
 #[test]
 fun ripemd160_test() {
+    // test vector from: https://homes.esat.kuleuven.be/~bosselae/ripemd160.html
     let data = vector[
         b"",
         b"a",
@@ -459,7 +460,8 @@ fun ripemd160_test() {
         b"abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
         b"For this sample, this 63-byte string will be used as input data",
         b"This is exactly 64 bytes long, not counting the terminating byte",
-
+        b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
+        b"12345678901234567890123456789012345678901234567890123456789012345678901234567890"
     ];
 
     let result = vector[
@@ -472,12 +474,27 @@ fun ripemd160_test() {
         x"12a053384a9c0c88e405a06c27dcf49ada62eb2b",
         x"de90dbfee14b63fb5abf27c2ad4a82aaa5f27a11",
         x"eda31d51d3a623b81e19eb02e24ff65d27d67b37",
+        x"b0e20b6e3116640286ed3a87a5713079b21f5189",
+        x"9b752e45573d4b39f4dbd3323cab82bf63326bfb"
     ];
+
     data.length().do!(|index| {
         let mut hasher = new();
-        let e = data[index].to_ascii_string().into_bytes();
+        let e = data[index];
         hasher.write(e, e.length());
         let h = hasher.finalize();
         assert!(h == result[index]);
     });
+}
+
+#[test]
+fun test_ripemd160_long_message() {
+    // More than 4000 we get timeout when run test.
+    // This maybe not extractly on your machine.
+    // data = a....a, data.length() = 4000, 'a' = 97 in ASCII
+    let data = vector::tabulate!(4000, |_| 97);
+    let mut hasher = new();
+    hasher.write(data, data.length());
+    let h = hasher.finalize();
+    assert!(h == x"b832c9debdca3a368a1ece8b03f634c932c08379");
 }
