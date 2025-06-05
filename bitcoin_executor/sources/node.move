@@ -92,7 +92,7 @@ fun validate_execution(state: &State, tx: Transaction): bool {
     let mut i = 0;
     let mut result = true;
     while (i < number_input) {
-        let stack = stack::create_with_data(tx.witness()[i].items());
+        let stack = stack::new_with_data(tx.witness()[i].items());
         let outpoint = utxo::new_outpoint(
             tx.input_at(i).tx_id(),
             LEtoNumber(tx.input_at(i).vout()) as u32,
