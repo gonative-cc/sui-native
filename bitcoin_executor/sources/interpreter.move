@@ -216,8 +216,9 @@ const OP_NOP9: u8 = 0xb8; // 184
 const OP_NOP10: u8 = 0xb9; // 185
 const OP_CHECKSIGADD: u8 = 0xba; // 186
 
-/* NOT USED
+// Invalid opcodes
 const OP_UNKNOWN187: u8 = 0xbb; // 187
+/*
 const OP_UNKNOWN188: u8 = 0xbc; // 188
 const OP_UNKNOWN189: u8 = 0xbd; // 189
 const OP_UNKNOWN190: u8 = 0xbe; // 190
@@ -279,13 +280,12 @@ const OP_UNKNOWN245: u8 = 0xf5; // 245
 const OP_UNKNOWN246: u8 = 0xf6; // 246
 const OP_UNKNOWN247: u8 = 0xf7; // 247
 const OP_UNKNOWN248: u8 = 0xf8; // 248
-const OP_UNKNOWN249: u8 = 0xf9; // 249
 */
-
+const OP_UNKNOWN249: u8 = 0xf9; // 249
 const OP_SMALLINTEGER: u8 = 0xfa; // 250 - bitcoin core internal
 const OP_PUBKEYS: u8 = 0xfb; // 251 - bitcoin core internal
+const OP_UNKNOWN252: u8 = 0xfc; // 252
 
-// const OP_UNKNOWN252: u8 = 0xfc; // 252
 
 const OP_PUBKEYHASH: u8 = 0xfd; // 253 - bitcoin core internal
 const OP_PUBKEY: u8 = 0xfe; // 254 - bitcoin core internal
@@ -308,6 +308,10 @@ const EMissingTxCtx: vector<u8> = b"Missing transaction context";
 #[error]
 const EUnsupportedSigVersionForChecksig: vector<u8> =
     b"Unsupported signature version for op_checksig";
+#[error]
+const EInvalidOpcode: vector<u8> = b"Invalid Opcode";
+#[error]
+const EInternalBitcoinCoreOpcode: vector<u8> = b"Invalid Opcode: Bitcoin core internal";
 
 public struct TransactionContext has copy, drop {
     tx: Transaction,
@@ -411,11 +415,28 @@ fun eval(ip: &mut Interpreter, r: Reader): bool {
             ip.op_checksig();
         } else if (op == OP_HASH160) {
             ip.op_hash160();
+        } else if (isBitcoinCoreInternalOpCode(op)) {
+	        // Bitcoin Core internal use opcode.  Defined here for completeness.
+	        // https://github.com/btcsuite/btcd/blob/v0.24.2/txscript/opcode.go#L581
+            abort EInternalBitcoinCoreOpcode
+        } else if (isInvalidOptCode(op)) {
+            abort EInvalidOpcode
         }
     };
 
     ip.isSuccess()
 }
+
+fun isInvalidOptCode(op: u8): bool {
+    op == OP_INVALIDOPCODE ||
+        op >= OP_UNKNOWN187 && op <= OP_UNKNOWN249
+}
+
+fun isBitcoinCoreInternalOpCode(op: u8): bool {
+    op == OP_UNKNOWN252 || op == OP_SMALLINTEGER ||
+        op == OP_PUBKEY || op == OP_PUBKEYS || op == OP_PUBKEYHASH
+}
+
 
 /// check evaluate is valid
 /// evaluation valid if the stack not empty
@@ -864,4 +885,56 @@ fun test_op_hash160() {
     let expected_hash: vector<u8> = x"82c12e3c770a95bd17fd1d983d6b2af2037b7a4b";
     assert_eq!(ip.stack.top(), expected_hash);
     assert_eq!(ip.stack.get_all_values(), vector[expected_hash]);
+}
+
+#[test, expected_failure(abort_code = EInternalBitcoinCoreOpcode)]
+fun test_op_unknown252() {
+    eval_test_ip(vector[OP_UNKNOWN252], vector[]);
+}
+
+#[test, expected_failure(abort_code = EInternalBitcoinCoreOpcode)]
+fun test_op_smallinteger() {
+    eval_test_ip(vector[OP_SMALLINTEGER], vector[]);
+}
+
+#[test, expected_failure(abort_code = EInternalBitcoinCoreOpcode)]
+fun test_op_pubkey() {
+    eval_test_ip(vector[OP_PUBKEY], vector[]);
+}
+
+#[test, expected_failure(abort_code = EInternalBitcoinCoreOpcode)]
+fun test_op_pubkeys() {
+    eval_test_ip(vector[OP_PUBKEYS], vector[]);
+}
+
+#[test, expected_failure(abort_code = EInternalBitcoinCoreOpcode)]
+fun test_op_pubkhash() {
+    eval_test_ip(vector[OP_PUBKEYHASH], vector[]);
+}
+
+#[test, expected_failure(abort_code = EInvalidOpcode)]
+fun test_op_invalid() {
+    eval_test_ip(vector[OP_INVALIDOPCODE], vector[]);
+}
+
+#[test, expected_failure(abort_code = EInvalidOpcode)]
+fun test_op_unknown187() {
+    eval_test_ip(vector[OP_UNKNOWN187], vector[]);
+}
+
+#[test, expected_failure(abort_code = EInvalidOpcode)]
+fun test_op_unknown249() {
+    eval_test_ip(vector[OP_UNKNOWN249], vector[]);
+}
+
+#[test, expected_failure(abort_code = EInvalidOpcode)]
+fun test_op_unknown188() {
+    eval_test_ip(vector[OP_UNKNOWN187+1], vector[]);
+}
+
+#[test_only]
+fun eval_test_ip(script: vector<u8>, stack_data: vector<vector<u8>>): bool {
+    let stack = stack::create_with_data(stack_data);
+    let mut ip = new_ip_for_test(stack);
+    ip.eval(reader::new(script))
 }
