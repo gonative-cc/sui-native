@@ -73,7 +73,7 @@ public fun create_bip143_sighash_preimage(
         let mut all_outputs_concat = vector[];
         transaction.outputs().length().do!(|i| {
             let output_ref = transaction.output_at(i);
-            all_outputs_concat.append(output_ref.amount());
+            all_outputs_concat.append(output_ref.amount_bytes());
             all_outputs_concat.append(utils::script_to_var_bytes(&output_ref.script_pubkey()));
         });
         hash256(all_outputs_concat)
@@ -82,7 +82,7 @@ public fun create_bip143_sighash_preimage(
     ) {
         let output_to_sign = transaction.output_at(input_idx_being_signed);
         let mut single_output_concatenated = vector[];
-        single_output_concatenated.append(output_to_sign.amount());
+        single_output_concatenated.append(output_to_sign.amount_bytes());
         single_output_concatenated.append(
             utils::script_to_var_bytes(&output_to_sign.script_pubkey()),
         );
@@ -115,7 +115,7 @@ fun test_create_bip143_sighash_preimage_lmb_example() {
 
     let test_outputs = vector[
         output::new(
-            x"204e000000000000",
+            20000,
             x"76a914ce72abfd0e6d9354a660c18f2825eb392f060fdc88ac",
         ),
     ];

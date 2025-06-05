@@ -813,7 +813,7 @@ fun test_op_checksig() {
 
     let test_outputs = vector[
         output::new(
-            x"204e000000000000",
+            20000,
             x"76a914ce72abfd0e6d9354a660c18f2825eb392f060fdc88ac",
         ),
     ];

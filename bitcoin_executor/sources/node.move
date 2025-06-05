@@ -48,7 +48,7 @@ fun store(state: &mut State, tx: &Transaction, coinbase: bool) {
 
         let (outpoint, data) = utxo::new(
             tx.tx_id(),
-            u32_to_le_bytes(index as u32),
+            index as u32,
             state.height,
             coinbase,
             *output
@@ -61,7 +61,7 @@ fun spend(s: &mut State, tx: &Transaction) {
     tx.inputs().do!(|input| {
         let outpoint = utxo::new_outpoint(
             input.tx_id(),
-            input.vout(),
+            utils::LEtoNumber(input.vout()) as u32,
         );
 
         let height = s.height;
@@ -93,10 +93,7 @@ fun validate_execution(state: &State, tx: Transaction): bool {
     let mut result = true;
     while (i < number_input) {
         let stack = stack::create_with_data(tx.witness()[i].items());
-        let outpoint = utxo::new_outpoint(
-            tx.input_at(i).tx_id(),
-            tx.input_at(i).vout(),
-        );
+        let outpoint = utxo::from_input(tx.input_at(i));
 
         let utxo_valid = state.utxo_exists(outpoint);
         assert!(utxo_valid, EUTXOInvalid);
@@ -107,7 +104,7 @@ fun validate_execution(state: &State, tx: Transaction): bool {
         // We will support more standard scripts.
         let pk = data.pkh();
         let script = create_p2wpkh_scriptcode_bytes(pk);
-        let valid = run(tx, stack, script, i, data.output().amount());
+        let valid = run(tx, stack, script, i, data.output().amount_bytes());
         if (!valid) {
             result = false;
             break
@@ -142,7 +139,7 @@ public fun utxo_exists(state: &State, outpoint: OutPoint): bool {
 fun test_add_utxo() {
     let mut ctx = tx_context::dummy();
 
-    let (outpint, info) = utxo::new(x"01", x"01000000", 1, true, output::new(x"01", x"01"));
+    let (outpint, info) = utxo::new(x"01", 1, 1, true, output::new(1, x"01"));
 
     let mut state = State {
         id: object::new(&mut ctx),
@@ -159,7 +156,7 @@ fun test_add_utxo() {
 fun test_add_utxo_fail() {
     let mut ctx = tx_context::dummy();
 
-    let (outpint, info) = utxo::new(x"01", x"01000000", 1, true, output::new(x"01", x"01"));
+    let (outpint, info) = utxo::new(x"01", 1, 1, true, output::new(1, x"01"));
 
     let mut state = State {
         id: object::new(&mut ctx),
@@ -175,7 +172,7 @@ fun test_add_utxo_fail() {
 fun test_spend_utxo() {
     let mut ctx = tx_context::dummy();
 
-    let (outpint, info) = utxo::new(x"01", x"01000000", 1, false, output::new(x"01", x"01"));
+    let (outpint, info) = utxo::new(x"01", 1, 1, false, output::new(1, x"01"));
 
     let mut state = State {
         id: object::new(&mut ctx),
@@ -192,7 +189,7 @@ fun test_spend_utxo() {
 fun test_spend_utxo_is_coinbase() {
     let mut ctx = tx_context::dummy();
 
-    let (outpint, info) = utxo::new(x"01", x"01000000", 1, true, output::new(x"01", x"01"));
+    let (outpint, info) = utxo::new(x"01", 1, 1, true, output::new(1, x"01"));
 
     let mut state = State {
         id: object::new(&mut ctx),
@@ -209,7 +206,7 @@ fun test_spend_utxo_is_coinbase() {
 fun test_spend_utxo_is_coinbase_fail() {
     let mut ctx = tx_context::dummy();
 
-    let (outpint, info) = utxo::new(x"01", x"01000000", 100, true, output::new(x"01", x"01"));
+    let (outpint, info) = utxo::new(x"01", 1, 100, true, output::new(1, x"01"));
 
     let mut state = State {
         id: object::new(&mut ctx),
@@ -227,10 +224,10 @@ fun execution_node_test() {
 
     let (outpint, info) = utxo::new(
         x"d2515c87b7afba3a576e80af3727b7511025a9615db33a3a768415601aeb59c1",
-        x"00000000",
+        00000000,
         0,
         true,
-        output::new(utils::u64_to_le_bytes(5000000000), x"001460bef4984dfcc473d6459368f4f1f9a21d1f4d74")
+        output::new(5000000000, x"001460bef4984dfcc473d6459368f4f1f9a21d1f4d74")
     );
 
     let mut state = State {
@@ -264,10 +261,10 @@ fun execution_node_double_spend_test() {
 
     let (outpint, info) = utxo::new(
         x"d2515c87b7afba3a576e80af3727b7511025a9615db33a3a768415601aeb59c1",
-        x"000000",
+        0,
         0,
         true,
-        output::new(utils::u64_to_le_bytes(5000000000), x"001460bef4984dfcc473d6459368f4f1f9a21d1f4d74")
+        output::new(5000000000, x"001460bef4984dfcc473d6459368f4f1f9a21d1f4d74")
     );
 
     let mut state = State {

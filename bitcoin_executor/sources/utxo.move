@@ -3,7 +3,9 @@
 module bitcoin_executor::utxo;
 
 use bitcoin_executor::output::Output;
-use bitcoin_executor::utils::vector_slice;
+use bitcoin_executor::input::Input;
+
+use bitcoin_executor::utils::{vector_slice, u32_to_le_bytes, LEtoNumber};
 
 const OP_0: u8 = 0x00;
 const OP_DATA_20: u8 = 0x14;
@@ -13,7 +15,8 @@ const OP_DATA_20: u8 = 0x14;
 /// OutPoint is a UTXO ID
 public struct OutPoint has copy, drop, store {
     tx_id: vector<u8>,
-    vout: vector<u8>,
+    vout: u32,
+    vout_bytes: vector<u8>,
 }
 
 /// Data is a UTXO value
@@ -23,27 +26,36 @@ public struct Data has copy, drop, store {
     output: Output,
 }
 
-public fun new_outpoint(tx_id: vector<u8>, vout: vector<u8>): OutPoint {
-    OutPoint { tx_id, vout }
+public fun new_outpoint(tx_id: vector<u8>, vout: u32): OutPoint {
+    OutPoint { tx_id, vout, vout_bytes: u32_to_le_bytes(vout) }
 }
 
+public fun from_input(input: &Input): OutPoint {
+    OutPoint {
+        tx_id: input.tx_id(),
+        vout: LEtoNumber(input.vout()) as u32,
+        vout_bytes: input.vout()
+    }
+}
 public fun new_data(height: u64, is_coinbase: bool, output: Output): Data {
     Data { height, is_coinbase, output }
 }
 
 public fun new(
     tx_id: vector<u8>,
-    vout: vector<u8>,
+    vout: u32,
     height: u64,
     is_coinbase: bool,
     output: Output
 ): (OutPoint, Data) {
-    (OutPoint { tx_id, vout }, Data { height, is_coinbase, output })
+    (new_outpoint(tx_id, vout), new_data(height, is_coinbase, output))
 }
 
 public fun tx_id(outpoint: &OutPoint): vector<u8> { outpoint.tx_id }
 
-public fun vout(outpoint: &OutPoint): vector<u8> { outpoint.vout }
+public fun vout(outpoint: &OutPoint): u32 { outpoint.vout }
+
+public fun vout_bytes(outpoint: &OutPoint): vector<u8> { outpoint.vout_bytes }
 
 public fun output(data: &Data): &Output {
     &data.output
