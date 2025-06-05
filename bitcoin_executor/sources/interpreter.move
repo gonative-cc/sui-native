@@ -886,3 +886,55 @@ fun test_op_hash160() {
     assert_eq!(ip.stack.top(), expected_hash);
     assert_eq!(ip.stack.get_all_values(), vector[expected_hash]);
 }
+
+#[test, expected_failure(abort_code = EInternalBitcoinCoreOpcode)]
+fun test_op_unknown252() {
+    eval_test_ip(vector[OP_UNKNOWN252], vector[]);
+}
+
+#[test, expected_failure(abort_code = EInternalBitcoinCoreOpcode)]
+fun test_op_smallinteger() {
+    eval_test_ip(vector[OP_SMALLINTEGER], vector[]);
+}
+
+#[test, expected_failure(abort_code = EInternalBitcoinCoreOpcode)]
+fun test_op_pubkey() {
+    eval_test_ip(vector[OP_PUBKEY], vector[]);
+}
+
+#[test, expected_failure(abort_code = EInternalBitcoinCoreOpcode)]
+fun test_op_pubkeys() {
+    eval_test_ip(vector[OP_PUBKEYS], vector[]);
+}
+
+#[test, expected_failure(abort_code = EInternalBitcoinCoreOpcode)]
+fun test_op_pubkhash() {
+    eval_test_ip(vector[OP_PUBKEYHASH], vector[]);
+}
+
+#[test, expected_failure(abort_code = EInvalidOpcode)]
+fun test_op_invalid() {
+    eval_test_ip(vector[OP_INVALIDOPCODE], vector[]);
+}
+
+#[test, expected_failure(abort_code = EInvalidOpcode)]
+fun test_op_unknown187() {
+    eval_test_ip(vector[OP_UNKNOWN187], vector[]);
+}
+
+#[test, expected_failure(abort_code = EInvalidOpcode)]
+fun test_op_unknown249() {
+    eval_test_ip(vector[OP_UNKNOWN249], vector[]);
+}
+
+#[test, expected_failure(abort_code = EInvalidOpcode)]
+fun test_op_unknown188() {
+    eval_test_ip(vector[OP_UNKNOWN187+1], vector[]);
+}
+
+#[test_only]
+fun eval_test_ip(script: vector<u8>, stack_data: vector<vector<u8>>): bool {
+    let stack = stack::create_with_data(stack_data);
+    let mut ip = new_ip_for_test(stack);
+    ip.eval(reader::new(script))
+}
