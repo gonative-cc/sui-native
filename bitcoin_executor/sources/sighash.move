@@ -22,7 +22,7 @@ public fun create_segwit_preimage(
     transaction: &Transaction,
     input_idx_to_sign: u64,
     input_script: &vector<u8>, // For P2WPKH: 0x1976a914{PKH}88ac. For P2WSH: the witnessScript.
-    amount_spent_by_this_input: u64,
+    amount_spent_by_this_input: vector<u8>,
     sighash_type: u8,
 ): vector<u8> {
     let mut preimage = vector[];
@@ -66,7 +66,7 @@ public fun create_segwit_preimage(
     preimage.append(current_input.vout());
 
     preimage.append(utils::script_to_var_bytes(input_script));
-    preimage.append(utils::u64_to_le_bytes(amount_spent_by_this_input));
+    preimage.append(amount_spent_by_this_input);
     preimage.append(current_input.sequence());
 
     // HASH256(concatenation of all (output.value + output.script_pub_key_with_len))
@@ -76,7 +76,7 @@ public fun create_segwit_preimage(
         let mut all_outputs_concat = vector[];
         transaction.outputs().length().do!(|i| {
             let output_ref = transaction.output_at(i);
-            all_outputs_concat.append(output_ref.amount());
+            all_outputs_concat.append(output_ref.amount_bytes());
             all_outputs_concat.append(utils::script_to_var_bytes(&output_ref.script_pubkey()));
         });
         hash256(all_outputs_concat)
@@ -85,7 +85,7 @@ public fun create_segwit_preimage(
     ) {
         let output_to_sign = transaction.output_at(input_idx_to_sign);
         let mut single_output_concatenated = vector[];
-        single_output_concatenated.append(output_to_sign.amount());
+        single_output_concatenated.append(output_to_sign.amount_bytes());
         single_output_concatenated.append(
             utils::script_to_var_bytes(&output_to_sign.script_pubkey()),
         );
@@ -118,7 +118,7 @@ fun test_create_segwit_preimage_lmb_example() {
 
     let test_outputs = vector[
         output::new(
-            x"204e000000000000",
+            20000,
             x"76a914ce72abfd0e6d9354a660c18f2825eb392f060fdc88ac",
         ),
     ];
@@ -136,7 +136,7 @@ fun test_create_segwit_preimage_lmb_example() {
 
     let input_idx_to_sign = 0u64;
     let input_script = x"76a914aa966f56de599b4094b61aa68a2b3df9e97e9c4888ac";
-    let amount_spent_by_this_input = 30000u64;
+    let amount_spent_by_this_input = x"3075000000000000";
     let sighash_type = SIGHASH_ALL; // 0x01
 
     let result_preimage = create_segwit_preimage(

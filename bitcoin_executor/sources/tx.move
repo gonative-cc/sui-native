@@ -5,7 +5,7 @@ module bitcoin_executor::tx;
 use bitcoin_executor::input::{Self, Input};
 use bitcoin_executor::output::{Self, Output};
 use bitcoin_executor::reader::Reader;
-use bitcoin_executor::utils::u64_to_varint_bytes;
+use bitcoin_executor::utils::{u64_to_varint_bytes, LEtoNumber};
 use bitcoin_executor::utils::hash256;
 
 public struct InputWitness has copy, drop {
@@ -150,7 +150,7 @@ public fun deserialize(r: &mut Reader): Transaction {
         raw_tx.append(script_pubkey);
         outputs.push_back(
             output::new(
-                amount,
+                LEtoNumber(amount),
                 script_pubkey,
             ),
         )

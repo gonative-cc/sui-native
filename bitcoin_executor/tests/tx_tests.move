@@ -25,7 +25,9 @@ fun segwit_tx_00() {
 
     let output = txn.outputs()[0];
     assert_eq(output.script_pubkey(), x"001464f9139a4a853b3d5ad1315ceb707386ed343c2c");
-    assert_eq(output.amount(), x"e918010000000000");
+    assert_eq(output.amount_bytes(), x"e918010000000000");
+    assert_eq(output.amount(), 71913);
+
 
     assert!(txn.is_witness());
     assert_eq(txn.witness().length(), txn.inputs().length());
