@@ -659,8 +659,7 @@ fun test_op_push_small_int5() {
 fun test_op_push_small_int_helper(ip: &mut Interpreter, opcode: u8, expected_size: u64, top_val: vector<u8>) {
     ip.op_push_small_int(opcode);
     assert_eq!(ip.stack.size(), expected_size);
-    let top_val = ip.stack.top();
-    assert_eq!(top_val, top_val);
+    assert_eq!(ip.stack.top(), top_val);
     assert_eq!(ip.isSuccess(), true);
 }
 
