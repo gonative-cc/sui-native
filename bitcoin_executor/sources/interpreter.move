@@ -761,7 +761,7 @@ fun test_op_size_fail() {
 
 #[test]
 fun test_op_sha256() {
-    let mut ip = new_test_ip(vector[vector[1]]);
+    let mut ip = new_test_ip(vector[vector[0x01]]);
     ip.op_sha256();
     assert_eq!(ip.stack.size(), 1);
     let expected_hash: vector<u8> =
@@ -772,7 +772,7 @@ fun test_op_sha256() {
 
 #[test]
 fun test_op_hash256() {
-    let mut ip = new_test_ip(vector[vector[1]]);
+    let mut ip = new_test_ip(vector[vector[0x01]]);
     ip.op_hash256();
     assert_eq!(ip.stack.size(), 1);
     let expected_hash: vector<u8> =
