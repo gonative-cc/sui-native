@@ -643,20 +643,20 @@ fun test_op_push_n_bytes() {
 fun test_op_push_small_int() {
     let mut ip = new_empty_test_ip();
 
-    ip.test_op_push_small_int_helper(OP_1, 1, vector[0x01]);
-    ip.test_op_push_small_int_helper(OP_7, 2, vector[0x07]);
-    ip.test_op_push_small_int_helper(OP_16, 3, vector[0x10]);
+    ip.op_push_small_int_helper(OP_1, 1, vector[0x01]);
+    ip.op_push_small_int_helper(OP_7, 2, vector[0x07]);
+    ip.op_push_small_int_helper(OP_16, 3, vector[0x10]);
 }
 
 #[test]
 fun test_op_push_small_int5() {
     let mut ip = new_empty_test_ip();
-    ip.test_op_push_small_int_helper(OP_5, 1, vector[0x05]);
+    ip.op_push_small_int_helper(OP_5, 1, vector[0x05]);
 }
 
 
 #[test_only]
-fun test_op_push_small_int_helper(ip: &mut Interpreter, opcode: u8, expected_size: u64, top_val: vector<u8>) {
+fun op_push_small_int_helper(ip: &mut Interpreter, opcode: u8, expected_size: u64, top_val: vector<u8>) {
     ip.op_push_small_int(opcode);
     assert_eq!(ip.stack.size(), expected_size);
     assert_eq!(ip.stack.top(), top_val);
