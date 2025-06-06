@@ -18,13 +18,11 @@ public struct Stack has copy, drop {
 }
 
 /// creates stack
-public fun create(): Stack {
-    Stack {
-        internal: vector[],
-    }
+public fun new(): Stack {
+    new_with_data(vector[])
 }
 
-public fun create_with_data(data: vector<vector<u8>>): Stack {
+public fun new_with_data(data: vector<vector<u8>>): Stack {
     Stack {
         internal: data,
     }

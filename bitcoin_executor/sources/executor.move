@@ -92,7 +92,7 @@ fun validate_execution(state: &State, tx: Transaction): bool {
     let mut i = 0;
     let mut result = true;
     while (i < number_input) {
-        let stack = stack::create_with_data(tx.witness()[i].items());
+        let stack = stack::new_with_data(tx.witness()[i].items());
         let outpoint = utxo::from_input(tx.input_at(i));
 
         let utxo_valid = state.utxo_exists(outpoint);
@@ -104,7 +104,7 @@ fun validate_execution(state: &State, tx: Transaction): bool {
         // We will support more standard scripts.
         let pk = data.pkh();
         let script = create_p2wpkh_scriptcode(pk);
-        let valid = run(tx, stack, script, i, data.output().amount_bytes());
+        let valid = run(tx, stack, script, i, data.output().amount());
         if (!valid) {
             result = false;
             break
@@ -219,7 +219,7 @@ fun test_spend_utxo_is_coinbase_fail() {
 }
 
 #[test]
-fun execution_node_test() {
+fun test_execution() {
     let mut ctx = tx_context::dummy();
 
     let (outpint, info) = utxo::new(
@@ -256,7 +256,7 @@ fun execution_node_test() {
 }
 
 #[test, expected_failure(abort_code = EUTXOInvalid)]
-fun execution_node_double_spend_test() {
+fun test_execution_double_spend() {
     let mut ctx = tx_context::dummy();
 
     let (outpint, info) = utxo::new(
