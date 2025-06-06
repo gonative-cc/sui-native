@@ -222,7 +222,7 @@ fun test_spend_utxo_is_coinbase_fail() {
 }
 
 #[test]
-fun execution_node_test() {
+fun test_execution() {
     let mut ctx = tx_context::dummy();
 
     let (outpint, info) = utxo::new(
@@ -260,7 +260,7 @@ fun execution_node_test() {
 }
 
 #[test, expected_failure(abort_code = EUTXOInvalid)]
-fun execution_node_double_spend_test() {
+fun test_execution_double_spend() {
     let mut ctx = tx_context::dummy();
 
     let (outpint, info) = utxo::new(
