@@ -19,15 +19,16 @@ Finally smart contracts on Sui don't have full access to Bitcoin state, which ma
 
 Built on [**Native Zero Trust Architecture**](https://www.gonative.cc/post/trust-models-in-blockchain-architecture), and powered by [Ika](https://ika.xyz/) 2PC-MPC, Trustless Bitcoin Node provides:
 
-- 👉 Fully mirror the Bitcoin State on Sui - you can
-- 👉 Simulate transactions
-- 👉 Grant Bitcoin users access to Sui assets based on Bitcoin execution / state.
+- 👉 Full mirror the Bitcoin state on Sui
+- 👉 Simulate Bitcoin transactions
+- 👉 Grant Bitcoin users an access to Sui assets based on Bitcoin execution / state.
 - 👉 Use advanced programmability patterns to execute native Bitcoin transactions.
 - 👉 Compose multi contract calls based in Bitcoin state or TX result.
 - 👉 Execute sophisticated flows, that include Bitcoin UTXOs.
 
 📢 Thanks to Sui Network scalability and [Native](https://gonative.cc) tech, **Bitcoin finally is fully programmable and scalable!**
-👉 you can trustlessly program and transfer access to Bitcoin assets without executing Bitcoin TXs.
+
+👉 You can trustlessly program and transfer access to Bitcoin assets!
 
 This is **completely new paradigm**! The Zero Trust Architecture at it's best!
 
