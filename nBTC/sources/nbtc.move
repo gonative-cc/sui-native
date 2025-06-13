@@ -51,6 +51,9 @@ const EMintAmountIsZero: vector<u8> = b"BTC deposit must not be zero";
 const EUntrustedLightClient: vector<u8> = b"Wrong Light Client object ID";
 #[error]
 const EVersionMismatch: vector<u8> = b"The package has been updated. You are using a wrong version";
+#[error]
+const EAlreadyUpdated: vector<u8> =
+    b"The package version has been already updated to the latest one";
 
 //
 // Structs
@@ -179,6 +182,12 @@ public fun redeem(
     assert!(treasury.version == VERSION, EVersionMismatch);
     // TODO: implement logic to guard burning
     coins.fold!(0, |total, c| total + coin::burn(&mut treasury.cap, c))
+}
+
+/// update_version updates the treasury.version to the latest, making the usage of the older versions not possible
+public fun update_version(treasury: &mut WrappedTreasuryCap, _: &mut TxContext) {
+    assert!(VERSION > treasury.version, EAlreadyUpdated);
+    treasury.version = VERSION;
 }
 
 //
