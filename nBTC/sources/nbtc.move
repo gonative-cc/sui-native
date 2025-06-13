@@ -63,7 +63,7 @@ const EAlreadyUpdated: vector<u8> =
 /// It should be a shared object to enable anyone to interact with the contract.
 public struct WrappedTreasuryCap has key, store {
     id: UID,
-    version: u8,
+    version: u32,
     cap: TreasuryCap<NBTC>,
     tx_ids: Table<vector<u8>, bool>,
     trusted_lc_id: ID,
