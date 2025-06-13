@@ -16,7 +16,7 @@ use sui::url;
 //
 
 /// Package version
-const VERSION: u8 = 1;
+const VERSION: u32 = 1;
 
 /// Coin Metadata
 const DECIMALS: u8 = 8;
@@ -185,7 +185,7 @@ public fun redeem(
 }
 
 /// update_version updates the treasury.version to the latest, making the usage of the older versions not possible
-public fun update_version(treasury: &mut WrappedTreasuryCap, _: &mut TxContext) {
+public fun update_version(treasury: &mut WrappedTreasuryCap) {
     assert!(VERSION > treasury.version, EAlreadyUpdated);
     treasury.version = VERSION;
 }
