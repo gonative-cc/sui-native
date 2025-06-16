@@ -15,6 +15,9 @@ use sui::url;
 // Constans
 //
 
+/// Package version
+const VERSION: u32 = 1;
+
 /// Coin Metadata
 const DECIMALS: u8 = 8;
 const SYMBOL: vector<u8> = b"nBTC";
@@ -46,6 +49,11 @@ const ETxAlreadyUsed: vector<u8> = b"The Bitcoin transaction ID has been already
 const EMintAmountIsZero: vector<u8> = b"BTC deposit must not be zero";
 #[error]
 const EUntrustedLightClient: vector<u8> = b"Wrong Light Client object ID";
+#[error]
+const EVersionMismatch: vector<u8> = b"The package has been updated. You are using a wrong version";
+#[error]
+const EAlreadyUpdated: vector<u8> =
+    b"The package version has been already updated to the latest one";
 
 //
 // Structs
@@ -55,6 +63,7 @@ const EUntrustedLightClient: vector<u8> = b"Wrong Light Client object ID";
 /// It should be a shared object to enable anyone to interact with the contract.
 public struct WrappedTreasuryCap has key, store {
     id: UID,
+    version: u32,
     cap: TreasuryCap<NBTC>,
     tx_ids: Table<vector<u8>, bool>,
     trusted_lc_id: ID,
@@ -86,6 +95,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
     transfer::public_freeze_object(metadata);
     let treasury = WrappedTreasuryCap {
         id: object::new(ctx),
+        version: VERSION,
         cap: treasury_cap,
         tx_ids: table::new<vector<u8>, bool>(ctx),
         trusted_lc_id: LIGHT_CLIENT_ID.to_id(),
@@ -119,6 +129,7 @@ public fun mint(
     tx_index: u64,
     ctx: &mut TxContext,
 ) {
+    assert!(treasury.version == VERSION, EVersionMismatch);
     let provided_lc_id = object::id(light_client);
     assert!(provided_lc_id == treasury.trusted_lc_id, EUntrustedLightClient);
 
@@ -163,9 +174,20 @@ public fun mint(
 }
 
 /// redeem returns total amount of redeemed balance
-public fun redeem(treasury: &mut WrappedTreasuryCap, coins: vector<Coin<NBTC>>, _ctx: &mut TxContext): u64 {
+public fun redeem(
+    treasury: &mut WrappedTreasuryCap,
+    coins: vector<Coin<NBTC>>,
+    _ctx: &mut TxContext,
+): u64 {
+    assert!(treasury.version == VERSION, EVersionMismatch);
     // TODO: implement logic to guard burning
     coins.fold!(0, |total, c| total + coin::burn(&mut treasury.cap, c))
+}
+
+/// update_version updates the treasury.version to the latest, making the usage of the older versions not possible
+public fun update_version(treasury: &mut WrappedTreasuryCap) {
+    assert!(VERSION > treasury.version, EAlreadyUpdated);
+    treasury.version = VERSION;
 }
 
 //
@@ -203,6 +225,7 @@ public(package) fun init_for_testing(
     transfer::public_freeze_object(metadata);
     let treasury = WrappedTreasuryCap {
         id: object::new(ctx),
+        version: VERSION,
         cap: treasury_cap,
         tx_ids: table::new<vector<u8>, bool>(ctx),
         trusted_lc_id: btc_lc_id,
