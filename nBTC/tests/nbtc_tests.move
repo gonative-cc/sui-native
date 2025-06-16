@@ -5,7 +5,14 @@ module nbtc::nbtc_tests;
 
 use bitcoin_spv::light_client::{new_light_client, LightClient};
 use bitcoin_spv::params;
-use nbtc::nbtc::{Self, WrappedTreasuryCap, EMintAmountIsZero, ETxAlreadyUsed, NBTC};
+use nbtc::nbtc::{
+    Self,
+    WrappedTreasuryCap,
+    EMintAmountIsZero,
+    ETxAlreadyUsed,
+    EAlreadyUpdated,
+    NBTC
+};
 use sui::address;
 use sui::coin::Coin;
 use sui::test_scenario::{Self, take_from_address};
@@ -212,6 +219,20 @@ fun test_nbtc_mint_fail_tx_already_used() {
         ctx,
     );
 
+    sui::test_utils::destroy(lc);
+    sui::test_utils::destroy(cap);
+    scenario.end();
+}
+
+#[test]
+#[expected_failure(abort_code = EAlreadyUpdated)]
+fun test_update_version_fail() {
+    let sender = @0x01;
+    let mut scenario = test_scenario::begin(sender);
+    let ctx = scenario.ctx();
+    let btc_treasury = x"509a651dd392e1bc125323f629b67d65cca3d4bb";
+    let (lc, mut cap) = init_nbtc(btc_treasury, ctx);
+    nbtc::update_version(&mut cap);
     sui::test_utils::destroy(lc);
     sui::test_utils::destroy(cap);
     scenario.end();
