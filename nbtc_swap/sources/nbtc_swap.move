@@ -57,10 +57,9 @@ fun calculate_price(price: u64): u64 {
     price  * PRICE_CONVERSION_FACTOR
 }
 
-public fun buy_nbtc(vault: &mut Vault, coin: Coin<SUI>, ctx: &mut TxContext) {
+public fun buy_nbtc(vault: &mut Vault, coin: Coin<SUI>, ctx: &mut TxContext): Coin<NBTC> {
     assert!(!vault.is_paused, EVaultPaused);
 
-    let sender = tx_context::sender(ctx);
     let sui_paid = coin.into_balance();
     let nbtc_to_receive = sui_paid.value() / vault.satoshi_price;
     assert!(nbtc_to_receive > 0, EInsufficientSuiPayment);
@@ -70,7 +69,22 @@ public fun buy_nbtc(vault: &mut Vault, coin: Coin<SUI>, ctx: &mut TxContext) {
     vault.sui_balance.join(sui_paid);
     let nbtc_to_send = coin::take(&mut vault.nbtc_balance, nbtc_to_receive, ctx);
 
-    transfer::public_transfer(nbtc_to_send, sender);
+    nbtc_to_send
+}
+
+public fun sell_nbtc(vault: &mut Vault, coin: Coin<NBTC>, ctx: &mut TxContext): Coin<SUI> {
+    assert!(!vault.is_paused, EVaultPaused);
+
+    let nbtc_paid = coin.into_balance();
+    let sui_to_recive = nbtc_paid.value() * vault.satoshi_price / 2; // we enable selling for half of price of the buy
+    assert!(sui_to_recive > 0, EInsufficientSuiPayment);
+    let vault_sui_balance = vault.sui_balance.value();
+    assert!(vault_sui_balance >= sui_to_recive, EInsufficientLiquidity);
+
+    vault.nbtc_balance.join(nbtc_paid);
+    let sui_to_send = coin::take(&mut vault.sui_balance, sui_to_recive, ctx);
+
+    sui_to_send
 }
 
 public entry fun add_nbtc_liquidity(
