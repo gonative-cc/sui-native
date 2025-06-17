@@ -5,6 +5,7 @@ module nbtc_swap::nbtc_swap;
 use nbtc::nbtc::NBTC;
 use sui::balance::{Self, Balance};
 use sui::coin::{Self, Coin};
+use sui::event::emit;
 use sui::sui::SUI;
 
 const EVaultPaused: u64 = 1;
@@ -16,6 +17,18 @@ const EInsufficientSuiPayment: u64 = 4;
 // nBTC has 8 decimals: 1 nBTC = 10^8 satoshi
 // The conversion factor for price = 10^9 / 10^8 = 10
 const PRICE_CONVERSION_FACTOR: u64 = 10;
+
+/// Event emitted when nBTC is purchased. Contains address of the buyer and the amount of nBTC bought.
+public struct Buy has copy, drop {
+    buyer: address,
+    amount: u64,
+}
+
+/// Event emitted when nBTC is sold. Contains address of the seller and the amount of nBTC sold.
+public struct Sell has copy, drop {
+    seller: address,
+    amount: u64,
+}
 
 public struct AdminCap has key, store {
     id: UID,
@@ -33,7 +46,7 @@ public struct Vault has key, store {
 
 fun init(ctx: &mut TxContext) {
     let initial_price = 25000; //25k SUI per NBTC
-    let sender = tx_context::sender(ctx);
+    let sender = ctx.sender();
 
     let vault = Vault {
         id: object::new(ctx),
@@ -69,6 +82,8 @@ public fun buy_nbtc(vault: &mut Vault, coin: Coin<SUI>, ctx: &mut TxContext): Co
     vault.sui_balance.join(sui_paid);
     let nbtc_to_send = coin::take(&mut vault.nbtc_balance, nbtc_to_receive, ctx);
 
+    emit(Buy { buyer: ctx.sender(), amount: nbtc_to_receive });
+
     nbtc_to_send
 }
 
@@ -76,13 +91,16 @@ public fun sell_nbtc(vault: &mut Vault, coin: Coin<NBTC>, ctx: &mut TxContext): 
     assert!(!vault.is_paused, EVaultPaused);
 
     let nbtc_paid = coin.into_balance();
-    let sui_to_recive = nbtc_paid.value() * vault.satoshi_price / 2; // we enable selling for half of price of the buy
+    let nbtc_amount = nbtc_paid.value();
+    let sui_to_recive = nbtc_amount * vault.satoshi_price / 2; // we enable selling for half of price of the buy
     assert!(sui_to_recive > 0, EInsufficientSuiPayment);
     let vault_sui_balance = vault.sui_balance.value();
     assert!(vault_sui_balance >= sui_to_recive, EInsufficientLiquidity);
 
     vault.nbtc_balance.join(nbtc_paid);
     let sui_to_send = coin::take(&mut vault.sui_balance, sui_to_recive, ctx);
+
+    emit(Sell { seller: ctx.sender(), amount: nbtc_amount });
 
     sui_to_send
 }
