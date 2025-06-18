@@ -105,7 +105,7 @@ public fun sell_nbtc(vault: &mut Vault, coin: Coin<NBTC>, ctx: &mut TxContext): 
     sui_to_send
 }
 
-public entry fun add_nbtc_liquidity(
+public fun add_nbtc_liquidity(
     _cap: &AdminCap,
     vault: &mut Vault,
     nbtc_coin: Coin<NBTC>,
@@ -115,8 +115,18 @@ public entry fun add_nbtc_liquidity(
     vault.nbtc_balance.join(nbtc_added);
 }
 
+public fun add_sui_liquidity(
+    _cap: &AdminCap,
+    vault: &mut Vault,
+    sui_coin: Coin<SUI>,
+    _ctx: &mut TxContext,
+) {
+    let sui_added = sui_coin.into_balance();
+    vault.sui_balance.join(sui_added);
+}
+
 /// sends all nBTC and Sui to admin
-public entry fun withdraw(_cap: &AdminCap, vault: &mut Vault, ctx: &mut TxContext) {
+public fun withdraw(_cap: &AdminCap, vault: &mut Vault, ctx: &mut TxContext) {
     let nbtc_amount = vault.nbtc_balance.value();
     let sui_amount = vault.sui_balance.value();
     let nbtc_to_withdraw = coin::take(&mut vault.nbtc_balance, nbtc_amount, ctx);
@@ -126,17 +136,12 @@ public entry fun withdraw(_cap: &AdminCap, vault: &mut Vault, ctx: &mut TxContex
 }
 
 /// Input the new price in standard units (e.g., 25000 for 25k SUI per NBTC)
-public entry fun set_price(
-    _cap: &AdminCap,
-    vault: &mut Vault,
-    new_price: u64,
-    _ctx: &mut TxContext,
-) {
+public fun set_price(_cap: &AdminCap, vault: &mut Vault, new_price: u64, _ctx: &mut TxContext) {
     assert!(new_price > 0, EInvalidPrice);
     vault.satoshi_price = calculate_price(new_price);
 }
 
-public entry fun set_paused(_cap: &AdminCap, vault: &mut Vault, pause: bool, _ctx: &mut TxContext) {
+public fun set_paused(_cap: &AdminCap, vault: &mut Vault, pause: bool, _ctx: &mut TxContext) {
     vault.is_paused = pause;
 }
 
