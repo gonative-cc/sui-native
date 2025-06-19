@@ -1,6 +1,6 @@
-module bitcoin_executor::output;
+module btc_parser::output;
 
-use bitcoin_executor::utils::u64_to_le_bytes;
+use btc_parser::utils::u64_to_le_bytes;
 
 /// Output in btc transaction
 public struct Output has copy, drop, store {

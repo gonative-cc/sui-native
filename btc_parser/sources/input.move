@@ -1,4 +1,4 @@
-module bitcoin_executor::input;
+module btc_parser::input;
 
 /// Input in btc transaction
 public struct Input has copy, drop {

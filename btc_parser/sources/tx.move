@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MPL-2.0
 
-module bitcoin_executor::tx;
+module btc_parser::tx;
 
-use bitcoin_executor::input::{Self, Input};
-use bitcoin_executor::output::{Self, Output};
-use bitcoin_executor::reader::Reader;
-use bitcoin_executor::utils::{u64_to_varint_bytes, LEtoNumber};
-use bitcoin_executor::utils::hash256;
+use btc_parser::input::{Self, Input};
+use btc_parser::output::{Self, Output};
+use btc_parser::reader::Reader;
+use btc_parser::utils::{u64_to_varint_bytes, le_vec_to_number, hash256};
 
 public struct InputWitness has copy, drop {
     items: vector<vector<u8>>,
@@ -150,7 +149,7 @@ public fun deserialize(r: &mut Reader): Transaction {
         raw_tx.append(script_pubkey);
         outputs.push_back(
             output::new(
-                LEtoNumber(amount),
+                le_vec_to_number(amount),
                 script_pubkey,
             ),
         )

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
 
-module bitcoin_executor::block_header;
+module btc_parser::block_header;
 
-use bitcoin_executor::reader;
-use bitcoin_executor::utils::hash256;
+use btc_parser::reader;
+use btc_parser::utils::hash256;
 
 public struct BlockHeader has copy, drop {
     version: u32,
