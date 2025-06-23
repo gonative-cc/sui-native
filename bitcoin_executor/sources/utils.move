@@ -7,6 +7,8 @@ use std::u64::do;
 
 #[test_only]
 use std::unit_test::assert_eq;
+
+
 /// Converts u64 into the CScriptNum byte vector format.
 /// This is the format expected to be pushed onto the stack.
 /// https://github.com/bitcoin/bitcoin/blob/87ec923d3a7af7b30613174b41c6fb11671df466/src/script/script.h#L349
@@ -33,14 +35,6 @@ public(package) fun u64_to_cscriptnum(n: u64): vector<u8> {
     };
     result_bytes
 }
-
-// public(package) fun le_vec_to_number(v: vector<u8>): u64 {
-//     let mut number: u64 = 0;
-//     v.length().do!(|i| {
-//         number = number + ((v[i] as u64) * ((1 as u64) << ((i as u8) * 8)) as u64)
-//     });
-//     number
-// }
 
 public fun vector_true(): vector<u8> { vector[0x01] }
 
@@ -119,10 +113,6 @@ public fun zerohash_32bytes(): vector<u8> {
     zeros
 }
 
-/// Computes sha2_256(sha2_256(data)).
-public fun hash256(data: vector<u8>): vector<u8> {
-    sha2_256(sha2_256(data))
-}
 
 #[test]
 fun test_u64_to_varint_bytes() {
@@ -171,11 +161,4 @@ fun test_zerohash_32bytes() {
     let expected = x"0000000000000000000000000000000000000000000000000000000000000000";
     assert_eq!(zerohash_32bytes(), expected);
     assert_eq!(zerohash_32bytes().length(), 32);
-}
-
-#[test]
-fun test_hash256() {
-    let data_to_hash = x"0011";
-    let expected = x"cbcf27657ceb69162a9f5153c6956d6fdd81f71d7bc0bca243bff54b405e4410";
-    assert_eq!(hash256(data_to_hash), expected);
 }

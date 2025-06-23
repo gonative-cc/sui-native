@@ -6,10 +6,8 @@ use std::hash::sha2_256;
 #[test_only]
 use std::unit_test::assert_eq;
 
-
 #[error]
 const EOutOfBounds: vector<u8> = b"Slice out of bounds";
-
 
 public fun le_vec_to_number(v: vector<u8>): u64 {
     let mut number = 0;
@@ -102,4 +100,11 @@ public fun vector_slice<T: copy + drop>(
 fun test_vector_slice() {
     let v = vector[1, 2, 3, 4, 5];
     assert_eq!(vector_slice(&v, 1, 4), vector[2, 3, 4]); // [1, 2, 3, 4, 5] -> [2, 3, 4]
+}
+
+#[test]
+fun test_hash256() {
+    let data_to_hash = x"0011";
+    let expected = x"cbcf27657ceb69162a9f5153c6956d6fdd81f71d7bc0bca243bff54b405e4410";
+    assert_eq!(hash256(data_to_hash), expected);
 }
