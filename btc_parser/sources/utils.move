@@ -3,6 +3,14 @@ use std::u64::do;
 use std::hash::sha2_256;
 
 
+#[test_only]
+use std::unit_test::assert_eq;
+
+
+#[error]
+const EOutOfBounds: vector<u8> = b"Slice out of bounds";
+
+
 public fun le_vec_to_number(v: vector<u8>): u64 {
     let mut number = 0;
     v.length().do!(|i| {
@@ -69,4 +77,29 @@ public fun u64_to_le_bytes(val: u64): vector<u8> {
 /// Computes sha2_256(sha2_256(data)).
 public fun hash256(data: vector<u8>): vector<u8> {
     sha2_256(sha2_256(data))
+}
+
+
+public fun vector_slice<T: copy + drop>(
+    source: &vector<T>,
+    start_index: u64,
+    end_index: u64,
+): vector<T> {
+    assert!(start_index <= end_index, EOutOfBounds);
+    assert!(end_index <= source.length(), EOutOfBounds);
+
+    let mut slice = vector::empty<T>();
+    let mut i = start_index;
+    while (i < end_index) {
+        slice.push_back(source[i]);
+        i = i + 1;
+    };
+    slice
+}
+
+//TODO: add more tests for slice
+#[test]
+fun test_vector_slice() {
+    let v = vector[1, 2, 3, 4, 5];
+    assert_eq!(vector_slice(&v, 1, 4), vector[2, 3, 4]); // [1, 2, 3, 4, 5] -> [2, 3, 4]
 }

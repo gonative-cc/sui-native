@@ -2,10 +2,10 @@
 
 module bitcoin_executor::utxo;
 
-use bitcoin_executor::output::Output;
-use bitcoin_executor::input::Input;
+use btc_parser::output::Output;
+use btc_parser::input::Input;
 
-use bitcoin_executor::utils::{vector_slice, u32_to_le_bytes, LEtoNumber};
+use btc_parser::utils::{vector_slice, u32_to_le_bytes, le_vec_to_number};
 
 const OP_0: u8 = 0x00;
 const OP_DATA_20: u8 = 0x14;
@@ -32,7 +32,7 @@ public fun new_outpoint(tx_id: vector<u8>, vout: u32): OutPoint {
 public fun from_input(input: &Input): OutPoint {
     OutPoint {
         tx_id: input.tx_id(),
-        vout: LEtoNumber(input.vout()) as u32,
+        vout: le_vec_to_number(input.vout()) as u32,
     }
 }
 public fun new_data(height: u64, is_coinbase: bool, output: Output): Data {

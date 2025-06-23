@@ -2,8 +2,8 @@
 
 #[test_only]
 module bitcoin_executor::tx_tests;
-use bitcoin_executor::tx;
-use bitcoin_executor::reader;
+use btc_parser::tx;
+use btc_parser::reader;
 use sui::test_utils::assert_eq;
 
 

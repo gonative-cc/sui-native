@@ -2,12 +2,12 @@
 
 module bitcoin_executor::bitcoin_executor;
 
-use bitcoin_executor::block;
+use btc_parser::block;
+use btc_parser::utils::{Self, le_vec_to_number, u32_to_le_bytes};
 use bitcoin_executor::interpreter::{run, create_p2wpkh_scriptcode};
 use bitcoin_executor::stack;
-use bitcoin_executor::tx::Transaction;
-use bitcoin_executor::utils::{Self, LEtoNumber, u32_to_le_bytes};
-use bitcoin_executor::output;
+use btc_parser::tx::Transaction;
+use btc_parser::output;
 use bitcoin_executor::utxo::{Self, OutPoint, Data};
 use sui::table::{Self, Table};
 
@@ -61,7 +61,7 @@ fun spend(s: &mut State, tx: &Transaction) {
     tx.inputs().do!(|input| {
         let outpoint = utxo::new_outpoint(
             input.tx_id(),
-            utils::LEtoNumber(input.vout()) as u32,
+            utils::le_vec_to_number(input.vout()) as u32,
         );
 
         let height = s.height;

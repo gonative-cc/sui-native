@@ -3,13 +3,13 @@
 module bitcoin_executor::interpreter;
 
 use bitcoin_executor::encoding;
-use bitcoin_executor::input;
-use bitcoin_executor::output;
-use bitcoin_executor::reader::{Self, Reader};
+use btc_parser::input;
+use btc_parser::output;
+use btc_parser::reader::{Self, Reader};
 use bitcoin_executor::ripemd160;
 use bitcoin_executor::sighash;
 use bitcoin_executor::stack::{Self, Stack};
-use bitcoin_executor::tx::{Self, Transaction};
+use btc_parser::tx::{Self, Transaction};
 use bitcoin_executor::utils::{Self, hash256};
 use std::hash::sha2_256;
 

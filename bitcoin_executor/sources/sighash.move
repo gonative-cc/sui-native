@@ -2,9 +2,9 @@
 
 module bitcoin_executor::sighash;
 
-use bitcoin_executor::input;
-use bitcoin_executor::output;
-use bitcoin_executor::tx::{Self, Transaction};
+use btc_parser::input;
+use btc_parser::output;
+use btc_parser::tx::{Self, Transaction};
 use bitcoin_executor::utils::{Self, hash256};
 
 #[test_only]

@@ -11,7 +11,7 @@ authors = ["Native"]
 # MyRemotePackage = { git = "https://some.remote/host.git", subdir = "remote/path", rev = "main" }
 
 # For local dependencies use `local = path`. Path is relative to the package root
-# Local = { local = "../path/to" }
+btc_parser = { local = "../btc_parser", override = true}
 
 # To resolve a version conflict and force a specific version for dependency
 # override use `override = true`
@@ -32,3 +32,4 @@ bitcoin_executor = "0x0"
 # The dev-addresses section allows overwriting named addresses for the `--test`
 # and `--dev` modes.
 # alice = "0xB0B"
+# btc_parser="0x1000"
