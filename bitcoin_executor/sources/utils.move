@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 module bitcoin_executor::utils;
-
-use std::hash::sha2_256;
 use std::u64::do;
 
 #[test_only]
@@ -68,30 +66,6 @@ public fun u64_to_varint_bytes(n: u64): vector<u8> {
         });
     };
     ans
-}
-
-/// Converts a u32 integer to a 4-byte little-endian vector<u8>.
-public fun u32_to_le_bytes(val: u32): vector<u8> {
-    let mut bytes = vector::empty<u8>();
-    bytes.push_back(((val >> 0) & 0xFF) as u8);
-    bytes.push_back(((val >> 8) & 0xFF) as u8);
-    bytes.push_back(((val >> 16) & 0xFF) as u8);
-    bytes.push_back(((val >> 24) & 0xFF) as u8);
-    bytes
-}
-
-/// Converts a u64 integer to an 8-byte little-endian vector<u8>.
-public fun u64_to_le_bytes(val: u64): vector<u8> {
-    let mut bytes = vector::empty<u8>();
-    bytes.push_back(((val >> 0) & 0xFF) as u8);
-    bytes.push_back(((val >> 8) & 0xFF) as u8);
-    bytes.push_back(((val >> 16) & 0xFF) as u8);
-    bytes.push_back(((val >> 24) & 0xFF) as u8);
-    bytes.push_back(((val >> 32) & 0xFF) as u8);
-    bytes.push_back(((val >> 40) & 0xFF) as u8);
-    bytes.push_back(((val >> 48) & 0xFF) as u8);
-    bytes.push_back(((val >> 56) & 0xFF) as u8);
-    bytes
 }
 
 /// Prepends the VarInt encoding of the script len to the script.

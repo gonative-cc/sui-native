@@ -4,9 +4,12 @@ use std::hash::sha2_256;
 
 #[error]
 const EOutOfBounds: vector<u8> = b"Slice out of bounds";
+#[error]
+const EOverflowVector: vector<u8> = b"Can't covert vector to u64 b/c overflow";
 
-/// covert vector bytes in little endian to number
-public fun le_bytes_to_number(v: vector<u8>): u64 {
+/// Covert vector bytes in little endian form to u64 range number
+public fun le_bytes_to_u64(v: vector<u8>): u64 {
+    assert!(v.length() <= 8, EOverflowVector);
     let mut number = 0;
     v.length().do!(|i| {
         number = number + ((v[i] as u64) * ((1 as u64) << ((i as u8) * 8)) as u64)
@@ -75,8 +78,8 @@ public fun hash256(data: vector<u8>): vector<u8> {
 }
 
 
-// TODO this is overlap with slice function in sui-bitcoin-spv
-/// Get slice from [start,end] in source.
+// NOTE: this is overlap with slice function in sui-bitcoin-spv
+/// Get slice from range [start_index ,end_index] in source.
 public fun vector_slice<T: copy + drop>(
     source: &vector<T>,
     start_index: u64,

@@ -12,6 +12,7 @@ use bitcoin_executor::stack::{Self, Stack};
 use btc_parser::tx::{Self, Transaction};
 use bitcoin_executor::utils;
 use btc_parser::utils::hash256;
+use btc_parser::utils::u64_to_le_bytes;
 use std::hash::sha2_256;
 
 #[test_only]
@@ -579,7 +580,7 @@ fun create_sighash(ip: &Interpreter, pub_key: vector<u8>, sighash_flag: u8): vec
             &ctx.tx,
             ctx.input_index,
             &script_code_to_use_for_sighash,
-            utils::u64_to_le_bytes(ctx.amount),
+            u64_to_le_bytes(ctx.amount),
             sighash_flag,
         );
         // sui::ecdsa_k1::secp256k1_verify does the 2nd hash. We need to do the first here

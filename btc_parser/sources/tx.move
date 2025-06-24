@@ -5,7 +5,7 @@ module btc_parser::tx;
 use btc_parser::input::{Self, Input};
 use btc_parser::output::{Self, Output};
 use btc_parser::reader::Reader;
-use btc_parser::utils::{u64_to_varint_bytes, le_bytes_to_number, hash256};
+use btc_parser::utils::{u64_to_varint_bytes, le_bytes_to_u64, hash256};
 
 public struct InputWitness has copy, drop {
     items: vector<vector<u8>>,
@@ -149,7 +149,7 @@ public fun deserialize(r: &mut Reader): Transaction {
         raw_tx.append(script_pubkey);
         outputs.push_back(
             output::new(
-                le_bytes_to_number(amount),
+                le_bytes_to_u64(amount),
                 script_pubkey,
             ),
         )
