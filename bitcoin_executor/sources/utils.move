@@ -104,13 +104,7 @@ public fun script_to_var_bytes(script: &vector<u8>): vector<u8> {
 
 /// Returns a vector with 32 zero bytes.
 public fun zerohash_32bytes(): vector<u8> {
-    let mut zeros = vector::empty<u8>();
-    let mut i = 0;
-    while (i < 32) {
-        zeros.push_back(0x00);
-        i = i + 1;
-    };
-    zeros
+    vector::tabulate!(32, |_| 0)
 }
 
 

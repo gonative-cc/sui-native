@@ -3,7 +3,7 @@
 #[test_only]
 module btc_parser::reader_tests;
 
-use btc_parser::reader::{Reader, Self};
+use btc_parser::reader;
 use sui::test_utils::assert_eq;
 
 #[test]
