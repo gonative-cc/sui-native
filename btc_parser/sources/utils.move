@@ -78,8 +78,7 @@ public fun hash256(data: vector<u8>): vector<u8> {
 }
 
 
-// NOTE: this is overlap with slice function in sui-bitcoin-spv
-/// Get slice from range [start_index ,end_index] in source.
+/// Returns slice of a vector for a given range [start_index ,end_index].
 public fun vector_slice<T: copy + drop>(
     source: &vector<T>,
     start_index: u64,
