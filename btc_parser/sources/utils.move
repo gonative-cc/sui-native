@@ -7,7 +7,7 @@ const EOutOfBounds: vector<u8> = b"Slice out of bounds";
 #[error]
 const EOverflowVector: vector<u8> = b"Can't covert vector to u64 b/c overflow";
 
-/// Covert vector bytes in little endian form to u64 range number
+/// Converts vector bytes in the little-endian form to a u64 integer
 public fun le_bytes_to_u64(v: vector<u8>): u64 {
     assert!(v.length() <= 8, EOverflowVector);
     let mut number = 0;
