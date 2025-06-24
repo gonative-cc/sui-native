@@ -9,7 +9,8 @@ use std::unit_test::assert_eq;
 #[error]
 const EOutOfBounds: vector<u8> = b"Slice out of bounds";
 
-public fun le_vec_to_number(v: vector<u8>): u64 {
+/// covert vector bytes in little endian to number
+public fun le_bytes_to_number(v: vector<u8>): u64 {
     let mut number = 0;
     v.length().do!(|i| {
         number = number + ((v[i] as u64) * ((1 as u64) << ((i as u8) * 8)) as u64)
@@ -78,6 +79,8 @@ public fun hash256(data: vector<u8>): vector<u8> {
 }
 
 
+// TODO this is overlap with slice function in sui-bitcoin-spv
+/// Get slice from [start,end] in source.
 public fun vector_slice<T: copy + drop>(
     source: &vector<T>,
     start_index: u64,
@@ -95,7 +98,7 @@ public fun vector_slice<T: copy + drop>(
     slice
 }
 
-//TODO: add more tests for slice
+// TODO: add more tests for slice
 #[test]
 fun test_vector_slice() {
     let v = vector[1, 2, 3, 4, 5];
