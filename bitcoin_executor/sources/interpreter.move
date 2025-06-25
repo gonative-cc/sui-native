@@ -439,7 +439,7 @@ public fun isSuccess(ip: &Interpreter): bool {
         return false
     };
     let top = ip.stack.top();
-    cast_to_bool(&top)
+    cast_to_bool(&top.destroy_or!(abort EInvalidStackOperation))
 }
 
 fun cast_to_bool(v: &vector<u8>): bool {
@@ -472,8 +472,8 @@ fun op_push_small_int(ip: &mut Interpreter, opcode: u8) {
 }
 
 fun op_equal(ip: &mut Interpreter) {
-    let first_value = ip.stack.pop();
-    let second_value = ip.stack.pop();
+    let first_value = ip.stack.pop().destroy_or!(abort EInvalidStackOperation);
+    let second_value = ip.stack.pop().destroy_or!(abort EInvalidStackOperation);
     let ans = if (first_value == second_value) {
         vector[1]
     } else {
@@ -484,48 +484,48 @@ fun op_equal(ip: &mut Interpreter) {
 
 fun op_equal_verify(ip: &mut Interpreter) {
     ip.op_equal();
-    assert!(ip.stack.pop() == vector[1], EEqualVerify);
+    let is_equal = ip.stack.pop().destroy_or!(abort EInvalidStackOperation);
+    assert!(is_equal == vector[1], EEqualVerify);
 }
 
 // OP_DUP eval
 fun op_dup(ip: &mut Interpreter) {
     let value = ip.stack.top();
-    ip.stack.push(value)
+    ip.stack.push(value.destroy_or!(abort EInvalidStackOperation))
 }
 
 fun op_drop(ip: &mut Interpreter) {
-    ip.stack.pop();
+    ip.stack.pop().destroy_or!(abort EInvalidStackOperation);
 }
 
 fun op_size(ip: &mut Interpreter) {
-    let top_element = ip.stack.top();
+    let top_element = ip.stack.top().destroy_or!(abort EInvalidStackOperation);
     let size = top_element.length();
     ip.stack.push(utils::u64_to_cscriptnum(size))
 }
 
 fun op_swap(ip: &mut Interpreter) {
-    assert!(ip.stack.size() >=2, EInvalidStackOperation);
-    let first_element = ip.stack.pop();
-    let second_element = ip.stack.pop();
+    let first_element = ip.stack.pop().destroy_or!(abort EInvalidStackOperation);
+    let second_element = ip.stack.pop().destroy_or!(abort EInvalidStackOperation);
     ip.stack.push(first_element);
     ip.stack.push(second_element);
 }
 
 fun op_sha256(ip: &mut Interpreter) {
-    let value = ip.stack.pop();
+    let value = ip.stack.pop().destroy_or!(abort EInvalidStackOperation);
     ip.stack.push(sha2_256(value))
 }
 
 fun op_hash256(ip: &mut Interpreter) {
-    let value = ip.stack.pop();
+    let value = ip.stack.pop().destroy_or!(abort EInvalidStackOperation);
     ip.stack.push(hash256(value))
 }
 
 fun op_checksig(ip: &mut Interpreter) {
     assert!(ip.stack.size() >= 2, EInvalidStackOperation);
 
-    let pubkey_bytes = ip.stack.pop();
-    let mut sig_bytes = ip.stack.pop();
+    let pubkey_bytes = ip.stack.pop().destroy_or!(abort EInvalidStackOperation);
+    let mut sig_bytes = ip.stack.pop().destroy_or!(abort EInvalidStackOperation);
 
     if (sig_bytes.is_empty()) {
         ip.stack.push(utils::vector_false());
@@ -589,7 +589,7 @@ fun create_sighash(ip: &Interpreter, pub_key: vector<u8>, sighash_flag: u8): vec
 }
 
 fun op_hash160(ip: &mut Interpreter) {
-    let value = ip.stack.pop();
+    let value = ip.stack.pop().destroy_or!(abort EInvalidStackOperation);
     let sha = sha2_256(value);
     let mut hasher = ripemd160::new();
     hasher.write(sha, sha.length());
@@ -602,7 +602,7 @@ fun test_op_0() {
     ip.op_push_empty_vector();
 
     assert!(ip.stack.size() == 1);
-    let top_val = ip.stack.top();
+    let top_val = ip.stack.top().destroy_some();
     assert!(top_val.length() == 0);
     assert!(!ip.isSuccess());
 }
@@ -618,7 +618,7 @@ fun test_op_push_n_bytes() {
     ip.op_push_n_bytes(num_bytes);
 
     assert_eq!(ip.stack.size(), 1);
-    let top_val = ip.stack.top();
+    let top_val = ip.stack.top().destroy_some();
     assert_eq!(top_val, vector[0x01, 0x02, 0x03]);
     assert_eq!(ip.isSuccess(), true);
 
@@ -626,7 +626,7 @@ fun test_op_push_n_bytes() {
     ip.op_push_n_bytes(num_bytes);
 
     assert_eq!(ip.stack.size(), 2);
-    let top_val = ip.stack.top();
+    let top_val = ip.stack.top().destroy_some();
     assert_eq!(top_val, vector[0x04]);
     assert_eq!(ip.isSuccess(), true);
 
@@ -634,7 +634,7 @@ fun test_op_push_n_bytes() {
     ip.op_push_n_bytes(num_bytes);
 
     assert_eq!(ip.stack.size(), 3);
-    let top_val = ip.stack.top();
+    let top_val = ip.stack.top().destroy_some();
     assert_eq!(top_val, vector[0x05, 0x06]);
     assert_eq!(ip.isSuccess(), true);
 }
@@ -659,7 +659,7 @@ fun test_op_push_small_int5() {
 fun op_push_small_int_helper(ip: &mut Interpreter, opcode: u8, expected_size: u64, top_val: vector<u8>) {
     ip.op_push_small_int(opcode);
     assert_eq!(ip.stack.size(), expected_size);
-    assert_eq!(ip.stack.top(), top_val);
+    assert_eq!(ip.stack.top().destroy_some(), top_val);
     assert_eq!(ip.isSuccess(), true);
 }
 
@@ -668,16 +668,16 @@ fun op_push_small_int_helper(ip: &mut Interpreter, opcode: u8, expected_size: u6
 fun test_op_equal() {
     let mut ip = new_test_ip(vector[vector[10], vector[10]]);
     ip.op_equal();
-    assert!(ip.stack.top() == vector[1]);
+    assert!(ip.stack.top().destroy_some() == vector[1]);
 
     ip.stack.push(vector[1]);
     ip.op_equal();
-    assert!(ip.stack.top() == vector[1]);
+    assert!(ip.stack.top().destroy_some() == vector[1]);
 
     ip.stack.push(vector[20]);
     ip.stack.push(vector[10]);
     ip.op_equal();
-    assert!(ip.stack.top() == vector[0]);
+    assert!(ip.stack.top().destroy_some() == vector[0]);
 }
 
 #[test]
@@ -692,7 +692,7 @@ fun test_op_equal_verify_fail() {
     ip.op_equal_verify();
 }
 
-#[test, expected_failure(abort_code = stack::EPopStackEmpty)]
+#[test, expected_failure(abort_code = EInvalidStackOperation)]
 fun test_op_equal_fail() {
     let mut ip = new_test_ip(vector[vector[10]]);
     ip.op_equal();
@@ -706,7 +706,7 @@ fun test_op_dup() {
     assert_eq!(ip.stack.size(), 2);
 }
 
-#[test, expected_failure(abort_code = stack::EPopStackEmpty)]
+#[test, expected_failure(abort_code = EInvalidStackOperation)]
 fun test_op_dup_fail() {
     let mut ip = new_empty_test_ip();
     ip.op_dup();
@@ -720,7 +720,7 @@ fun test_op_drop() {
     assert_eq!(ip.stack.size(), 0);
 }
 
-#[test, expected_failure(abort_code = stack::EPopStackEmpty)]
+#[test, expected_failure(abort_code = EInvalidStackOperation)]
 fun test_op_drop_fail() {
     let mut ip = new_empty_test_ip();
     ip.op_drop();
@@ -749,10 +749,10 @@ fun test_op_size() {
         ip.stack.get_all_values(),
         vector[vector[0x01], vector[0x01, 0x02, 0x03, 0x08], vector[0x04]],
     );
-    assert_eq!(ip.stack.top(), vector[0x04]);
+    assert_eq!(ip.stack.top().destroy_some(), vector[0x04]);
 }
 
-#[test, expected_failure(abort_code = stack::EPopStackEmpty)]
+#[test, expected_failure(abort_code = EInvalidStackOperation)]
 fun test_op_size_fail() {
     let mut ip = new_empty_test_ip();
     ip.op_size();
@@ -765,7 +765,7 @@ fun test_op_sha256() {
     assert_eq!(ip.stack.size(), 1);
     let expected_hash: vector<u8> =
         x"4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a";
-    assert_eq!(ip.stack.top(), expected_hash);
+    assert_eq!(ip.stack.top().destroy_some(), expected_hash);
     assert_eq!(ip.stack.get_all_values(), vector[expected_hash]);
 }
 
@@ -776,7 +776,7 @@ fun test_op_hash256() {
     assert_eq!(ip.stack.size(), 1);
     let expected_hash: vector<u8> =
         x"9c12cfdc04c74584d787ac3d23772132c18524bc7ab28dec4219b8fc5b425f70";
-    assert_eq!(ip.stack.top(), expected_hash);
+    assert_eq!(ip.stack.top().destroy_some(), expected_hash);
     assert_eq!(ip.stack.get_all_values(), vector[expected_hash]);
 }
 
@@ -842,7 +842,7 @@ fun test_op_checksig() {
     ip.op_checksig();
 
     assert_eq!(ip.stack.size(), 1);
-    assert_eq!(ip.stack.top(), utils::vector_true());
+    assert_eq!(ip.stack.top().destroy_some(), utils::vector_true());
 }
 
 #[test]
@@ -851,7 +851,7 @@ fun test_op_hash160() {
     ip.op_hash160();
     assert_eq!(ip.stack.size(), 1);
     let expected_hash: vector<u8> = x"82c12e3c770a95bd17fd1d983d6b2af2037b7a4b";
-    assert_eq!(ip.stack.top(), expected_hash);
+    assert_eq!(ip.stack.top().destroy_some(), expected_hash);
     assert_eq!(ip.stack.get_all_values(), vector[expected_hash]);
 }
 

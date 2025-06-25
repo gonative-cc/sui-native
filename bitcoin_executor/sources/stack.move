@@ -5,6 +5,7 @@ module bitcoin_executor::stack;
 // ============= Constants ===========
 const MaximumStackSize: u64 = 1000;
 const MaximumElementSize: u64 = 520; // in bytes
+
 // ============= Errors =============
 #[error]
 const EReachMaximumSize: vector<u8> = b"Reach maximum element in stack";
@@ -53,15 +54,21 @@ public fun push_byte(s: &mut Stack, byte: u8) {
 }
 
 /// pops top element from the stack
-public fun pop(s: &mut Stack): vector<u8> {
-    assert!(!s.is_empty(), EPopStackEmpty);
-    s.internal.pop_back()
+public fun pop(s: &mut Stack): option::Option<vector<u8>> {
+    if (s.is_empty()) {
+        option::none()
+    } else {
+        option::some(s.internal.pop_back())
+    }
 }
 
 /// returns top element from the stack
-public fun top(s: &Stack): vector<u8> {
-    assert!(!s.is_empty(), EPopStackEmpty);
-    s.internal[s.internal.length() - 1]
+public fun top(s: &Stack):  option::Option<vector<u8>> {
+    if (s.is_empty()) {
+        option::none()
+    } else {
+        option::some( s.internal[s.internal.length() - 1])
+    }
 }
 
 #[test_only]
