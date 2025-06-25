@@ -51,7 +51,7 @@ public fun push_byte(s: &mut Stack, byte: u8) {
     s.internal.push_back(vector[byte]);
 }
 
-/// pops top element from the stack
+/// Pop returns `option` top element of the stack and pop the top value
 public fun pop(s: &mut Stack): option::Option<vector<u8>> {
     if (s.is_empty()) {
         option::none()
@@ -60,7 +60,7 @@ public fun pop(s: &mut Stack): option::Option<vector<u8>> {
     }
 }
 
-/// returns top element from the stack
+/// Top returns an `option` of the top element
 public fun top(s: &Stack):  option::Option<vector<u8>> {
     if (s.is_empty()) {
         option::none()
