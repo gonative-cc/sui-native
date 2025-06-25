@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #[test_only]
-module bitcoin_executor::reader_tests;
+module btc_parser::reader_tests;
 
-use bitcoin_executor::reader::{Reader, Self};
+use btc_parser::reader;
 use sui::test_utils::assert_eq;
 
 #[test]

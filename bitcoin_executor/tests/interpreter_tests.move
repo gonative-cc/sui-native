@@ -1,8 +1,8 @@
 #[test_only]
 module bitcoin_executor::interpreter_tests;
 use bitcoin_executor::interpreter::{create_p2wpkh_scriptcode, run};
-use bitcoin_executor::tx::deserialize;
-use bitcoin_executor::reader;
+use btc_parser::tx::deserialize;
+use btc_parser::reader;
 use bitcoin_executor::stack::new_with_data;
 
 #[test]

@@ -1,7 +1,7 @@
 #[test_only]
 module bitcoin_executor::execution_tests;
-use bitcoin_executor::reader;
-use bitcoin_executor::tx;
+use btc_parser::reader;
+use btc_parser::tx;
 
 #[test]
 fun execute_transaction() {

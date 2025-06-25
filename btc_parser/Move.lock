@@ -2,14 +2,13 @@
 
 [move]
 version = 3
-manifest_digest = "F50ECCDEC8104596C7E9794A3C3AAAE703498FFAF58EFAE8F473DD88018804B3"
-deps_digest = "397E6A9F7A624706DBDFEE056CE88391A15876868FD18A88504DA74EB458D697"
+manifest_digest = "65FF0C8D9CD5C0E032286F48B46C2282634322629DBA3F034FC758DFBC1B875F"
+deps_digest = "F9B494B64F0615AED0E98FC12A85B85ECD2BC5185C22D30E7F67786BB52E507C"
 dependencies = [
   { id = "Bridge", name = "Bridge" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
   { id = "SuiSystem", name = "SuiSystem" },
-  { id = "btc_parser", name = "btc_parser" },
 ]
 
 [[move.package]]
@@ -41,17 +40,6 @@ source = { git = "https://github.com/MystenLabs/sui.git", rev = "e54b798790ed", 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
-]
-
-[[move.package]]
-id = "btc_parser"
-source = { local = "../btc_parser" }
-
-dependencies = [
-  { id = "Bridge", name = "Bridge" },
-  { id = "MoveStdlib", name = "MoveStdlib" },
-  { id = "Sui", name = "Sui" },
-  { id = "SuiSystem", name = "SuiSystem" },
 ]
 
 [move.toolchain-version]

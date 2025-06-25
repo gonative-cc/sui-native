@@ -2,11 +2,11 @@
 
 module bitcoin_executor::sighash;
 
-use bitcoin_executor::input;
-use bitcoin_executor::output;
-use bitcoin_executor::tx::{Self, Transaction};
-use bitcoin_executor::utils::{Self, hash256};
-
+use btc_parser::input;
+use btc_parser::output;
+use btc_parser::tx::{Self, Transaction};
+use btc_parser::utils::{hash256, u32_to_le_bytes};
+use bitcoin_executor::utils;
 #[test_only]
 use sui::test_utils::assert_eq;
 
@@ -95,7 +95,7 @@ public fun create_segwit_preimage(
     };
     preimage.append(hash_outputs);
     preimage.append(transaction.locktime());
-    preimage.append(utils::u32_to_le_bytes((sighash_type as u32)));
+    preimage.append(u32_to_le_bytes((sighash_type as u32)));
     preimage //Complete preimage data to be hashed (Once and later edcsa::verify will hash second time)
 }
 

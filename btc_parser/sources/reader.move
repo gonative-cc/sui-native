@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 
-module bitcoin_executor::reader;
+module btc_parser::reader;
 
-use bitcoin_executor::utils::LEtoNumber;
+use btc_parser::utils::le_bytes_to_u64;
 
 // TODO: Follow error in btc implemetation
 #[error]
@@ -55,7 +55,7 @@ public fun peek(r: &Reader, len: u64): vector<u8> {
 
 public fun read_u32(r: &mut Reader): u32 {
     let v = r.read(4);
-    LEtoNumber(v) as u32
+    le_bytes_to_u64(v) as u32
 }
 
 public fun read_compact_size(r: &mut Reader): u64 {
@@ -73,7 +73,7 @@ public fun read_compact_size(r: &mut Reader): u64 {
     };
 
     let v = r.read(offset);
-    LEtoNumber(v)
+    le_bytes_to_u64(v)
 }
 
 /// reads the next byte from the stream
