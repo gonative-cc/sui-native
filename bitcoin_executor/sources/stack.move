@@ -11,8 +11,6 @@ const MaximumElementSize: u64 = 520; // in bytes
 const EReachMaximumSize: vector<u8> = b"Reach maximum element in stack";
 #[error]
 const EElementSizeInvalid: vector<u8> = b"Element size is greater than 520";
-#[error]
-const EPopStackEmpty: vector<u8> = b"Pop stack empty";
 
 public struct Stack has copy, drop {
     internal: vector<vector<u8>>,
