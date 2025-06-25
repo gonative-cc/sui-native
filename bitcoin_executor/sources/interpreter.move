@@ -304,7 +304,9 @@ const SHA256: u8 = 1;
 #[error]
 const EEqualVerify: vector<u8> = b"SCRIPT_ERR_EQUALVERIFY";
 #[error]
-const EInvalidStackOperation: vector<u8> = b"Invalid stack operation";
+const EPopStackEmpty: vector<u8> = b"Pop stack valid: Stack empty";
+#[error]
+const ETopStackEmpty: vector<u8> = b"Top stack valid: Stack empty";
 #[error]
 const EMissingTxCtx: vector<u8> = b"Missing transaction context";
 #[error]
@@ -314,6 +316,8 @@ const EUnsupportedSigVersionForChecksig: vector<u8> =
 const EInvalidOpcode: vector<u8> = b"Invalid Opcode";
 #[error]
 const EInternalBitcoinCoreOpcode: vector<u8> = b"Invalid Opcode: Bitcoin core internal";
+#[error]
+const EInvalidPKHLength: vector<u8> = b"Invalid PHK: PHK should have length is 20";
 
 public struct TransactionContext has copy, drop {
     tx: Transaction,
@@ -439,7 +443,7 @@ public fun isSuccess(ip: &Interpreter): bool {
         return false
     };
     let top = ip.stack.top();
-    cast_to_bool(&top.destroy_or!(abort EInvalidStackOperation))
+    cast_to_bool(&top.destroy_or!(abort ETopStackEmpty))
 }
 
 fun cast_to_bool(v: &vector<u8>): bool {
@@ -472,8 +476,8 @@ fun op_push_small_int(ip: &mut Interpreter, opcode: u8) {
 }
 
 fun op_equal(ip: &mut Interpreter) {
-    let first_value = ip.stack.pop().destroy_or!(abort EInvalidStackOperation);
-    let second_value = ip.stack.pop().destroy_or!(abort EInvalidStackOperation);
+    let first_value = ip.stack.pop().destroy_or!(abort EPopStackEmpty);
+    let second_value = ip.stack.pop().destroy_or!(abort EPopStackEmpty);
     let ans = if (first_value == second_value) {
         vector[1]
     } else {
@@ -484,48 +488,47 @@ fun op_equal(ip: &mut Interpreter) {
 
 fun op_equal_verify(ip: &mut Interpreter) {
     ip.op_equal();
-    let is_equal = ip.stack.pop().destroy_or!(abort EInvalidStackOperation);
+    let is_equal = ip.stack.pop().destroy_or!(abort EPopStackEmpty);
     assert!(is_equal == vector[1], EEqualVerify);
 }
 
 // OP_DUP eval
 fun op_dup(ip: &mut Interpreter) {
     let value = ip.stack.top();
-    ip.stack.push(value.destroy_or!(abort EInvalidStackOperation))
+    ip.stack.push(value.destroy_or!(abort ETopStackEmpty))
 }
 
 fun op_drop(ip: &mut Interpreter) {
-    ip.stack.pop().destroy_or!(abort EInvalidStackOperation);
+    ip.stack.pop().destroy_or!(abort EPopStackEmpty);
 }
 
 fun op_size(ip: &mut Interpreter) {
-    let top_element = ip.stack.top().destroy_or!(abort EInvalidStackOperation);
+    let top_element = ip.stack.top().destroy_or!(abort ETopStackEmpty);
     let size = top_element.length();
     ip.stack.push(utils::u64_to_cscriptnum(size))
 }
 
 fun op_swap(ip: &mut Interpreter) {
-    let first_element = ip.stack.pop().destroy_or!(abort EInvalidStackOperation);
-    let second_element = ip.stack.pop().destroy_or!(abort EInvalidStackOperation);
+    let first_element = ip.stack.pop().destroy_or!(abort EPopStackEmpty);
+    let second_element = ip.stack.pop().destroy_or!(abort EPopStackEmpty);
     ip.stack.push(first_element);
     ip.stack.push(second_element);
 }
 
 fun op_sha256(ip: &mut Interpreter) {
-    let value = ip.stack.pop().destroy_or!(abort EInvalidStackOperation);
+    let value = ip.stack.pop().destroy_or!(abort EPopStackEmpty);
     ip.stack.push(sha2_256(value))
 }
 
 fun op_hash256(ip: &mut Interpreter) {
-    let value = ip.stack.pop().destroy_or!(abort EInvalidStackOperation);
+    let value = ip.stack.pop().destroy_or!(abort EPopStackEmpty);
     ip.stack.push(hash256(value))
 }
 
 fun op_checksig(ip: &mut Interpreter) {
-    assert!(ip.stack.size() >= 2, EInvalidStackOperation);
 
-    let pubkey_bytes = ip.stack.pop().destroy_or!(abort EInvalidStackOperation);
-    let mut sig_bytes = ip.stack.pop().destroy_or!(abort EInvalidStackOperation);
+    let pubkey_bytes = ip.stack.pop().destroy_or!(abort EPopStackEmpty);
+    let mut sig_bytes = ip.stack.pop().destroy_or!(abort EPopStackEmpty);
 
     if (sig_bytes.is_empty()) {
         ip.stack.push(utils::vector_false());
@@ -554,7 +557,7 @@ fun op_checksig(ip: &mut Interpreter) {
 }
 
 public fun create_p2wpkh_scriptcode(pkh: vector<u8>): vector<u8> {
-    assert!(pkh.length() == 20, EInvalidStackOperation);
+    assert!(pkh.length() == 20, EInvalidPKHLength);
     let mut script = vector::empty<u8>();
     script.push_back(OP_DUP);
     script.push_back(OP_HASH160);
@@ -589,7 +592,7 @@ fun create_sighash(ip: &Interpreter, pub_key: vector<u8>, sighash_flag: u8): vec
 }
 
 fun op_hash160(ip: &mut Interpreter) {
-    let value = ip.stack.pop().destroy_or!(abort EInvalidStackOperation);
+    let value = ip.stack.pop().destroy_or!(abort EPopStackEmpty);
     let sha = sha2_256(value);
     let mut hasher = ripemd160::new();
     hasher.write(sha, sha.length());
@@ -692,7 +695,7 @@ fun test_op_equal_verify_fail() {
     ip.op_equal_verify();
 }
 
-#[test, expected_failure(abort_code = EInvalidStackOperation)]
+#[test, expected_failure(abort_code = EPopStackEmpty)]
 fun test_op_equal_fail() {
     let mut ip = new_test_ip(vector[vector[10]]);
     ip.op_equal();
@@ -706,7 +709,7 @@ fun test_op_dup() {
     assert_eq!(ip.stack.size(), 2);
 }
 
-#[test, expected_failure(abort_code = EInvalidStackOperation)]
+#[test, expected_failure(abort_code = ETopStackEmpty)]
 fun test_op_dup_fail() {
     let mut ip = new_empty_test_ip();
     ip.op_dup();
@@ -720,7 +723,7 @@ fun test_op_drop() {
     assert_eq!(ip.stack.size(), 0);
 }
 
-#[test, expected_failure(abort_code = EInvalidStackOperation)]
+#[test, expected_failure(abort_code = EPopStackEmpty)]
 fun test_op_drop_fail() {
     let mut ip = new_empty_test_ip();
     ip.op_drop();
@@ -734,7 +737,7 @@ fun test_op_swap() {
     assert_eq!(ip.stack.get_all_values(), vector[vector[0x02], vector[0x01]]);
 }
 
-#[test, expected_failure(abort_code = EInvalidStackOperation)]
+#[test, expected_failure(abort_code = EPopStackEmpty)]
 fun test_op_swap_fail() {
     let mut ip = new_test_ip(vector[vector[1]]);
     ip.op_swap();
@@ -752,7 +755,7 @@ fun test_op_size() {
     assert_eq!(ip.stack.top().destroy_some(), vector[0x04]);
 }
 
-#[test, expected_failure(abort_code = EInvalidStackOperation)]
+#[test, expected_failure(abort_code = ETopStackEmpty)]
 fun test_op_size_fail() {
     let mut ip = new_empty_test_ip();
     ip.op_size();
