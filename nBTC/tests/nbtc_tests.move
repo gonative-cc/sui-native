@@ -3,16 +3,9 @@
 #[test_only]
 module nbtc::nbtc_tests;
 
-// Configuration
-/// The Object ID of the Bitcoin SPV Light Client.
-const LIGHT_CLIENT_ID: address = @light_client;
-/// The fallback Sui address to receive nBTC if OP_RETURN data is invalid or missing.
-const FALLBACK_ADDR: address = @fallback;
-// TODO: convert to pub key hash
-/// The Bitcoin public key hash where users must send BTC to mint nBTC.
-/// Corresponds to `tb1qe60n447jylrxa96y6pfgy8pq6x9zafu09ky7cq` address on Bitcoin testnet.
-const NBTC_BITCOIN_PKH: vector<u8> = x"ce9f3ad7d227c66e9744d052821c20d18a2ea78f";
-
+// The fallback Sui address to receive nBTC if OP_RETURN data is invalid or missing.
+// Use for test
+const FALLBACK_ADDR: address = @0xB0B;
 
 use bitcoin_spv::light_client::{new_light_client, LightClient};
 use bitcoin_spv::params;
