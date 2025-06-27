@@ -215,9 +215,6 @@ public fun get_fallback_addr(treasury: &WrappedTreasuryCap): address {
 
 #[test_only]
 public(package) fun init_for_testing(
-    btc_lc_addr: address,
-    fallback_addr: address,
-    nbtc_bitcoin_pkh: vector<u8>,
     ctx: &mut TxContext,
 ): WrappedTreasuryCap {
     let witness = NBTC {};
@@ -231,7 +228,7 @@ public(package) fun init_for_testing(
         ctx,
     );
     transfer::public_freeze_object(metadata);
-    let mut treasury = WrappedTreasuryCap {
+    let treasury = WrappedTreasuryCap {
         id: object::new(ctx),
         version: VERSION,
         cap: treasury_cap,
@@ -240,7 +237,5 @@ public(package) fun init_for_testing(
         fallback_addr: option::none(),
         nbtc_bitcoin_pkh: option::none(),
     };
-
-    treasury.setup(btc_lc_addr, fallback_addr, nbtc_bitcoin_pkh);
     treasury
 }
