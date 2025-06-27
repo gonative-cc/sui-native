@@ -11,6 +11,9 @@ It's the first ever synthetic BTC that is
 - NBTC_BITCOIN_PKH = 0xce9f3ad7d227c66e9744d052821c20d18a2ea78f. Corresponds to `tb1qe60n447jylrxa96y6pfgy8pq6x9zafu09ky7cq` address on Bitcoin testnet.
 
 
+## Deployment 
+We need to run PTB with 2 transactions: publish nbtc + move call for setup method.
+
 ## Deployed contracts
 
 See the main [README](../README.md#deployed-objects--packages) file.

@@ -101,7 +101,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
 // Public functions
 //
 
-
+/// Setup the spv light client, fallback_addr and btc public key hash for treasury
 public fun setup(
     treasury: &mut WrappedTreasuryCap,
     trusted_lc_addr: address,
