@@ -198,3 +198,16 @@ fun test_update_version_fail() {
     nbtc::update_version(&mut cap);
     abort
 }
+
+#[test, expected_failure(abort_code = nbtc::EReSetupTreasuryNotAllow)]
+fun test_re_setup_treasury_should_fail() {
+    let sender = @0x01;
+    let mut scenario = test_scenario::begin(sender);
+    let ctx = scenario.ctx();
+    let btc_treasury = x"509a651dd392e1bc125323f629b67d65cca3d4bb";
+    let (lc, mut cap) = init_nbtc(btc_treasury, ctx);
+    // resetup, should fail
+    cap.setup(lc.client_id().to_address(), FALLBACK_ADDR, btc_treasury);
+
+    abort
+}

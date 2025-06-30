@@ -45,6 +45,8 @@ const EVersionMismatch: vector<u8> = b"The package has been updated. You are usi
 #[error]
 const EAlreadyUpdated: vector<u8> =
     b"The package version has been already updated to the latest one";
+#[error]
+const EReSetupTreasuryNotAllow: vector<u8> = b"Resetup treasury is not allow";
 
 //
 // Structs
@@ -108,6 +110,22 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
 //
 // Public functions
 //
+
+/// Setup the spv light client, fallback_addr and btc public key hash for treasury
+public fun setup(
+    treasury: &mut WrappedTreasuryCap,
+    trusted_lc_addr: address,
+    fallback_addr: address,
+    nbtc_bitcoin_pkh: vector<u8>
+) {
+    assert!(treasury.trusted_lc_addr.is_none(), EReSetupTreasuryNotAllow);
+    assert!(treasury.fallback_addr.is_none(), EReSetupTreasuryNotAllow);
+    assert!(treasury.nbtc_bitcoin_pkh.is_none(), EReSetupTreasuryNotAllow);
+
+    treasury.trusted_lc_addr = option::some(trusted_lc_addr);
+    treasury.fallback_addr = option::some(fallback_addr);
+    treasury.nbtc_bitcoin_pkh = option::some(nbtc_bitcoin_pkh);
+}
 
 /// Mints nBTC tokens after verifying a Bitcoin transaction proof.
 /// * `tx_bytes`: raw, hex-encoded tx bytes.
