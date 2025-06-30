@@ -3,6 +3,10 @@
 #[test_only]
 module nbtc::nbtc_tests;
 
+// The fallback Sui address to receive nBTC if OP_RETURN data is invalid or missing.
+// Use for test
+const FALLBACK_ADDR: address = @0xB0B;
+
 use bitcoin_spv::light_client::{new_light_client, LightClient};
 use bitcoin_spv::params;
 use nbtc::nbtc::{
@@ -38,8 +42,8 @@ fun new_lc_for_test(ctx: &mut TxContext): LightClient {
 #[test_only]
 fun init_nbtc(btc_treasury: vector<u8>, ctx: &mut TxContext): (LightClient, WrappedTreasuryCap) {
     let lc = new_lc_for_test(ctx);
-    let lc_id = lc.client_id().uid_to_inner();
-    let cap = nbtc::init_for_testing(lc_id, btc_treasury, ctx);
+    let mut cap = nbtc::init_for_testing(ctx);
+    cap.setup(lc.client_id().to_address(), FALLBACK_ADDR, btc_treasury);
     (lc, cap)
 }
 
@@ -50,6 +54,7 @@ fun test_nbtc_mint() {
     let ctx = scenario.ctx();
     let btc_treasury = x"509a651dd392e1bc125323f629b67d65cca3d4bb";
     let (lc, mut cap) = init_nbtc(btc_treasury, ctx);
+
     let proof = vector[x"52ee354a603838a57543e4f13619dfc6f9c8bc86cda7c0151466a16cefb09f6c"];
     let version = x"01000000";
     let input_count = 1;
@@ -95,6 +100,7 @@ fun test_nbtc_mint_fallback() {
     let ctx = scenario.ctx();
     let btc_treasury = x"509a651dd392e1bc125323f629b67d65cca3d4bb";
     let (lc, mut cap) = init_nbtc(btc_treasury, ctx);
+
     let proof = vector[x"176a70bb168bcc72332f679689e32ca3810cdbb36d2b9d2d5a1a9a14927a42ab"];
     let version = x"01000000";
     let input_count = 1;
@@ -107,7 +113,7 @@ fun test_nbtc_mint_fallback() {
     let lock_time = x"00000000";
     let height = 0;
     let tx_index = 0;
-    let fallback_address = @fallback;
+    let fallback_address = FALLBACK_ADDR;
     nbtc::mint(
         &mut cap,
         &lc,
@@ -140,6 +146,7 @@ fun test_nbtc_mint_fail_amount_is_zero() {
     let ctx = scenario.ctx();
     let btc_treasury = x"509a651dd392e1bc125323f629b67d65cca3d4ff"; // modified address
     let (lc, mut cap) = init_nbtc(btc_treasury, ctx);
+
     let proof = vector[x"52ee354a603838a57543e4f13619dfc6f9c8bc86cda7c0151466a16cefb09f6c"];
     let version = x"01000000";
     let input_count = 1;
@@ -178,6 +185,7 @@ fun test_nbtc_mint_fail_tx_already_used() {
     let ctx = scenario.ctx();
     let btc_treasury = x"509a651dd392e1bc125323f629b67d65cca3d4bb";
     let (lc, mut cap) = init_nbtc(btc_treasury, ctx);
+
     let proof = vector[x"52ee354a603838a57543e4f13619dfc6f9c8bc86cda7c0151466a16cefb09f6c"];
     let version = x"01000000";
     let input_count = 1;
@@ -224,8 +232,7 @@ fun test_nbtc_mint_fail_tx_already_used() {
     scenario.end();
 }
 
-#[test]
-#[expected_failure(abort_code = EAlreadyUpdated)]
+#[test, expected_failure(abort_code = EAlreadyUpdated)]
 fun test_update_version_fail() {
     let sender = @0x01;
     let mut scenario = test_scenario::begin(sender);
@@ -236,4 +243,17 @@ fun test_update_version_fail() {
     sui::test_utils::destroy(lc);
     sui::test_utils::destroy(cap);
     scenario.end();
+}
+
+#[test, expected_failure(abort_code = nbtc::EReSetupTreasuryNotAllow)]
+fun test_re_setup_treasury_should_fail() {
+    let sender = @0x01;
+    let mut scenario = test_scenario::begin(sender);
+    let ctx = scenario.ctx();
+    let btc_treasury = x"509a651dd392e1bc125323f629b67d65cca3d4bb";
+    let (lc, mut cap) = init_nbtc(btc_treasury, ctx);
+    // resetup, should fail
+    cap.setup(lc.client_id().to_address(), FALLBACK_ADDR, btc_treasury);
+
+    abort
 }
