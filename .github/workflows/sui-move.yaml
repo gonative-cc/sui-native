@@ -1,10 +1,13 @@
 on:
   merge_group:
     types: [checks_requested]
+  pull_request:
+
 
 concurrency:
   group: ci-${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
+
 
 jobs:
   test:
