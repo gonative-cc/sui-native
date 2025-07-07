@@ -58,4 +58,4 @@ jobs:
         with:
           # This part is also where you can pass other options, for example:
           prettier_options: -c .
-          only_changed: True
+          only_changed: true
