@@ -31,6 +31,7 @@ jobs:
         run: pwd
       - name: Install Node.js
         uses: actions/setup-node@v4
+        working-directory: ./contrib
         with:
           node-version: 22
           cache: "pnpm"
