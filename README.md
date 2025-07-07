@@ -1,3 +1,6 @@
+<!-- markdownlint-disable MD041 -->
+<!-- markdownlint-disable MD034 -->
+
 ![Logo!](assets/logo.png)
 
 # Bitcoin Chain Abstraction on Sui powered by Native
