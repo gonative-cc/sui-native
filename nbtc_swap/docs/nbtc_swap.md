@@ -1,24 +1,20 @@
-
 <a name="(nbtc_swap=0x0)_nbtc_swap"></a>
 
 # Module `(nbtc_swap=0x0)::nbtc_swap`
 
-
-
--  [Struct `AdminCap`](#(nbtc_swap=0x0)_nbtc_swap_AdminCap)
--  [Struct `Vault`](#(nbtc_swap=0x0)_nbtc_swap_Vault)
--  [Constants](#@Constants_0)
--  [Function `init`](#(nbtc_swap=0x0)_nbtc_swap_init)
--  [Function `calculate_price`](#(nbtc_swap=0x0)_nbtc_swap_calculate_price)
--  [Function `buy_nbtc`](#(nbtc_swap=0x0)_nbtc_swap_buy_nbtc)
--  [Function `add_nbtc_liquidity`](#(nbtc_swap=0x0)_nbtc_swap_add_nbtc_liquidity)
--  [Function `withdraw`](#(nbtc_swap=0x0)_nbtc_swap_withdraw)
--  [Function `set_price`](#(nbtc_swap=0x0)_nbtc_swap_set_price)
--  [Function `set_paused`](#(nbtc_swap=0x0)_nbtc_swap_set_paused)
--  [Function `price`](#(nbtc_swap=0x0)_nbtc_swap_price)
--  [Function `nbtc_liquidity`](#(nbtc_swap=0x0)_nbtc_swap_nbtc_liquidity)
--  [Function `is_paused`](#(nbtc_swap=0x0)_nbtc_swap_is_paused)
-
+- [Struct `AdminCap`](<#(nbtc_swap=0x0)_nbtc_swap_AdminCap>)
+- [Struct `Vault`](<#(nbtc_swap=0x0)_nbtc_swap_Vault>)
+- [Constants](#@Constants_0)
+- [Function `init`](<#(nbtc_swap=0x0)_nbtc_swap_init>)
+- [Function `calculate_price`](<#(nbtc_swap=0x0)_nbtc_swap_calculate_price>)
+- [Function `buy_nbtc`](<#(nbtc_swap=0x0)_nbtc_swap_buy_nbtc>)
+- [Function `add_nbtc_liquidity`](<#(nbtc_swap=0x0)_nbtc_swap_add_nbtc_liquidity>)
+- [Function `withdraw`](<#(nbtc_swap=0x0)_nbtc_swap_withdraw>)
+- [Function `set_price`](<#(nbtc_swap=0x0)_nbtc_swap_set_price>)
+- [Function `set_paused`](<#(nbtc_swap=0x0)_nbtc_swap_set_paused>)
+- [Function `price`](<#(nbtc_swap=0x0)_nbtc_swap_price>)
+- [Function `nbtc_liquidity`](<#(nbtc_swap=0x0)_nbtc_swap_nbtc_liquidity>)
+- [Function `is_paused`](<#(nbtc_swap=0x0)_nbtc_swap_is_paused>)
 
 <pre><code><b>use</b> (bitcoin_spv=0x0)::block_header;
 <b>use</b> (bitcoin_spv=0x0)::btc_math;
@@ -57,22 +53,15 @@
 <b>use</b> <a href="../dependencies/sui/vec_set.md#sui_vec_set">sui::vec_set</a>;
 </code></pre>
 
-
-
 <a name="(nbtc_swap=0x0)_nbtc_swap_AdminCap"></a>
 
 ## Struct `AdminCap`
 
-
-
 <pre><code><b>public</b> <b>struct</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_AdminCap">AdminCap</a> <b>has</b> key, store
 </code></pre>
 
-
-
 <details>
 <summary>Fields</summary>
-
 
 <dl>
 <dt>
@@ -82,23 +71,17 @@
 </dd>
 </dl>
 
-
 </details>
 
 <a name="(nbtc_swap=0x0)_nbtc_swap_Vault"></a>
 
 ## Struct `Vault`
 
-
-
 <pre><code><b>public</b> <b>struct</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_Vault">Vault</a> <b>has</b> key, store
 </code></pre>
 
-
-
 <details>
 <summary>Fields</summary>
-
 
 <dl>
 <dt>
@@ -133,73 +116,46 @@
 </dd>
 </dl>
 
-
 </details>
 
 <a name="@Constants_0"></a>
 
 ## Constants
 
-
 <a name="(nbtc_swap=0x0)_nbtc_swap_EvaultPaused"></a>
-
-
 
 <pre><code><b>const</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_EvaultPaused">EvaultPaused</a>: u64 = 1;
 </code></pre>
 
-
-
 <a name="(nbtc_swap=0x0)_nbtc_swap_EInsufficientLiquidity"></a>
-
-
 
 <pre><code><b>const</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_EInsufficientLiquidity">EInsufficientLiquidity</a>: u64 = 2;
 </code></pre>
 
-
-
 <a name="(nbtc_swap=0x0)_nbtc_swap_EInvalidPrice"></a>
-
-
 
 <pre><code><b>const</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_EInvalidPrice">EInvalidPrice</a>: u64 = 3;
 </code></pre>
 
-
-
 <a name="(nbtc_swap=0x0)_nbtc_swap_EInsufficientSuiPayment"></a>
-
-
 
 <pre><code><b>const</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_EInsufficientSuiPayment">EInsufficientSuiPayment</a>: u64 = 4;
 </code></pre>
 
-
-
 <a name="(nbtc_swap=0x0)_nbtc_swap_PRICE_CONVERSION_FACTOR"></a>
-
-
 
 <pre><code><b>const</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_PRICE_CONVERSION_FACTOR">PRICE_CONVERSION_FACTOR</a>: u64 = 10;
 </code></pre>
-
-
 
 <a name="(nbtc_swap=0x0)_nbtc_swap_init"></a>
 
 ## Function `init`
 
-
-
 <pre><code><b>fun</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_init">init</a>(ctx: &<b>mut</b> <a href="../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_init">init</a>(ctx: &<b>mut</b> TxContext) {
     <b>let</b> initial_price = 25000; //25k SUI per NBTC
@@ -222,31 +178,22 @@
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="(nbtc_swap=0x0)_nbtc_swap_calculate_price"></a>
 
 ## Function `calculate_price`
 
-
-
 <pre><code><b>fun</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_calculate_price">calculate_price</a>(<a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_price">price</a>: u64): u64
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_calculate_price">calculate_price</a>(<a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_price">price</a>: u64): u64 {
     <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_price">price</a>  * <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_PRICE_CONVERSION_FACTOR">PRICE_CONVERSION_FACTOR</a>
 }
 </code></pre>
-
-
 
 </details>
 
@@ -254,16 +201,11 @@
 
 ## Function `buy_nbtc`
 
-
-
 <pre><code><b>public</b> <b>entry</b> <b>fun</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_buy_nbtc">buy_nbtc</a>(vault: &<b>mut</b> (<a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap">nbtc_swap</a>=0x0)::nbtc_swap::Vault, coin: <a href="../dependencies/sui/coin.md#sui_coin_Coin">sui::coin::Coin</a>&lt;<a href="../dependencies/sui/sui.md#sui_sui_SUI">sui::sui::SUI</a>&gt;, ctx: &<b>mut</b> <a href="../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>entry</b> <b>fun</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_buy_nbtc">buy_nbtc</a>(vault: &<b>mut</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_Vault">Vault</a>, coin: Coin&lt;SUI&gt;, ctx: &<b>mut</b> TxContext) {
     <b>assert</b>!(!vault.<a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_is_paused">is_paused</a>, <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_EvaultPaused">EvaultPaused</a>);
@@ -279,24 +221,17 @@
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="(nbtc_swap=0x0)_nbtc_swap_add_nbtc_liquidity"></a>
 
 ## Function `add_nbtc_liquidity`
 
-
-
 <pre><code><b>public</b> <b>entry</b> <b>fun</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_add_nbtc_liquidity">add_nbtc_liquidity</a>(_cap: &(<a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap">nbtc_swap</a>=0x0)::nbtc_swap::AdminCap, vault: &<b>mut</b> (<a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap">nbtc_swap</a>=0x0)::nbtc_swap::Vault, nbtc_coin: <a href="../dependencies/sui/coin.md#sui_coin_Coin">sui::coin::Coin</a>&lt;(nbtc=0x0)::nbtc::NBTC&gt;, _ctx: &<b>mut</b> <a href="../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>entry</b> <b>fun</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_add_nbtc_liquidity">add_nbtc_liquidity</a>(
     _cap: &<a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_AdminCap">AdminCap</a>,
@@ -309,24 +244,17 @@
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="(nbtc_swap=0x0)_nbtc_swap_withdraw"></a>
 
 ## Function `withdraw`
 
-
-
 <pre><code><b>public</b> <b>entry</b> <b>fun</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_withdraw">withdraw</a>(_cap: &(<a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap">nbtc_swap</a>=0x0)::nbtc_swap::AdminCap, vault: &<b>mut</b> (<a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap">nbtc_swap</a>=0x0)::nbtc_swap::Vault, ctx: &<b>mut</b> <a href="../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>entry</b> <b>fun</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_withdraw">withdraw</a>(_cap: &<a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_AdminCap">AdminCap</a>, vault: &<b>mut</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_Vault">Vault</a>, ctx: &<b>mut</b> TxContext) {
     <b>let</b> nbtc_amount = vault.nbtc_balance.value();
@@ -338,24 +266,17 @@
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="(nbtc_swap=0x0)_nbtc_swap_set_price"></a>
 
 ## Function `set_price`
 
-
-
 <pre><code><b>public</b> <b>entry</b> <b>fun</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_set_price">set_price</a>(_cap: &(<a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap">nbtc_swap</a>=0x0)::nbtc_swap::AdminCap, vault: &<b>mut</b> (<a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap">nbtc_swap</a>=0x0)::nbtc_swap::Vault, new_price: u64, _ctx: &<b>mut</b> <a href="../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>entry</b> <b>fun</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_set_price">set_price</a>(
     _cap: &<a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_AdminCap">AdminCap</a>,
@@ -368,31 +289,22 @@
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="(nbtc_swap=0x0)_nbtc_swap_set_paused"></a>
 
 ## Function `set_paused`
 
-
-
 <pre><code><b>public</b> <b>entry</b> <b>fun</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_set_paused">set_paused</a>(_cap: &(<a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap">nbtc_swap</a>=0x0)::nbtc_swap::AdminCap, vault: &<b>mut</b> (<a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap">nbtc_swap</a>=0x0)::nbtc_swap::Vault, pause: bool, _ctx: &<b>mut</b> <a href="../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>entry</b> <b>fun</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_set_paused">set_paused</a>(_cap: &<a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_AdminCap">AdminCap</a>, vault: &<b>mut</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_Vault">Vault</a>, pause: bool, _ctx: &<b>mut</b> TxContext) {
     vault.<a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_is_paused">is_paused</a> = pause;
 }
 </code></pre>
-
-
 
 </details>
 
@@ -400,23 +312,16 @@
 
 ## Function `price`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_price">price</a>(vault: &(<a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap">nbtc_swap</a>=0x0)::nbtc_swap::Vault): u64
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_price">price</a>(vault: &<a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_Vault">Vault</a>): u64 {
     vault.price_per_nbtc_satoshi_in_mist
 }
 </code></pre>
-
-
 
 </details>
 
@@ -424,23 +329,16 @@
 
 ## Function `nbtc_liquidity`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_nbtc_liquidity">nbtc_liquidity</a>(vault: &(<a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap">nbtc_swap</a>=0x0)::nbtc_swap::Vault): u64
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_nbtc_liquidity">nbtc_liquidity</a>(vault: &<a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_Vault">Vault</a>): u64 {
     balance::value(&vault.nbtc_balance)
 }
 </code></pre>
-
-
 
 </details>
 
@@ -448,22 +346,15 @@
 
 ## Function `is_paused`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_is_paused">is_paused</a>(vault: &(<a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap">nbtc_swap</a>=0x0)::nbtc_swap::Vault): bool
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_is_paused">is_paused</a>(vault: &<a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_Vault">Vault</a>): bool {
     vault.<a href="../nbtc_swap/nbtc_swap.md#(nbtc_swap=0x0)_nbtc_swap_is_paused">is_paused</a>
 }
 </code></pre>
-
-
 
 </details>

@@ -61,7 +61,7 @@ flowchart
     Bitcoin2[Bitcoin Node] o--o Relayer[Decentralized Relayer]
     Relayer -- send blocks ---> Walrus
     Relayer -- "send light blocks <br>& verifies the hardest chain" ---> SPV[Sui Bitcoin SPV]
-    Relayer -- send blocks --> Executor        
+    Relayer -- send blocks --> Executor
     Executor -- execute TXs --> Interpreter[[Interpreter]]
     Executor -- verifies --> SPV
 ```

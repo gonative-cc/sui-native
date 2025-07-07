@@ -10,8 +10,8 @@ It's the first ever synthetic BTC that is
 - rightmost trust minimized (read about [nBTC trust model](https://x.com/goNativeCC/status/1899487861939806641))
 - NBTC_BITCOIN_PKH = 0xce9f3ad7d227c66e9744d052821c20d18a2ea78f. Corresponds to `tb1qe60n447jylrxa96y6pfgy8pq6x9zafu09ky7cq` address on Bitcoin testnet.
 
+## Deployment
 
-## Deployment 
 We need to run PTB with 2 transactions: publish nbtc + move call for setup method.
 
 ## Deployed contracts
@@ -130,4 +130,3 @@ sui client call --package 0x5419f6e223f18a9141e91a42286f2783eee27bf2667422c2100a
             51 \
     --gas-budget 100000000
 ```
-
