@@ -8,13 +8,15 @@ insert_final_newline = true
 # indent_style = space
 # indent_size = 4
 
-[*.css]
-indent_style = tab
-
-[*.{coffee,js,jsx,ts,tsx}]
+[*.{js,cjs,ts}]
 indent_style = tab
 indent_size = 4
 max_line_length = 96
+
+[*.{jsx,tsx}]
+indent_style = tab
+indent_size = 4
+max_line_length = 110
 
 [*.json]
 indent_style = tab
@@ -24,14 +26,8 @@ indent_size = 4
 max_line_length = 96
 indent_style = tab
 
-[*.py]
-max_line_length = 80
-# tabs are allowed, but spaces is a pep8 convention... //indent_style = tab
-
-[*.{sol,move}]
+[*.move]
 max_line_length = 96
-indent_style = space
-indent_size = 4
 
 [*.sql]
 indent_style = tab
@@ -41,3 +37,6 @@ trim_trailing_whitespace = false
 
 [*.{html,mako,less,org}]
 indent_style = tab
+
+[*.yml]
+indent_style = space

@@ -2,7 +2,7 @@
 build
 .github
 pnpm-lock.yaml
+node_modules
 package.json
 
-# generated files
-nbtc_swap/docs/nbtc_swap.md
+worker-configuration.d.ts
