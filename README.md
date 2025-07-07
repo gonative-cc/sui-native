@@ -19,7 +19,7 @@ Participating in open source is often a highly collaborative experience. We’re
 
 Check out [contributing repo](https://github.com/gonative-cc/contributig) for our guidelines & policies for how to contribute. Note: we require DCO! Thank you to all those who have contributed!
 
-After cloning the repository, make sure to run `make setup-hooks`.
+After cloning the repository, **make sure to run `make setup-hooks`**.
 
 ### Security
 

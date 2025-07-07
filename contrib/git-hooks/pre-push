@@ -1,0 +1,18 @@
+#!/bin/bash
+
+echo "Coverage skipped"
+exit 0
+
+# TODO: need to enter into each directory
+
+threshold=80
+
+coverage=$(sui move coverage summary | grep "% Move Coverage" | tail -n1 | sed -E 's/.*% Move Coverage:[[:space:]]*([0-9.]+).*/\1/')
+
+if awk "BEGIN {exit ($coverage < $threshold ? 0 : 1)}"; then
+    echo "❌ Coverage is low"
+    exit 1
+else
+    echo "✅ Coverage is fine"
+    exit 0
+fi
