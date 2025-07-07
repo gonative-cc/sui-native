@@ -57,6 +57,6 @@ jobs:
       - name: Prettify code
         uses: creyD/prettier_action@v4.6
         with:
-          # This part is also where you can pass other options, for example:
-          prettier_options: -c .
+          # prettier_options: -c .
+          dry: true,
           only_changed: true
