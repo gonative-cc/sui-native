@@ -1,0 +1,8 @@
+# Ignore artifacts:
+build
+.github
+pnpm-lock.yaml
+package.json
+
+# generated files
+nbtc_swap/docs/nbtc_swap.md
