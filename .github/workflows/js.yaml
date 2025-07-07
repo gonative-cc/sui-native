@@ -26,6 +26,7 @@ jobs:
         name: Install pnpm
         with:
           run_install: false
+          version: 10
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
