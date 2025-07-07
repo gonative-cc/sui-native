@@ -4,8 +4,8 @@ on:
     types: [checks_requested]
   pull_request:
     paths:
-      - "**.js"
-      - "**.ts"
+      - "contrib/**.js"
+      - "contrib/**.ts"
 
 concurrency:
   group: ci-${{ github.ref }}-${{ github.workflow }}
@@ -14,9 +14,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./contrib
+    # defaults:
+    #   run:
+    #     working-directory: ./contrib
 
     steps:
       - uses: actions/checkout@v4
@@ -27,11 +27,8 @@ jobs:
         with:
           run_install: false
           version: 10
-      - name: working dir
-        run: pwd
       - name: Install Node.js
         uses: actions/setup-node@v4
-        working-directory: ./contrib
         with:
           node-version: 22
           cache: "pnpm"
