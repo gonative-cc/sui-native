@@ -1,0 +1,29 @@
+name: Build and test
+
+on:
+  merge_group:
+    types: [checks_requested]
+
+concurrency:
+  group: ci-${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: mysten/sui-tools:ci
+    steps:
+      - uses: actions/checkout@v4
+      # lint only changed files
+      - uses: tj-actions/changed-files@v46
+        id: changed-files
+        with:
+          files: "**/*.move"
+          separator: ","
+      - name: Build
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: sui move build
+      - name: Run test
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: sui move test
