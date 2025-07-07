@@ -4,6 +4,8 @@ on:
   merge_group:
     types: [checks_requested]
   pull_request:
+    paths:
+      - '**.move'
 
 concurrency:
   group: ci-${{ github.ref }}-${{ github.workflow }}
@@ -18,11 +20,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       # lint only changed files
-      - uses: tj-actions/changed-files@v46
-        id: changed-files
-        with:
-          files: "**/*.move"
-          separator: ","
+      # - uses: tj-actions/changed-files@v46
+      #   id: changed-files
+      #   with:
+      #     files: "**/*.move"
+      #     separator: ","
       - name: changed Move files
         if: steps.changed-files.outputs.any_changed == 'true'
         run: echo ${{ steps.changed-files-specific.outputs.all_changed_files }}
