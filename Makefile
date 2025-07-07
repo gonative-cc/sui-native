@@ -1,3 +1,7 @@
+setup-hooks:
+	@cd .git/hooks; ln -s -f ../../contrib/git-hooks/* ./
+	@pnpm install -g prettier @mysten/prettier-plugin-move
+
 # add license header to every source file
 add-license:
 	@awk -i inplace 'FNR==1 && !/SPDX-License-Identifier/ {print "// SPDX-License-Identifier: MPL-2.0\n"}1' */sources/*.move */tests/*.move
