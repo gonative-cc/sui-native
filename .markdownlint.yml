@@ -1,5 +1,10 @@
 # Default state for all rules
 default: true
+# MD013/line-length
+# MD013:
+#   line_length: 120
+MD013: false
 # MD014/commands-show-output Dollar signs used before commands without showing output
 MD014: false
-MD013: false
+# MD030/list-marker-space Spaces after list markers
+MD030: false

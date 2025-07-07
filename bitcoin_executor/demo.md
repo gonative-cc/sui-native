@@ -1,6 +1,8 @@
 # Bitcoin Execution Layer on Sui - Demo Guide
 
-This guide show the steps to run a demonstration of the Bitcoin Executor, which operates as a Move smart contract on the Sui blockchain. The demo will show the execution of Bitcoin blocks and the management of the UTXO set on-chain.
+This guide show the steps to run a demonstration of the Bitcoin Executor, which operates as a
+Move smart contract on the Sui blockchain. The demo will show the execution of
+Bitcoin blocks and the management of the UTXO set on-chain.
 
 - [**Demo Video**](https://drive.google.com/file/d/1S-PR5aN2S24Q1HZmXregBqqAS4aZHR4h/view?usp=sharing)
 - [Documentation](./README.md)
@@ -17,7 +19,8 @@ Overview:
 
     As an alternative you can use docker setup from `relayer/contrib`
 
-2.  Relayer Scripts https://github.com/gonative-cc/relayer
+2.  Relayer Scripts
+    - checkout [gonative-cc/relayer](https://github.com/gonative-cc/relayer) repository.
     - You will need the `btc_executor.sh` and `submit_blocks.sh` scripts from `demo_scripts` directory. (Or you can perform these actions manually).
 
 3.  Sui Development Environment:
