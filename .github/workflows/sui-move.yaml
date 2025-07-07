@@ -1,0 +1,31 @@
+name: sui-move
+
+on:
+  merge_group:
+    types: [checks_requested]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: mysten/sui-tools:ci
+
+    steps:
+      - uses: actions/checkout@v4
+      # lint only changed files
+      - uses: tj-actions/changed-files@v46
+        id: changed-files
+        with:
+          files: "**/*.move"
+          separator: ","
+      - name: changed Move files
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: echo ${{ steps.changed-files-specific.outputs.all_changed_files }}
+      - name: run test script
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: bash ./contrib/ci/run-move-tests.sh

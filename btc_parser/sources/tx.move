@@ -7,6 +7,7 @@ use btc_parser::output::{Self, Output};
 use btc_parser::reader::Reader;
 use btc_parser::utils::{u64_to_varint_bytes, le_bytes_to_u64, hash256};
 
+// list of witnesses for inputs
 public struct InputWitness has copy, drop {
     items: vector<vector<u8>>,
 }
