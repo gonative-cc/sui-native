@@ -14,8 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: mysten/sui-tools:ci
-    strategy:
-      matrix: { dir: ["bitcoin_executor", "btc_parser", "nBTC", "nbtc_swap"] }
 
     steps:
       - uses: actions/checkout@v4
@@ -23,16 +21,11 @@ jobs:
       - uses: tj-actions/changed-files@v46
         id: changed-files
         with:
-          files: "${{ matrix.dir }}/**/*.move"
+          files: "**/*.move"
           separator: ","
-      - name: changed-files
+      - name: changed Move files
         if: steps.changed-files.outputs.any_changed == 'true'
         run: echo ${{ steps.changed-files-specific.outputs.all_changed_files }}
-      - name: Build
-        working-directory: ${{ matrix.dir }}
+      - name: run test script
         if: steps.changed-files.outputs.any_changed == 'true'
-        run: sui move build
-      - name: Run test
-        working-directory: ${{ matrix.dir }}
-        if: steps.changed-files.outputs.any_changed == 'true'
-        run: sui move test
+        run: bash ./contrib/ci/run-move-tests.sh
