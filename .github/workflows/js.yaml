@@ -1,0 +1,61 @@
+name: JS
+on:
+  merge_group:
+    types: [checks_requested]
+  pull_request:
+    paths:
+      - "contrib/**.js"
+      - "contrib/**.ts"
+
+concurrency:
+  group: ci-${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # defaults:
+    #   run:
+    #     working-directory: ./contrib
+
+    steps:
+      - uses: actions/checkout@v4
+
+      ### version with cache
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          run_install: false
+          version: 10
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+      - name: Install dependencies
+        run: pnpm install
+      ###
+
+      # - name: eslint
+      #   run: "pnpm run lint"
+
+      - name: test
+        run: "pnpm run test"
+
+  prettier:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Make sure the actual branch is checked out when running on pull requests
+          ref: ${{ github.head_ref }}
+          # This is important to fetch the changes to the previous commit
+          fetch-depth: 0
+
+      - name: Prettify code
+        uses: creyD/prettier_action@v4.6
+        with:
+          # prettier_options: -c .
+          only_changed: true

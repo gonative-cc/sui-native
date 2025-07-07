@@ -1,0 +1,24 @@
+name: Lint-Title
+on:
+  merge_group:
+  pull_request_target:
+    types:
+      - opened
+      - edited
+      - synchronize
+
+concurrency:
+  group: ci-${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  main:
+    name: PR Title Linter
+    runs-on: ubuntu-latest
+    steps:
+      - name: event name
+        run: echo ${{ github.event_name }}
+      - uses: amannn/action-semantic-pull-request@v5
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

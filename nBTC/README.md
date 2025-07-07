@@ -1,3 +1,6 @@
+<!-- markdownlint-disable MD041 -->
+<!-- markdownlint-disable MD034 -->
+
 # ![nBTC Logo!](../assets/nbtc.svg) nBTC
 
 `nBTC` is the synthetic BTC on Sui, redeemable 1-1 for BTC (on Bitcoin).
@@ -10,8 +13,8 @@ It's the first ever synthetic BTC that is
 - rightmost trust minimized (read about [nBTC trust model](https://x.com/goNativeCC/status/1899487861939806641))
 - NBTC_BITCOIN_PKH = 0xce9f3ad7d227c66e9744d052821c20d18a2ea78f. Corresponds to `tb1qe60n447jylrxa96y6pfgy8pq6x9zafu09ky7cq` address on Bitcoin testnet.
 
+## Deployment
 
-## Deployment 
 We need to run PTB with 2 transactions: publish nbtc + move call for setup method.
 
 ## Deployed contracts
@@ -33,11 +36,11 @@ See the main [README](../README.md#deployed-objects--packages) file.
 
 ## How it Works?
 
-1.  A user sends BTC to the `nBTC` dwallet address (on Bitcoin network). They include their target Sui address in the transaction's `OP_RETURN` field.
-2.  The user calls the `mint` function of the `nBTC` Sui object, providing the BTC transfer details and the proof of the transaction. The proof is the traditional SPV Bitcoin proof.
-3.  The `mint` function uses a configured Bitcoin SPV Light Client (identified by `LIGHT_CLIENT_ID`) to verify the transaction proof. It checks that BTC was sent to the correct `nBTC` dwallet address.
-4.  Once the verification is successful and the BTC transaction hasn't been used before, the module mints the corresponding amount of `nBTC` Sui Coins.
-5.  The new `nBTC` Coins are sent to the Sui address found in the `OP_RETURN` data, or to the `FALLBACK_ADDRESS` if the `OP_RETURN` data is missing or is invalid.
+1. A user sends BTC to the `nBTC` dwallet address (on Bitcoin network). They include their target Sui address in the transaction's `OP_RETURN` field.
+2. The user calls the `mint` function of the `nBTC` Sui object, providing the BTC transfer details and the proof of the transaction. The proof is the traditional SPV Bitcoin proof.
+3. The `mint` function uses a configured Bitcoin SPV Light Client (identified by `LIGHT_CLIENT_ID`) to verify the transaction proof. It checks that BTC was sent to the correct `nBTC` dwallet address.
+4. Once the verification is successful and the BTC transaction hasn't been used before, the module mints the corresponding amount of `nBTC` Sui Coins.
+5. The new `nBTC` Coins are sent to the Sui address found in the `OP_RETURN` data, or to the `FALLBACK_ADDRESS` if the `OP_RETURN` data is missing or is invalid.
 
 ### Flowchart
 
@@ -73,7 +76,7 @@ Use the `contrib/scripts/create_btc_mint_data.sh` script to extract the necessar
 - `proof`: The Merkle proof branches.
 - `tx_index`: The index of the transaction within the block.
 
-#### Command:
+Command:
 
 ```bash
 # Replace with the actual Bitcoin transaction ID
@@ -81,7 +84,7 @@ TXID="897addd511f0a4c1ddc3dc3e9a14ba2174a6fa49388764db5bde4e946f8b8b1a"
 ./contrib/scripts/create_btc_mint_data.sh ${TXID}
 ```
 
-#### Example Output:
+Example Output:
 
 ```json
 {
@@ -109,9 +112,7 @@ TXID="897addd511f0a4c1ddc3dc3e9a14ba2174a6fa49388764db5bde4e946f8b8b1a"
 }
 ```
 
-Use the extracted data to call the `nbtc::mint` function.
-
-#### Command:
+Use the extracted data to call the `nbtc::mint` function. Command:
 
 ```bash
 sui client call --package 0x5419f6e223f18a9141e91a42286f2783eee27bf2667422c2100afc7b2296731b \
@@ -130,4 +131,3 @@ sui client call --package 0x5419f6e223f18a9141e91a42286f2783eee27bf2667422c2100a
             51 \
     --gas-budget 100000000
 ```
-

@@ -1,0 +1,29 @@
+name: Markdown
+on:
+  merge_group:
+    types: [checks_requested]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # lint only changed files
+      - uses: tj-actions/changed-files@v46
+        id: changed-files
+        with:
+          files: "**/*.md"
+          files_ignore: "nbtc_swap/docs/nbtc_swap.md"
+          separator: ","
+      - uses: DavidAnson/markdownlint-cli2-action@v20
+        if: steps.changed-files.outputs.any_changed == 'true'
+        with:
+          globs: ${{ steps.changed-files.outputs.all_changed_files }}
+          separator: ","

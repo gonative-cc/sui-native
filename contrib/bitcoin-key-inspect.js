@@ -38,7 +38,7 @@ function hash160Hex(input) {
 }
 
 /**
- * @param {string} mnemonic - one string of 12 mnemonic words.
+ * @param {string} mnemonic - one string of 12 mnemonic words separated with spaces.
  * @returns {object} - bitcoinKey.
  */
 function keyFromMnemonic(mnemonic, keyType) {
