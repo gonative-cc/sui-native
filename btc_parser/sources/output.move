@@ -79,8 +79,8 @@ public fun is_P2WPHK(output: &Output): bool {
 
 // TODO: add support script addresses.
 // TODO: check and verify the address to make sure we support it. Return error otherwise
-/// extract pkh from the output in P2PHK or P2WPKH
-/// return empty if the cannot extract public key hash
+/// extracts public key hash (PKH) from the output in P2PHK or P2WPKH
+/// returns an empty vector in case it was not able to extract it
 public fun extract_public_key_hash(output: &Output): vector<u8> {
     let script = output.script_pubkey;
     if (output.is_P2PHK()) {
@@ -93,9 +93,9 @@ public fun extract_public_key_hash(output: &Output): vector<u8> {
 
 /// Extracts the data payload from an OP_RETURN output in a transaction.
 /// script = OP_RETURN <data>.
-/// If transaction mined to BTC, then this must pass basic conditions
-/// include the conditions for OP_RETURN script.
-/// This why we only return the message without check size message.
+/// If transaction is mined, then this must pass basic conditions
+/// including the conditions for OP_RETURN script.
+/// This is why we only return the message without check size message.
 public fun op_return(output: &Output): vector<u8> {
     let script = output.script_pubkey;
 
