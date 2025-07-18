@@ -14,10 +14,12 @@ publish:
 lint-git:
 	@git diff --name-only --cached | grep  -E '\.md$$' | xargs -r markdownlint-cli2
 	@sui move build --lint
+# note: prettier-move is run in the hook directly
+
 # lint changed files
 lint:
 	@git diff --name-only | grep  -E '\.md$$' | xargs -r markdownlint-cli2
-	@ sui move build --lint
+	@sui move build --lint
 
 lint-all:
 	@markdownlint-cli2 **.md
@@ -26,9 +28,10 @@ lint-all:
 lint-fix-all:
 	@markdownlint-cli2 --fix **.md
 	@echo "Sui move lint will be fixed by manual"
+	@prettier-move --w .
 
 .PHONY: build setup
-.PHONY: lint lint-all lint-fix-all
+.PHONY: lint-git lint lint-all lint-fix-all
 
 ###############################################################################
 ##                                   Tests                                   ##
