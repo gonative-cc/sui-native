@@ -3,16 +3,15 @@
 module bitcoin_executor::interpreter;
 
 use bitcoin_executor::encoding;
-use btc_parser::input;
-use btc_parser::output;
-use btc_parser::reader::{Self, Reader};
 use bitcoin_executor::ripemd160;
 use bitcoin_executor::sighash;
 use bitcoin_executor::stack::{Self, Stack};
-use btc_parser::tx::{Self, Transaction};
 use bitcoin_executor::utils;
-use btc_parser::utils::hash256;
-use btc_parser::utils::u64_to_le_bytes;
+use btc_parser::input;
+use btc_parser::output;
+use btc_parser::reader::{Self, Reader};
+use btc_parser::tx::{Self, Transaction};
+use btc_parser::utils::{hash256, u64_to_le_bytes};
 use std::hash::sha2_256;
 
 #[test_only]
@@ -290,7 +289,6 @@ const OP_SMALLINTEGER: u8 = 0xfa; // 250 - bitcoin core internal
 const OP_PUBKEYS: u8 = 0xfb; // 251 - bitcoin core internal
 const OP_UNKNOWN252: u8 = 0xfc; // 252
 
-
 const OP_PUBKEYHASH: u8 = 0xfd; // 253 - bitcoin core internal
 const OP_PUBKEY: u8 = 0xfe; // 254 - bitcoin core internal
 const OP_INVALIDOPCODE: u8 = 0xff; // 255 - bitcoin core internal
@@ -411,8 +409,8 @@ fun eval(ip: &mut Interpreter, r: Reader): bool {
         } else if (op == OP_HASH160) {
             ip.op_hash160();
         } else if (isBitcoinCoreInternalOpCode(op)) {
-	        // Bitcoin Core internal use opcode.  Defined here for completeness.
-	        // https://github.com/btcsuite/btcd/blob/v0.24.2/txscript/opcode.go#L581
+            // Bitcoin Core internal use opcode.  Defined here for completeness.
+            // https://github.com/btcsuite/btcd/blob/v0.24.2/txscript/opcode.go#L581
             abort EInternalBitcoinCoreOpcode
         } else if (isInvalidOptCode(op)) {
             abort EInvalidOpcode
@@ -431,7 +429,6 @@ fun isBitcoinCoreInternalOpCode(op: u8): bool {
     op == OP_UNKNOWN252 || op == OP_SMALLINTEGER ||
         op == OP_PUBKEY || op == OP_PUBKEYS || op == OP_PUBKEYHASH
 }
-
 
 /// check evaluate is valid
 /// evaluation valid if the stack not empty
@@ -656,15 +653,18 @@ fun test_op_push_small_int5() {
     ip.op_push_small_int_helper(OP_5, 1, vector[0x05]);
 }
 
-
 #[test_only]
-fun op_push_small_int_helper(ip: &mut Interpreter, opcode: u8, expected_size: u64, top_val: vector<u8>) {
+fun op_push_small_int_helper(
+    ip: &mut Interpreter,
+    opcode: u8,
+    expected_size: u64,
+    top_val: vector<u8>,
+) {
     ip.op_push_small_int(opcode);
     assert_eq!(ip.stack.size(), expected_size);
     assert_eq!(ip.stack.top(), top_val);
     assert_eq!(ip.isSuccess(), true);
 }
-
 
 #[test]
 fun test_op_equal() {

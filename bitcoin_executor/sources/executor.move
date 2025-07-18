@@ -2,13 +2,13 @@
 
 module bitcoin_executor::bitcoin_executor;
 
-use btc_parser::block;
-use btc_parser::utils::le_bytes_to_u64;
 use bitcoin_executor::interpreter::{run, create_p2wpkh_scriptcode};
 use bitcoin_executor::stack;
-use btc_parser::tx::Transaction;
-use btc_parser::output;
 use bitcoin_executor::utxo::{Self, OutPoint, Data};
+use btc_parser::block;
+use btc_parser::output;
+use btc_parser::tx::Transaction;
+use btc_parser::utils::le_bytes_to_u64;
 use sui::table::{Self, Table};
 
 #[test_only]
@@ -51,7 +51,7 @@ fun store(state: &mut State, tx: &Transaction, coinbase: bool) {
             index as u32,
             state.height,
             coinbase,
-            *output
+            *output,
         );
         state.add_utxo(outpoint, data);
     })
@@ -227,7 +227,7 @@ fun test_execution() {
         00000000,
         0,
         true,
-        output::new(5000000000, x"001460bef4984dfcc473d6459368f4f1f9a21d1f4d74")
+        output::new(5000000000, x"001460bef4984dfcc473d6459368f4f1f9a21d1f4d74"),
     );
 
     let mut state = State {
@@ -264,7 +264,7 @@ fun test_execution_double_spend() {
         0,
         0,
         true,
-        output::new(5000000000, x"001460bef4984dfcc473d6459368f4f1f9a21d1f4d74")
+        output::new(5000000000, x"001460bef4984dfcc473d6459368f4f1f9a21d1f4d74"),
     );
 
     let mut state = State {

@@ -3,10 +3,6 @@
 #[test_only]
 module nbtc::nbtc_tests;
 
-// The fallback Sui address to receive nBTC if OP_RETURN data is invalid or missing.
-// Use for test
-const FALLBACK_ADDR: address = @0xB0B;
-
 use bitcoin_spv::light_client::{new_light_client, LightClient};
 use bitcoin_spv::params;
 use nbtc::nbtc::{
@@ -20,6 +16,10 @@ use nbtc::nbtc::{
 use sui::address;
 use sui::coin::Coin;
 use sui::test_scenario::{Self, take_from_address};
+
+// The fallback Sui address to receive nBTC if OP_RETURN data is invalid or missing.
+// Use for test
+const FALLBACK_ADDR: address = @0xB0B;
 
 // context for this test:
 // 1 block

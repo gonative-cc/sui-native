@@ -2,9 +2,8 @@
 
 module bitcoin_executor::utxo;
 
-use btc_parser::output::Output;
 use btc_parser::input::Input;
-
+use btc_parser::output::Output;
 use btc_parser::utils::{vector_slice, le_bytes_to_u64};
 
 const OP_0: u8 = 0x00;
@@ -35,6 +34,7 @@ public fun from_input(input: &Input): OutPoint {
         vout: le_bytes_to_u64(input.vout()) as u32,
     }
 }
+
 public fun new_data(height: u64, is_coinbase: bool, output: Output): Data {
     Data { height, is_coinbase, output }
 }
@@ -44,7 +44,7 @@ public fun new(
     vout: u32,
     height: u64,
     is_coinbase: bool,
-    output: Output
+    output: Output,
 ): (OutPoint, Data) {
     (new_outpoint(tx_id, vout), new_data(height, is_coinbase, output))
 }

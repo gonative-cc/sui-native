@@ -1,7 +1,13 @@
 #[test_only]
 module btc_parser::utils_tests;
-use btc_parser::utils::{vector_slice, u32_to_le_bytes, u64_to_le_bytes, u64_to_varint_bytes, hash256};
 
+use btc_parser::utils::{
+    vector_slice,
+    u32_to_le_bytes,
+    u64_to_le_bytes,
+    u64_to_varint_bytes,
+    hash256
+};
 use std::unit_test::assert_eq;
 
 // TODO: add more tests for slice
@@ -17,7 +23,6 @@ fun test_hash256() {
     let expected = x"cbcf27657ceb69162a9f5153c6956d6fdd81f71d7bc0bca243bff54b405e4410";
     assert_eq!(hash256(data_to_hash), expected);
 }
-
 
 #[test]
 fun test_u32_to_le_bytes() {
