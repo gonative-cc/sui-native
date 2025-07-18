@@ -1,7 +1,6 @@
 module btc_parser::output;
 
-use btc_parser::utils::u64_to_le_bytes;
-use btc_parser::utils::vector_slice;
+use btc_parser::utils::{u64_to_le_bytes, vector_slice};
 
 // === BTC script opcodes ===
 /// An empty array of bytes is pushed onto the stack. (This is not a no-op: an item is added to the stack.)
@@ -27,7 +26,6 @@ const OP_PUSHDATA1: u8 = 0x4c;
 /// Push the next 75 bytes onto the stack.
 const OP_DATA_75: u8 = 0x4b;
 
-
 /// Output in btc transaction
 public struct Output has copy, drop, store {
     amount: u64,
@@ -46,6 +44,7 @@ public fun new(amount: u64, script_pubkey: vector<u8>): Output {
 public fun amount_bytes(output: &Output): vector<u8> {
     output.amount_bytes
 }
+
 public fun amount(output: &Output): u64 {
     output.amount
 }
