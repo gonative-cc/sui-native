@@ -106,7 +106,7 @@ public fun setup(
     treasury: &mut WrappedTreasuryCap,
     trusted_lc_addr: address,
     fallback_addr: address,
-    nbtc_bitcoin_pkh: vector<u8>
+    nbtc_bitcoin_pkh: vector<u8>,
 ) {
     assert!(treasury.trusted_lc_addr.is_none(), EReSetupTreasuryNotAllow);
     assert!(treasury.fallback_addr.is_none(), EReSetupTreasuryNotAllow);
@@ -214,9 +214,7 @@ public fun get_fallback_addr(treasury: &WrappedTreasuryCap): address {
 }
 
 #[test_only]
-public(package) fun init_for_testing(
-    ctx: &mut TxContext,
-): WrappedTreasuryCap {
+public(package) fun init_for_testing(ctx: &mut TxContext): WrappedTreasuryCap {
     let witness = NBTC {};
     let (treasury_cap, metadata) = coin::create_currency<NBTC>(
         witness,

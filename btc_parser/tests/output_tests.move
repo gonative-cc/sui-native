@@ -4,7 +4,6 @@ module btc_parser::output_tests;
 use btc_parser::output;
 use std::unit_test::assert_eq;
 
-
 #[test]
 fun pkh_script_happy_cases() {
     let output = &output::new(100, x"76a91455ae51684c43435da751ac8d2173b2652eb6410588ac");

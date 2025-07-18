@@ -24,13 +24,11 @@ fun end_stream() {
     assert!(r.end_stream());
 }
 
-
 #[test]
 fun read_byte() {
     let mut r = reader::new(vector[1]);
     assert_eq(r.read_byte(), 1);
 }
-
 
 #[test]
 fun read() {

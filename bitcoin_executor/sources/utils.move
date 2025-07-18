@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MPL-2.0
 
 module bitcoin_executor::utils;
+
 use std::u64::do;
 
 #[test_only]
 use std::unit_test::assert_eq;
-
 
 /// Converts u64 into the CScriptNum byte vector format.
 /// This is the format expected to be pushed onto the stack.
@@ -37,7 +37,6 @@ public(package) fun u64_to_cscriptnum(n: u64): vector<u8> {
 public fun vector_true(): vector<u8> { vector[0x01] }
 
 public fun vector_false(): vector<u8> { vector[] }
-
 
 /// Encodes a u64 into VarInt format.
 /// Adapted from go_native/move_spv_light_client
@@ -81,8 +80,6 @@ public fun zerohash_32bytes(): vector<u8> {
     vector::tabulate!(32, |_| 0)
 }
 
-
-
 #[test]
 fun test_script_to_var_bytes() {
     assert_eq!(1, 1)
@@ -98,7 +95,6 @@ fun test_u64_to_cscriptnum() {
     assert_eq!(u64_to_cscriptnum(256), vector[0x00, 0x01]); // 256 -> [0x00, 0x01]
     assert_eq!(u64_to_cscriptnum(520), vector[0x08, 0x02]); // 520 -> [0x08, 0x02]
 }
-
 
 #[test]
 fun test_zerohash_32bytes() {
