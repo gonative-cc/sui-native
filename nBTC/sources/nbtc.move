@@ -4,7 +4,8 @@
 module nbtc::nbtc;
 
 use bitcoin_spv::light_client::{LightClient, verify_payment};
-use bitcoin_spv::transaction::make_transaction;
+use btc_parser::reader;
+use btc_parser::tx;
 use sui::address;
 use sui::coin::{Self, Coin, TreasuryCap};
 use sui::event;
@@ -118,20 +119,15 @@ public fun setup(
 }
 
 /// Mints nBTC tokens after verifying a Bitcoin transaction proof.
-/// * `input_count`: number of input objects
-/// * `inputs`: all tx inputs encoded as a single list of bytes.
-/// * `output_count`: number of output objects
-/// * `outputs`: all tx outputs encoded as a single list of bytes.
+/// * `tx_bytes`: raw, hex-encoded tx bytes.
+/// * `proof`: merkele proof for the tx.
+/// * `height`: block height, where the tx was included.
+/// * `tx_index`: index of the tx within the block.
 /// Emits `MintEvent` if succesfull.
 public fun mint(
     treasury: &mut WrappedTreasuryCap,
     light_client: &LightClient,
-    version: vector<u8>,
-    input_count: u32,
-    inputs: vector<u8>,
-    output_count: u32,
-    outputs: vector<u8>,
-    lock_time: vector<u8>,
+    tx_bytes: vector<u8>,
     proof: vector<vector<u8>>,
     height: u64,
     tx_index: u64,
@@ -141,14 +137,9 @@ public fun mint(
     let provided_lc_id = object::id(light_client);
     assert!(provided_lc_id == treasury.get_light_client_id(), EUntrustedLightClient);
 
-    let tx = make_transaction(
-        version,
-        input_count,
-        inputs,
-        output_count,
-        outputs,
-        lock_time,
-    );
+    let mut r = reader::new(tx_bytes);
+    let tx = tx::deserialize(&mut r);
+
     let (amount_satoshi, op_return, tx_id) = light_client.verify_payment(
         height,
         proof,
