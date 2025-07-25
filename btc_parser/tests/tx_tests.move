@@ -5,7 +5,7 @@ module btc_parser::tx_tests;
 
 use btc_parser::reader;
 use btc_parser::tx;
-use sui::test_utils::assert_eq;
+use std::unit_test::assert_eq;
 
 #[test]
 fun segwit_tx_00() {
@@ -14,24 +14,24 @@ fun segwit_tx_00() {
         x"020000000001019dafd815a150414d02047a22ab806dbd2f43d0e1ea5922dadd5396f6d67769202900000000ffffffff01e91801000000000016001464f9139a4a853b3d5ad1315ceb707386ed343c2c02473044022063db5a24fec209152863fb251cc349a7030220bf4ca6e6296002d46d4c3651a502205a0b4b5a520fc42b91b8a888351c1c42bd2864aba2c398007405e957dea77bb101210329cdb63380e0a7109773703534659df6be41c48b4e80e5da77eb384ff7d41be200000000";
     let mut r = reader::new(data);
     let txn = tx::deserialize(&mut r);
-    assert_eq(txn.tx_id(), x"9ecedf01c545f5abf78fce749fd326e27ad3375d432405b736990ace73148d8b");
+    assert_eq!(txn.tx_id(), x"9ecedf01c545f5abf78fce749fd326e27ad3375d432405b736990ace73148d8b");
     let input = txn.inputs()[0];
 
-    assert_eq(input.tx_id(), x"9dafd815a150414d02047a22ab806dbd2f43d0e1ea5922dadd5396f6d6776920");
-    assert_eq(input.vout(), x"29000000");
-    assert_eq(input.script_sig(), x"");
-    assert_eq(txn.inputs().length(), 1);
+    assert_eq!(input.tx_id(), x"9dafd815a150414d02047a22ab806dbd2f43d0e1ea5922dadd5396f6d6776920");
+    assert_eq!(input.vout(), x"29000000");
+    assert_eq!(input.script_sig(), x"");
+    assert_eq!(txn.inputs().length(), 1);
 
-    assert_eq(txn.outputs().length(), 1);
+    assert_eq!(txn.outputs().length(), 1);
 
     let output = txn.outputs()[0];
-    assert_eq(output.script_pubkey(), x"001464f9139a4a853b3d5ad1315ceb707386ed343c2c");
-    assert_eq(output.amount_bytes(), x"e918010000000000");
-    assert_eq(output.amount(), 71913);
+    assert_eq!(output.script_pubkey(), x"001464f9139a4a853b3d5ad1315ceb707386ed343c2c");
+    assert_eq!(output.amount_bytes(), x"e918010000000000");
+    assert_eq!(output.amount(), 71913);
 
-    assert!(txn.is_witness());
-    assert_eq(txn.witness().length(), txn.inputs().length());
-    assert_eq(
+    assert_eq!(txn.is_witness(), true);
+    assert_eq!(txn.witness().length(), txn.inputs().length());
+    assert_eq!(
         txn.witness()[0].items(),
         vector[
             x"3044022063db5a24fec209152863fb251cc349a7030220bf4ca6e6296002d46d4c3651a502205a0b4b5a520fc42b91b8a888351c1c42bd2864aba2c398007405e957dea77bb101",
@@ -47,10 +47,10 @@ fun segwit_tx_01() {
         x"020000000001071831b1080eae061d8edbb77055e5e7010f4e82d4fded8805d9cbd133b3bef75f0100000017160014bcb0ac4aa8b49c69e85227500d20d038bbaf5c07ffffffff3466d312149ff0a325287db3395b276e319f08547e6f43f0c9329dc26b0b70e6000000001716001465c935de57526bb34583430bc33f13b84af46cbaffffffff431eb63fbd0af90be6890141761e48021818a61e34f874fd9e2da41d7d1afe530100000017160014ffe479ebcfbfb39aa22ba61f00fb8230100da02dffffffff4e388d11fdb0c6a8bf24a4543c7ffeebe238b713618f9e74f1c167ffc94a95120000000017160014ed944e4ebd87ae9c4b68b8ae2c50c8b4208b44f3ffffffff54d42f48435c07b3049608b476823feb62ddf400d64303f5a1f325c41dbbdcad000000001716001494c73787f4969756e8d8d6e4f5d94e9e120bad6dffffffff58891831f6a8621167e7169e58d0a73da61d1d39c4c5e3f24e16677c3fe8b4c10100000017160014ffe479ebcfbfb39aa22ba61f00fb8230100da02dffffffff614c49d597670d43996319ec3adacd9095411af1cceb81cbc0e1bd83d3919e9c0000000017160014550bcda16f5ce785f2236fd9be0263afb701c79cffffffff0240ac2700000000001976a91482e21c599e7245e632d3fb7583d2224e67dd7b1288acbab944000000000017a914898ffd60ad6091221250047a9f2bd6456190263487024730440220271ac7713fc035ade3c0f48ec61967f0c5a8169656ca3375294ca062c944537c022022bfea80e8b71c1b0b34150fc87484ae2aef4908f4be54ad0597664c81d75e7e0121027c7e8a1cb29b86743d8451ce1aec137dbb4440d07a46bea74d98d6b9842ff0e50247304402203c022ba048357bb3cf635b4735d5b6c1f1615df67805c336ee2c35b245b07c190220445c01cbb1b4090d8339d44f32a908c2b0e86116eba617ae8fa52a4c43d38409012102358fa73953ea0bc0509373054687f4dff1b741391700740972427877db1cfe97024730440220732c3f7203a3fc99a80942a72a75e6e9c2ccbd1ae0fe632f5505839fc65b094b0220159c1a9e32ceaba0a495292a5c901a4f2d64f73c5926275a640e7dfac240646e012102896d6ee67ce183b202b668b1f5ace0a623e7ab30bac1e22592f02f34f7c9ff3302473044022071cabefe8dabf09959000e412fa102a00dfe6f77ac08c4d02a10c3c38b1a5e9202203942ba259adcdc2ac5d793262f014977ccdf6fc2382c16adbca08193f138919a012103985f69a8ffda23e7c6c94f36f51e6f26a16aca78fbe04b0d06235c3a39f2fc60024730440220669d8e3f99e28d2c2a53c460afbd15623a6cf21df85b03e507e89eacad37811402201e2bc2275069d292138a1e1364a1b1e3c9ed169670e49e97c3163dee9f86b1000121034ffc5841000a4441671cabf3f5f3d5fbf187695f90c8609a8e90ece5cc82fb850247304402205ad6784a7d3735d498a888a4535dba160b04a484edee56c50cd8521960cdee7c022057d47481424b96137bc07731527f7752e4547d90e11559f6003a878516b7af3c012102896d6ee67ce183b202b668b1f5ace0a623e7ab30bac1e22592f02f34f7c9ff330247304402207c483872b998704fc2c0eeedc7f34bb205a85c4ecbf1434d77c6c26db5b3c72b02207bf00e2d7dc760b0754fb35f8ccc51acc684426cb11b05175123f0dfa876505a012103493d0bf6d9d552a2d15f6d76da7bfbf254bb57b064ed618373febbe3028a10db00000000";
     let mut r = reader::new(data);
     let txn = tx::deserialize(&mut r);
-    assert_eq(txn.tx_id(), x"ea5c8c3479f2e3d265b46781d605ab6b3aae943caae86ddd633779aed909673b");
-    assert_eq(txn.inputs().length(), 7);
-    assert_eq(txn.outputs().length(), 2);
-    assert!(txn.is_witness());
+    assert_eq!(txn.tx_id(), x"ea5c8c3479f2e3d265b46781d605ab6b3aae943caae86ddd633779aed909673b");
+    assert_eq!(txn.inputs().length(), 7);
+    assert_eq!(txn.outputs().length(), 2);
+    assert_eq!(txn.is_witness(), true);
 }
 
 #[test]
@@ -61,5 +61,5 @@ fun coinbase_logic() {
 
     let mut r = reader::new(raw_coinbase_tx);
     let txn = tx::deserialize(&mut r);
-    assert!(txn.is_coinbase());
+    assert_eq!(txn.is_coinbase(), true);
 }

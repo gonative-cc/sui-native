@@ -1,6 +1,9 @@
+// SPDX-License-Identifier: MPL-2.0
+
 module btc_parser::output;
 
-use btc_parser::utils::{u64_to_le_bytes, vector_slice};
+use btc_parser::encoding::u64_to_le_bytes;
+use btc_parser::vector_utils::vector_slice;
 
 // === BTC script opcodes ===
 /// An empty array of bytes is pushed onto the stack. (This is not a no-op: an item is added to the stack.)
