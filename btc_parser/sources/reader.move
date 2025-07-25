@@ -2,7 +2,7 @@
 
 module btc_parser::reader;
 
-use btc_parser::utils::le_bytes_to_u64;
+use btc_parser::encoding::le_bytes_to_u64;
 
 // TODO: Follow error in btc implemetation
 #[error]

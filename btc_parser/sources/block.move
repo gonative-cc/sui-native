@@ -7,7 +7,7 @@ use btc_parser::reader;
 use btc_parser::tx::{Self, Transaction};
 
 #[test_only]
-use sui::test_utils::assert_eq;
+use std::unit_test::assert_eq;
 
 /// A block is a collection of all transactions in the BTC block
 public struct Block has copy, drop {
@@ -45,11 +45,11 @@ fun parse_block_test() {
 
     let block = new(data);
 
-    assert_eq(
+    assert_eq!(
         block.block_header.block_hash(),
         x"06226e46111a0b59caaf126043eb5bbf28c34f3a5e332a1fc7b2b73cf188910f",
     );
-    assert_eq(
+    assert_eq!(
         block.transactions[0].tx_id(),
         x"3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a",
     );
@@ -62,11 +62,11 @@ fun parse_block_segwit_test() {
 
     let block = new(data);
 
-    assert_eq(
+    assert_eq!(
         block.block_header.block_hash(),
         x"516567e505288fe41b2fc6be9b96318c406418c7d338168fe75a26111490eb2f",
     );
-    assert_eq(
+    assert_eq!(
         block.transactions[0].tx_id(),
         x"3fb8582bc04a0abb67965f6c139445bdc5d173ddc80008aa219929ab7285278f",
     );
