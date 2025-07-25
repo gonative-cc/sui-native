@@ -2,8 +2,8 @@
 
 module btc_parser::block_header;
 
+use btc_parser::crypto::hash256;
 use btc_parser::reader;
-use btc_parser::utils::hash256;
 
 public struct BlockHeader has copy, drop {
     version: u32,

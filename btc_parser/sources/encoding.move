@@ -1,10 +1,9 @@
-module btc_parser::utils;
+// SPDX-License-Identifier: MPL-2.0
 
-use std::hash::sha2_256;
+module btc_parser::encoding;
+
 use std::u64::do;
 
-#[error]
-const EOutOfBounds: vector<u8> = b"Slice out of bounds";
 #[error]
 const EOverflowVector: vector<u8> = b"Can't covert vector to u64 b/c overflow";
 
@@ -69,27 +68,4 @@ public fun u64_to_le_bytes(val: u64): vector<u8> {
     bytes.push_back(((val >> 48) & 0xFF) as u8);
     bytes.push_back(((val >> 56) & 0xFF) as u8);
     bytes
-}
-
-/// Computes sha2_256(sha2_256(data)).
-public fun hash256(data: vector<u8>): vector<u8> {
-    sha2_256(sha2_256(data))
-}
-
-/// Returns slice of a vector for a given range [start_index ,end_index).
-public fun vector_slice<T: copy + drop>(
-    source: &vector<T>,
-    start_index: u64,
-    end_index: u64,
-): vector<T> {
-    assert!(start_index <= end_index, EOutOfBounds);
-    assert!(end_index <= source.length(), EOutOfBounds);
-
-    let mut slice = vector::empty<T>();
-    let mut i = start_index;
-    while (i < end_index) {
-        slice.push_back(source[i]);
-        i = i + 1;
-    };
-    slice
 }
