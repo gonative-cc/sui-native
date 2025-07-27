@@ -9,5 +9,12 @@ if [ -z "$STAGED_MOVE_FILES" ]; then
     exit 0
 fi
 
+for f in $(echo $STAGED_MOVE_FILES | awk -F "/" '{print $1}' | uniq); do
+    echo building and linting $f
+    cd $f
+    sui move build --lint
+    cd -
+done
+
 prettier-move $STAGED_MOVE_FILES --write
 git add $STAGED_MOVE_FILES
