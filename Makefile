@@ -7,3 +7,8 @@ add-license:
 	@awk -i inplace 'FNR==1 && !/SPDX-License-Identifier/ {print "// SPDX-License-Identifier: MPL-2.0\n"}1' */sources/*.move */tests/*.move
 # with reuse tool:
 # docker run --rm --volume $(pwd):/data fsfe/reuse annotate --license MPL-2.0  */tests/*.move */sources/*.move  -s cpp
+
+
+# used as pre-commit
+lint-git:
+	@git diff --name-only --cached --diff-filter=ACM | grep  -E '\.md$$' | xargs -r markdownlint-cli2
