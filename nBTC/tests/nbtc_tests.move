@@ -20,6 +20,7 @@ const NBTC_PHK: vector<u8> = x"509a651dd392e1bc125323f629b67d65cca3d4bb";
 // The fallback Sui address to receive nBTC if OP_RETURN data is invalid or missing.
 // Use for test
 const FALLBACK_ADDR: address = @0xB0B;
+const BTC_TREASURY: vector<u8> = x"509a651dd392e1bc125323f629b67d65cca3d4bb";
 
 // context for this test:
 // regtest network
@@ -208,10 +209,9 @@ fun test_re_setup_treasury_should_fail() {
     let sender = @0x01;
     let mut scenario = test_scenario::begin(sender);
     let ctx = scenario.ctx();
-    let btc_treasury = x"509a651dd392e1bc125323f629b67d65cca3d4bb";
-    let (lc, mut cap) = init_nbtc(btc_treasury, ctx);
+    let (lc, mut cap) = setup(BTC_TREASURY, ctx);
     // resetup, should fail
-    cap.setup(lc.client_id().to_address(), FALLBACK_ADDR, btc_treasury);
+    cap.setup(lc.client_id().to_address(), FALLBACK_ADDR, BTC_TREASURY);
 
     abort
 }
