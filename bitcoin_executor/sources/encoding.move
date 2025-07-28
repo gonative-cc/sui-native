@@ -2,7 +2,7 @@
 
 module bitcoin_executor::encoding;
 
-use bitcoin_executor::utils;
+use btc_parser::vector_utils;
 
 #[test_only]
 use std::unit_test::assert_eq;
@@ -66,7 +66,7 @@ fun parse_der_encoded_int_value(
     let component_len = (der_bytes[*cursor] as u64);
     *cursor = *cursor + 1;
     assert!(component_len > 0 && *cursor + component_len <= der_len, EBtcSigParsing);
-    let value_der_bytes = btc_parser::vector_utils::vector_slice(
+    let value_der_bytes = vector_utils::vector_slice(
         der_bytes,
         *cursor,
         *cursor + component_len,

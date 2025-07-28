@@ -17,6 +17,7 @@ use std::unit_test::assert_eq;
 use sui::address;
 use sui::coin::Coin;
 use sui::test_scenario::{Self, take_from_address, Scenario};
+use sui::test_utils::destroy;
 
 // The fallback Sui address to receive nBTC if OP_RETURN data is invalid or missing.
 // Use for test
@@ -55,7 +56,7 @@ fun mint_and_assert(
 
     let coin = take_from_address<Coin<NBTC>>(scenario, expected_recipient);
     assert_eq!(coin.value(), expected_amount);
-    sui::test_utils::destroy(coin);
+    destroy(coin);
 }
 
 #[test_only]
@@ -109,8 +110,8 @@ fun test_nbtc_mint() {
         sender,
     );
 
-    sui::test_utils::destroy(lc);
-    sui::test_utils::destroy(cap);
+    destroy(lc);
+    destroy(cap);
     scenario.end();
 }
 
@@ -128,8 +129,8 @@ fun test_nbtc_mint_fallback() {
         sender,
     );
 
-    sui::test_utils::destroy(lc);
-    sui::test_utils::destroy(cap);
+    destroy(lc);
+    destroy(cap);
     scenario.end();
 }
 
@@ -152,8 +153,8 @@ fun test_nbtc_mint_fail_amount_is_zero() {
         scenario.ctx(),
     );
 
-    sui::test_utils::destroy(lc);
-    sui::test_utils::destroy(cap);
+    destroy(lc);
+    destroy(cap);
     scenario.end();
 }
 
@@ -187,8 +188,8 @@ fun test_nbtc_mint_fail_tx_already_used() {
         scenario.ctx(),
     );
 
-    sui::test_utils::destroy(lc);
-    sui::test_utils::destroy(cap);
+    destroy(lc);
+    destroy(cap);
     scenario.end();
 }
 
@@ -199,8 +200,8 @@ fun test_update_version_fail() {
     let ctx = scenario.ctx();
     let (lc, mut cap) = setup(BTC_TREASURY, ctx);
     nbtc::update_version(&mut cap);
-    sui::test_utils::destroy(lc);
-    sui::test_utils::destroy(cap);
+    destroy(lc);
+    destroy(cap);
     scenario.end();
 }
 
