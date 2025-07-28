@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 
 for name in "bitcoin_executor" "btc_parser" "nBTC" "nbtc_swap"; do
     echo testing $name
