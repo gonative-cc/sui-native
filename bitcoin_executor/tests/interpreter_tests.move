@@ -5,6 +5,7 @@ use bitcoin_executor::interpreter::{create_p2wpkh_scriptcode, run};
 use bitcoin_executor::stack::new_with_data;
 use btc_parser::reader;
 use btc_parser::tx::deserialize;
+use std::unit_test::assert_eq;
 
 #[test]
 fun run_segwit_script() {
@@ -18,5 +19,5 @@ fun run_segwit_script() {
     let pk = x"5c2dc82f606be66506b7403f9b304f5e0908b652";
     let script = create_p2wpkh_scriptcode(pk);
     let ans = run(tx, stack, script, index, amount);
-    assert!(ans)
+    assert_eq!(ans, true)
 }

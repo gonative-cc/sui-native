@@ -6,9 +6,9 @@ use bitcoin_executor::interpreter::{run, create_p2wpkh_scriptcode};
 use bitcoin_executor::stack;
 use bitcoin_executor::utxo::{Self, OutPoint, Data};
 use btc_parser::block;
+use btc_parser::encoding::le_bytes_to_u64;
 use btc_parser::output;
 use btc_parser::tx::Transaction;
-use btc_parser::utils::le_bytes_to_u64;
 use sui::table::{Self, Table};
 
 #[test_only]
