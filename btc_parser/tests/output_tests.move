@@ -47,3 +47,25 @@ fun op_return_script_happy_cases() {
     let output = &output::new(100, x"76a91455ae51684c43435da751ac8d2173b2652eb6410588ac");
     assert_eq!(output.is_op_return(), false);
 }
+
+#[test]
+fun P2HS_happy_cases() {
+    let output = &output::new(100, x"a914b4acb9d78d6a6256964a60484c95de490eaaae7587");
+    assert_eq!(output.is_P2SH(), true);
+
+
+    // add 00 to script
+    let output = &output::new(100, x"a914b4acb9d78d6a6256964a60484c95de490eaaae758700");
+    assert_eq!(output.is_P2SH(), false);
+}
+
+#[test]
+fun P2WHS_happy_cases() {
+    let output = &output::new(100, x"002065f91a53cb7120057db3d378bd0f7d944167d43a7dcbff15d6afc4823f1d3ed3");
+    assert_eq!(output.is_P2WSH(), true);
+
+
+    // add 00 to script
+    let output = &output::new(100, x"002065f91a53cb7120057db3d378bd0f7d944167d43a7dcbff15d6afc4823f1d3ed300");
+    assert_eq!(output.is_P2WSH(), false);
+}

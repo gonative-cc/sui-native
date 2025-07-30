@@ -14,6 +14,10 @@ const OP_DUP: u8 = 0x76;
 const OP_HASH160: u8 = 0xa9;
 /// Push the next 20 bytes as an array onto the stack
 const OP_DATA_20: u8 = 0x14;
+///
+const OP_DATA_32: u8 = 0x20;
+///
+const OP_EQUAL: u8 = 0x87;
 /// Returns success if the inputs are exactly equal, failure otherwise
 const OP_EQUALVERIFY: u8 = 0x88;
 /// https://en.bitcoin.it/wiki/OP_CHECKSIG pushing 1/0 for success/failure
@@ -54,6 +58,21 @@ public fun amount(output: &Output): u64 {
 
 public fun script_pubkey(output: &Output): vector<u8> {
     output.script_pubkey
+}
+
+public fun is_P2SH(output: &Output): bool {
+    let script = output.script_pubkey();
+    script.length() == 23 &&
+	script[0] == OP_HASH160 &&
+	script[1] == OP_DATA_20 &&
+	script[22] == OP_EQUAL
+}
+
+public fun is_P2WSH(output: &Output): bool {
+    let script = output.script_pubkey();
+    script.length() == 34 &&
+	script[0] == OP_0 &&
+	script[1] == OP_DATA_32
 }
 
 public fun is_P2PHK(output: &Output): bool {
