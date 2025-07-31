@@ -52,20 +52,20 @@ fun op_return_script_happy_cases() {
 fun P2HS_happy_cases() {
     let output = &output::new(100, x"a914b4acb9d78d6a6256964a60484c95de490eaaae7587");
     assert_eq!(output.is_P2SH(), true);
-
-
+    assert_eq!(output.extract_script_hash(), option::some(x"b4acb9d78d6a6256964a60484c95de490eaaae75"));
     // add 00 to script
     let output = &output::new(100, x"a914b4acb9d78d6a6256964a60484c95de490eaaae758700");
     assert_eq!(output.is_P2SH(), false);
+    assert_eq!(output.extract_script_hash(), option::none());
 }
 
 #[test]
 fun P2WHS_happy_cases() {
     let output = &output::new(100, x"002065f91a53cb7120057db3d378bd0f7d944167d43a7dcbff15d6afc4823f1d3ed3");
     assert_eq!(output.is_P2WSH(), true);
-
-
+    assert_eq!(output.extract_witness_script_hash(), option::some(x"65f91a53cb7120057db3d378bd0f7d944167d43a7dcbff15d6afc4823f1d3ed3"));
     // add 00 to script
     let output = &output::new(100, x"002065f91a53cb7120057db3d378bd0f7d944167d43a7dcbff15d6afc4823f1d3ed300");
     assert_eq!(output.is_P2WSH(), false);
+    assert_eq!(output.extract_witness_script_hash(), option::none());
 }

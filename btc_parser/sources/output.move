@@ -112,6 +112,23 @@ public fun extract_public_key_hash(output: &Output): Option<vector<u8>> {
     option::none()
 }
 
+public fun extract_script_hash(output: &Output): Option<vector<u8>> {
+    let script = output.script_pubkey;
+    if (output.is_P2SH()) {
+	option::some(vector_slice(&script, 2, 22))
+    } else {
+	option::none()
+    }
+}
+
+public fun extract_witness_script_hash(output: &Output): Option<vector<u8>> {
+    let script = output.script_pubkey;
+    if (output.is_P2WSH()) {
+	option::some(vector_slice(&script, 2, 34))
+    } else {
+	option::none()
+    }
+}
 /// Extracts the data payload from an OP_RETURN output in a transaction.
 /// script = OP_RETURN <data>.
 /// If transaction is mined, then this must pass basic conditions
