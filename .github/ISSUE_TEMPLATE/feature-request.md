@@ -3,10 +3,6 @@ name: Feature Request
 about: Create a proposal to request a feature
 ---
 
-<!-- markdownlint-disable MD003 -->
-<!-- markdownlint-disable MD012 -->
-<!-- markdownlint-disable MD041 -->
-
 ## Summary
 
 ## Context
