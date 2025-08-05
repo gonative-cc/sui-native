@@ -3,6 +3,8 @@
 /// Module: nbtc
 module nbtc::nbtc;
 
+use nbtc::verify_payment::verify_payment;
+
 use bitcoin_spv::light_client::LightClient;
 use btc_parser::reader;
 use btc_parser::tx;
@@ -140,7 +142,8 @@ public fun mint(
     let mut r = reader::new(tx_bytes);
     let tx = tx::deserialize(&mut r);
 
-    let (amount_satoshi, op_return, tx_id) = light_client.verify_payment(
+    let (amount_satoshi, op_return, tx_id) = verify_payment(
+	light_client,
         height,
         proof,
         tx_index,
