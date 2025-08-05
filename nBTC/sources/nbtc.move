@@ -3,7 +3,7 @@
 /// Module: nbtc
 module nbtc::nbtc;
 
-use bitcoin_spv::light_client::{LightClient, verify_payment};
+use bitcoin_spv::light_client::LightClient;
 use btc_parser::reader;
 use btc_parser::tx;
 use sui::address;
