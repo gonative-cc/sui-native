@@ -6,7 +6,7 @@ module nbtc::verify_payment_tests;
 use nbtc::verify_payment::{verify_payment, ETxNotInBlock};
 
 use bitcoin_spv::block_header::new_block_header;
-use bitcoin_spv::light_client::{initialize_light_client, LightClient};
+use bitcoin_spv::light_client::new_light_client;
 use btc_parser::reader;
 use btc_parser::tx;
 use std::unit_test::assert_eq;
@@ -27,18 +27,14 @@ fun verify_payment_happy_cases() {
 
     let ctx = scenario.ctx();
     let finality = 4; // => the block 325001 is finally in this case
-    initialize_light_client(
-        0, // mainnet
+    let lc = new_light_client(
+        bitcoin_spv::params::mainnet(),
         start_block_height,
         headers,
         0,
         finality,
         ctx,
     );
-
-    scenario.next_tx(sender);
-
-    let lc: LightClient = test_scenario::take_shared(&scenario);
     // merkle proof of transaction id gen by proof.py in scripts folder.
 
     let proof = vector[
@@ -94,16 +90,14 @@ fun verify_payment_with_P2WPHK_output_happy_cases() {
     let ctx = scenario.ctx();
     let finality = 0;
 
-    initialize_light_client(
-        0,
+    let lc = new_light_client(
+        bitcoin_spv::params::mainnet(),
         start_block_height,
         headers,
         0,
         finality,
         ctx,
     );
-
-    let lc: LightClient = test_scenario::take_shared(&scenario);
 
     // empty because only one transaction
     let proof = vector[];
@@ -142,10 +136,7 @@ fun verify_payment_for_tx_not_in_block_shoul_fail() {
         ),
     ];
     let ctx = scenario.ctx();
-    // 0 = mainnet
-    initialize_light_client(0, start_block_height, headers, 0, 8, ctx);
-
-    let lc: LightClient = test_scenario::take_shared(&scenario);
+    let lc = new_light_client(bitcoin_spv::params::mainnet(), start_block_height, headers, 0, 8, ctx);
 
     // merkle proof of transaction id gen by proof.py in scripts folder.
     // we modify proof to make this invalid.
@@ -196,8 +187,7 @@ fun verify_payment_on_block_not_finalize_should_fail() {
         ),
     ];
     let ctx = scenario.ctx();
-    initialize_light_client(0, start_block_height, headers, 0, 8, ctx);
-    let lc: LightClient = test_scenario::take_shared(&scenario);
+    let lc = new_light_client(bitcoin_spv::params::mainnet(), start_block_height, headers, 0, 8, ctx);
 
     // merkle proof of transaction id gen by proof.py in scripts folder.
     // we modify proof to make this invalid.
