@@ -1,6 +1,6 @@
 # nBTC Minting
 
-## Minting nBTC process:
+## Minting nBTC process
 
 1. A user sends BTC to the `nBTC` dwallet address (on Bitcoin network).
 1. In the transaction, he must create an extra `OP_RETURN` vout (UTXO), where he puts the instructions (where to mint the nBTC and what to do with it).
@@ -12,7 +12,7 @@
 1. The new `nBTC` Coins are sent to a Sui address or a package, based on the instruction in `OP_RETURN`.
 1. If the `OP_RETURN` data is missing or is invalid, `nBTC` is sent to `FALLBACK_ADDRESS`.
 
-### Flowchart
+### Flowchart: minting
 
 ```mermaid
 graph TD
@@ -43,7 +43,7 @@ The first byte of the OP_RETURN determines the type of the instructions:
 
 Today, only the simple transfer to a recipient is supported. Orchestrator will be implemented later.
 
-### Flowchart
+### Flowchart: handling nBTC
 
 ```mermaid
 flowchart TD
