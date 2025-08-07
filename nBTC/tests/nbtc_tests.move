@@ -207,9 +207,7 @@ fun test_update_version_fail() {
 #[test, expected_failure(abort_code = nbtc::EReSetupTreasuryNotAllow)]
 fun test_re_setup_treasury_should_fail() {
     let sender = @0x01;
-    let mut scenario = test_scenario::begin(sender);
-    let ctx = scenario.ctx();
-    let (lc, mut cap) = setup(BTC_TREASURY, ctx);
+    let (lc, mut cap, _scenario) = setup(BTC_TREASURY, sender);
     // resetup, should fail
     cap.setup(lc.client_id().to_address(), FALLBACK_ADDR, BTC_TREASURY);
 
