@@ -4,7 +4,8 @@
 module nbtc::nbtc_tests;
 
 use bitcoin_spv::light_client::{new_light_client, LightClient};
-use bitcoin_spv::params;
+use bitcoin_spv::block_header::new_block_header;
+
 use nbtc::nbtc::{
     Self,
     WrappedTreasuryCap,
@@ -86,21 +87,24 @@ fun get_fallback_mint_data(): TestData {
 }
 
 #[test_only]
-fun setup(btc_treasury: vector<u8>, ctx: &mut TxContext): (LightClient, WrappedTreasuryCap) {
+fun setup(btc_treasury: vector<u8>, sender: address): (LightClient, WrappedTreasuryCap, Scenario) {
+    let mut scenario = test_scenario::begin(sender);
+
     let headers = vector[
-        x"00000020a97594d6b5b9369535da225d464bde7e0ae3794e9b270a010000000000000000234edbf5d62a2790addd8d3fc85727c58c301ddbdebd2738c8f72fb6427ce722bb27e8585a330218b119eaee",
+        new_block_header(x"00000020a97594d6b5b9369535da225d464bde7e0ae3794e9b270a010000000000000000234edbf5d62a2790addd8d3fc85727c58c301ddbdebd2738c8f72fb6427ce722bb27e8585a330218b119eaee"),
     ];
-    let lc = new_light_client(params::mainnet(), 0, headers, 0, 0, ctx);
-    let mut cap = nbtc::init_for_testing(ctx);
+
+    let lc = new_light_client(bitcoin_spv::params::regtest(), 0, headers, 0, 0, scenario.ctx());
+
+    let mut cap = nbtc::init_for_testing(scenario.ctx());
     cap.setup(lc.client_id().to_address(), FALLBACK_ADDR, btc_treasury);
-    (lc, cap)
+    (lc, cap, scenario)
 }
 
 #[test]
 fun test_nbtc_mint() {
     let sender = @0x1;
-    let mut scenario = test_scenario::begin(sender);
-    let (lc, mut cap) = setup(BTC_TREASURY, scenario.ctx());
+    let (lc, mut cap, mut scenario) = setup(BTC_TREASURY, sender);
 
     mint_and_assert(
         &mut scenario,
@@ -118,8 +122,7 @@ fun test_nbtc_mint() {
 #[test]
 fun test_nbtc_mint_fallback() {
     let sender = @0x1;
-    let mut scenario = test_scenario::begin(sender);
-    let (lc, mut cap) = setup(BTC_TREASURY, scenario.ctx());
+    let (lc, mut cap, mut scenario) = setup(BTC_TREASURY, sender);
 
     mint_and_assert(
         &mut scenario,
@@ -138,9 +141,8 @@ fun test_nbtc_mint_fallback() {
 #[expected_failure(abort_code = EMintAmountIsZero)]
 fun test_nbtc_mint_fail_amount_is_zero() {
     let sender = @0x1;
-    let mut scenario = test_scenario::begin(sender);
     // Use a different treasury address so the payment to our main treasury is not found.
-    let (lc, mut cap) = setup(x"509a651dd392e1bc125323f629b67d65cca3d4ff", scenario.ctx());
+    let (lc, mut cap, mut scenario) = setup(x"509a651dd392e1bc125323f629b67d65cca3d4ff", sender);
     let data = get_valid_mint_data();
 
     nbtc::mint(
@@ -162,8 +164,7 @@ fun test_nbtc_mint_fail_amount_is_zero() {
 #[expected_failure(abort_code = ETxAlreadyUsed)]
 fun test_nbtc_mint_fail_tx_already_used() {
     let sender = @0x1;
-    let mut scenario = test_scenario::begin(sender);
-    let (lc, mut cap) = setup(BTC_TREASURY, scenario.ctx());
+    let (lc, mut cap, mut scenario) = setup(BTC_TREASURY, sender);
     let data = get_valid_mint_data();
 
     // First mint, should succeed
@@ -196,21 +197,15 @@ fun test_nbtc_mint_fail_tx_already_used() {
 #[test, expected_failure(abort_code = EAlreadyUpdated)]
 fun test_update_version_fail() {
     let sender = @0x01;
-    let mut scenario = test_scenario::begin(sender);
-    let ctx = scenario.ctx();
-    let (lc, mut cap) = setup(BTC_TREASURY, ctx);
+    let (_lc, mut cap, _scenario) = setup(BTC_TREASURY, sender);
     nbtc::update_version(&mut cap);
-    destroy(lc);
-    destroy(cap);
-    scenario.end();
+    abort
 }
 
 #[test, expected_failure(abort_code = nbtc::EReSetupTreasuryNotAllow)]
 fun test_re_setup_treasury_should_fail() {
     let sender = @0x01;
-    let mut scenario = test_scenario::begin(sender);
-    let ctx = scenario.ctx();
-    let (lc, mut cap) = setup(BTC_TREASURY, ctx);
+    let (lc, mut cap, _scenario) = setup(BTC_TREASURY, sender);
     // resetup, should fail
     cap.setup(lc.client_id().to_address(), FALLBACK_ADDR, BTC_TREASURY);
 
