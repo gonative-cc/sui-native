@@ -22,8 +22,8 @@ graph TD
     D --> E{"SPV Client verifies the transaction proof"};
     E -- Verification Successful --> F{"Checks in nBTC module: <br> 1. Has BTC TX ID been already used? <br> 2. Is the BTC amount > 0?"};
 
-    F -- Checks Pass --> G{"Check if OP_RETURN UTXO <br> contains is valid"};
-    G -- Valid OP_RETURN --> H("Mint nBTC Sui Coins and execute instructions based from OP_RETURN");
+    F -- Checks Pass --> G{"Check if OP_RETURN UTXO <br> contains valid data"};
+    G -- Valid OP_RETURN --> H("Mint nBTC Sui Coins and execute instructions based on OP_RETURN");
     G -- Invalid/No OP_RETURN --> I("Mint nBTC Sui Coins to the FALLBACK_ADDRESS");
     H --> Z(["Success: nBTC Minted & Transferred"]);
     I --> Z;
