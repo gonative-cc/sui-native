@@ -2,7 +2,7 @@
 
 module btc_parser::block;
 
-use btc_parser::block_header::{Self, BlockHeader};
+use btc_parser::header::{Self, BlockHeader};
 use btc_parser::reader;
 use btc_parser::tx::{Self, Transaction};
 
@@ -17,7 +17,7 @@ public struct Block has copy, drop {
 
 public fun new(raw_block: vector<u8>): Block {
     let mut r = reader::new(raw_block);
-    let block_header = block_header::new(r.read(80));
+    let block_header = header::new(r.read(80));
     let number_tx = r.read_compact_size();
     let mut transactions = vector[];
     number_tx.do!(|_| {
