@@ -39,7 +39,7 @@ The first byte of the OP_RETURN determines the type of the instructions:
 
 - `0<recipient>`: simple transfer to a recipient. Right after `0`, a valid Sui address is expected.
 - `1<script_hash>`: Orchestrator. Right after `1` a hash of a script is expected. Full script must be provided to the user. Orchestrator will check if the script matches the recorded hash.
-- Other values are reserved for the future versions of the protocol.
+- Other values are reserved for the future versions of the protocol. Note: 2 could be zklogin instructions.
 
 Today, only the simple transfer to a recipient is supported. Orchestrator will be implemented later.
 
