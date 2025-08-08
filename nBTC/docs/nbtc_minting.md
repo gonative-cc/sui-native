@@ -6,7 +6,7 @@
 1. In the transaction, he must create an extra `OP_RETURN` vout (UTXO), where he puts the instructions (where to mint the nBTC and what to do with it).
 1. Native system detects such transaction and calls the `mint` function of the `nBTC` Sui object, providing the BTC transfer details and the proof of the transaction and extra data provided by the user.
     - Note: the system is permissionless: anyone can handle the proof generation and calling mint function.
-1. The nBTC module checks if the Bitcoin transaction was not already processed.
+1. The nBTC module checks if the Bitcoin transaction was not already processed (To prevent double spends).
 1. The `mint` function uses a configured Bitcoin SPV Light Client (identified by `LIGHT_CLIENT_ID`) to verify the transaction proof. It checks that BTC was sent to the correct `nBTC` dwallet address with the correct amount and the Bitcoin transaction contains UTXO with OP_RETURN.
 1. Once the verification is successful and the BTC transaction hasn't been used before, the module mints the corresponding amount of `nBTC` Sui Coins.
 1. The new `nBTC` Coins are sent to a Sui address or a package, based on the instruction in `OP_RETURN`.
@@ -34,7 +34,7 @@ graph TD
 
 ## Handling nBTC after minting
 
-nBTC package expects handling instructions in the OP_RETURN data. This is handled right after minting.
+nBTC package expects handling instructions in the OP_RETURN data. This is handled right after minting. It determines what to do with the newly minted `nBTC`. 
 The first byte of the OP_RETURN determines the type of the instructions:
 
 - `0<recipient>`: simple transfer to a recipient. Right after `0`, a valid Sui address is expected.
