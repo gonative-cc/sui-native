@@ -34,11 +34,11 @@ graph TD
 
 ## Handling nBTC after minting
 
-nBTC package expects handling instructions in the OP_RETURN data. This is handled right after minting. It determines what to do with the newly minted `nBTC`. 
-The first byte of the OP_RETURN determines the type of the instructions:
+nBTC package expects handling instructions in the OP_RETURN data. This is handled right after minting. It determines what to do with the newly minted `nBTC`.
+The first byte of the OP_RETURN determines the type of the instructions (we use hex notation below):
 
-- `0<recipient>`: simple transfer to a recipient. Right after `0`, a valid Sui address is expected.
-- `1<script_hash>`: Orchestrator. Right after `1` a hash of a script is expected. Full script must be provided to the user. Orchestrator will check if the script matches the recorded hash.
+- `0x00<recipient>`: simple transfer to a recipient. Right after the first byte (`0x00`), a valid Sui address is expected.
+- `0x01<script_hash>`: Orchestrator. Right after `1` a hash of a script is expected. Full script must be provided to the user. Orchestrator will check if the script matches the recorded hash.
 - Other values are reserved for the future versions of the protocol. Note: 2 could be zklogin instructions.
 
 Today, only the simple transfer to a recipient is supported. Orchestrator will be implemented later.
