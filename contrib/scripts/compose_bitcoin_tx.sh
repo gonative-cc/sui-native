@@ -9,7 +9,8 @@ BITCOIN_CLI_ARGS="-testnet4"
 if [ "$#" -ne 3 ]; then
     echo "Error: Incorrect number of arguments." >&2
     echo "Usage: $0 <recipient_address> <amount_btc> <op_return_hex>" >&2
-    echo "Example: $0 tb1qe60n447jylrxa96y6pfgy8pq6x9zafu09ky7cq 0.00006200 c76280db47f593b58118ac78c257f0bfa5bbfef6be2eff385f4e32a781f76945" >&2
+    echo "Example: $0 tb1qe60n447jylrxa96y6pfgy8pq6x9zafu09ky7cq 0.00006200 00c76280db47f593b58118ac78c257f0bfa5bbfef6be2eff385f4e32a781f76945" >&2
+    echo "  Use 00prefix in the <op_return_hex> for a simple transfer"
     exit 1
 fi
 
