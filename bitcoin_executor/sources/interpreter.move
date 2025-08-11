@@ -2,7 +2,7 @@
 
 module bitcoin_executor::interpreter;
 
-use bitcoin_executor::encoding;
+use bitcoin_executor::btc_encoding;
 use bitcoin_executor::ripemd160;
 use bitcoin_executor::sighash;
 use bitcoin_executor::stack::{Self, Stack};
@@ -533,7 +533,7 @@ fun op_checksig(ip: &mut Interpreter) {
     };
 
     // https://learnmeabitcoin.com/technical/keys/signature/
-    let (sig_to_verify, sighash_flag) = encoding::parse_btc_sig(&mut sig_bytes);
+    let (sig_to_verify, sighash_flag) = btc_encoding::parse_btc_sig(&mut sig_bytes);
 
     assert!(option::is_some(&ip.tx_context), EMissingTxCtx);
 
