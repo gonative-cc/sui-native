@@ -57,9 +57,10 @@ fun verify_payment_happy_cases() {
     );
     let transaction = tx::deserialize(&mut r);
 
+    let tx_id = transaction.tx_id();
     // Tx: 6dfb16dd580698242bcfd8e433d557ed8c642272a368894de27292a8844a4e75 (Height 303,699)
     // from mainnet
-    let (amount, message, tx_id) = verify_payment(
+    let (amount,mut message) = verify_payment(
 	&lc,
         start_block_height,
         proof,
@@ -70,7 +71,7 @@ fun verify_payment_happy_cases() {
 
     assert_eq!(tx_id, x"754e4a84a89272e24d8968a37222648ced57d533e4d8cf2b24980658dd16fb6d");
     assert_eq!(amount, 412133);
-    assert_eq!(message, x"68656c6c6f20776f726c64");
+    assert_eq!(message.extract(), x"68656c6c6f20776f726c64");
     sui::test_utils::destroy(lc);
     scenario.end();
 }
@@ -108,8 +109,8 @@ fun verify_payment_with_P2WPHK_output_happy_cases() {
         x"01000000018c0bfefccb5755874ea0872a17b0d682c84981eed93fccd3ef86556f51f21522010000006a47304402204bbbefdc49e7289b0f36fe8c7623e93ff7ff751664d63caf49c1d9d8a4cbefd402200582f12a9490bdf8e6980025c08f83c43c50bc472706e3a38e7f1a972404bc4d0121035533036f3a7e9dc4c76e9d3697eb9d573aa76844baaadda347893a793797b639ffffffff0410270000000000001976a914303962c3ad29f08d13d98218ceeb7057e9bc184888ac10270000000000001976a914c6a3b95415d3fe9a9161c4b5100c1b6f2ad1e90c88ac00000000000000000d6a0b68656c6c6f20776f726c64e549060000000000160014e6228f7a5ee6b15c7cccfd9f9cb7e8699261084500000000",
     );
     let transaction = tx::deserialize(&mut r);
-
-    let (amount, message, tx_id) = verify_payment(
+    let tx_id = transaction.tx_id();
+    let (amount, mut message) = verify_payment(
 	&lc,
         start_block_height,
         proof,
@@ -120,7 +121,7 @@ fun verify_payment_with_P2WPHK_output_happy_cases() {
 
     assert_eq!(tx_id, x"df88e4ad22477438db0a80979cf3dea033aa968c97fe06270f8864941a30649b");
     assert_eq!(amount, 412133);
-    assert_eq!(message, x"68656c6c6f20776f726c64");
+    assert_eq!(message.extract(), x"68656c6c6f20776f726c64");
     sui::test_utils::destroy(lc);
     scenario.end();
 }
