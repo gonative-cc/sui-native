@@ -1,6 +1,5 @@
 module nbtc::verify_payment;
 
-
 use bitcoin_spv::light_client::LightClient;
 use btc_parser::tx::Transaction;
 
@@ -28,25 +27,24 @@ public fun verify_payment(
     transaction: &Transaction,
     receiver_pk_hash: vector<u8>,
 ): (u64, Option<vector<u8>>) {
-
     let mut amount = 0;
-    let mut op_msg= option::none();
+    let mut op_msg = option::none();
     let tx_id = transaction.tx_id();
 
     assert!(lc.verify_tx(height, tx_id, proof, tx_index), ETxNotInBlock);
     let outputs = transaction.outputs();
     outputs.do!(|o| {
-	let output_phk = o.extract_public_key_hash();
+        let output_phk = o.extract_public_key_hash();
 
-	if (output_phk.is_some()) {
+        if (output_phk.is_some()) {
             if (output_phk.borrow() == receiver_pk_hash) {
-		amount = amount + o.amount();
+                amount = amount + o.amount();
             };
-	} else {
-	    if (o.is_op_return()) {
-		op_msg = o.op_return();
-	    }
-	}
+        } else {
+            if (o.is_op_return()) {
+                op_msg = o.op_return();
+            }
+        }
     });
 
     (amount, op_msg)
