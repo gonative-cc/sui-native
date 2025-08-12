@@ -3,11 +3,10 @@
 /// Module: nbtc
 module nbtc::nbtc;
 
-use nbtc::verify_payment::verify_payment;
-
 use bitcoin_spv::light_client::LightClient;
 use btc_parser::reader;
 use btc_parser::tx;
+use nbtc::verify_payment::verify_payment;
 use sui::address;
 use sui::coin::{Self, Coin, TreasuryCap};
 use sui::event;
@@ -15,7 +14,7 @@ use sui::table::{Self, Table};
 use sui::url;
 
 //
-// Constans
+// Constant
 //
 
 /// Package version
@@ -144,7 +143,7 @@ public fun mint(
 
     let tx_id = tx.tx_id();
     let (amount_satoshi, mut op_return) = verify_payment(
-	light_client,
+        light_client,
         height,
         proof,
         tx_index,
@@ -158,10 +157,20 @@ public fun mint(
     let mut recipient_address: address = treasury.get_fallback_addr();
 
     if (op_return.is_some()) {
-	let msg = op_return.extract();
-	if (msg.length() == 32) {
-            recipient_address = address::from_bytes(msg);
-	}
+        let msg = op_return.extract();
+	let mut msg_reader = reader::new(msg);
+        let flag = msg_reader.read_byte();
+        if (flag == 0x00) {
+	    if (msg_reader.readable(32)) {
+		recipient_address = address::from_bytes(msg_reader.read(32));
+	    };
+
+	    // stream not end, format is invalid, move data to fallback
+	    if (!msg_reader.end_stream()) {
+		recipient_address =  treasury.get_fallback_addr();
+
+	    }
+        }
     };
 
     treasury.tx_ids.add(tx_id, true);
