@@ -162,9 +162,9 @@ public fun mint(
         let flag = msg_reader.read_byte();
         match (flag) {
             0x00 => {
-		if (r.readable(32)) {
-		    recipient_address = address::from_bytes(r.read(32));
-		}
+		if (msg_reader.readable(32)) {
+		    recipient_address = address::from_bytes(msg_reader.read(32));
+		};
 		// TODO: ensure we need to check this one
 		// assert!(msg_reader.end_stream())
             },
