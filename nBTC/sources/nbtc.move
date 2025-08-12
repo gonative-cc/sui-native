@@ -160,18 +160,17 @@ public fun mint(
         let msg = op_return.extract();
 	let mut msg_reader = reader::new(msg);
         let flag = msg_reader.read_byte();
-        match (flag) {
-            0x00 => {
-		if (msg_reader.readable(32)) {
-		    recipient_address = address::from_bytes(msg_reader.read(32));
-		};
-		// TODO: ensure we need to check this one
-		// assert!(msg_reader.end_stream())
-            },
-            _ => {
-		//
-	    },
-        };
+        if (flag == 0x00) {
+	    if (msg_reader.readable(32)) {
+		recipient_address = address::from_bytes(msg_reader.read(32));
+	    };
+
+	    // stream not end, format is invalid, move data to fallback
+	    if (!msg_reader.end_stream()) {
+		recipient_address =  treasury.get_fallback_addr();
+
+	    }
+        }
     };
 
     treasury.tx_ids.add(tx_id, true);
