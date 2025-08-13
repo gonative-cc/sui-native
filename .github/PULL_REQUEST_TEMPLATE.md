@@ -1,6 +1,3 @@
-<!-- markdownlint-disable MD041 -->
-<!-- markdownlint-disable MD012 -->
-
 ## Description
 
 Closes: #XXXX

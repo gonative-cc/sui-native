@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
-module btc_parser::block_header;
+module btc_parser::header;
 
 use btc_parser::crypto::hash256;
 use btc_parser::reader;

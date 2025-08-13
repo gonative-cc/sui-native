@@ -3,9 +3,10 @@
 /// Module: nbtc
 module nbtc::nbtc;
 
-use bitcoin_spv::light_client::{LightClient, verify_payment};
+use bitcoin_spv::light_client::LightClient;
 use btc_parser::reader;
 use btc_parser::tx;
+use nbtc::verify_payment::verify_payment;
 use sui::address;
 use sui::coin::{Self, Coin, TreasuryCap};
 use sui::event;
@@ -13,7 +14,7 @@ use sui::table::{Self, Table};
 use sui::url;
 
 //
-// Constans
+// Constant
 //
 
 /// Package version
@@ -140,7 +141,9 @@ public fun mint(
     let mut r = reader::new(tx_bytes);
     let tx = tx::deserialize(&mut r);
 
-    let (amount_satoshi, op_return, tx_id) = light_client.verify_payment(
+    let tx_id = tx.tx_id();
+    let (amount_satoshi, mut op_return) = verify_payment(
+        light_client,
         height,
         proof,
         tx_index,
@@ -150,13 +153,26 @@ public fun mint(
 
     assert!(!treasury.tx_ids.contains(tx_id), ETxAlreadyUsed);
     assert!(amount_satoshi > 0, EMintAmountIsZero);
-    let recipient_address: address;
-    if (op_return.length() == 32) {
-        //TODO: we need more advanced parsing. For PoC we just check the length, else use fallback
-        recipient_address = address::from_bytes(op_return);
-    } else {
-        recipient_address = treasury.get_fallback_addr();
+
+    let mut recipient_address: address = treasury.get_fallback_addr();
+
+    if (op_return.is_some()) {
+        let msg = op_return.extract();
+	let mut msg_reader = reader::new(msg);
+        let flag = msg_reader.read_byte();
+        if (flag == 0x00) {
+	    if (msg_reader.readable(32)) {
+		recipient_address = address::from_bytes(msg_reader.read(32));
+	    };
+
+	    // stream not end, format is invalid, move data to fallback
+	    if (!msg_reader.end_stream()) {
+		recipient_address =  treasury.get_fallback_addr();
+
+	    }
+        }
     };
+
     treasury.tx_ids.add(tx_id, true);
 
     coin::mint_and_transfer(&mut treasury.cap, amount_satoshi, recipient_address, ctx);

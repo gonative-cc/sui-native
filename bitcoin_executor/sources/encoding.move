@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
-module bitcoin_executor::encoding;
+module bitcoin_executor::btc_encoding;
 
 use btc_parser::vector_utils;
 
