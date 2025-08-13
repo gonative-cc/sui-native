@@ -10,7 +10,7 @@ use btc_parser::output;
 use btc_parser::tx::{Self, Transaction};
 
 #[test_only]
-use sui::test_utils::assert_eq;
+use std::unit_test::assert_eq;
 
 /// Sighash types
 const SIGHASH_ALL: u8 = 0x01;
@@ -149,6 +149,6 @@ fun test_create_segwit_preimage_lmb_example() {
         sighash_type,
     );
 
-    assert_eq(result_preimage, expected_preimage);
+    assert_eq!(result_preimage, expected_preimage);
 }
 // TODO: add a test case where user spends two UTXOs
