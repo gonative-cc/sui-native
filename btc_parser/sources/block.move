@@ -10,7 +10,7 @@ use btc_parser::tx::{Self, Transaction};
 use std::unit_test::assert_eq;
 
 /// A block is a collection of all transactions in the BTC block
-public struct Block has copy, drop {
+public struct Block has copy, drop, store {
     block_header: BlockHeader,
     transactions: vector<Transaction>,
 }

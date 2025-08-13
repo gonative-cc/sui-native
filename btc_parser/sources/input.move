@@ -3,7 +3,7 @@
 module btc_parser::input;
 
 /// Input in btc transaction
-public struct Input has copy, drop {
+public struct Input has copy, drop, store {
     tx_id: vector<u8>,
     vout: vector<u8>,
     script_sig: vector<u8>,

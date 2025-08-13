@@ -5,7 +5,7 @@ module btc_parser::header;
 use btc_parser::crypto::hash256;
 use btc_parser::reader;
 
-public struct BlockHeader has copy, drop {
+public struct BlockHeader has copy, drop, store {
     version: u32,
     parent: vector<u8>,
     merkle_root: vector<u8>,
