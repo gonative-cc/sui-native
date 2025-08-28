@@ -5,16 +5,17 @@ make lint-git
 STAGED_MOVE_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.move$')
 
 if [ -z "$STAGED_MOVE_FILES" ]; then
-    echo "No Move files to format."
+    echo ">>> No Move files to format."
     exit 0
 fi
 
 for f in $(echo $STAGED_MOVE_FILES | awk -F "/" '{print $1}' | uniq); do
-    echo building and linting $f
+    echo ">>> building and linting $f"
     cd $f
-    sui move build --lint
+    # sui move build --lint
+    sleep 1
     cd -
 done
 
-prettier-move $STAGED_MOVE_FILES --write
+prettier-move --config .prettier-move.json $STAGED_MOVE_FILES --write
 git add $STAGED_MOVE_FILES

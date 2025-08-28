@@ -4,5 +4,10 @@ build
 pnpm-lock.yaml
 node_modules
 package.json
+pnpm-workspace.yaml
+
+.prettier-move.json
 
 worker-configuration.d.ts
+
+private*
