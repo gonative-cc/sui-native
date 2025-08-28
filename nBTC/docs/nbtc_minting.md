@@ -69,7 +69,7 @@ flowchart TD
 
 NOTE: we are working on a fullstack app to automate the minting process.
 
-Use the `contrib/scripts/create_btc_mint_data.sh` script to extract the necessary transaction details and generate the Merkle proof required for verification on Sui. Provide the Bitcoin transaction ID (txid) as an argument to the script. The script gathers the following data needed for the `nbtc::mint` function:
+Use the `scripts/create_btc_mint_data.sh` script to extract the necessary transaction details and generate the Merkle proof required for verification on Sui. Provide the Bitcoin transaction ID (txid) as an argument to the script. The script gathers the following data needed for the `nbtc::mint` function:
 
 - `version`: Transaction version.
 - `input_count`: Number of transaction inputs.
@@ -86,7 +86,7 @@ Command:
 ```bash
 # Replace with the actual Bitcoin transaction ID
 TXID="897addd511f0a4c1ddc3dc3e9a14ba2174a6fa49388764db5bde4e946f8b8b1a"
-./contrib/scripts/create_btc_mint_data.sh ${TXID}
+bash scripts/create_btc_mint_data.sh ${TXID}
 ```
 
 Example Output:

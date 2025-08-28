@@ -71,7 +71,7 @@ def big_endian_to_little_endian(hex_str):
 
     # Reverse the order of bytes (pair of hex characters)
     little_endian = "".join(
-        [hex_str[i: i + 2] for i in range(0, len(hex_str), 2)][::-1]
+        [hex_str[i : i + 2] for i in range(0, len(hex_str), 2)][::-1]
     )
 
     return little_endian
@@ -84,38 +84,37 @@ def read_byte_transaction(hex_str):
         "inputs": "0x",
         "output_count": 0,
         "outputs": "0x",
-        "lock_time": "0x"
+        "lock_time": "0x",
     }
 
     i = 4
-    tx_data["version"] = "0x" + hex_str[:i * 2]
+    tx_data["version"] = "0x" + hex_str[: i * 2]
 
-    if (tx_data["version"] == "0x02000000"):
+    if tx_data["version"] == "0x02000000":
         i += 2
 
-    tx_data["input_count"] = int(hex_str[i * 2: (i + 1) * 2], 16)
+    tx_data["input_count"] = int(hex_str[i * 2 : (i + 1) * 2], 16)
     i += 1
     for j in range(tx_data["input_count"]):
-        tx_data["inputs"] = tx_data["inputs"] + \
-            hex_str[i * 2: (i + 32 + 4) * 2]
+        tx_data["inputs"] = tx_data["inputs"] + hex_str[i * 2 : (i + 32 + 4) * 2]
         i += 32 + 4
 
-        k = int(hex_str[i * 2: (i + 1) * 2], 16)
-        tx_data["inputs"] = tx_data["inputs"] + hex_str[i * 2: (i + 1) * 2]
+        k = int(hex_str[i * 2 : (i + 1) * 2], 16)
+        tx_data["inputs"] = tx_data["inputs"] + hex_str[i * 2 : (i + 1) * 2]
         i += 1
-        tx_data["inputs"] = tx_data["inputs"] + hex_str[i * 2: (i + k + 4) * 2]
+        tx_data["inputs"] = tx_data["inputs"] + hex_str[i * 2 : (i + k + 4) * 2]
         i += k + 4
 
-    tx_data["output_count"] = int(hex_str[i * 2: (i + 1) * 2], 16)
+    tx_data["output_count"] = int(hex_str[i * 2 : (i + 1) * 2], 16)
     i += 1
 
     for j in range(tx_data["output_count"]):
-        tx_data["outputs"] = tx_data["outputs"] + hex_str[i * 2: (i + 8) * 2]
+        tx_data["outputs"] = tx_data["outputs"] + hex_str[i * 2 : (i + 8) * 2]
         i += 8
-        k = int(hex_str[i * 2: (i + 1) * 2], 16)
-        tx_data["outputs"] = tx_data["outputs"] + hex_str[i * 2: (i + 1) * 2]
+        k = int(hex_str[i * 2 : (i + 1) * 2], 16)
+        tx_data["outputs"] = tx_data["outputs"] + hex_str[i * 2 : (i + 1) * 2]
         i += 1
-        tx_data["outputs"] = tx_data["outputs"] + hex_str[i * 2: (i + k) * 2]
+        tx_data["outputs"] = tx_data["outputs"] + hex_str[i * 2 : (i + k) * 2]
         i += k
     tx_data["lock_time"] = "0x" + hex_str[-8:]
 
@@ -124,15 +123,16 @@ def read_byte_transaction(hex_str):
 
 def main():
     parser = argparse.ArgumentParser(description="nBTC prepare data")
-    parser.add_argument('block_filename', type=str,
-                        help='path to a JSON file with Bitcoin block data (can be created using "contrib/scripts/create_btc_mint_data.sh"')
-    parser.add_argument('transaction_id', type=str, help='transaction id')
+    parser.add_argument(
+        "block_filename",
+        type=str,
+        help='path to a JSON file with Bitcoin block data (can be created using "scripts/create_btc_mint_data.sh"',
+    )
+    parser.add_argument("transaction_id", type=str, help="transaction id")
     args = parser.parse_args()
     block_filename = args.block_filename
     transaction_id = args.transaction_id
-    with open(
-            block_filename+".json"
-    ) as file:
+    with open(block_filename + ".json") as file:
         data = json.load(file)
         tx_hashes = data["tx"]
         tx_hashes = list(map(big_endian_to_little_endian, tx_hashes))
@@ -144,22 +144,22 @@ def main():
     proof = merkle_proof(tx_hash, tx_hashes)
     # print(f"Merkle Proof for {tx_hash}: {proof}")
 
-    proof_with_prefix = [f'0x{hash_value}' for hash_value in proof]
+    proof_with_prefix = [f"0x{hash_value}" for hash_value in proof]
 
     # print(f"Merkle Proof for {tx_hash}: [{', '.join(proof_with_prefix)}]")
     height = data["height"]
-    with open(
-            transaction_id+".json"
-    ) as file:
+    with open(transaction_id + ".json") as file:
         data = json.load(file)
-        tx_hex = data['hex']
+        tx_hex = data["hex"]
 
     result = read_byte_transaction(tx_hex)
-    result.update({
-        "height": height,
-        "proof": proof_with_prefix,
-        "tx_index": tx_hashes.index(tx_hash)
-    })
+    result.update(
+        {
+            "height": height,
+            "proof": proof_with_prefix,
+            "tx_index": tx_hashes.index(tx_hash),
+        }
+    )
     print(json.dumps(result, indent=4))
 
 
