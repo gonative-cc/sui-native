@@ -50,21 +50,21 @@ First, you need to deploy the Move package containing the `bitcoin_executor` mod
 This step involves creating wallets, generating addresses, and mining blocks on your local Bitcoin `regtest` node.
 
 - Option A: Using `btc_executor.sh` script:
-    - Navigate to your `relayer/demo_scripts/` directory.
-    - Ensure the `btc_executor.sh` script is executable (`chmod +x btc_executor.sh`).
-    - Run the script:
+  - Navigate to your `relayer/demo_scripts/` directory.
+  - Ensure the `btc_executor.sh` script is executable (`chmod +x btc_executor.sh`).
+  - Run the script:
 
-        ```bash
-        ./btc_executor.sh
-        ```
+    ```bash
+    ./btc_executor.sh
+    ```
 
-    - This script should:
-        1.  Create/load "alice" and "bob" wallets.
-        2.  Generate P2WPKH addresses for Alice and Bob.
-        3.  Mine 200 blocks to Alice's address (maturing coinbase outputs and ensuring SegWit is active).
-        4.  Create a SegWit transaction where Alice sends 1 BTC to Bob.
-        5.  Mine 1 more block (total 201 blocks from genesis, block index 200) to confirm this transaction.
-        6.  Output the raw hex of that transaction.
+  - This script should:
+    1.  Create/load "alice" and "bob" wallets.
+    2.  Generate P2WPKH addresses for Alice and Bob.
+    3.  Mine 200 blocks to Alice's address (maturing coinbase outputs and ensuring SegWit is active).
+    4.  Create a SegWit transaction where Alice sends 1 BTC to Bob.
+    5.  Mine 1 more block (total 201 blocks from genesis, block index 200) to confirm this transaction.
+    6.  Output the raw hex of that transaction.
 
 - Option B: Manual Steps
   Check the bitcoin-cli docs for it.
@@ -74,17 +74,17 @@ This step involves creating wallets, generating addresses, and mining blocks on 
 Now, we will send the hex data of these Bitcoin blocks
 
 - Option A: Using `submit_blocks.sh` script:
-    - This script will loop from block 0 to 201, fetch each block's raw hex, and perform the `sui client call`.
-    - _Important:_ You will need to edit `submit_blocks.sh` to set `PACKAGE_ID` and `STATE_OBJECT_ID` to the values you obtained in Step 1.
-    - Ensure the `submit_blocks.sh` script is executable (`chmod +x submit_blocks.sh`).
-    - Run the script:
+  - This script will loop from block 0 to 201, fetch each block's raw hex, and perform the `sui client call`.
+  - _Important:_ You will need to edit `submit_blocks.sh` to set `PACKAGE_ID` and `STATE_OBJECT_ID` to the values you obtained in Step 1.
+  - Ensure the `submit_blocks.sh` script is executable (`chmod +x submit_blocks.sh`).
+  - Run the script:
 
-        ```bash
-        ./submit_blocks.sh
+    ```bash
+    ./submit_blocks.sh
 
-        ```
+    ```
 
-    - Observe the logs from the script and potentially from your Sui node/Move contract.
+  - Observe the logs from the script and potentially from your Sui node/Move contract.
 
 - Option B: Manual Submission (Example for one block):
   Check the bitcoin-cli and sui-client docs for it.
