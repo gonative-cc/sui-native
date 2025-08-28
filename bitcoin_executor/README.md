@@ -1,7 +1,7 @@
 <!-- markdownlint-disable MD041 -->
 <!-- markdownlint-disable MD034 -->
 
-![Logo!](assets/logo.jpg)
+![Logo!](assets/logo.webp)
 
 # Bitcoin Executor
 
