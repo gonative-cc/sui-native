@@ -25,6 +25,16 @@ Check out [contributing repo](https://github.com/gonative-cc/contributig) for ou
 
 After cloning the repository, **make sure to run `make setup-hooks`**.
 
+### Requirements
+
+- Sui >= latest
+- [Bun](https://bun.com/) >= 1.2 -- NOTE: we use bun rather than Node.js
+- `prettier` and `prettier-move` to format the code.
+
+### Development
+
+- use `bun format:move` or `bun format:move-all` to format your Move code.
+
 ### Security
 
 Check out [SECURITY.md](./SECURITY.md) for security concerns.
