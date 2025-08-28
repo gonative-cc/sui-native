@@ -74,17 +74,17 @@ flowchart
 
 1. Relayer listens for _new blocks_.
 2. Once a _new block_ arrives, Relayer validates it and checks if it's already processed. If not valid or already processed, `abort`.
-    - NOTE: Relayer has internal storage to handle reorgs and query Bitcoin nodes for missing blocks of the _current branch_.
+   - NOTE: Relayer has internal storage to handle reorgs and query Bitcoin nodes for missing blocks of the _current branch_.
 3. Relayer sends block header (or a whole branch if reorg is detected) to SPV to validate if the branch makes a heaviest chain. If not, `abort`.
 4. Relayer sends new blocks of the extended branch (based on the SPV result) to Walrus for data availability.
 5. Relayer sends new blocks to Executor.
 6. Executor parses the block, `abort` if encounter errors.
 7. Executor extracts transactions and processes them. For each transaction:
-    1. Checks if inputs are existing UTXOs
-    2. For each input, call Interpreter to execute Bitcoin script.
-    3. If Interpreter returns error (false), `continue` to the next transaction.
-    4. Marks UTXOs of a successful TX as spent.
-    5. Add outputs of a successful TX to UTXO set.
+   1. Checks if inputs are existing UTXOs
+   2. For each input, call Interpreter to execute Bitcoin script.
+   3. If Interpreter returns error (false), `continue` to the next transaction.
+   4. Marks UTXOs of a successful TX as spent.
+   5. Add outputs of a successful TX to UTXO set.
 
 ## TODO
 
