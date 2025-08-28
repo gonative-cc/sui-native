@@ -9,12 +9,12 @@ use btc_parser::output::{Self, Output};
 use btc_parser::reader::Reader;
 
 // list of witnesses for inputs
-public struct InputWitness has copy, drop {
+public struct InputWitness has copy, drop, store {
     items: vector<vector<u8>>,
 }
 
 /// BTC transaction
-public struct Transaction has copy, drop {
+public struct Transaction has copy, drop, store {
     version: vector<u8>,
     inputs: vector<Input>,
     marker: Option<u8>,
