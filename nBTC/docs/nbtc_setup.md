@@ -43,6 +43,5 @@ sui client call \
 - **`<YOUR_BTC_ESCROW_PKH_HEX>`**: The hex-encoded Public Key Hash of your Bitcoin deposit address.
 
   **CRITICAL**: This value must be the **20-byte Public Key Hash (PKH)** only, _not_ the full `scriptPubKey`. An incorrect value will cause all minting transactions to fail.
-
   - **Correct (PKH only):** `0x9201782d57fa256bc74146871bb662f099c1f539`
   - **Incorrect (with script prefix):** `0x00149201782d57fa256bc74146871bb662f099c1f539`
