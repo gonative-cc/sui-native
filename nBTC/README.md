@@ -36,4 +36,5 @@ See the main [README](../README.md#deployed-objects--packages) file.
 
 ## Documentation
 
+- [Setup](./docs/nbtc_setup.md)
 - [Minting](./docs/nbtc_minting.md)
