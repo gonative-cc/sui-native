@@ -6,7 +6,7 @@ use btc_parser::crypto::hash256;
 use btc_parser::encoding::{u64_to_varint_bytes, le_bytes_to_u64};
 use btc_parser::input::{Self, Input};
 use btc_parser::output::{Self, Output};
-use btc_parser::reader::Reader;
+use btc_parser::reader::{Self, Reader};
 
 // list of witnesses for inputs
 public struct InputWitness has copy, drop, store {
@@ -22,7 +22,8 @@ public struct Transaction has copy, drop, store {
     outputs: vector<Output>,
     witness: vector<InputWitness>,
     locktime: vector<u8>,
-    tx_id: vector<u8>,
+    tx_id: vector<u8>, // Legacy TXID
+    wtx_id: vector<u8>, // Witness TXID
 }
 
 // TODO: `new` is not good name here.
@@ -36,6 +37,7 @@ public fun new(
     witness: vector<InputWitness>,
     locktime: vector<u8>,
     tx_id: vector<u8>,
+    wtx_id: vector<u8>,
 ): Transaction {
     Transaction {
         version,
@@ -46,6 +48,7 @@ public fun new(
         witness,
         locktime,
         tx_id,
+        wtx_id,
     }
 }
 
@@ -88,46 +91,48 @@ public fun is_witness(tx: &Transaction): bool {
 
     let m = tx.marker.borrow();
     let f = tx.flag.borrow();
-    m == 0x00 && f == 0x01
+    *m == 0x00 && *f == 0x01
 }
 
 public fun tx_id(tx: &Transaction): vector<u8> {
     tx.tx_id
 }
 
+public fun wtx_id(tx: &Transaction): vector<u8> {
+    tx.wtx_id
+}
+
 /// deseriablize transaction from bytes
 public fun deserialize(r: &mut Reader): Transaction {
-    // transaction data without segwit.
-    // use for compute the tx_id
-    let mut raw_tx = vector[];
+    let mut raw_tx_legacy = vector[];
+    let full_tx_bytes = reader::full_data(r);
 
     let version = r.read(4);
-    raw_tx.append(version);
+    raw_tx_legacy.append(version);
 
-    let segwit = r.peek(2);
+    let segwit_peek = r.peek(2);
     let mut marker: Option<u8> = option::none();
     let mut flag: Option<u8> = option::none();
-    if (segwit[0] == 0x00 && segwit[1] == 0x01) {
-        // TODO: Handle case marker and option is none
+    let is_segwit = (segwit_peek[0] == 0x00 && segwit_peek[1] == 0x01);
+    if (is_segwit) {
         marker = option::some(r.read_byte());
         flag = option::some(r.read_byte());
     };
 
     let number_inputs = r.read_compact_size();
-    raw_tx.append(u64_to_varint_bytes(number_inputs));
+    raw_tx_legacy.append(u64_to_varint_bytes(number_inputs));
     let mut inputs = vector[];
     number_inputs.do!(|_| {
         let tx_id = r.read(32);
-        raw_tx.append(tx_id);
+        raw_tx_legacy.append(tx_id);
         let vout = r.read(4);
-        raw_tx.append(vout);
+        raw_tx_legacy.append(vout);
         let script_sig_size = r.read_compact_size();
-        raw_tx.append(u64_to_varint_bytes(script_sig_size));
+        raw_tx_legacy.append(u64_to_varint_bytes(script_sig_size));
         let script_sig = r.read(script_sig_size);
-        raw_tx.append(script_sig);
+        raw_tx_legacy.append(script_sig);
         let sequence = r.read(4);
-        raw_tx.append(sequence);
-
+        raw_tx_legacy.append(sequence);
         inputs.push_back(
             input::new(
                 tx_id,
@@ -138,17 +143,16 @@ public fun deserialize(r: &mut Reader): Transaction {
         );
     });
 
-    // read outputs
     let number_outputs = r.read_compact_size();
-    raw_tx.append(u64_to_varint_bytes(number_outputs));
+    raw_tx_legacy.append(u64_to_varint_bytes(number_outputs));
     let mut outputs = vector[];
     number_outputs.do!(|_| {
         let amount = r.read(8);
-        raw_tx.append(amount);
+        raw_tx_legacy.append(amount);
         let script_pubkey_size = r.read_compact_size();
+        raw_tx_legacy.append(u64_to_varint_bytes(script_pubkey_size));
         let script_pubkey = r.read(script_pubkey_size);
-        raw_tx.append(u64_to_varint_bytes(script_pubkey_size));
-        raw_tx.append(script_pubkey);
+        raw_tx_legacy.append(script_pubkey);
         outputs.push_back(
             output::new(
                 le_bytes_to_u64(amount),
@@ -158,7 +162,7 @@ public fun deserialize(r: &mut Reader): Transaction {
     });
 
     let mut witness = vector[];
-    if (segwit[0] == 0x00 && segwit[1] == 0x01) {
+    if (is_segwit) {
         number_inputs.do!(|_| {
             let stack_item = r.read_compact_size();
             let mut items = vector[];
@@ -173,9 +177,16 @@ public fun deserialize(r: &mut Reader): Transaction {
     };
 
     let locktime = r.read(4);
-    raw_tx.append(locktime);
+    raw_tx_legacy.append(locktime);
 
-    let tx_id = hash256(raw_tx);
+    // Calculate both TXIDs
+    let tx_id = hash256(raw_tx_legacy);
+    let wtx_id = if (is_segwit) {
+        hash256(full_tx_bytes)
+    } else {
+        tx_id // For non-segwit tx, txid and wtxid are the same
+    };
+
     new(
         version,
         marker,
@@ -185,11 +196,12 @@ public fun deserialize(r: &mut Reader): Transaction {
         witness,
         locktime,
         tx_id,
+        wtx_id,
     )
 }
 
 public fun is_coinbase(tx: &Transaction): bool {
     // TODO: check BIP34 and BIP141
     tx.inputs.length() == 1 && tx.inputs[0].vout() == x"ffffffff" &&
-        tx.inputs[0].tx_id() ==  x"0000000000000000000000000000000000000000000000000000000000000000"
+    tx.inputs[0].tx_id() == x"0000000000000000000000000000000000000000000000000000000000000000"
 }

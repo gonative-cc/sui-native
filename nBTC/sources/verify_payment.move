@@ -29,9 +29,9 @@ public fun verify_payment(
 ): (u64, Option<vector<u8>>) {
     let mut amount = 0;
     let mut op_msg = option::none();
-    let tx_id = transaction.tx_id();
+    let wtx_id_to_verify = transaction.wtx_id();
 
-    assert!(lc.verify_tx(height, tx_id, proof, tx_index), ETxNotInBlock);
+    assert!(lc.verify_tx(height, wtx_id_to_verify, proof, tx_index), ETxNotInBlock);
     let outputs = transaction.outputs();
     outputs.do!(|o| {
         let output_phk = o.extract_public_key_hash();
