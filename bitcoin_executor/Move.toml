@@ -11,7 +11,8 @@ authors = ["Native"]
 # MyRemotePackage = { git = "https://some.remote/host.git", subdir = "remote/path", rev = "main" }
 
 # For local dependencies use `local = path`. Path is relative to the package root
-btc_parser = { local = "../btc_parser", override = true}
+btc_parser = { git = "https://github.com/gonative-cc/sui-bitcoin-spv", subdir = "./packages/btc_parser", rev = "master" }
+
 
 # To resolve a version conflict and force a specific version for dependency
 # override use `override = true`
