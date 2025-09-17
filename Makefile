@@ -12,3 +12,25 @@ add-license:
 # used as pre-commit
 lint-git:
 	@git diff --name-only --cached --diff-filter=ACM | grep  -E '\.md$$' | xargs -r markdownlint-cli2
+
+
+############
+
+# All immediate subdirectories
+SUBDIRS := $(wildcard */)
+
+# Filter subdirectories that contain a Move.toml file
+MOVE_SUBDIRS := $(foreach dir,$(SUBDIRS),$(if $(wildcard $(dir)Move.toml),$(dir)))
+
+
+build-all: $(MOVE_SUBDIRS)
+
+$(MOVE_SUBDIRS):
+	@echo "==> Building in directory: $@"
+	@cd "$@" && sui move build
+
+
+test-all:
+	@for dir in $(MOVE_SUBDIRS); do \
+		echo "==> testing $$dir"; sui move test; \
+	done
