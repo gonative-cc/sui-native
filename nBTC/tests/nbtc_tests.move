@@ -3,9 +3,8 @@
 #[test_only]
 module nbtc::nbtc_tests;
 
-use bitcoin_spv::light_client::{new_light_client, LightClient};
 use bitcoin_spv::block_header::new_block_header;
-
+use bitcoin_spv::light_client::{new_light_client, LightClient};
 use nbtc::nbtc::{
     Self,
     WrappedTreasuryCap,
@@ -91,7 +90,9 @@ fun setup(btc_treasury: vector<u8>, sender: address): (LightClient, WrappedTreas
     let mut scenario = test_scenario::begin(sender);
 
     let headers = vector[
-        new_block_header(x"00000020a97594d6b5b9369535da225d464bde7e0ae3794e9b270a010000000000000000addcae45a90f73dc68e3225b2d0be1c155bf9b0864f187e31203079c0b6d42c5bb27e8585a330218b119eaee"),
+        new_block_header(
+            x"00000020a97594d6b5b9369535da225d464bde7e0ae3794e9b270a010000000000000000addcae45a90f73dc68e3225b2d0be1c155bf9b0864f187e31203079c0b6d42c5bb27e8585a330218b119eaee",
+        ),
     ];
 
     let lc = new_light_client(bitcoin_spv::params::regtest(), 0, headers, 0, 0, scenario.ctx());

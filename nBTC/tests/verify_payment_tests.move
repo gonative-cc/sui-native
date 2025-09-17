@@ -3,12 +3,11 @@
 #[test_only]
 module nbtc::verify_payment_tests;
 
-use nbtc::verify_payment::{verify_payment, ETxNotInBlock};
-
 use bitcoin_spv::block_header::new_block_header;
 use bitcoin_spv::light_client::new_light_client;
 use btc_parser::reader;
 use btc_parser::tx;
+use nbtc::verify_payment::{verify_payment, ETxNotInBlock};
 use std::unit_test::assert_eq;
 use sui::test_scenario;
 
@@ -60,8 +59,8 @@ fun verify_payment_happy_cases() {
     let tx_id = transaction.tx_id();
     // Tx: 6dfb16dd580698242bcfd8e433d557ed8c642272a368894de27292a8844a4e75 (Height 303,699)
     // from mainnet
-    let (amount,mut message) = verify_payment(
-	&lc,
+    let (amount, mut message) = verify_payment(
+        &lc,
         start_block_height,
         proof,
         tx_index,
@@ -111,7 +110,7 @@ fun verify_payment_with_P2WPHK_output_happy_cases() {
     let transaction = tx::deserialize(&mut r);
     let tx_id = transaction.tx_id();
     let (amount, mut message) = verify_payment(
-	&lc,
+        &lc,
         start_block_height,
         proof,
         tx_index,
@@ -137,7 +136,14 @@ fun verify_payment_for_tx_not_in_block_shoul_fail() {
         ),
     ];
     let ctx = scenario.ctx();
-    let lc = new_light_client(bitcoin_spv::params::mainnet(), start_block_height, headers, 0, 8, ctx);
+    let lc = new_light_client(
+        bitcoin_spv::params::mainnet(),
+        start_block_height,
+        headers,
+        0,
+        8,
+        ctx,
+    );
 
     // merkle proof of transaction id gen by proof.py in scripts folder.
     // we modify proof to make this invalid.
@@ -165,7 +171,7 @@ fun verify_payment_for_tx_not_in_block_shoul_fail() {
     // from mainnet
     // should return error
     verify_payment(
-	&lc,
+        &lc,
         start_block_height,
         proof,
         tx_index,
@@ -188,7 +194,14 @@ fun verify_payment_on_block_not_finalize_should_fail() {
         ),
     ];
     let ctx = scenario.ctx();
-    let lc = new_light_client(bitcoin_spv::params::mainnet(), start_block_height, headers, 0, 8, ctx);
+    let lc = new_light_client(
+        bitcoin_spv::params::mainnet(),
+        start_block_height,
+        headers,
+        0,
+        8,
+        ctx,
+    );
 
     // merkle proof of transaction id gen by proof.py in scripts folder.
     // we modify proof to make this invalid.
@@ -216,7 +229,7 @@ fun verify_payment_on_block_not_finalize_should_fail() {
     // from mainnet
     // should return error
     verify_payment(
-	&lc,
+        &lc,
         start_block_height,
         proof,
         tx_index,
