@@ -23,8 +23,8 @@ const VERSION: u32 = 1;
 /// Coin Metadata
 const DECIMALS: u8 = 8;
 const SYMBOL: vector<u8> = b"nBTC";
-const NAME: vector<u8> = b"Native BTC";
-const DESCRIPTION: vector<u8> = b"Natvie synthetic BTC";
+const NAME: vector<u8> = b"nBTC";
+const DESCRIPTION: vector<u8> = b"Native synthetic BTC";
 const ICON_URL: vector<u8> =
     b"https://raw.githubusercontent.com/gonative-cc/sui-native/master/assets/nbtc.svg";
 
