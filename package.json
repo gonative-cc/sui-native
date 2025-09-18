@@ -5,8 +5,6 @@
 	"module": "index.ts",
 	"type": "module",
 	"private": true,
-	"main": "index.js",
-	"author": "",
 	"license": "ISC",
 	"scripts": {
 		"lint": "echo \"Error: no linter specified\"",
