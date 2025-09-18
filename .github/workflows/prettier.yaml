@@ -1,11 +1,13 @@
 name: Prettier
+
+permissions:
+  contents: read
+  pull-requests: write
+
 on:
   merge_group:
     types: [checks_requested]
   pull_request:
-
-permissions:
-  contents: read
 
 jobs:
   prettier:
@@ -13,17 +15,15 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
-          # Make sure the actual branch is checked out when running on pull requests
           ref: ${{ github.head_ref }}
-          # This is important to fetch the changes to the previous commit
           fetch-depth: 0
 
       - name: Prettify code
         uses: creyD/prettier_action@v4.6
         with:
-          prettier_options: -c .
+          prettier_options: --no-config -c .
           only_changed: true
 
   test:
