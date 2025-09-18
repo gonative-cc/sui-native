@@ -59,7 +59,7 @@ public struct NbtcContract has key, store {
     /// set of "minted" txs
     tx_ids: Table<vector<u8>, bool>,
     // Bitcoin light client
-    bitcoin_lc: address,
+    bitcoin_lc: ID,
     fallback_addr: address,
     // TODO: change to taproot once Ika will support it
     nbtc_bitcoin_pkh: vector<u8>,
@@ -98,7 +98,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         version: VERSION,
         cap: treasury_cap,
         tx_ids: table::new<vector<u8>, bool>(ctx),
-        bitcoin_lc: @bitcoin_lc,
+        bitcoin_lc: @bitcoin_lc.to_id(),
         fallback_addr: @fallback_addr,
         nbtc_bitcoin_pkh,
     };
@@ -138,7 +138,7 @@ public fun mint(
         proof,
         tx_index,
         &tx,
-        *treasury.nbtc_bitcoin_pkh.borrow(),
+        treasury.nbtc_bitcoin_pkh,
     );
 
     assert!(!treasury.tx_ids.contains(tx_id), ETxAlreadyUsed);
@@ -202,7 +202,7 @@ public fun total_supply(treasury: &NbtcContract): u64 {
 }
 
 public fun get_light_client_id(treasury: &NbtcContract): ID {
-    object::id_from_address(treasury.bitcoin_lc)
+    treasury.bitcoin_lc
 }
 
 public fun get_fallback_addr(treasury: &NbtcContract): address {
