@@ -3,10 +3,10 @@
 #[test_only]
 module nbtc::verify_payment_tests;
 
-use bitcoin_spv::block_header::new_block_header;
+use bitcoin_parser::header;
+use bitcoin_parser::reader;
+use bitcoin_parser::tx;
 use bitcoin_spv::light_client::new_light_client;
-use btc_parser::reader;
-use btc_parser::tx;
 use nbtc::verify_payment::{verify_payment, ETxNotInBlock};
 use std::unit_test::assert_eq;
 use sui::test_scenario;
@@ -22,7 +22,7 @@ fun verify_payment_happy_cases() {
         x"020000002e4fd5261bc0c9e663d32f4bbbb3253e3a8f8e5759f7ae070000000000000000046c024dcdabcc5f3071d8f44e030dba6b9ae7e30336523be2a767c68b0e3ba684863a5473691f180220726b",
         x"02000000ae4bcf449c0e9ea803a663bb09c45f221b62b206353e1e0f000000000000000010638f6182860aa213236fbce7bafc9b68a6f8826d3f05482c4e8cd7465ec9824c8c3a5473691f185c90957a",
         x"02000000c331af5f49fd96014b398d9541b4d252a8a4235c2797d90b00000000000000003ac10882c715806ec7b557b9de9fd786c0380718335e2ae2c1fbee9fb1465aa03b8c3a5473691f187cd8568e",
-    ].map!(|h| new_block_header(h));
+    ].map!(|h| header::new(h));
 
     let ctx = scenario.ctx();
     let finality = 4; // => the block 325001 is finally in this case
@@ -82,7 +82,7 @@ fun verify_payment_with_P2WPHK_output_happy_cases() {
     let start_block_height = 0;
     let headers = vector[
         // only one transaction
-        new_block_header(
+        header::new(
             x"020000005d42717a33dd7046b6ca5fa33f14a7318b8221ce5b6909040000000000000000df88e4ad22477438db0a80979cf3dea033aa968c97fe06270f8864941a30649b5c843a5473691f184c13685d",
         ),
     ];
@@ -131,7 +131,7 @@ fun verify_payment_for_tx_not_in_block_shoul_fail() {
     let mut scenario = test_scenario::begin(sender);
     let start_block_height = 325001;
     let headers = vector[
-        new_block_header(
+        header::new(
             x"020000005d42717a33dd7046b6ca5fa33f14a7318b8221ce5b6909040000000000000000d7ee3bfa38399e87f302a41b388f33df29bf3ecb3552ed208a4869e17870a74d5c843a5473691f184c13685d",
         ),
     ];
@@ -189,7 +189,7 @@ fun verify_payment_on_block_not_finalize_should_fail() {
     let mut scenario = test_scenario::begin(sender);
     let start_block_height = 325001;
     let headers = vector[
-        new_block_header(
+        header::new(
             x"020000005d42717a33dd7046b6ca5fa33f14a7318b8221ce5b6909040000000000000000d7ee3bfa38399e87f302a41b388f33df29bf3ecb3552ed208a4869e17870a74d5c843a5473691f184c13685d",
         ),
     ];

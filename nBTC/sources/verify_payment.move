@@ -1,7 +1,7 @@
 module nbtc::verify_payment;
 
+use bitcoin_parser::tx::Transaction;
 use bitcoin_spv::light_client::LightClient;
-use btc_parser::tx::Transaction;
 
 #[error]
 const ETxNotInBlock: vector<u8> =
