@@ -1,4 +1,9 @@
 name: JS
+
+permissions:
+  contents: read
+  pull-requests: write
+
 on:
   merge_group:
     types: [checks_requested]
