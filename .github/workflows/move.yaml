@@ -10,6 +10,7 @@ on:
   pull_request:
     paths:
       - '**.move'
+      - '**Move.toml'
 
 jobs:
   test:
@@ -21,7 +22,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: run Sui Move test
-        run: bash ./contrib/ci/run-move-tests.sh
+        run: make test-move-all
 
   prettier:
     runs-on: ubuntu-latest

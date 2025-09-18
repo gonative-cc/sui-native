@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MPL-2.0
+
 module nbtc::verify_payment;
 
 use bitcoin_parser::tx::Transaction;

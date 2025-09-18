@@ -1,3 +1,10 @@
+
+# All immediate subdirectories inside /packages
+SUBDIRS := $(wildcard */)
+MAKE_SUBDIRS := $(foreach dir,$(SUBDIRS),$(if $(wildcard $(dir)Makefile),$(dir)))
+MOVE_SUBDIRS := $(foreach dir,$(SUBDIRS),$(if $(wildcard $(dir)Move.toml),$(dir)))
+
+
 .PHONY: setup-hooks lint-git
 
 setup-hooks:
@@ -11,36 +18,28 @@ setup-hooks:
 lint-git:
 	@git diff --name-only --cached --diff-filter=ACM | grep  -E '\.md$$' | xargs -r markdownlint-cli2
 
-
-############
-
-# All immediate subdirectories inside /packages
-SUBDIRS := $(wildcard packages/*/)
-
-# Filter subdirectories that contain a Move.toml file
-MOVE_SUBDIRS := $(foreach dir,$(SUBDIRS),$(if $(wildcard $(dir)Move.toml),$(dir)))
-MAKE_SUBDIRS := $(foreach dir,$(SUBDIRS),$(if $(wildcard $(dir)Makefile),$(dir)))
-
-format-move:
-	@bun run format:move-all
-
-build-all:
-	@for dir in $(MOVE_SUBDIRS); do \
-		echo "==> building $$dir"; cd $$dir; sui move build; cd -; \
-	done
-
-
-test-all:
-	@for dir in $(MOVE_SUBDIRS); do \
-		echo "==> testing $$dir"; sui move test; cd -; \
-	done
-
 # add license header to every source file
 add-license:
-	@for dir in $(MOVE_SUBDIRS); do \
-		cd $$dir; make add-license; cd -; \
-	done
+	@awk -i inplace 'FNR==1 && !/SPDX-License-Identifier/ {print "// SPDX-License-Identifier: MPL-2.0\n"}1' **/sources/*.move **/tests/*.move
 # with reuse tool:
 # docker run --rm --volume $(pwd):/data fsfe/reuse annotate --license MPL-2.0  */tests/*.move */sources/*.move  -s cpp
 
-.PHONY: add-license, build-all, test-all
+.PHONY: add-license
+
+
+############
+
+print-packages:
+	@for p in $(MAKE_SUBDIRS); do \
+		echo $$p; done
+
+format-move-all:
+	@bun run format:move-all
+
+test-move-all:
+	bash ./contrib/run-move-tests.sh test
+
+build-move-all:
+	bash ./contrib/run-move-tests.sh build
+
+.PHONY: print-packages format-move build-all test-all
