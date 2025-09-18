@@ -5,14 +5,7 @@ module nbtc::nbtc_tests;
 
 use bitcoin_parser::header;
 use bitcoin_spv::light_client::{new_light_client, LightClient};
-use nbtc::nbtc::{
-    Self,
-    WrappedTreasuryCap,
-    EMintAmountIsZero,
-    ETxAlreadyUsed,
-    EAlreadyUpdated,
-    NBTC
-};
+use nbtc::nbtc::{Self, NbtcContract, EMintAmountIsZero, ETxAlreadyUsed, EAlreadyUpdated, NBTC};
 use std::unit_test::assert_eq;
 use sui::address;
 use sui::coin::Coin;
@@ -44,7 +37,7 @@ public struct TestData has drop {
 #[test_only]
 fun mint_and_assert(
     scenario: &mut Scenario,
-    cap: &mut WrappedTreasuryCap,
+    cap: &mut NbtcContract,
     lc: &LightClient,
     data: TestData,
     sender: address,
@@ -86,7 +79,7 @@ fun get_fallback_mint_data(): TestData {
 }
 
 #[test_only]
-fun setup(btc_treasury: vector<u8>, sender: address): (LightClient, WrappedTreasuryCap, Scenario) {
+fun setup(btc_treasury: vector<u8>, sender: address): (LightClient, NbtcContract, Scenario) {
     let mut scenario = test_scenario::begin(sender);
 
     let headers = vector[

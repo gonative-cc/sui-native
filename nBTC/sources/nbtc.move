@@ -50,9 +50,9 @@ const EAlreadyUpdated: vector<u8> =
 // Structs
 //
 
-/// WrappedTreasuryCap holds the TreasuryCap as well as configuration and state.
+/// NbtcContract holds the TreasuryCap as well as configuration and state.
 /// It should be a shared object to enable anyone to interact with the contract.
-public struct WrappedTreasuryCap has key, store {
+public struct NbtcContract has key, store {
     id: UID,
     version: u32,
     cap: TreasuryCap<NBTC>,
@@ -85,15 +85,19 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         ctx,
     );
 
+    // we removed post deployment setup function and didn't want to implement PTB style
+    // initialization, so we require setting the address before publishing the package.
+    let nbtc_bitcoin_pkh = b""; // TODO: valid bitcoin address
+    assert!(nbtc_bitcoin_pkh.length() >= 23);
     transfer::public_freeze_object(metadata);
-    let treasury = WrappedTreasuryCap {
+    let treasury = NbtcContract {
         id: object::new(ctx),
         version: VERSION,
         cap: treasury_cap,
         tx_ids: table::new<vector<u8>, bool>(ctx),
         bitcoin_lc: @bitcoin_lc,
         fallback_addr: @fallback_addr,
-        nbtc_bitcoin_pkh: b"TODO", // valid bitcoin address
+        nbtc_bitcoin_pkh,
     };
     transfer::public_share_object(treasury);
 }
@@ -109,7 +113,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
 /// * `tx_index`: index of the tx within the block.
 /// Emits `MintEvent` if succesfull.
 public fun mint(
-    treasury: &mut WrappedTreasuryCap,
+    treasury: &mut NbtcContract,
     light_client: &LightClient,
     tx_bytes: vector<u8>,
     proof: vector<vector<u8>>,
@@ -171,7 +175,7 @@ public fun mint(
 
 /// redeem returns total amount of redeemed balance
 public fun redeem(
-    treasury: &mut WrappedTreasuryCap,
+    treasury: &mut NbtcContract,
     coins: vector<Coin<NBTC>>,
     _ctx: &mut TxContext,
 ): u64 {
@@ -181,7 +185,7 @@ public fun redeem(
 }
 
 /// update_version updates the treasury.version to the latest, making the usage of the older versions not possible
-public fun update_version(treasury: &mut WrappedTreasuryCap) {
+public fun update_version(treasury: &mut NbtcContract) {
     assert!(VERSION > treasury.version, EAlreadyUpdated);
     treasury.version = VERSION;
 }
@@ -190,15 +194,15 @@ public fun update_version(treasury: &mut WrappedTreasuryCap) {
 // View functions
 //
 
-public fun total_supply(treasury: &WrappedTreasuryCap): u64 {
+public fun total_supply(treasury: &NbtcContract): u64 {
     coin::total_supply(&treasury.cap)
 }
 
-public fun get_light_client_id(treasury: &WrappedTreasuryCap): ID {
+public fun get_light_client_id(treasury: &NbtcContract): ID {
     object::id_from_address(treasury.bitcoin_lc)
 }
 
-public fun get_fallback_addr(treasury: &WrappedTreasuryCap): address {
+public fun get_fallback_addr(treasury: &NbtcContract): address {
     treasury.fallback_addr
 }
 
@@ -212,7 +216,7 @@ public(package) fun init_for_testing(
     bitcoin_lc: address,
     fallback_addr: address,
     nbtc_bitcoin_pkh: vector<u8>,
-): WrappedTreasuryCap {
+): NbtcContract {
     let witness = NBTC {};
     let (treasury_cap, metadata) = coin::create_currency<NBTC>(
         witness,
@@ -224,7 +228,7 @@ public(package) fun init_for_testing(
         ctx,
     );
     transfer::public_freeze_object(metadata);
-    let treasury = WrappedTreasuryCap {
+    let treasury = NbtcContract {
         id: object::new(ctx),
         version: VERSION,
         cap: treasury_cap,
