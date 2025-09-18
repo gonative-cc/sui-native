@@ -1,10 +1,4 @@
 
-# used as pre-commit
-lint-git:
-	@git diff --name-only --cached | grep  -E '\.md$$' | xargs -r markdownlint-cli2
-	@sui move build --lint
-# note: prettier-move is run in the hook directly
-
 # lint changed files
 lint:
 	@git diff --name-only | grep  -E '\.md$$' | xargs -r markdownlint-cli2
@@ -23,12 +17,6 @@ lint-fix-all:
 .PHONY: setup lint-git lint lint-all lint-fix-all
 
 
-# add license header to every source file
-add-license:
-	@awk -i inplace 'FNR==1 && !/SPDX-License-Identifier/ {print "// SPDX-License-Identifier: MPL-2.0\n"}1' sources/*.move tests/*.move
-.PHONY: add-license
-
-
 ###############################################################################
 ##                              Build & Test                                 ##
 ###############################################################################
@@ -44,7 +32,7 @@ test-coverage:
 # sui move test --coverage
 # sui move coverage
 
-.PHONY: test test-coverage
+.PHONY: build test test-coverage
 
 ###############################################################################
 ##                                   Docs                                    ##

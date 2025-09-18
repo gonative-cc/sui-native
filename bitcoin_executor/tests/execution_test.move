@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MPL-2.0
+
 #[test_only]
 module bitcoin_executor::execution_tests;
 
