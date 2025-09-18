@@ -49,8 +49,8 @@ function keyFromMnemonic(mnemonic, keyType) {
 
   const path = getProperty(keyType, mainnetBIP32, "key type");
 
-  const bitcoinKey = rootKey.derivePath(path);
-  return bitcoinKey;
+  return rootKey.derivePath(path);
+
 }
 
 /**
