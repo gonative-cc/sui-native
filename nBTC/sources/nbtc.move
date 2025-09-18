@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
 
-/// Module: nbtc
 module nbtc::nbtc;
 
 use bitcoin_parser::reader;
