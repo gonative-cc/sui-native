@@ -1,0 +1,35 @@
+name: SuiMove
+
+permissions:
+  contents: read
+  pull-requests: write
+
+on:
+  merge_group:
+    types: [checks_requested]
+  pull_request:
+    paths:
+      - '**.move'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: mysten/sui-tools:ci
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: run Sui Move test
+        run: bash ./contrib/ci/run-move-tests.sh
+
+  prettier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # @v2
+      - uses: oven-sh/setup-bun@22457c87c1b161cf7dde222c3e82b2b5f8d2bed2
+      - run: bun install @mysten/prettier-plugin-move
+
+      - run: bun prettier-move --config .prettier-move.json -c **/*.move
