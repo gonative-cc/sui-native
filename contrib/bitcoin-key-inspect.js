@@ -3,6 +3,8 @@ import { BIP32Factory } from "bip32";
 import bitcoin from "bitcoinjs-lib";
 import * as ecc from "tiny-secp256k1";
 
+import { getProperty } from "./objutil.js";
+
 // We must wrap a tiny-secp256k1 compatible implementation
 const bip32 = BIP32Factory(ecc);
 
@@ -21,12 +23,6 @@ const mainnetBIP32 = {
 // 	p2tr: "m/86'/1'/0'/0/0", // taproot
 // 	legacy_p2pkh: "m/44'/1'/0'/0/0", // deprecated
 // };
-
-function getProperty(key, obj, msg) {
-	if (!(key in obj))
-		throw new Error("Wrong" + msg + ": " + key + ", must be in: " + Object.keys(obj));
-	return obj[key];
-}
 
 /**
  * @param {Uint8Array} - bytes.
