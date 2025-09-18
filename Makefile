@@ -23,11 +23,10 @@ SUBDIRS := $(wildcard */)
 MOVE_SUBDIRS := $(foreach dir,$(SUBDIRS),$(if $(wildcard $(dir)Move.toml),$(dir)))
 
 
-build-all: $(MOVE_SUBDIRS)
-
-$(MOVE_SUBDIRS):
-	@echo "==> Building in directory: $@"
-	@cd "$@" && sui move build
+build-all:
+	@for dir in $(MOVE_SUBDIRS); do \
+		echo "==> building $$dir"; cd $$dir; sui move build; \
+	done
 
 
 test-all:
