@@ -2,12 +2,16 @@
 build
 .github
 pnpm-lock.yaml
+pnpm-workspace.yaml
 node_modules
 package.json
-pnpm-workspace.yaml
+bun.lock
 
 .prettier-move.json
 
 worker-configuration.d.ts
 
 private*
+
+# generated docs
+packages/*/docs
