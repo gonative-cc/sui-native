@@ -25,7 +25,7 @@ jobs:
 
       # @v2
       - uses: oven-sh/setup-bun@22457c87c1b161cf7dde222c3e82b2b5f8d2bed2
-      - run: bun install prettier
+      - run: bun ci
 
       - name: eslint
         run: "bun run lint"
