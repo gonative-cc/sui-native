@@ -2,32 +2,20 @@
 
 [move]
 version = 3
-manifest_digest = "3B6CE811E0C118BB52C5C2F4B02E1B2FE399B6AC92FEF030C60959472D0DE8C2"
+manifest_digest = "D914644FFDB6E4BB04B4D3E53C316A326AC7299D981453CF032762434C88B417"
 deps_digest = "52B406A7A21811BEF51751CF88DA0E76DAEFFEAC888D4F4060B1A72BBE7D8D35"
 dependencies = [
-  { id = "BitcoinSPV", name = "BitcoinSPV" },
   { id = "Bridge", name = "Bridge" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
   { id = "SuiSystem", name = "SuiSystem" },
-  { id = "btc_parser", name = "btc_parser" },
-]
-
-[[move.package]]
-id = "BitcoinSPV"
-source = { git = "https://github.com/gonative-cc/sui-bitcoin-spv.git", rev = "master", subdir = "./" }
-
-dependencies = [
-  { id = "Bridge", name = "Bridge" },
-  { id = "MoveStdlib", name = "MoveStdlib" },
-  { id = "Sui", name = "Sui" },
-  { id = "SuiSystem", name = "SuiSystem" },
+  { id = "bitcoin_spv", name = "bitcoin_spv" },
   { id = "btc_parser", name = "btc_parser" },
 ]
 
 [[move.package]]
 id = "Bridge"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "b448b1d971bd6c1aac8ef4eee4305943806d5d5b", subdir = "crates/sui-framework/packages/bridge" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "664b05b3b047c5bb03979d093660176176ea6175", subdir = "crates/sui-framework/packages/bridge" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -37,11 +25,11 @@ dependencies = [
 
 [[move.package]]
 id = "MoveStdlib"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "b448b1d971bd6c1aac8ef4eee4305943806d5d5b", subdir = "crates/sui-framework/packages/move-stdlib" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "664b05b3b047c5bb03979d093660176176ea6175", subdir = "crates/sui-framework/packages/move-stdlib" }
 
 [[move.package]]
 id = "Sui"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "b448b1d971bd6c1aac8ef4eee4305943806d5d5b", subdir = "crates/sui-framework/packages/sui-framework" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "664b05b3b047c5bb03979d093660176176ea6175", subdir = "crates/sui-framework/packages/sui-framework" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -49,7 +37,7 @@ dependencies = [
 
 [[move.package]]
 id = "SuiSystem"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "b448b1d971bd6c1aac8ef4eee4305943806d5d5b", subdir = "crates/sui-framework/packages/sui-system" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "664b05b3b047c5bb03979d093660176176ea6175", subdir = "crates/sui-framework/packages/sui-system" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -57,8 +45,20 @@ dependencies = [
 ]
 
 [[move.package]]
+id = "bitcoin_spv"
+source = { git = "https://github.com/gonative-cc/sui-bitcoin-spv.git", rev = "master", subdir = "./packages/bitcoin_spv" }
+
+dependencies = [
+  { id = "Bridge", name = "Bridge" },
+  { id = "MoveStdlib", name = "MoveStdlib" },
+  { id = "Sui", name = "Sui" },
+  { id = "SuiSystem", name = "SuiSystem" },
+  { id = "btc_parser", name = "btc_parser" },
+]
+
+[[move.package]]
 id = "btc_parser"
-source = { git = "https://github.com/gonative-cc/sui-native", rev = "master", subdir = "./btc_parser" }
+source = { git = "https://github.com/gonative-cc/sui-bitcoin-spv", rev = "master", subdir = "./packages/btc_parser" }
 
 dependencies = [
   { id = "Bridge", name = "Bridge" },
@@ -68,6 +68,6 @@ dependencies = [
 ]
 
 [move.toolchain-version]
-compiler-version = "1.53.2"
+compiler-version = "1.56.2"
 edition = "2024.beta"
 flavor = "sui"
