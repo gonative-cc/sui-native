@@ -56,6 +56,7 @@ public struct NbtcContract has key, store {
     id: UID,
     version: u32,
     cap: TreasuryCap<NBTC>,
+    /// set of "minted" txs
     tx_ids: Table<vector<u8>, bool>,
     // Bitcoin light client
     bitcoin_lc: address,
@@ -69,8 +70,10 @@ public struct MintEvent has copy, drop {
     minter: address,
     recipient: address,
     amount: u64, // in satoshi
+    /// Bitcoin transaction ID
     btc_tx_id: vector<u8>,
     btc_block_height: u64,
+    /// index of the tx within the block.
     btc_tx_index: u64,
 }
 
