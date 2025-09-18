@@ -6,6 +6,7 @@
 	"type": "module",
 	"private": true,
 	"license": "ISC",
+	"packageManager": "bun@1.20.22",
 	"scripts": {
 		"lint": "echo \"Error: no linter specified\"",
 		"typecheck": "tsc --noEmit",
