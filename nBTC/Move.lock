@@ -2,15 +2,15 @@
 
 [move]
 version = 3
-manifest_digest = "D914644FFDB6E4BB04B4D3E53C316A326AC7299D981453CF032762434C88B417"
+manifest_digest = "DFCA2DD4FA372D95053D64EEBA09D9504D9BAC3C91DC00D21C721EB386FB83C1"
 deps_digest = "52B406A7A21811BEF51751CF88DA0E76DAEFFEAC888D4F4060B1A72BBE7D8D35"
 dependencies = [
   { id = "Bridge", name = "Bridge" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
   { id = "SuiSystem", name = "SuiSystem" },
+  { id = "bitcoin_parser", name = "bitcoin_parser" },
   { id = "bitcoin_spv", name = "bitcoin_spv" },
-  { id = "btc_parser", name = "btc_parser" },
 ]
 
 [[move.package]]
@@ -45,6 +45,17 @@ dependencies = [
 ]
 
 [[move.package]]
+id = "bitcoin_parser"
+source = { git = "https://github.com/gonative-cc/sui-bitcoin-spv.git", rev = "master", subdir = "./packages/bitcoin_parser" }
+
+dependencies = [
+  { id = "Bridge", name = "Bridge" },
+  { id = "MoveStdlib", name = "MoveStdlib" },
+  { id = "Sui", name = "Sui" },
+  { id = "SuiSystem", name = "SuiSystem" },
+]
+
+[[move.package]]
 id = "bitcoin_spv"
 source = { git = "https://github.com/gonative-cc/sui-bitcoin-spv.git", rev = "master", subdir = "./packages/bitcoin_spv" }
 
@@ -53,18 +64,7 @@ dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
   { id = "SuiSystem", name = "SuiSystem" },
-  { id = "btc_parser", name = "btc_parser" },
-]
-
-[[move.package]]
-id = "btc_parser"
-source = { git = "https://github.com/gonative-cc/sui-bitcoin-spv", rev = "master", subdir = "./packages/btc_parser" }
-
-dependencies = [
-  { id = "Bridge", name = "Bridge" },
-  { id = "MoveStdlib", name = "MoveStdlib" },
-  { id = "Sui", name = "Sui" },
-  { id = "SuiSystem", name = "SuiSystem" },
+  { id = "bitcoin_parser", name = "bitcoin_parser" },
 ]
 
 [move.toolchain-version]
