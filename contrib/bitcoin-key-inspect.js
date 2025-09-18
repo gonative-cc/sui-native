@@ -50,7 +50,6 @@ function keyFromMnemonic(mnemonic, keyType) {
   const path = getProperty(keyType, mainnetBIP32, "key type");
 
   return rootKey.derivePath(path);
-
 }
 
 /**
