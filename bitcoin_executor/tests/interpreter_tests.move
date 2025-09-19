@@ -5,8 +5,8 @@ module bitcoin_executor::interpreter_tests;
 
 use bitcoin_executor::interpreter::{create_p2wpkh_scriptcode, run};
 use bitcoin_executor::stack::new_with_data;
-use btc_parser::reader;
-use btc_parser::tx::deserialize;
+use bitcoin_parser::reader;
+use bitcoin_parser::tx::deserialize;
 use std::unit_test::assert_eq;
 
 #[test]

@@ -2,7 +2,7 @@
 
 module bitcoin_executor::btc_encoding;
 
-use btc_parser::vector_utils;
+use bitcoin_parser::vector_utils;
 
 #[test_only]
 use std::unit_test::assert_eq;
