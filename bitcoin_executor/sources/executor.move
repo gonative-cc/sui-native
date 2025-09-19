@@ -5,10 +5,10 @@ module bitcoin_executor::bitcoin_executor;
 use bitcoin_executor::interpreter::{run, create_p2wpkh_scriptcode};
 use bitcoin_executor::stack;
 use bitcoin_executor::utxo::{Self, OutPoint, Data};
-use btc_parser::block;
-use btc_parser::encoding::le_bytes_to_u64;
-use btc_parser::output;
-use btc_parser::tx::Transaction;
+use bitcoin_parser::block;
+use bitcoin_parser::encoding::le_bytes_to_u64;
+use bitcoin_parser::output;
+use bitcoin_parser::tx::Transaction;
 use sui::table::{Self, Table};
 
 #[test_only]

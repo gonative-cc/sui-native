@@ -11,7 +11,7 @@ authors = ["Native"]
 # MyRemotePackage = { git = "https://some.remote/host.git", subdir = "remote/path", rev = "main" }
 
 # For local dependencies use `local = path`. Path is relative to the package root
-btc_parser = { git = "https://github.com/gonative-cc/sui-bitcoin-spv", subdir = "./packages/btc_parser", rev = "master" }
+bitcoin_parser = { git = "https://github.com/gonative-cc/sui-bitcoin-spv", subdir = "./packages/bitcoin_parser", rev = "master" }
 
 
 # To resolve a version conflict and force a specific version for dependency
@@ -33,4 +33,4 @@ bitcoin_executor = "0x0"
 # The dev-addresses section allows overwriting named addresses for the `--test`
 # and `--dev` modes.
 # alice = "0xB0B"
-# btc_parser="0x1000"
+# bitcoin_parser="0x1000"
