@@ -93,7 +93,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
     let nbtc_bitcoin_pkh = b""; // TODO: valid bitcoin address
     assert!(nbtc_bitcoin_pkh.length() >= 23);
     transfer::public_freeze_object(metadata);
-    let treasury = NbtcContract {
+    let contract = NbtcContract {
         id: object::new(ctx),
         version: VERSION,
         cap: treasury_cap,
@@ -102,7 +102,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         fallback_addr: @fallback_addr,
         nbtc_bitcoin_pkh,
     };
-    transfer::public_share_object(treasury);
+    transfer::public_share_object(contract);
 }
 
 //
@@ -116,7 +116,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
 /// * `tx_index`: index of the tx within the block.
 /// Emits `MintEvent` if succesfull.
 public fun mint(
-    treasury: &mut NbtcContract,
+    contract: &mut NbtcContract,
     light_client: &LightClient,
     tx_bytes: vector<u8>,
     proof: vector<vector<u8>>,
@@ -124,9 +124,9 @@ public fun mint(
     tx_index: u64,
     ctx: &mut TxContext,
 ) {
-    assert!(treasury.version == VERSION, EVersionMismatch);
+    assert!(contract.version == VERSION, EVersionMismatch);
     let provided_lc_id = object::id(light_client);
-    assert!(provided_lc_id == treasury.get_light_client_id(), EUntrustedLightClient);
+    assert!(provided_lc_id == contract.get_light_client_id(), EUntrustedLightClient);
 
     let mut r = reader::new(tx_bytes);
     let tx = tx::deserialize(&mut r);
@@ -138,13 +138,13 @@ public fun mint(
         proof,
         tx_index,
         &tx,
-        treasury.nbtc_bitcoin_pkh,
+        contract.nbtc_bitcoin_pkh,
     );
 
-    assert!(!treasury.tx_ids.contains(tx_id), ETxAlreadyUsed);
+    assert!(!contract.tx_ids.contains(tx_id), ETxAlreadyUsed);
     assert!(amount_satoshi > 0, EMintAmountIsZero);
 
-    let mut recipient_address: address = treasury.get_fallback_addr();
+    let mut recipient_address: address = contract.get_fallback_addr();
 
     if (op_return.is_some()) {
         let msg = op_return.extract();
@@ -157,14 +157,14 @@ public fun mint(
 
             // stream not end, format is invalid, move data to fallback
             if (!msg_reader.end_stream()) {
-                recipient_address = treasury.get_fallback_addr();
+                recipient_address = contract.get_fallback_addr();
             }
         }
     };
 
-    treasury.tx_ids.add(tx_id, true);
+    contract.tx_ids.add(tx_id, true);
 
-    coin::mint_and_transfer(&mut treasury.cap, amount_satoshi, recipient_address, ctx);
+    coin::mint_and_transfer(&mut contract.cap, amount_satoshi, recipient_address, ctx);
 
     event::emit(MintEvent {
         minter: tx_context::sender(ctx),
@@ -178,35 +178,35 @@ public fun mint(
 
 /// redeem returns total amount of redeemed balance
 public fun redeem(
-    treasury: &mut NbtcContract,
+    contract: &mut NbtcContract,
     coins: vector<Coin<NBTC>>,
     _ctx: &mut TxContext,
 ): u64 {
-    assert!(treasury.version == VERSION, EVersionMismatch);
+    assert!(contract.version == VERSION, EVersionMismatch);
     // TODO: implement logic to guard burning
-    coins.fold!(0, |total, c| total + coin::burn(&mut treasury.cap, c))
+    coins.fold!(0, |total, c| total + coin::burn(&mut contract.cap, c))
 }
 
-/// update_version updates the treasury.version to the latest, making the usage of the older versions not possible
-public fun update_version(treasury: &mut NbtcContract) {
-    assert!(VERSION > treasury.version, EAlreadyUpdated);
-    treasury.version = VERSION;
+/// update_version updates the contract.version to the latest, making the usage of the older versions not possible
+public fun update_version(contract: &mut NbtcContract) {
+    assert!(VERSION > contract.version, EAlreadyUpdated);
+    contract.version = VERSION;
 }
 
 //
 // View functions
 //
 
-public fun total_supply(treasury: &NbtcContract): u64 {
-    coin::total_supply(&treasury.cap)
+public fun total_supply(contract: &NbtcContract): u64 {
+    coin::total_supply(&contract.cap)
 }
 
-public fun get_light_client_id(treasury: &NbtcContract): ID {
-    treasury.bitcoin_lc
+public fun get_light_client_id(contract: &NbtcContract): ID {
+    contract.bitcoin_lc
 }
 
-public fun get_fallback_addr(treasury: &NbtcContract): address {
-    treasury.fallback_addr
+public fun get_fallback_addr(contract: &NbtcContract): address {
+    contract.fallback_addr
 }
 
 //
@@ -221,7 +221,7 @@ public(package) fun init_for_testing(
     nbtc_bitcoin_pkh: vector<u8>,
 ): NbtcContract {
     let witness = NBTC {};
-    let (treasury_cap, metadata) = coin::create_currency<NBTC>(
+    let (contract_cap, metadata) = coin::create_currency<NBTC>(
         witness,
         DECIMALS,
         SYMBOL,
@@ -231,14 +231,14 @@ public(package) fun init_for_testing(
         ctx,
     );
     transfer::public_freeze_object(metadata);
-    let treasury = NbtcContract {
+    let contract = NbtcContract {
         id: object::new(ctx),
         version: VERSION,
-        cap: treasury_cap,
+        cap: contract_cap,
         tx_ids: table::new<vector<u8>, bool>(ctx),
         bitcoin_lc: bitcoin_lc.to_id(),
         fallback_addr,
         nbtc_bitcoin_pkh,
     };
-    treasury
+    contract
 }
