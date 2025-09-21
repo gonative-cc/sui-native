@@ -7,12 +7,12 @@ use bitcoin_executor::ripemd160;
 use bitcoin_executor::sighash;
 use bitcoin_executor::stack::{Self, Stack};
 use bitcoin_executor::utils;
-use btc_parser::crypto::hash256;
-use btc_parser::encoding::u64_to_le_bytes;
-use btc_parser::input;
-use btc_parser::output;
-use btc_parser::reader::{Self, Reader};
-use btc_parser::tx::{Self, Transaction};
+use bitcoin_parser::crypto::hash256;
+use bitcoin_parser::encoding::u64_to_le_bytes;
+use bitcoin_parser::input;
+use bitcoin_parser::output;
+use bitcoin_parser::reader::{Self, Reader};
+use bitcoin_parser::tx::{Self, Transaction};
 use std::hash::sha2_256;
 
 #[test_only]
@@ -23,11 +23,10 @@ use std::unit_test::assert_eq;
 /// in bitcoin core and in most if not all other references and software related
 /// to handling BTC scripts.
 /// https://github.com/btcsuite/btcd/blob/master/txscript/opcode.go
-const OP_0: u8 = 0x00; // 0
-const OP_FALSE: u8 = 0x00; // 0 - AKA OP_0
+const OP_0: u8 = 0x00; // 0 == OP_FALSE
 const OP_PUSHBYTES_1: u8 = 0x01; // 1
 const OP_PUSHBYTES_20: u8 = 0x14; // 20
-/*
+/* OP_PUSHBYTES_1 - OP_PUSHBYTES_75 are handled by the same function
 const OP_PUSHBYTES_2: u8 = 0x02; // 2
 const OP_PUSHBYTES_3: u8 = 0x03; // 3
 const OP_PUSHBYTES_4: u8 = 0x04; // 4
@@ -102,13 +101,16 @@ const OP_PUSHBYTES_73: u8 = 0x49; // 73
 const OP_PUSHBYTES_74: u8 = 0x4a; // 74
 */
 const OP_PUSHBYTES_75: u8 = 0x4b; // 75
+
+/*
 const OP_PUSHDATA1: u8 = 0x4c; // 76
 const OP_PUSHDATA2: u8 = 0x4d; // 77
 const OP_PUSHDATA4: u8 = 0x4e; // 78
 const OP_1NEGATE: u8 = 0x4f; // 79
 const OP_RESERVED: u8 = 0x50; // 80
+*/
 const OP_1: u8 = 0x51; // 81 - AKA OP_TRUE
-const OP_TRUE: u8 = 0x51; // 81
+/* op1 - op16 are handled by one function
 const OP_2: u8 = 0x52; // 82
 const OP_3: u8 = 0x53; // 83
 const OP_4: u8 = 0x54; // 84
@@ -123,7 +125,9 @@ const OP_12: u8 = 0x5c; // 92
 const OP_13: u8 = 0x5d; // 93
 const OP_14: u8 = 0x5e; // 94
 const OP_15: u8 = 0x5f; // 95
+*/
 const OP_16: u8 = 0x60; // 96
+/*
 const OP_NOP: u8 = 0x61; // 97
 const OP_VER: u8 = 0x62; // 98
 const OP_IF: u8 = 0x63; // 99
@@ -144,29 +148,31 @@ const OP_2ROT: u8 = 0x71; // 113
 const OP_2SWAP: u8 = 0x72; // 114
 const OP_IFDUP: u8 = 0x73; // 115
 const OP_DEPTH: u8 = 0x74; // 116
+*/
 const OP_DROP: u8 = 0x75; // 117
 /// Duplicate the top item on the stack.
 const OP_DUP: u8 = 0x76; // 118
-const OP_NIP: u8 = 0x77; // 119
-const OP_OVER: u8 = 0x78; // 120
-const OP_PICK: u8 = 0x79; // 121
-const OP_ROLL: u8 = 0x7a; // 122
-const OP_ROT: u8 = 0x7b; // 123
+// const OP_NIP: u8 = 0x77; // 119
+// const OP_OVER: u8 = 0x78; // 120
+// const OP_PICK: u8 = 0x79; // 121
+// const OP_ROLL: u8 = 0x7a; // 122
+// const OP_ROT: u8 = 0x7b; // 123
 const OP_SWAP: u8 = 0x7c; // 124
-const OP_TUCK: u8 = 0x7d; // 125
-const OP_CAT: u8 = 0x7e; // 126
-const OP_SUBSTR: u8 = 0x7f; // 127
-const OP_LEFT: u8 = 0x80; // 128
-const OP_RIGHT: u8 = 0x81; // 129
+// const OP_TUCK: u8 = 0x7d; // 125
+// const OP_CAT: u8 = 0x7e; // 126
+// const OP_SUBSTR: u8 = 0x7f; // 127
+// const OP_LEFT: u8 = 0x80; // 128
+// const OP_RIGHT: u8 = 0x81; // 129
 const OP_SIZE: u8 = 0x82; // 130
-const OP_INVERT: u8 = 0x83; // 131
-const OP_AND: u8 = 0x84; // 132
-const OP_OR: u8 = 0x85; // 133
-const OP_XOR: u8 = 0x86; // 134
+// const OP_INVERT: u8 = 0x83; // 131
+// const OP_AND: u8 = 0x84; // 132
+// const OP_OR: u8 = 0x85; // 133
+// const OP_XOR: u8 = 0x86; // 134
 /// Compare the top two items on the stack and push 1 if they are equal, 0 otherwise.
 const OP_EQUAL: u8 = 0x87; // 135
 /// Compare the top two items on the stack and halts the script if they are not equal.
 const OP_EQUALVERIFY: u8 = 0x88; // 136
+/*
 const OP_RESERVED1: u8 = 0x89; // 137
 const OP_RESERVED2: u8 = 0x8a; // 138
 const OP_1ADD: u8 = 0x8b; // 139
@@ -198,11 +204,13 @@ const OP_MAX: u8 = 0xa4; // 164
 const OP_WITHIN: u8 = 0xa5; // 165
 const OP_RIPEMD160: u8 = 0xa6; // 166
 const OP_SHA1: u8 = 0xa7; // 167
+*/
 const OP_SHA256: u8 = 0xa8; // 168
 const OP_HASH160: u8 = 0xa9; // 169
 const OP_HASH256: u8 = 0xaa; // 170
-const OP_CODESEPARATOR: u8 = 0xab; // 171
+// const OP_CODESEPARATOR: u8 = 0xab; // 171
 const OP_CHECKSIG: u8 = 0xac; // 172
+/*
 const OP_CHECKSIGVERIFY: u8 = 0xad; // 173
 const OP_CHECKMULTISIG: u8 = 0xae; // 174
 const OP_CHECKMULTISIGVERIFY: u8 = 0xaf; // 175
@@ -219,7 +227,7 @@ const OP_NOP8: u8 = 0xb7; // 183
 const OP_NOP9: u8 = 0xb8; // 184
 const OP_NOP10: u8 = 0xb9; // 185
 const OP_CHECKSIGADD: u8 = 0xba; // 186
-
+*/
 // Invalid opcodes
 const OP_UNKNOWN187: u8 = 0xbb; // 187
 /*
@@ -644,14 +652,14 @@ fun test_op_push_small_int() {
     let mut ip = new_empty_test_ip();
 
     ip.op_push_small_int_helper(OP_1, 1, vector[0x01]);
-    ip.op_push_small_int_helper(OP_7, 2, vector[0x07]);
+    ip.op_push_small_int_helper(OP_1+6, 2, vector[0x07]);
     ip.op_push_small_int_helper(OP_16, 3, vector[0x10]);
 }
 
 #[test]
 fun test_op_push_small_int5() {
     let mut ip = new_empty_test_ip();
-    ip.op_push_small_int_helper(OP_5, 1, vector[0x05]);
+    ip.op_push_small_int_helper(OP_1+4, 1, vector[0x05]);
 }
 
 #[test_only]

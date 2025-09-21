@@ -21,7 +21,7 @@ lint-fix-all:
 ##                              Build & Test                                 ##
 ###############################################################################
 
-build: .git/hooks/pre-commit
+build:
 	@sui move build
 
 test:
