@@ -50,6 +50,9 @@ const EAlreadyUpdated: vector<u8> =
 // Structs
 //
 
+/// Created only once in the `init` function.
+public struct AdminCap has key { id: UID }
+
 /// NbtcContract holds the TreasuryCap as well as configuration and state.
 /// It should be a shared object to enable anyone to interact with the contract.
 public struct NbtcContract has key, store {
@@ -77,6 +80,10 @@ public struct MintEvent has copy, drop {
     btc_tx_index: u64,
 }
 
+//
+// Functions
+//
+
 fun init(witness: NBTC, ctx: &mut TxContext) {
     let (treasury_cap, metadata) = coin::create_currency<NBTC>(
         witness,
@@ -103,6 +110,11 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         nbtc_bitcoin_pkh,
     };
     transfer::public_share_object(contract);
+
+    transfer::transfer(
+        AdminCap { id: object::new(ctx) },
+        ctx.sender(),
+    )
 }
 
 //
