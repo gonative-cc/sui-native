@@ -236,7 +236,7 @@ public(package) fun init_for_testing(
         version: VERSION,
         cap: treasury_cap,
         tx_ids: table::new<vector<u8>, bool>(ctx),
-        bitcoin_lc,
+        bitcoin_lc: bitcoin_lc.to_id(),
         fallback_addr,
         nbtc_bitcoin_pkh,
     };
