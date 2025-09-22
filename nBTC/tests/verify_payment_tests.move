@@ -25,13 +25,13 @@ fun verify_payment_happy_cases() {
     ].map!(|h| header::new(h));
 
     let ctx = scenario.ctx();
-    let finality = 4; // => the block 325001 is finally in this case
+    let confirmation_depth = 5; // => the block 325001 is finally in this case
     let lc = new_light_client(
         bitcoin_spv::params::mainnet(),
         start_block_height,
         headers,
         0,
-        finality,
+        confirmation_depth,
         ctx,
     );
     // merkle proof of transaction id gen by proof.py in scripts folder.
@@ -88,14 +88,14 @@ fun verify_payment_with_P2WPHK_output_happy_cases() {
     ];
 
     let ctx = scenario.ctx();
-    let finality = 0;
+    let confirmation_depth = 1;
 
     let lc = new_light_client(
         bitcoin_spv::params::mainnet(),
         start_block_height,
         headers,
         0,
-        finality,
+        confirmation_depth,
         ctx,
     );
 

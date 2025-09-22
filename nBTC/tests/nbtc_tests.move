@@ -95,7 +95,7 @@ fun setup(btc_treasury: vector<u8>, sender: address): (LightClient, WrappedTreas
         ),
     ];
 
-    let lc = new_light_client(bitcoin_spv::params::regtest(), 0, headers, 0, 0, scenario.ctx());
+    let lc = new_light_client(bitcoin_spv::params::regtest(), 0, headers, 0, 1, scenario.ctx());
 
     let mut cap = nbtc::init_for_testing(scenario.ctx());
     cap.setup(lc.client_id().to_address(), FALLBACK_ADDR, btc_treasury);
