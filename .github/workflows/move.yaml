@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: run Sui Move test
-        run: make test-move-all
+        run: bash ./contrib/run-move-tests.sh test
 
   prettier:
     runs-on: ubuntu-latest
