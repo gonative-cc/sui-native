@@ -25,7 +25,7 @@ fun verify_payment_happy_cases() {
     ].map!(|h| header::new(h));
 
     let ctx = scenario.ctx();
-    let confirmation_depth = 5; // => the block 325001 is finally in this case
+    let confirmation_depth = 5; // => the block 325001 has enough confirmations.
     let lc = new_light_client(
         bitcoin_spv::params::mainnet(),
         start_block_height,
