@@ -210,7 +210,7 @@ public fun mint(
         contract.fees_collected.join(fee);
     };
 
-    transfer::public_transfer(coin::from_balance(minted, ctx), recipient);
+    if (amount > 0) transfer::public_transfer(coin::from_balance(minted, ctx), recipient);
 
     event::emit(MintEvent {
         minter: tx_context::sender(ctx),
