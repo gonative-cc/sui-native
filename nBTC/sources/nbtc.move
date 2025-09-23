@@ -137,11 +137,13 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
 
 /// Mints nBTC tokens after verifying a Bitcoin transaction proof.
 /// * `tx_bytes`: raw, hex-encoded tx bytes.
-/// * `proof`: merkele proof for the tx.
+/// * `proof`: merkle proof for the tx.
 /// * `height`: block height, where the tx was included.
 /// * `tx_index`: index of the tx within the block.
-/// * `ops_arg`: additional argument for handling the operation and fees.
-/// Emits `MintEvent` if succesfull.
+/// * `ops_arg`: operation argument controlling fee application. 
+///   - Pass `1` to apply minting fees.
+///   - Pass `0` to skip minting fees (for special cases or admin operations).
+/// Emits `MintEvent` if successful.
 public fun mint(
     contract: &mut NbtcContract,
     light_client: &LightClient,
