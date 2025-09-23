@@ -4,6 +4,9 @@ module bitcoin_executor::ripemd160;
 
 use std::u64::do;
 
+#[test_only]
+use std::unit_test::assert_eq;
+
 public struct Ripemd160 has copy, drop {
     s: vector<u32>, // len 5;
     buf: vector<u8>,
@@ -484,7 +487,7 @@ fun ripemd160_test() {
         let e = data[index];
         hasher.write(e, e.length());
         let h = hasher.finalize();
-        assert!(h == result[index]);
+        assert_eq!(h, result[index]);
     });
 }
 
@@ -497,5 +500,5 @@ fun test_ripemd160_long_message() {
     let mut hasher = new();
     hasher.write(data, data.length());
     let h = hasher.finalize();
-    assert!(h == x"b832c9debdca3a368a1ece8b03f634c932c08379");
+    assert_eq!(h, x"b832c9debdca3a368a1ece8b03f634c932c08379");
 }

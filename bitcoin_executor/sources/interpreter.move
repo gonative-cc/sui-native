@@ -7,11 +7,12 @@ use bitcoin_executor::ripemd160;
 use bitcoin_executor::sighash;
 use bitcoin_executor::stack::{Self, Stack};
 use bitcoin_executor::utils;
+use btc_parser::crypto::hash256;
+use btc_parser::encoding::u64_to_le_bytes;
 use btc_parser::input;
 use btc_parser::output;
 use btc_parser::reader::{Self, Reader};
 use btc_parser::tx::{Self, Transaction};
-use btc_parser::utils::{hash256, u64_to_le_bytes};
 use std::hash::sha2_256;
 
 #[test_only]
@@ -603,10 +604,10 @@ fun test_op_0() {
     let mut ip = new_empty_test_ip();
     ip.op_push_empty_vector();
 
-    assert!(ip.stack.size() == 1);
-    let top_val = ip.stack.top().destroy_some();
-    assert!(top_val.length() == 0);
-    assert!(!ip.isSuccess());
+    assert_eq!(ip.stack.size(), 1);
+    let top_val = ip.stack.top();
+    assert_eq!(top_val, option::some(vector[]));
+    assert_eq!(ip.isSuccess(), false);
 }
 
 #[test]
@@ -673,16 +674,16 @@ fun op_push_small_int_helper(
 fun test_op_equal() {
     let mut ip = new_test_ip(vector[vector[10], vector[10]]);
     ip.op_equal();
-    assert!(ip.stack.top().destroy_some() == vector[1]);
+    assert_eq!(ip.stack.top(), option::some(vector[1]));
 
     ip.stack.push(vector[1]);
     ip.op_equal();
-    assert!(ip.stack.top().destroy_some() == vector[1]);
+    assert_eq!(ip.stack.top(), option::some(vector[1]));
 
     ip.stack.push(vector[20]);
     ip.stack.push(vector[10]);
     ip.op_equal();
-    assert!(ip.stack.top().destroy_some() == vector[0]);
+    assert_eq!(ip.stack.top(), option::some(vector[0]));
 }
 
 #[test]
