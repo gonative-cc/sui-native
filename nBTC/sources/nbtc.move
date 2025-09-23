@@ -28,6 +28,9 @@ const DESCRIPTION: vector<u8> = b"Native synthetic BTC";
 const ICON_URL: vector<u8> =
     b"https://raw.githubusercontent.com/gonative-cc/sui-native/master/assets/nbtc.svg";
 
+/// ops_arg consts
+const MINT_OP_APPLY_FEE: u32 = 1;
+
 /// One Time Witness
 public struct NBTC has drop {}
 
@@ -46,17 +49,19 @@ const EVersionMismatch: vector<u8> = b"The package has been updated. You are usi
 #[error]
 const EAlreadyUpdated: vector<u8> =
     b"The package version has been already updated to the latest one";
+#[error]
+const EInvalidOpsArg: vector<u8> = b"invalid mint ops_arg";
 
 //
 // Structs
 //
 
 /// Operator capability. Created only once in the `init` function.
-public struct OpCap has key { id: UID }
+public struct OpCap has key, store { id: UID }
 
 /// Admin capability. Created only once in the `init` function.
 /// It has higher capabilities than Operator. For example, it can change contract parameters .
-public struct AdminCap has key { id: UID }
+public struct AdminCap has key, store { id: UID }
 
 /// NbtcContract holds the TreasuryCap as well as configuration and state.
 /// It should be a shared object to enable anyone to interact with the contract.
@@ -71,7 +76,7 @@ public struct NbtcContract has key, store {
     fallback_addr: address,
     // TODO: change to taproot once Ika will support it
     nbtc_bitcoin_pkh: vector<u8>,
-    /// fee in nBTC
+    /// as in Balance<nBTC>
     mint_fee: u64,
     fees_collected: Balance<NBTC>,
 }
@@ -81,6 +86,7 @@ public struct MintEvent has copy, drop {
     minter: address,
     recipient: address,
     amount: u64, // in satoshi
+    fee: u64,
     /// Bitcoin transaction ID
     btc_tx_id: vector<u8>,
     btc_block_height: u64,
@@ -140,7 +146,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
 /// * `proof`: merkle proof for the tx.
 /// * `height`: block height, where the tx was included.
 /// * `tx_index`: index of the tx within the block.
-/// * `ops_arg`: operation argument controlling fee application. 
+/// * `ops_arg`: operation argument controlling fee application.
 ///   - Pass `1` to apply minting fees.
 ///   - Pass `0` to skip minting fees (for special cases or admin operations).
 /// Emits `MintEvent` if successful.
@@ -155,6 +161,7 @@ public fun mint(
     ctx: &mut TxContext,
 ) {
     assert!(contract.version == VERSION, EVersionMismatch);
+    assert!(ops_arg == 0 || ops_arg == MINT_OP_APPLY_FEE, EInvalidOpsArg);
     let provided_lc_id = object::id(light_client);
     assert!(provided_lc_id == contract.get_light_client_id(), EUntrustedLightClient);
 
@@ -194,9 +201,10 @@ public fun mint(
 
     contract.tx_ids.add(tx_id, true);
     let mut minted = contract.cap.mint_balance(amount);
+    let mut fee_amount = 0;
 
     if (ops_arg == 1) {
-        let fee_amount = if (amount <= contract.mint_fee) amount else contract.mint_fee;
+        fee_amount = amount.min(contract.mint_fee);
         let fee = minted.split(fee_amount);
         amount = amount - fee_amount;
         contract.fees_collected.join(fee);
@@ -208,6 +216,7 @@ public fun mint(
         minter: tx_context::sender(ctx),
         recipient,
         amount,
+        fee: fee_amount,
         btc_tx_id: tx_id,
         btc_block_height: height,
         btc_tx_index: tx_index,
