@@ -45,23 +45,24 @@ const EVersionMismatch: vector<u8> = b"The package has been updated. You are usi
 #[error]
 const EAlreadyUpdated: vector<u8> =
     b"The package version has been already updated to the latest one";
-#[error]
-const EReSetupTreasuryNotAllow: vector<u8> = b"Resetup treasury is not allow";
 
 //
 // Structs
 //
 
-/// WrappedTreasuryCap holds the TreasuryCap as well as configuration and state.
+/// NbtcContract holds the TreasuryCap as well as configuration and state.
 /// It should be a shared object to enable anyone to interact with the contract.
-public struct WrappedTreasuryCap has key, store {
+public struct NbtcContract has key, store {
     id: UID,
     version: u32,
     cap: TreasuryCap<NBTC>,
+    /// set of "minted" txs
     tx_ids: Table<vector<u8>, bool>,
-    trusted_lc_addr: Option<address>,
-    fallback_addr: Option<address>,
-    nbtc_bitcoin_pkh: Option<vector<u8>>,
+    // Bitcoin light client
+    bitcoin_lc: ID,
+    fallback_addr: address,
+    // TODO: change to taproot once Ika will support it
+    nbtc_bitcoin_pkh: vector<u8>,
 }
 
 /// MintEvent is emitted when nBTC is successfully minted.
@@ -69,8 +70,10 @@ public struct MintEvent has copy, drop {
     minter: address,
     recipient: address,
     amount: u64, // in satoshi
+    /// Bitcoin transaction ID
     btc_tx_id: vector<u8>,
     btc_block_height: u64,
+    /// index of the tx within the block.
     btc_tx_index: u64,
 }
 
@@ -85,38 +88,26 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         ctx,
     );
 
+    // NOTE: we removed post deployment setup function and didn't want to implement PTB style
+    // initialization, so we require setting the address before publishing the package.
+    let nbtc_bitcoin_pkh = b""; // TODO: valid bitcoin address
+    assert!(nbtc_bitcoin_pkh.length() >= 23);
     transfer::public_freeze_object(metadata);
-    let treasury = WrappedTreasuryCap {
+    let contract = NbtcContract {
         id: object::new(ctx),
         version: VERSION,
         cap: treasury_cap,
         tx_ids: table::new<vector<u8>, bool>(ctx),
-        trusted_lc_addr: option::none(),
-        fallback_addr: option::none(),
-        nbtc_bitcoin_pkh: option::none(),
+        bitcoin_lc: @bitcoin_lc.to_id(),
+        fallback_addr: @fallback_addr,
+        nbtc_bitcoin_pkh,
     };
-    transfer::public_share_object(treasury);
+    transfer::public_share_object(contract);
 }
 
 //
 // Public functions
 //
-
-/// Setup the spv light client, fallback_addr and btc public key hash for treasury
-public fun setup(
-    treasury: &mut WrappedTreasuryCap,
-    trusted_lc_addr: address,
-    fallback_addr: address,
-    nbtc_bitcoin_pkh: vector<u8>,
-) {
-    assert!(treasury.trusted_lc_addr.is_none(), EReSetupTreasuryNotAllow);
-    assert!(treasury.fallback_addr.is_none(), EReSetupTreasuryNotAllow);
-    assert!(treasury.nbtc_bitcoin_pkh.is_none(), EReSetupTreasuryNotAllow);
-
-    treasury.trusted_lc_addr = option::some(trusted_lc_addr);
-    treasury.fallback_addr = option::some(fallback_addr);
-    treasury.nbtc_bitcoin_pkh = option::some(nbtc_bitcoin_pkh);
-}
 
 /// Mints nBTC tokens after verifying a Bitcoin transaction proof.
 /// * `tx_bytes`: raw, hex-encoded tx bytes.
@@ -125,7 +116,7 @@ public fun setup(
 /// * `tx_index`: index of the tx within the block.
 /// Emits `MintEvent` if succesfull.
 public fun mint(
-    treasury: &mut WrappedTreasuryCap,
+    contract: &mut NbtcContract,
     light_client: &LightClient,
     tx_bytes: vector<u8>,
     proof: vector<vector<u8>>,
@@ -133,9 +124,9 @@ public fun mint(
     tx_index: u64,
     ctx: &mut TxContext,
 ) {
-    assert!(treasury.version == VERSION, EVersionMismatch);
+    assert!(contract.version == VERSION, EVersionMismatch);
     let provided_lc_id = object::id(light_client);
-    assert!(provided_lc_id == treasury.get_light_client_id(), EUntrustedLightClient);
+    assert!(provided_lc_id == contract.get_light_client_id(), EUntrustedLightClient);
 
     let mut r = reader::new(tx_bytes);
     let tx = tx::deserialize(&mut r);
@@ -147,13 +138,13 @@ public fun mint(
         proof,
         tx_index,
         &tx,
-        *treasury.nbtc_bitcoin_pkh.borrow(),
+        contract.nbtc_bitcoin_pkh,
     );
 
-    assert!(!treasury.tx_ids.contains(tx_id), ETxAlreadyUsed);
+    assert!(!contract.tx_ids.contains(tx_id), ETxAlreadyUsed);
     assert!(amount_satoshi > 0, EMintAmountIsZero);
 
-    let mut recipient_address: address = treasury.get_fallback_addr();
+    let mut recipient_address: address = contract.get_fallback_addr();
 
     if (op_return.is_some()) {
         let msg = op_return.extract();
@@ -166,14 +157,14 @@ public fun mint(
 
             // stream not end, format is invalid, move data to fallback
             if (!msg_reader.end_stream()) {
-                recipient_address = treasury.get_fallback_addr();
+                recipient_address = contract.get_fallback_addr();
             }
         }
     };
 
-    treasury.tx_ids.add(tx_id, true);
+    contract.tx_ids.add(tx_id, true);
 
-    coin::mint_and_transfer(&mut treasury.cap, amount_satoshi, recipient_address, ctx);
+    contract.cap.mint_and_transfer(amount_satoshi, recipient_address, ctx);
 
     event::emit(MintEvent {
         minter: tx_context::sender(ctx),
@@ -187,41 +178,50 @@ public fun mint(
 
 /// redeem returns total amount of redeemed balance
 public fun redeem(
-    treasury: &mut WrappedTreasuryCap,
+    contract: &mut NbtcContract,
     coins: vector<Coin<NBTC>>,
     _ctx: &mut TxContext,
 ): u64 {
-    assert!(treasury.version == VERSION, EVersionMismatch);
+    assert!(contract.version == VERSION, EVersionMismatch);
     // TODO: implement logic to guard burning
-    coins.fold!(0, |total, c| total + coin::burn(&mut treasury.cap, c))
+    coins.fold!(0, |total, c| total + coin::burn(&mut contract.cap, c))
 }
 
-/// update_version updates the treasury.version to the latest, making the usage of the older versions not possible
-public fun update_version(treasury: &mut WrappedTreasuryCap) {
-    assert!(VERSION > treasury.version, EAlreadyUpdated);
-    treasury.version = VERSION;
+/// update_version updates the contract.version to the latest, making the usage of the older versions not possible
+public fun update_version(contract: &mut NbtcContract) {
+    assert!(VERSION > contract.version, EAlreadyUpdated);
+    contract.version = VERSION;
 }
 
 //
 // View functions
 //
 
-public fun total_supply(treasury: &WrappedTreasuryCap): u64 {
-    coin::total_supply(&treasury.cap)
+public fun total_supply(contract: &NbtcContract): u64 {
+    coin::total_supply(&contract.cap)
 }
 
-public fun get_light_client_id(treasury: &WrappedTreasuryCap): ID {
-    object::id_from_address(*treasury.trusted_lc_addr.borrow())
+public fun get_light_client_id(contract: &NbtcContract): ID {
+    contract.bitcoin_lc
 }
 
-public fun get_fallback_addr(treasury: &WrappedTreasuryCap): address {
-    *treasury.fallback_addr.borrow()
+public fun get_fallback_addr(contract: &NbtcContract): address {
+    contract.fallback_addr
 }
+
+//
+// Testing
+//
 
 #[test_only]
-public(package) fun init_for_testing(ctx: &mut TxContext): WrappedTreasuryCap {
+public(package) fun init_for_testing(
+    bitcoin_lc: address,
+    fallback_addr: address,
+    nbtc_bitcoin_pkh: vector<u8>,
+    ctx: &mut TxContext,
+): NbtcContract {
     let witness = NBTC {};
-    let (treasury_cap, metadata) = coin::create_currency<NBTC>(
+    let (contract_cap, metadata) = coin::create_currency<NBTC>(
         witness,
         DECIMALS,
         SYMBOL,
@@ -231,14 +231,14 @@ public(package) fun init_for_testing(ctx: &mut TxContext): WrappedTreasuryCap {
         ctx,
     );
     transfer::public_freeze_object(metadata);
-    let treasury = WrappedTreasuryCap {
+    let contract = NbtcContract {
         id: object::new(ctx),
         version: VERSION,
-        cap: treasury_cap,
+        cap: contract_cap,
         tx_ids: table::new<vector<u8>, bool>(ctx),
-        trusted_lc_addr: option::none(),
-        fallback_addr: option::none(),
-        nbtc_bitcoin_pkh: option::none(),
+        bitcoin_lc: bitcoin_lc.to_id(),
+        fallback_addr,
+        nbtc_bitcoin_pkh,
     };
-    treasury
+    contract
 }
