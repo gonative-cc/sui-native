@@ -145,6 +145,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
 /// * `proof`: merkle proof for the tx.
 /// * `height`: block height, where the tx was included.
 /// * `tx_index`: index of the tx within the block.
+/// * `payload`: additional argument that is related to the op_return instruction handling.
 /// * `ops_arg`: operation argument controlling fee application.
 ///   - Pass `1` to apply minting fees.
 ///   - Pass `0` to skip minting fees (for special cases or admin operations).
@@ -156,6 +157,7 @@ public fun mint(
     proof: vector<vector<u8>>,
     height: u64,
     tx_index: u64,
+    _payload: vector<u8>,
     ops_arg: u32,
     ctx: &mut TxContext,
 ) {
@@ -191,7 +193,8 @@ public fun mint(
                 recipient = address::from_bytes(msg_reader.read(32));
             };
 
-            // stream not end, format is invalid, move data to fallback
+            // For flag=0x0 we expect only 32 bytes. If the stream is longer (more data), then
+            // the format is invalid, so moving recipient to fallback.
             if (!msg_reader.end_stream()) {
                 recipient = contract.get_fallback_addr();
             }
