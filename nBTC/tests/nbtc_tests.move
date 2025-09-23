@@ -15,7 +15,7 @@ use sui::test_utils::destroy;
 // The fallback Sui address to receive nBTC if OP_RETURN data is invalid or missing.
 // Use for test
 const FALLBACK_ADDR: address = @0xB0B;
-const NBTC_BITCOIN_ADDR: vector<u8> = x"509a651dd392e1bc125323f629b67d65cca3d4bb";
+const NBTC_PHK: vector<u8> = x"509a651dd392e1bc125323f629b67d65cca3d4bb";
 
 // context for this test:
 // regtest network
@@ -101,7 +101,7 @@ fun setup(nbtc_bitcoin_addr: vector<u8>, sender: address): (LightClient, NbtcCon
 #[test]
 fun test_nbtc_mint() {
     let sender = @0x1;
-    let (lc, mut cap, mut scenario) = setup(NBTC_BITCOIN_ADDR, sender);
+    let (lc, mut cap, mut scenario) = setup(NBTC_PHK, sender);
 
     mint_and_assert(
         &mut scenario,
@@ -119,7 +119,7 @@ fun test_nbtc_mint() {
 #[test]
 fun test_nbtc_mint_fallback() {
     let sender = @0x1;
-    let (lc, mut cap, mut scenario) = setup(NBTC_BITCOIN_ADDR, sender);
+    let (lc, mut cap, mut scenario) = setup(NBTC_PHK, sender);
 
     mint_and_assert(
         &mut scenario,
@@ -161,7 +161,7 @@ fun test_nbtc_mint_fail_amount_is_zero() {
 #[expected_failure(abort_code = ETxAlreadyUsed)]
 fun test_nbtc_mint_fail_tx_already_used() {
     let sender = @0x1;
-    let (lc, mut cap, mut scenario) = setup(NBTC_BITCOIN_ADDR, sender);
+    let (lc, mut cap, mut scenario) = setup(NBTC_PHK, sender);
     let data = get_valid_mint_data();
 
     // First mint, should succeed
@@ -194,7 +194,7 @@ fun test_nbtc_mint_fail_tx_already_used() {
 #[test, expected_failure(abort_code = EAlreadyUpdated)]
 fun test_update_version_fail() {
     let sender = @0x01;
-    let (_lc, mut cap, _scenario) = setup(NBTC_BITCOIN_ADDR, sender);
+    let (_lc, mut cap, _scenario) = setup(NBTC_PHK, sender);
     nbtc::update_version(&mut cap);
     abort
 }
