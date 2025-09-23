@@ -116,7 +116,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         bitcoin_lc: @bitcoin_lc.to_id(),
         fallback_addr: @fallback_addr,
         nbtc_bitcoin_pkh,
-        mint_fee: 0,
+        mint_fee: 10,
         fees_collected: balance::zero(),
     };
     transfer::public_share_object(contract);
