@@ -88,7 +88,7 @@ fun setup(nbtc_bitcoin_addr: vector<u8>, sender: address): (LightClient, NbtcCon
         ),
     ];
 
-    let lc = new_light_client(bitcoin_spv::params::regtest(), 0, headers, 0, 0, scenario.ctx());
+    let lc = new_light_client(bitcoin_spv::params::regtest(), 0, headers, 0, 1, scenario.ctx());
     let cap = nbtc::init_for_testing(
         lc.client_id().to_address(),
         FALLBACK_ADDR,
