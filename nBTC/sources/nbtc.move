@@ -287,6 +287,8 @@ public(package) fun init_for_testing(
         bitcoin_lc: bitcoin_lc.to_id(),
         fallback_addr,
         nbtc_bitcoin_pkh,
+        fees_collected: balance::zero(),
+        mint_fee: 10,
     };
     contract
 }
