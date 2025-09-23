@@ -88,7 +88,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         ctx,
     );
 
-    // we removed post deployment setup function and didn't want to implement PTB style
+    // NOTE: we removed post deployment setup function and didn't want to implement PTB style
     // initialization, so we require setting the address before publishing the package.
     let nbtc_bitcoin_pkh = b""; // TODO: valid bitcoin address
     assert!(nbtc_bitcoin_pkh.length() >= 23);
@@ -215,10 +215,10 @@ public fun get_fallback_addr(contract: &NbtcContract): address {
 
 #[test_only]
 public(package) fun init_for_testing(
-    ctx: &mut TxContext,
     bitcoin_lc: address,
     fallback_addr: address,
     nbtc_bitcoin_pkh: vector<u8>,
+    ctx: &mut TxContext,
 ): NbtcContract {
     let witness = NBTC {};
     let (contract_cap, metadata) = coin::create_currency<NBTC>(
