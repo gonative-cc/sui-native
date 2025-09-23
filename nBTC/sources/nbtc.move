@@ -7,6 +7,7 @@ use bitcoin_parser::tx;
 use bitcoin_spv::light_client::LightClient;
 use nbtc::verify_payment::verify_payment;
 use sui::address;
+use sui::balance::{Self, Balance};
 use sui::coin::{Self, Coin, TreasuryCap};
 use sui::event;
 use sui::table::{Self, Table};
@@ -50,7 +51,11 @@ const EAlreadyUpdated: vector<u8> =
 // Structs
 //
 
-/// Created only once in the `init` function.
+/// Operator capability. Created only once in the `init` function.
+public struct OpCap has key { id: UID }
+
+/// Admin capability. Created only once in the `init` function.
+/// It has higher capabilities than Operator. For example, it can change contract parameters .
 public struct AdminCap has key { id: UID }
 
 /// NbtcContract holds the TreasuryCap as well as configuration and state.
@@ -66,6 +71,9 @@ public struct NbtcContract has key, store {
     fallback_addr: address,
     // TODO: change to taproot once Ika will support it
     nbtc_bitcoin_pkh: vector<u8>,
+    /// fee in nBTC
+    mint_fee: u64,
+    fees_collected: Balance<NBTC>,
 }
 
 /// MintEvent is emitted when nBTC is successfully minted.
@@ -108,13 +116,19 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         bitcoin_lc: @bitcoin_lc.to_id(),
         fallback_addr: @fallback_addr,
         nbtc_bitcoin_pkh,
+        mint_fee: 0,
+        fees_collected: balance::zero(),
     };
     transfer::public_share_object(contract);
 
     transfer::transfer(
+        OpCap { id: object::new(ctx) },
+        ctx.sender(),
+    );
+    transfer::transfer(
         AdminCap { id: object::new(ctx) },
         ctx.sender(),
-    )
+    );
 }
 
 //
@@ -126,6 +140,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
 /// * `proof`: merkele proof for the tx.
 /// * `height`: block height, where the tx was included.
 /// * `tx_index`: index of the tx within the block.
+/// * `ops_arg`: additional argument for handling the operation and fees.
 /// Emits `MintEvent` if succesfull.
 public fun mint(
     contract: &mut NbtcContract,
@@ -134,6 +149,7 @@ public fun mint(
     proof: vector<vector<u8>>,
     height: u64,
     tx_index: u64,
+    ops_arg: u32,
     ctx: &mut TxContext,
 ) {
     assert!(contract.version == VERSION, EVersionMismatch);
@@ -144,7 +160,7 @@ public fun mint(
     let tx = tx::deserialize(&mut r);
 
     let tx_id = tx.tx_id();
-    let (amount_satoshi, mut op_return) = verify_payment(
+    let (mut amount, mut op_return) = verify_payment(
         light_client,
         height,
         proof,
@@ -154,9 +170,9 @@ public fun mint(
     );
 
     assert!(!contract.tx_ids.contains(tx_id), ETxAlreadyUsed);
-    assert!(amount_satoshi > 0, EMintAmountIsZero);
+    assert!(amount > 0, EMintAmountIsZero);
 
-    let mut recipient_address: address = contract.get_fallback_addr();
+    let mut recipient: address = contract.get_fallback_addr();
 
     if (op_return.is_some()) {
         let msg = op_return.extract();
@@ -164,24 +180,32 @@ public fun mint(
         let flag = msg_reader.read_byte();
         if (flag == 0x00) {
             if (msg_reader.readable(32)) {
-                recipient_address = address::from_bytes(msg_reader.read(32));
+                recipient = address::from_bytes(msg_reader.read(32));
             };
 
             // stream not end, format is invalid, move data to fallback
             if (!msg_reader.end_stream()) {
-                recipient_address = contract.get_fallback_addr();
+                recipient = contract.get_fallback_addr();
             }
         }
     };
 
     contract.tx_ids.add(tx_id, true);
+    let mut minted = contract.cap.mint_balance(amount);
 
-    contract.cap.mint_and_transfer(amount_satoshi, recipient_address, ctx);
+    if (ops_arg == 1) {
+        let fee_amount = if (amount <= contract.mint_fee) amount else contract.mint_fee;
+        let fee = minted.split(fee_amount);
+        amount = amount - fee_amount;
+        contract.fees_collected.join(fee);
+    };
+
+    transfer::public_transfer(coin::from_balance(minted, ctx), recipient);
 
     event::emit(MintEvent {
         minter: tx_context::sender(ctx),
-        recipient: recipient_address,
-        amount: amount_satoshi,
+        recipient,
+        amount,
         btc_tx_id: tx_id,
         btc_block_height: height,
         btc_tx_index: tx_index,
@@ -203,6 +227,18 @@ public fun redeem(
 public fun update_version(contract: &mut NbtcContract) {
     assert!(VERSION > contract.version, EAlreadyUpdated);
     contract.version = VERSION;
+}
+
+//
+// Admin functions
+//
+
+public fun withdraw_fees(_: &OpCap, contract: &mut NbtcContract, ctx: &mut TxContext): Coin<NBTC> {
+    coin::from_balance(contract.fees_collected.withdraw_all(), ctx)
+}
+
+public fun change_fees(_: &AdminCap, contract: &mut NbtcContract, mint_fee: u64) {
+    contract.mint_fee = mint_fee;
 }
 
 //
