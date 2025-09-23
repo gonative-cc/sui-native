@@ -164,7 +164,7 @@ public fun mint(
 
     contract.tx_ids.add(tx_id, true);
 
-    coin::mint_and_transfer(&mut contract.cap, amount_satoshi, recipient_address, ctx);
+    contract.cap.mint_and_transfer(amount_satoshi, recipient_address, ctx);
 
     event::emit(MintEvent {
         minter: tx_context::sender(ctx),
