@@ -313,6 +313,8 @@ const SHA256: u8 = 1;
 #[error]
 const EEqualVerify: vector<u8> = b"SCRIPT_ERR_EQUALVERIFY";
 #[error]
+const EPopStackEmpty: vector<u8> = b"Pop stack valid: Stack empty";
+#[error]
 const ETopStackEmpty: vector<u8> = b"Top stack valid: Stack empty";
 #[error]
 const EMissingTxCtx: vector<u8> = b"Missing transaction context";
