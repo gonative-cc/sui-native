@@ -83,7 +83,6 @@ public struct NbtcContract has key, store {
 
 /// MintEvent is emitted when nBTC is successfully minted.
 public struct MintEvent has copy, drop {
-    minter: address,
     recipient: address,
     amount: u64, // in satoshi
     fee: u64,
@@ -214,7 +213,6 @@ public fun mint(
     else minted.destroy_zero();
 
     event::emit(MintEvent {
-        minter: tx_context::sender(ctx),
         recipient,
         amount,
         fee: fee_amount,
