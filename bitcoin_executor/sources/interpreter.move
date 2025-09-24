@@ -313,17 +313,17 @@ const SUCCESS: u64 = 0;
 // ============= Errors ================================
 #[error]
 const EEqualVerify: vector<u8> = b"SCRIPT_ERR_EQUALVERIFY";
-const EPopStackEmpty: u64 = 1;
-const ETopStackEmpty: u64 = 2;
-const EMissingTxCtx: u64 = 3;
 #[error]
 const EUnsupportedSigVersionForChecksig: vector<u8> =
     b"Unsupported signature version for op_checksig";
-
-const EInvalidOpcode: u64 = 2;
-const EInternalBitcoinCoreOpcode: u64 = 3;
 #[error]
 const EInvalidPKHLength: vector<u8> = b"Invalid PHK: PHK should have length is 20";
+
+const EPopStackEmpty: u64 = 1;
+const ETopStackEmpty: u64 = 2;
+const EMissingTxCtx: u64 = 3;
+const EInvalidOpcode: u64 = 4;
+const EInternalBitcoinCoreOpcode: u64 = 5;
 
 public struct EvalResult has copy, drop {
     res: bool,
@@ -332,6 +332,10 @@ public struct EvalResult has copy, drop {
 
 public fun is_success(res: &EvalResult): bool {
     return res.err == 0 && res.res
+}
+
+public fun error(res: &EvalResult): u64 {
+    res.err
 }
 
 public struct TransactionContext has copy, drop {
