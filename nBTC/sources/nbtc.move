@@ -157,6 +157,8 @@ public fun mint(
     proof: vector<vector<u8>>,
     height: u64,
     tx_index: u64,
+    // TODO: The `payload` parameter is reserved for future use related to advanced op_return instruction handling.
+    //       Implementation pending. Do not remove; will be used to support additional minting logic.
     _payload: vector<u8>,
     ops_arg: u32,
     ctx: &mut TxContext,
