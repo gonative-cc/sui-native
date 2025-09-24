@@ -534,7 +534,6 @@ fun op_hash256(ip: &mut Interpreter) {
 }
 
 fun op_checksig(ip: &mut Interpreter) {
-
     let pubkey_bytes = ip.stack.pop().destroy_or!(abort EPopStackEmpty);
     let mut sig_bytes = ip.stack.pop().destroy_or!(abort EPopStackEmpty);
 

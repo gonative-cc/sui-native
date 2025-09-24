@@ -61,11 +61,11 @@ public fun pop(s: &mut Stack): option::Option<vector<u8>> {
 }
 
 /// Top returns an `option` of the top element
-public fun top(s: &Stack):  option::Option<vector<u8>> {
+public fun top(s: &Stack): option::Option<vector<u8>> {
     if (s.is_empty()) {
         option::none()
     } else {
-        option::some( s.internal[s.internal.length() - 1])
+        option::some(s.internal[s.internal.length() - 1])
     }
 }
 

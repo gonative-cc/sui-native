@@ -139,7 +139,10 @@ fun test_nbtc_mint_fallback() {
 fun test_nbtc_mint_fail_amount_is_zero() {
     let sender = @0x1;
     // Use a different treasury address so the payment to our main treasury is not found.
-    let (lc, mut cap, mut scenario) = setup(x"509a651dd392e1bc125323f629b67d65cca3d4ff", sender);
+    let (lc, mut cap, mut scenario) = setup(
+        x"509a651dd392e1bc125323f629b67d65cca3d4ff",
+        sender,
+    );
     let data = get_valid_mint_data();
 
     nbtc::mint(
