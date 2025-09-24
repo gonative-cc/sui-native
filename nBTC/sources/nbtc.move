@@ -269,6 +269,10 @@ public fun get_fallback_addr(contract: &NbtcContract): address {
     contract.fallback_addr
 }
 
+public fun get_mint_fee(contract: &NbtcContract): u64 {
+    contract.mint_fee
+}
+
 //
 // Testing
 //
@@ -303,4 +307,9 @@ public(package) fun init_for_testing(
         mint_fee: 10,
     };
     contract
+}
+
+#[test_only]
+public fun get_fees_collected(contract: &NbtcContract): u64 {
+    contract.fees_collected.value()
 }
