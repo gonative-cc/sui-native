@@ -48,7 +48,7 @@ fun mint_and_assert(
 ) {
     let TestData { tx_bytes, proof, height, tx_index, expected_recipient, expected_amount } = data;
 
-    nbtc::mint(ctr, lc, tx_bytes, proof, height, tx_index, vector[], ops_arg, scenario.ctx());
+    ctr.mint(lc, tx_bytes, proof, height, tx_index, vector[], ops_arg, scenario.ctx());
     test_scenario::next_tx(scenario, sender);
 
     let coin = take_from_address<Coin<NBTC>>(scenario, expected_recipient);
@@ -174,8 +174,7 @@ fun test_nbtc_mint_fail_amount_is_zero() {
     let (lc, mut ctr, mut scenario) = setup(x"509a651dd392e1bc125323f629b67d65cca3d4ff", sender);
     let data = get_valid_mint_data();
 
-    nbtc::mint(
-        &mut ctr,
+    ctr.mint(
         &lc,
         data.tx_bytes,
         data.proof,
@@ -199,8 +198,7 @@ fun test_nbtc_mint_fail_tx_already_used() {
     let data = get_valid_mint_data();
 
     // First mint, should succeed
-    nbtc::mint(
-        &mut ctr,
+    ctr.mint(
         &lc,
         data.tx_bytes,
         data.proof,
@@ -212,8 +210,7 @@ fun test_nbtc_mint_fail_tx_already_used() {
     );
 
     // Second mint (double spend), should fail
-    nbtc::mint(
-        &mut ctr,
+    ctr.mint(
         &lc,
         data.tx_bytes,
         data.proof,
