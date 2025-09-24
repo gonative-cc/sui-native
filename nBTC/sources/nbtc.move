@@ -203,7 +203,7 @@ public fun mint(
     let mut minted = contract.cap.mint_balance(amount);
     let mut fee_amount = 0;
 
-    if (ops_arg == 1) {
+    if (ops_arg == MINT_OP_APPLY_FEE) {
         fee_amount = amount.min(contract.mint_fee);
         let fee = minted.split(fee_amount);
         amount = amount - fee_amount;
