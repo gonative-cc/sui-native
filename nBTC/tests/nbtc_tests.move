@@ -17,11 +17,6 @@ use sui::test_utils::destroy;
 const FALLBACK_ADDR: address = @0xB0B;
 const NBTC_PHK: vector<u8> = x"509a651dd392e1bc125323f629b67d65cca3d4bb";
 
-// The fallback Sui address to receive nBTC if OP_RETURN data is invalid or missing.
-// Use for test
-const FALLBACK_ADDR: address = @0xB0B;
-const BTC_TREASURY: vector<u8> = x"509a651dd392e1bc125323f629b67d65cca3d4bb";
-
 // context for this test:
 // regtest network
 // 1 block
