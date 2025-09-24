@@ -104,8 +104,8 @@ fun validate_execution(state: &State, tx: Transaction): bool {
         // We will support more standard scripts.
         let pk = data.pkh();
         let script = create_p2wpkh_scriptcode(pk);
-        let valid = run(tx, stack, script, i, data.output().amount());
-        if (!valid) {
+        let res = run(tx, stack, script, i, data.output().amount());
+        if (!res.is_success()) {
             result = false;
             break
         };
