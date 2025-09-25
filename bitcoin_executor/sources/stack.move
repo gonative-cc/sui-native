@@ -5,13 +5,12 @@ module bitcoin_executor::stack;
 // ============= Constants ===========
 const MaximumStackSize: u64 = 1000;
 const MaximumElementSize: u64 = 520; // in bytes
+
 // ============= Errors =============
 #[error]
 const EReachMaximumSize: vector<u8> = b"Reach maximum element in stack";
 #[error]
 const EElementSizeInvalid: vector<u8> = b"Element size is greater than 520";
-#[error]
-const EPopStackEmpty: vector<u8> = b"Pop stack empty";
 
 public struct Stack has copy, drop {
     internal: vector<vector<u8>>,
@@ -52,16 +51,22 @@ public fun push_byte(s: &mut Stack, byte: u8) {
     s.internal.push_back(vector[byte]);
 }
 
-/// pops top element from the stack
-public fun pop(s: &mut Stack): vector<u8> {
-    assert!(!s.is_empty(), EPopStackEmpty);
-    s.internal.pop_back()
+/// Pop returns `option` top element of the stack and pop the top value
+public fun pop(s: &mut Stack): option::Option<vector<u8>> {
+    if (s.is_empty()) {
+        option::none()
+    } else {
+        option::some(s.internal.pop_back())
+    }
 }
 
-/// returns top element from the stack
-public fun top(s: &Stack): vector<u8> {
-    assert!(!s.is_empty(), EPopStackEmpty);
-    s.internal[s.internal.length() - 1]
+/// Top returns an `option` of the top element
+public fun top(s: &Stack): option::Option<vector<u8>> {
+    if (s.is_empty()) {
+        option::none()
+    } else {
+        option::some(s.internal[s.internal.length() - 1])
+    }
 }
 
 #[test_only]

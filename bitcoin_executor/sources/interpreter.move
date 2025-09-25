@@ -308,21 +308,35 @@ const SIG_VERSION_WITNESS_V0: u8 = 1; //SEGWIT
 
 /// Hash types
 const SHA256: u8 = 1;
+const SUCCESS: u64 = 0;
 
 // ============= Errors ================================
 #[error]
 const EEqualVerify: vector<u8> = b"SCRIPT_ERR_EQUALVERIFY";
 #[error]
-const EInvalidStackOperation: vector<u8> = b"Invalid stack operation";
-#[error]
-const EMissingTxCtx: vector<u8> = b"Missing transaction context";
-#[error]
 const EUnsupportedSigVersionForChecksig: vector<u8> =
     b"Unsupported signature version for op_checksig";
 #[error]
-const EInvalidOpcode: vector<u8> = b"Invalid Opcode";
-#[error]
-const EInternalBitcoinCoreOpcode: vector<u8> = b"Invalid Opcode: Bitcoin core internal";
+const EInvalidPKHLength: vector<u8> = b"PHK length must be 20";
+
+const EPopStackEmpty: u64 = 1;
+const ETopStackEmpty: u64 = 2;
+const EMissingTxCtx: u64 = 3;
+const EInvalidOpcode: u64 = 4;
+const EInternalBitcoinCoreOpcode: u64 = 5;
+
+public struct EvalResult has copy, drop {
+    res: bool,
+    err: u64,
+}
+
+public fun is_success(res: &EvalResult): bool {
+    return res.err == 0 && res.res
+}
+
+public fun error(res: &EvalResult): u64 {
+    res.err
+}
 
 public struct TransactionContext has copy, drop {
     tx: Transaction,
@@ -367,7 +381,7 @@ public fun run(
     script: vector<u8>,
     input_idx: u64,
     amount: u64,
-): bool {
+): EvalResult {
     let sig_version = if (tx.is_witness()) {
         SIG_VERSION_WITNESS_V0
     } else {
@@ -386,47 +400,57 @@ public fun run(
     ip.eval(r)
 }
 
-fun eval(ip: &mut Interpreter, r: Reader): bool {
+fun eval(ip: &mut Interpreter, r: Reader): EvalResult {
     ip.reader = r; // init new  reader
     while (!ip.reader.end_stream()) {
         let op = ip.reader.next_opcode();
 
-        if (op == OP_0) {
-            ip.op_push_empty_vector();
+        let err = if (op == OP_0) {
+            ip.op_push_empty_vector()
         } else if (op >= OP_PUSHBYTES_1 && op <= OP_PUSHBYTES_75) {
-            ip.op_push_n_bytes(op);
+            ip.op_push_n_bytes(op)
         } else if (op >= OP_1 && op <= OP_16) {
-            ip.op_push_small_int(op);
+            ip.op_push_small_int(op)
         } else if (op == OP_DUP) {
-            ip.op_dup();
+            ip.op_dup()
         } else if (op == OP_DROP) {
-            ip.op_drop();
+            ip.op_drop()
         } else if (op == OP_SWAP) {
-            ip.op_swap();
+            ip.op_swap()
         } else if (op == OP_SIZE) {
-            ip.op_size();
+            ip.op_size()
         } else if (op == OP_EQUAL) {
-            ip.op_equal();
+            ip.op_equal()
         } else if (op == OP_EQUALVERIFY) {
-            ip.op_equal_verify();
+            ip.op_equal_verify()
         } else if (op == OP_SHA256) {
-            ip.op_sha256();
+            ip.op_sha256()
         } else if (op == OP_HASH256) {
-            ip.op_hash256();
+            ip.op_hash256()
         } else if (op == OP_CHECKSIG) {
-            ip.op_checksig();
+            ip.op_checksig()
         } else if (op == OP_HASH160) {
-            ip.op_hash160();
+            ip.op_hash160()
         } else if (isBitcoinCoreInternalOpCode(op)) {
             // Bitcoin Core internal use opcode.  Defined here for completeness.
             // https://github.com/btcsuite/btcd/blob/v0.24.2/txscript/opcode.go#L581
-            abort EInternalBitcoinCoreOpcode
-        } else if (isInvalidOptCode(op)) {
-            abort EInvalidOpcode
-        }
-    };
+            EInternalBitcoinCoreOpcode
+        } else {
+            // isInvalidOptCode
+            EInvalidOpcode
+        };
 
-    ip.isSuccess()
+        if (err != 0) {
+            return EvalResult {
+                res: false,
+                err,
+            }
+        };
+    };
+    EvalResult {
+        res: ip.isSuccess(),
+        err: 0,
+    }
 }
 
 fun isInvalidOptCode(op: u8): bool {
@@ -447,7 +471,7 @@ public fun isSuccess(ip: &Interpreter): bool {
         return false
     };
     let top = ip.stack.top();
-    cast_to_bool(&top)
+    cast_to_bool(&top.destroy_or!(abort ETopStackEmpty))
 }
 
 fun cast_to_bool(v: &vector<u8>): bool {
@@ -463,87 +487,132 @@ fun cast_to_bool(v: &vector<u8>): bool {
     false
 }
 
-fun op_push_empty_vector(ip: &mut Interpreter) {
+fun op_push_empty_vector(ip: &mut Interpreter): u64 {
     ip.stack.push(vector[]);
+    SUCCESS
 }
 
-fun op_push_n_bytes(ip: &mut Interpreter, num_bytes_to_push: u8) {
+fun op_push_n_bytes(ip: &mut Interpreter, num_bytes_to_push: u8): u64 {
     let data_to_push = ip.reader.read(num_bytes_to_push as u64);
     ip.stack.push(data_to_push);
+    SUCCESS
 }
 
-fun op_push_small_int(ip: &mut Interpreter, opcode: u8) {
+fun op_push_small_int(ip: &mut Interpreter, opcode: u8): u64 {
     // OP_1 (81) corresponds to 1  (81 - 81 + 1 = 1)
     // OP_16 (96) corresponds to 16 (96 - 81 + 1 = 16)
     let numeric_value: u8 = opcode - OP_1 + 1;
     ip.stack.push_byte(numeric_value);
+    SUCCESS
 }
 
-fun op_equal(ip: &mut Interpreter) {
+fun op_equal(ip: &mut Interpreter): u64 {
     let first_value = ip.stack.pop();
     let second_value = ip.stack.pop();
+
+    if (first_value.is_none() || second_value.is_none()) {
+        return EPopStackEmpty
+    };
     let ans = if (first_value == second_value) {
         vector[1]
     } else {
         vector[0]
     };
     ip.stack.push(ans);
+    SUCCESS
 }
 
-fun op_equal_verify(ip: &mut Interpreter) {
-    ip.op_equal();
-    assert!(ip.stack.pop() == vector[1], EEqualVerify);
+fun op_equal_verify(ip: &mut Interpreter): u64 {
+    let previous_opcode_result = ip.op_equal();
+    if (previous_opcode_result != SUCCESS) {
+        return previous_opcode_result
+    };
+    let is_equal = ip.stack.pop().destroy_or!(abort EPopStackEmpty);
+    assert!(is_equal == vector[1], EEqualVerify);
+    SUCCESS
 }
 
 // OP_DUP eval
-fun op_dup(ip: &mut Interpreter) {
-    let value = ip.stack.top();
-    ip.stack.push(value)
+fun op_dup(ip: &mut Interpreter): u64 {
+    let mut value = ip.stack.top();
+    if (value.is_none()) {
+        EPopStackEmpty
+    } else {
+        ip.stack.push(value.extract());
+        SUCCESS
+    }
 }
 
-fun op_drop(ip: &mut Interpreter) {
+fun op_drop(ip: &mut Interpreter): u64 {
+    if (ip.stack.is_empty()) {
+        return EPopStackEmpty
+    };
     ip.stack.pop();
+    SUCCESS
 }
 
-fun op_size(ip: &mut Interpreter) {
-    let top_element = ip.stack.top();
-    let size = top_element.length();
-    ip.stack.push(utils::u64_to_cscriptnum(size))
+fun op_size(ip: &mut Interpreter): u64 {
+    let mut top_element = ip.stack.top();
+    if (top_element.is_none()) {
+        return ETopStackEmpty
+    };
+    let size = top_element.extract().length();
+    ip.stack.push(utils::u64_to_cscriptnum(size));
+    SUCCESS
 }
 
-fun op_swap(ip: &mut Interpreter) {
-    assert!(ip.stack.size() >=2, EInvalidStackOperation);
-    let first_element = ip.stack.pop();
-    let second_element = ip.stack.pop();
-    ip.stack.push(first_element);
-    ip.stack.push(second_element);
+fun op_swap(ip: &mut Interpreter): u64 {
+    let mut first_element = ip.stack.pop();
+    let mut second_element = ip.stack.pop();
+    if (first_element.is_none() || second_element.is_none()) {
+        return EPopStackEmpty
+    };
+    ip.stack.push(first_element.extract());
+    ip.stack.push(second_element.extract());
+    SUCCESS
 }
 
-fun op_sha256(ip: &mut Interpreter) {
-    let value = ip.stack.pop();
-    ip.stack.push(sha2_256(value))
+fun op_sha256(ip: &mut Interpreter): u64 {
+    let mut value = ip.stack.pop();
+    if (value.is_none()) {
+        return EPopStackEmpty
+    };
+    ip.stack.push(sha2_256(value.extract()));
+    SUCCESS
 }
 
-fun op_hash256(ip: &mut Interpreter) {
-    let value = ip.stack.pop();
-    ip.stack.push(hash256(value))
+fun op_hash256(ip: &mut Interpreter): u64 {
+    let mut value = ip.stack.pop();
+    if (value.is_none()) {
+        return EPopStackEmpty
+    };
+    ip.stack.push(hash256(value.extract()));
+    SUCCESS
 }
 
-fun op_checksig(ip: &mut Interpreter) {
-    assert!(ip.stack.size() >= 2, EInvalidStackOperation);
+fun op_checksig(ip: &mut Interpreter): u64 {
+    let mut pubkey_bytes = ip.stack.pop();
+    if (pubkey_bytes.is_none()) {
+        return EPopStackEmpty
+    };
 
-    let pubkey_bytes = ip.stack.pop();
     let mut sig_bytes = ip.stack.pop();
+    if (sig_bytes.is_none()) {
+        return EPopStackEmpty
+    };
+
+    let pubkey_bytes = pubkey_bytes.extract();
+    let mut sig_bytes = sig_bytes.extract();
 
     if (sig_bytes.is_empty()) {
         ip.stack.push(utils::vector_false());
-        return
+        return SUCCESS
     };
 
     // https://learnmeabitcoin.com/technical/keys/signature/
     let (sig_to_verify, sighash_flag) = btc_encoding::parse_btc_sig(&mut sig_bytes);
 
-    assert!(option::is_some(&ip.tx_context), EMissingTxCtx);
+    if (option::is_none(&ip.tx_context)) { return EMissingTxCtx };
 
     let message_digest = create_sighash(ip, pubkey_bytes, sighash_flag);
 
@@ -559,10 +628,11 @@ fun op_checksig(ip: &mut Interpreter) {
     } else {
         ip.stack.push(utils::vector_false());
     };
+    SUCCESS
 }
 
 public fun create_p2wpkh_scriptcode(pkh: vector<u8>): vector<u8> {
-    assert!(pkh.length() == 20, EInvalidStackOperation);
+    assert!(pkh.length() == 20, EInvalidPKHLength);
     let mut script = vector::empty<u8>();
     script.push_back(OP_DUP);
     script.push_back(OP_HASH160);
@@ -596,12 +666,13 @@ fun create_sighash(ip: &Interpreter, pub_key: vector<u8>, sighash_flag: u8): vec
     }
 }
 
-fun op_hash160(ip: &mut Interpreter) {
-    let value = ip.stack.pop();
+fun op_hash160(ip: &mut Interpreter): u64 {
+    let value = ip.stack.pop().destroy_or!(abort EPopStackEmpty);
     let sha = sha2_256(value);
     let mut hasher = ripemd160::new();
     hasher.write(sha, sha.length());
-    ip.stack.push(hasher.finalize())
+    ip.stack.push(hasher.finalize());
+    SUCCESS
 }
 
 #[test]
@@ -610,8 +681,8 @@ fun test_op_0() {
     ip.op_push_empty_vector();
 
     assert_eq!(ip.stack.size(), 1);
-    let top_val = ip.stack.top();
-    assert_eq!(top_val.length(), 0);
+    let top_val = ip.stack.top().destroy_or!(abort);
+    assert_eq!(top_val, vector[]);
     assert_eq!(ip.isSuccess(), false);
 }
 
@@ -626,7 +697,7 @@ fun test_op_push_n_bytes() {
     ip.op_push_n_bytes(num_bytes);
 
     assert_eq!(ip.stack.size(), 1);
-    let top_val = ip.stack.top();
+    let top_val = ip.stack.top().destroy_some();
     assert_eq!(top_val, vector[0x01, 0x02, 0x03]);
     assert_eq!(ip.isSuccess(), true);
 
@@ -634,7 +705,7 @@ fun test_op_push_n_bytes() {
     ip.op_push_n_bytes(num_bytes);
 
     assert_eq!(ip.stack.size(), 2);
-    let top_val = ip.stack.top();
+    let top_val = ip.stack.top().destroy_some();
     assert_eq!(top_val, vector[0x04]);
     assert_eq!(ip.isSuccess(), true);
 
@@ -642,7 +713,7 @@ fun test_op_push_n_bytes() {
     ip.op_push_n_bytes(num_bytes);
 
     assert_eq!(ip.stack.size(), 3);
-    let top_val = ip.stack.top();
+    let top_val = ip.stack.top().destroy_some();
     assert_eq!(top_val, vector[0x05, 0x06]);
     assert_eq!(ip.isSuccess(), true);
 }
@@ -671,7 +742,7 @@ fun op_push_small_int_helper(
 ) {
     ip.op_push_small_int(opcode);
     assert_eq!(ip.stack.size(), expected_size);
-    assert_eq!(ip.stack.top(), top_val);
+    assert_eq!(ip.stack.top().destroy_some(), top_val);
     assert_eq!(ip.isSuccess(), true);
 }
 
@@ -679,16 +750,16 @@ fun op_push_small_int_helper(
 fun test_op_equal() {
     let mut ip = new_test_ip(vector[vector[10], vector[10]]);
     ip.op_equal();
-    assert_eq!(ip.stack.top(), vector[1]);
+    assert_eq!(ip.stack.top().destroy_or!(abort), vector[1]);
 
     ip.stack.push(vector[1]);
     ip.op_equal();
-    assert_eq!(ip.stack.top(), vector[1]);
+    assert_eq!(ip.stack.top().destroy_or!(abort), vector[1]);
 
     ip.stack.push(vector[20]);
     ip.stack.push(vector[10]);
     ip.op_equal();
-    assert_eq!(ip.stack.top(), vector[0]);
+    assert_eq!(ip.stack.top().destroy_or!(abort), vector[0]);
 }
 
 #[test]
@@ -703,7 +774,7 @@ fun test_op_equal_verify_fail() {
     ip.op_equal_verify();
 }
 
-#[test, expected_failure(abort_code = stack::EPopStackEmpty)]
+#[test]
 fun test_op_equal_fail() {
     let mut ip = new_test_ip(vector[vector[10]]);
     ip.op_equal();
@@ -717,7 +788,7 @@ fun test_op_dup() {
     assert_eq!(ip.stack.size(), 2);
 }
 
-#[test, expected_failure(abort_code = stack::EPopStackEmpty)]
+#[test]
 fun test_op_dup_fail() {
     let mut ip = new_empty_test_ip();
     ip.op_dup();
@@ -731,10 +802,10 @@ fun test_op_drop() {
     assert_eq!(ip.stack.size(), 0);
 }
 
-#[test, expected_failure(abort_code = stack::EPopStackEmpty)]
+#[test]
 fun test_op_drop_fail() {
     let mut ip = new_empty_test_ip();
-    ip.op_drop();
+    assert_eq!(ip.op_drop(), EPopStackEmpty);
 }
 
 #[test]
@@ -745,10 +816,10 @@ fun test_op_swap() {
     assert_eq!(ip.stack.get_all_values(), vector[vector[0x02], vector[0x01]]);
 }
 
-#[test, expected_failure(abort_code = EInvalidStackOperation)]
+#[test]
 fun test_op_swap_fail() {
     let mut ip = new_test_ip(vector[vector[1]]);
-    ip.op_swap();
+    assert_eq!(ip.op_swap(), EPopStackEmpty);
 }
 
 #[test]
@@ -760,13 +831,13 @@ fun test_op_size() {
         ip.stack.get_all_values(),
         vector[vector[0x01], vector[0x01, 0x02, 0x03, 0x08], vector[0x04]],
     );
-    assert_eq!(ip.stack.top(), vector[0x04]);
+    assert_eq!(ip.stack.top().destroy_some(), vector[0x04]);
 }
 
-#[test, expected_failure(abort_code = stack::EPopStackEmpty)]
+#[test]
 fun test_op_size_fail() {
     let mut ip = new_empty_test_ip();
-    ip.op_size();
+    assert_eq!(ip.op_size(), ETopStackEmpty);
 }
 
 #[test]
@@ -776,7 +847,7 @@ fun test_op_sha256() {
     assert_eq!(ip.stack.size(), 1);
     let expected_hash: vector<u8> =
         x"4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a";
-    assert_eq!(ip.stack.top(), expected_hash);
+    assert_eq!(ip.stack.top().destroy_some(), expected_hash);
     assert_eq!(ip.stack.get_all_values(), vector[expected_hash]);
 }
 
@@ -787,7 +858,7 @@ fun test_op_hash256() {
     assert_eq!(ip.stack.size(), 1);
     let expected_hash: vector<u8> =
         x"9c12cfdc04c74584d787ac3d23772132c18524bc7ab28dec4219b8fc5b425f70";
-    assert_eq!(ip.stack.top(), expected_hash);
+    assert_eq!(ip.stack.top().destroy_some(), expected_hash);
     assert_eq!(ip.stack.get_all_values(), vector[expected_hash]);
 }
 
@@ -853,7 +924,7 @@ fun test_op_checksig() {
     ip.op_checksig();
 
     assert_eq!(ip.stack.size(), 1);
-    assert_eq!(ip.stack.top(), utils::vector_true());
+    assert_eq!(ip.stack.top().destroy_some(), utils::vector_true());
 }
 
 #[test]
@@ -862,57 +933,57 @@ fun test_op_hash160() {
     ip.op_hash160();
     assert_eq!(ip.stack.size(), 1);
     let expected_hash: vector<u8> = x"82c12e3c770a95bd17fd1d983d6b2af2037b7a4b";
-    assert_eq!(ip.stack.top(), expected_hash);
+    assert_eq!(ip.stack.top().destroy_some(), expected_hash);
     assert_eq!(ip.stack.get_all_values(), vector[expected_hash]);
 }
 
-#[test, expected_failure(abort_code = EInternalBitcoinCoreOpcode)]
+#[test]
 fun test_op_unknown252() {
-    eval_test_ip(vector[OP_UNKNOWN252], vector[]);
+    assert_eq!(eval_test_ip(vector[OP_UNKNOWN252], vector[]).err, EInternalBitcoinCoreOpcode);
 }
 
-#[test, expected_failure(abort_code = EInternalBitcoinCoreOpcode)]
+#[test]
 fun test_op_smallinteger() {
-    eval_test_ip(vector[OP_SMALLINTEGER], vector[]);
+    assert_eq!(eval_test_ip(vector[OP_SMALLINTEGER], vector[]).err, EInternalBitcoinCoreOpcode);
 }
 
-#[test, expected_failure(abort_code = EInternalBitcoinCoreOpcode)]
+#[test]
 fun test_op_pubkey() {
-    eval_test_ip(vector[OP_PUBKEY], vector[]);
+    assert_eq!(eval_test_ip(vector[OP_PUBKEY], vector[]).err, EInternalBitcoinCoreOpcode);
 }
 
-#[test, expected_failure(abort_code = EInternalBitcoinCoreOpcode)]
+#[test]
 fun test_op_pubkeys() {
-    eval_test_ip(vector[OP_PUBKEYS], vector[]);
+    assert_eq!(eval_test_ip(vector[OP_PUBKEYS], vector[]).err, EInternalBitcoinCoreOpcode);
 }
 
-#[test, expected_failure(abort_code = EInternalBitcoinCoreOpcode)]
+#[test]
 fun test_op_pubkhash() {
-    eval_test_ip(vector[OP_PUBKEYHASH], vector[]);
+    assert_eq!(eval_test_ip(vector[OP_PUBKEYHASH], vector[]).err, EInternalBitcoinCoreOpcode);
 }
 
-#[test, expected_failure(abort_code = EInvalidOpcode)]
+#[test]
 fun test_op_invalid() {
-    eval_test_ip(vector[OP_INVALIDOPCODE], vector[]);
+    assert_eq!(eval_test_ip(vector[OP_INVALIDOPCODE], vector[]).err, EInvalidOpcode);
 }
 
-#[test, expected_failure(abort_code = EInvalidOpcode)]
+#[test]
 fun test_op_unknown187() {
-    eval_test_ip(vector[OP_UNKNOWN187], vector[]);
+    assert_eq!(eval_test_ip(vector[OP_UNKNOWN187], vector[]).err, EInvalidOpcode);
 }
 
-#[test, expected_failure(abort_code = EInvalidOpcode)]
+#[test]
 fun test_op_unknown249() {
-    eval_test_ip(vector[OP_UNKNOWN249], vector[]);
+    assert_eq!(eval_test_ip(vector[OP_UNKNOWN249], vector[]).err, EInvalidOpcode);
 }
 
-#[test, expected_failure(abort_code = EInvalidOpcode)]
+#[test]
 fun test_op_unknown188() {
-    eval_test_ip(vector[OP_UNKNOWN187+1], vector[]);
+    assert_eq!(eval_test_ip(vector[OP_UNKNOWN187+1], vector[]).err, EInvalidOpcode);
 }
 
 #[test_only]
-fun eval_test_ip(script: vector<u8>, stack_data: vector<vector<u8>>): bool {
+fun eval_test_ip(script: vector<u8>, stack_data: vector<vector<u8>>): EvalResult {
     let mut ip = new_test_ip(stack_data);
     ip.eval(reader::new(script))
 }

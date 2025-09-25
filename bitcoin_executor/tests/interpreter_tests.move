@@ -21,5 +21,5 @@ fun run_segwit_script() {
     let pk = x"5c2dc82f606be66506b7403f9b304f5e0908b652";
     let script = create_p2wpkh_scriptcode(pk);
     let ans = run(tx, stack, script, index, amount);
-    assert_eq!(ans, true)
+    assert_eq!(ans.is_success(), true)
 }
