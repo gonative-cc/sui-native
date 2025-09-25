@@ -317,7 +317,7 @@ const EEqualVerify: vector<u8> = b"SCRIPT_ERR_EQUALVERIFY";
 const EUnsupportedSigVersionForChecksig: vector<u8> =
     b"Unsupported signature version for op_checksig";
 #[error]
-const EInvalidPKHLength: vector<u8> = b"Invalid PHK: PHK should have length is 20";
+const EInvalidPKHLength: vector<u8> = b"PHK length must be 20";
 
 const EPopStackEmpty: u64 = 1;
 const ETopStackEmpty: u64 = 2;
