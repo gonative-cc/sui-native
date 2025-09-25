@@ -681,8 +681,8 @@ fun test_op_0() {
     ip.op_push_empty_vector();
 
     assert_eq!(ip.stack.size(), 1);
-    let top_val = ip.stack.top();
-    assert_eq!(top_val, option::some(vector[]));
+    let top_val = ip.stack.top().destroy_or!(abort);
+    assert_eq!(top_val, vector[]);
     assert_eq!(ip.isSuccess(), false);
 }
 
@@ -750,16 +750,16 @@ fun op_push_small_int_helper(
 fun test_op_equal() {
     let mut ip = new_test_ip(vector[vector[10], vector[10]]);
     ip.op_equal();
-    assert_eq!(ip.stack.top(), option::some(vector[1]));
+    assert_eq!(ip.stack.top().destroy_or!(abort), vector[1]);
 
     ip.stack.push(vector[1]);
     ip.op_equal();
-    assert_eq!(ip.stack.top(), option::some(vector[1]));
+    assert_eq!(ip.stack.top().destroy_or!(abort), vector[1]);
 
     ip.stack.push(vector[20]);
     ip.stack.push(vector[10]);
     ip.op_equal();
-    assert_eq!(ip.stack.top(), option::some(vector[0]));
+    assert_eq!(ip.stack.top().destroy_or!(abort), vector[0]);
 }
 
 #[test]
