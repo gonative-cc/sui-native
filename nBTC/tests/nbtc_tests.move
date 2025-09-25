@@ -17,6 +17,9 @@ use sui::test_utils::destroy;
 const FALLBACK_ADDR: address = @0xB0B;
 const NBTC_PHK: vector<u8> = x"509a651dd392e1bc125323f629b67d65cca3d4bb";
 
+// copy from nbtc.move
+const MINT_OP_APPLY_FEE: u32 = 1;
+
 // context for this test:
 // regtest network
 // 1 block
@@ -37,18 +40,22 @@ public struct TestData has drop {
 #[test_only]
 fun mint_and_assert(
     scenario: &mut Scenario,
-    cap: &mut NbtcContract,
+    ctr: &mut NbtcContract,
     lc: &LightClient,
     data: TestData,
     sender: address,
+    ops_arg: u32,
 ) {
     let TestData { tx_bytes, proof, height, tx_index, expected_recipient, expected_amount } = data;
 
-    nbtc::mint(cap, lc, tx_bytes, proof, height, tx_index, scenario.ctx());
+    ctr.mint(lc, tx_bytes, proof, height, tx_index, vector[], ops_arg, scenario.ctx());
     test_scenario::next_tx(scenario, sender);
 
     let coin = take_from_address<Coin<NBTC>>(scenario, expected_recipient);
-    assert_eq!(coin.value(), expected_amount);
+    let amount = coin.value();
+    if (ops_arg == MINT_OP_APPLY_FEE) assert_eq!(amount, expected_amount - ctr.get_mint_fee())
+    else assert_eq!(amount, expected_amount);
+
     destroy(coin);
 }
 
@@ -89,48 +96,73 @@ fun setup(nbtc_bitcoin_addr: vector<u8>, sender: address): (LightClient, NbtcCon
     ];
 
     let lc = new_light_client(bitcoin_spv::params::regtest(), 0, headers, 0, 1, scenario.ctx());
-    let cap = nbtc::init_for_testing(
+    let ctr = nbtc::init_for_testing(
         lc.client_id().to_address(),
         FALLBACK_ADDR,
         nbtc_bitcoin_addr,
         scenario.ctx(),
     );
-    (lc, cap, scenario)
+    (lc, ctr, scenario)
 }
 
 #[test]
 fun test_nbtc_mint() {
     let sender = @0x1;
-    let (lc, mut cap, mut scenario) = setup(NBTC_PHK, sender);
+    let (lc, mut ctr, mut scenario) = setup(NBTC_PHK, sender);
 
     mint_and_assert(
         &mut scenario,
-        &mut cap,
+        &mut ctr,
         &lc,
         get_valid_mint_data(),
         sender,
+        0,
+    );
+
+    // check with fallback
+    mint_and_assert(
+        &mut scenario,
+        &mut ctr,
+        &lc,
+        get_fallback_mint_data(),
+        sender,
+        0,
     );
 
     destroy(lc);
-    destroy(cap);
+    destroy(ctr);
     scenario.end();
 }
 
 #[test]
-fun test_nbtc_mint_fallback() {
+fun test_mint_with_fee() {
     let sender = @0x1;
-    let (lc, mut cap, mut scenario) = setup(NBTC_PHK, sender);
+    let (lc, mut ctr, mut scenario) = setup(NBTC_PHK, sender);
 
     mint_and_assert(
         &mut scenario,
-        &mut cap,
+        &mut ctr,
+        &lc,
+        get_valid_mint_data(),
+        sender,
+        1,
+    );
+
+    // check with fallback
+    mint_and_assert(
+        &mut scenario,
+        &mut ctr,
         &lc,
         get_fallback_mint_data(),
         sender,
+        1,
     );
 
+    // mint with fallback should take fee as well.
+    assert_eq!(ctr.get_fees_collected(), 2*ctr.get_mint_fee());
+
     destroy(lc);
-    destroy(cap);
+    destroy(ctr);
     scenario.end();
 }
 
@@ -139,24 +171,22 @@ fun test_nbtc_mint_fallback() {
 fun test_nbtc_mint_fail_amount_is_zero() {
     let sender = @0x1;
     // Use a different treasury address so the payment to our main treasury is not found.
-    let (lc, mut cap, mut scenario) = setup(
-        x"509a651dd392e1bc125323f629b67d65cca3d4ff",
-        sender,
-    );
+    let (lc, mut ctr, mut scenario) = setup(x"509a651dd392e1bc125323f629b67d65cca3d4ff", sender);
     let data = get_valid_mint_data();
 
-    nbtc::mint(
-        &mut cap,
+    ctr.mint(
         &lc,
         data.tx_bytes,
         data.proof,
         data.height,
         data.tx_index,
+        vector[],
+        0,
         scenario.ctx(),
     );
 
     destroy(lc);
-    destroy(cap);
+    destroy(ctr);
     scenario.end();
 }
 
@@ -164,40 +194,42 @@ fun test_nbtc_mint_fail_amount_is_zero() {
 #[expected_failure(abort_code = ETxAlreadyUsed)]
 fun test_nbtc_mint_fail_tx_already_used() {
     let sender = @0x1;
-    let (lc, mut cap, mut scenario) = setup(NBTC_PHK, sender);
+    let (lc, mut ctr, mut scenario) = setup(NBTC_PHK, sender);
     let data = get_valid_mint_data();
 
     // First mint, should succeed
-    nbtc::mint(
-        &mut cap,
+    ctr.mint(
         &lc,
         data.tx_bytes,
         data.proof,
         data.height,
         data.tx_index,
+        vector[],
+        0,
         scenario.ctx(),
     );
 
     // Second mint (double spend), should fail
-    nbtc::mint(
-        &mut cap,
+    ctr.mint(
         &lc,
         data.tx_bytes,
         data.proof,
         data.height,
         data.tx_index,
+        vector[],
+        0,
         scenario.ctx(),
     );
 
     destroy(lc);
-    destroy(cap);
+    destroy(ctr);
     scenario.end();
 }
 
 #[test, expected_failure(abort_code = EAlreadyUpdated)]
 fun test_update_version_fail() {
     let sender = @0x01;
-    let (_lc, mut cap, _scenario) = setup(NBTC_PHK, sender);
-    nbtc::update_version(&mut cap);
+    let (_lc, mut ctr, _scenario) = setup(NBTC_PHK, sender);
+    nbtc::update_version(&mut ctr);
     abort
 }
