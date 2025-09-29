@@ -181,6 +181,11 @@ public fun mint(
 
     let tx_id = tx.tx_id();
 
+    // Double check prevent
+    assert!(!contract.tx_ids.contains(tx_id), ETxAlreadyUsed);
+    contract.tx_ids.add(tx_id, true);
+    // NOTE: We assume only one active key. We should handle mutiple nbtc active key in the
+    // future.
     contract.nbtc_active_keys.keys().do_ref!(|pkh| {
         let (mut amount, mut op_return) = verify_payment(
             light_client,
@@ -191,7 +196,8 @@ public fun mint(
             *pkh,
         );
 
-        assert!(!contract.tx_ids.contains(tx_id), ETxAlreadyUsed);
+        // TODO: handle case mutiple keys active at one time.
+        // Because the amount can be zero in this case.
         assert!(amount > 0, EMintAmountIsZero);
 
         let mut recipient: address = contract.get_fallback_addr();
@@ -213,7 +219,6 @@ public fun mint(
             }
         };
 
-        contract.tx_ids.add(tx_id, true);
         let mut minted = contract.cap.mint_balance(amount);
         let mut fee_amount = 0;
 
