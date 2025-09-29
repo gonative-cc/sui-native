@@ -52,6 +52,12 @@ const EAlreadyUpdated: vector<u8> =
     b"The package version has been already updated to the latest one";
 #[error]
 const EInvalidOpsArg: vector<u8> = b"invalid mint ops_arg";
+#[error]
+const ERemoveActiveKey: vector<u8> = b"Remove active key";
+#[error]
+const EDisableKeyNotInKeySet: vector<u8> = b"Disable key not in key set";
+#[error]
+const EEnableKeyNotInKeySet: vector<u8> = b"Endable key not in key set";
 //
 // Structs
 //
@@ -266,16 +272,17 @@ public fun add_phk(_: &AdminCap, contract: &mut NbtcContract, phk: vector<u8>) {
 }
 
 public fun remove_phk(_: &AdminCap, contract: &mut NbtcContract, phk: vector<u8>) {
+    assert!(!contract.nbtc_active_keys.contains(&phk), ERemoveActiveKey);
     contract.nbtc_bitcoin_pkhs.remove(&phk);
 }
 
 public fun disable_key(_: &AdminCap, contract: &mut NbtcContract, phk: vector<u8>) {
-    assert!(contract.nbtc_bitcoin_pkhs.contains(&phk));
+    assert!(contract.nbtc_bitcoin_pkhs.contains(&phk), EDisableKeyNotInKeySet);
     contract.nbtc_active_keys.remove(&phk);
 }
 
 public fun enable_key(_: &AdminCap, contract: &mut NbtcContract, phk: vector<u8>) {
-    assert!(contract.nbtc_bitcoin_pkhs.contains(&phk));
+    assert!(contract.nbtc_bitcoin_pkhs.contains(&phk), EEnableKeyNotInKeySet);
     contract.nbtc_active_keys.insert(phk);
 }
 
@@ -297,6 +304,14 @@ public fun get_fallback_addr(contract: &NbtcContract): address {
 
 public fun get_mint_fee(contract: &NbtcContract): u64 {
     contract.mint_fee
+}
+
+public fun active_keys(contract: &NbtcContract): &vector<vector<u8>> {
+    contract.nbtc_active_keys.keys()
+}
+
+public fun all_keys(contract: &NbtcContract): &vector<vector<u8>> {
+    contract.nbtc_bitcoin_pkhs.keys()
 }
 
 //
