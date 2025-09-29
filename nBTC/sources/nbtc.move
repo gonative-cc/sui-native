@@ -12,6 +12,7 @@ use sui::coin::{Self, Coin, TreasuryCap};
 use sui::event;
 use sui::table::{Self, Table};
 use sui::url;
+use sui::vec_set::{Self, VecSet};
 
 //
 // Constant
@@ -51,7 +52,6 @@ const EAlreadyUpdated: vector<u8> =
     b"The package version has been already updated to the latest one";
 #[error]
 const EInvalidOpsArg: vector<u8> = b"invalid mint ops_arg";
-
 //
 // Structs
 //
@@ -75,7 +75,8 @@ public struct NbtcContract has key, store {
     bitcoin_lc: ID,
     fallback_addr: address,
     // TODO: change to taproot once Ika will support it
-    nbtc_bitcoin_pkh: vector<u8>,
+    nbtc_bitcoin_pkhs: VecSet<vector<u8>>,
+    nbtc_active_keys: VecSet<vector<u8>>,
     /// as in Balance<nBTC>
     mint_fee: u64,
     fees_collected: Balance<NBTC>,
@@ -120,7 +121,8 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         tx_ids: table::new<vector<u8>, bool>(ctx),
         bitcoin_lc: @bitcoin_lc.to_id(),
         fallback_addr: @fallback_addr,
-        nbtc_bitcoin_pkh,
+        nbtc_bitcoin_pkhs: vec_set::singleton(nbtc_bitcoin_pkh),
+        nbtc_active_keys: vec_set::singleton(nbtc_bitcoin_pkh),
         mint_fee: 10,
         fees_collected: balance::zero(),
     };
@@ -172,59 +174,62 @@ public fun mint(
     let tx = tx::deserialize(&mut r);
 
     let tx_id = tx.tx_id();
-    let (mut amount, mut op_return) = verify_payment(
-        light_client,
-        height,
-        proof,
-        tx_index,
-        &tx,
-        contract.nbtc_bitcoin_pkh,
-    );
 
-    assert!(!contract.tx_ids.contains(tx_id), ETxAlreadyUsed);
-    assert!(amount > 0, EMintAmountIsZero);
+    contract.nbtc_active_keys.keys().do_ref!(|pkh| {
+        let (mut amount, mut op_return) = verify_payment(
+            light_client,
+            height,
+            proof,
+            tx_index,
+            &tx,
+            *pkh,
+        );
 
-    let mut recipient: address = contract.get_fallback_addr();
+        assert!(!contract.tx_ids.contains(tx_id), ETxAlreadyUsed);
+        assert!(amount > 0, EMintAmountIsZero);
 
-    if (op_return.is_some()) {
-        let msg = op_return.extract();
-        let mut msg_reader = reader::new(msg);
-        let flag = msg_reader.read_byte();
-        if (flag == 0x00) {
-            if (msg_reader.readable(32)) {
-                recipient = address::from_bytes(msg_reader.read(32));
-            };
+        let mut recipient: address = contract.get_fallback_addr();
 
-            // For flag=0x0 we expect only 32 bytes. If the stream is longer (more data), then
-            // the format is invalid, so moving recipient to fallback.
-            if (!msg_reader.end_stream()) {
-                recipient = contract.get_fallback_addr();
+        if (op_return.is_some()) {
+            let msg = op_return.extract();
+            let mut msg_reader = reader::new(msg);
+            let flag = msg_reader.read_byte();
+            if (flag == 0x00) {
+                if (msg_reader.readable(32)) {
+                    recipient = address::from_bytes(msg_reader.read(32));
+                };
+
+                // For flag=0x0 we expect only 32 bytes. If the stream is longer (more data), then
+                // the format is invalid, so moving recipient to fallback.
+                if (!msg_reader.end_stream()) {
+                    recipient = contract.get_fallback_addr();
+                }
             }
-        }
-    };
+        };
 
-    contract.tx_ids.add(tx_id, true);
-    let mut minted = contract.cap.mint_balance(amount);
-    let mut fee_amount = 0;
+        contract.tx_ids.add(tx_id, true);
+        let mut minted = contract.cap.mint_balance(amount);
+        let mut fee_amount = 0;
 
-    if (ops_arg == MINT_OP_APPLY_FEE) {
-        fee_amount = amount.min(contract.mint_fee);
-        let fee = minted.split(fee_amount);
-        amount = amount - fee_amount;
-        contract.fees_collected.join(fee);
-    };
+        if (ops_arg == MINT_OP_APPLY_FEE) {
+            fee_amount = amount.min(contract.mint_fee);
+            let fee = minted.split(fee_amount);
+            amount = amount - fee_amount;
+            contract.fees_collected.join(fee);
+        };
 
-    if (amount > 0) transfer::public_transfer(coin::from_balance(minted, ctx), recipient)
-    else minted.destroy_zero();
+        if (amount > 0) transfer::public_transfer(coin::from_balance(minted, ctx), recipient)
+        else minted.destroy_zero();
 
-    event::emit(MintEvent {
-        recipient,
-        amount,
-        fee: fee_amount,
-        btc_tx_id: tx_id,
-        btc_block_height: height,
-        btc_tx_index: tx_index,
-    });
+        event::emit(MintEvent {
+            recipient,
+            amount,
+            fee: fee_amount,
+            btc_tx_id: tx_id,
+            btc_block_height: height,
+            btc_tx_index: tx_index,
+        });
+    })
 }
 
 /// redeem returns total amount of redeemed balance
@@ -254,6 +259,24 @@ public fun withdraw_fees(_: &OpCap, contract: &mut NbtcContract, ctx: &mut TxCon
 
 public fun change_fees(_: &AdminCap, contract: &mut NbtcContract, mint_fee: u64) {
     contract.mint_fee = mint_fee;
+}
+
+public fun add_phk(_: &AdminCap, contract: &mut NbtcContract, phk: vector<u8>) {
+    contract.nbtc_bitcoin_pkhs.insert(phk);
+}
+
+public fun remove_phk(_: &AdminCap, contract: &mut NbtcContract, phk: vector<u8>) {
+    contract.nbtc_bitcoin_pkhs.remove(&phk);
+}
+
+public fun disable_key(_: &AdminCap, contract: &mut NbtcContract, phk: vector<u8>) {
+    assert!(contract.nbtc_bitcoin_pkhs.contains(&phk));
+    contract.nbtc_active_keys.remove(&phk);
+}
+
+public fun enable_key(_: &AdminCap, contract: &mut NbtcContract, phk: vector<u8>) {
+    assert!(contract.nbtc_bitcoin_pkhs.contains(&phk));
+    contract.nbtc_active_keys.insert(phk);
 }
 
 //
@@ -305,7 +328,8 @@ public(package) fun init_for_testing(
         tx_ids: table::new<vector<u8>, bool>(ctx),
         bitcoin_lc: bitcoin_lc.to_id(),
         fallback_addr,
-        nbtc_bitcoin_pkh,
+        nbtc_bitcoin_pkhs: vec_set::singleton(nbtc_bitcoin_pkh),
+        nbtc_active_keys: vec_set::singleton(nbtc_bitcoin_pkh),
         fees_collected: balance::zero(),
         mint_fee: 10,
     };
