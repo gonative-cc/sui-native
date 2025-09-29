@@ -189,13 +189,13 @@ public fun mint(
     if (op_return.is_some()) {
         let msg = op_return.extract();
         let mut msg_reader = reader::new(msg);
-        let flag = msg_reader.read_byte();
-        if (flag == 0x00) {
+        let op_ret_type = msg_reader.read_byte();
+        if (op_ret_type == 0x00) {
             if (msg_reader.readable(32)) {
                 recipient = address::from_bytes(msg_reader.read(32));
             };
 
-            // For flag=0x0 we expect only 32 bytes. If the stream is longer (more data), then
+            // For op_ret_type=0x0 we expect only 32 bytes. If the stream is longer (more data), then
             // the format is invalid, so moving recipient to fallback.
             if (!msg_reader.end_stream()) {
                 recipient = contract.get_fallback_addr();
