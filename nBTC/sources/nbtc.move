@@ -57,7 +57,7 @@ const ERemoveActiveKey: vector<u8> = b"Remove active key";
 #[error]
 const EDisableKeyNotInKeySet: vector<u8> = b"Disable key not in key set";
 #[error]
-const EEnableKeyNotInKeySet: vector<u8> = b"Endable key not in key set";
+const EEnableKeyNotInKeySet: vector<u8> = b"Enable key not in key set";
 //
 // Structs
 //
