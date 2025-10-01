@@ -108,6 +108,24 @@ public struct MintEvent has copy, drop {
     btc_tx_index: u64,
 }
 
+public struct InactiveDepositEvent has copy, drop {
+    bitcoin_spend_key: vector<u8>,
+    recipient: address,
+    amount: u64, // in satoshi
+    /// Bitcoin transaction ID
+    btc_tx_id: vector<u8>,
+    btc_block_height: u64,
+    /// index of the tx within the block.
+    btc_tx_index: u64,
+}
+
+public struct RedeemInactiveDepositEvent has copy, drop {
+    bitcoin_spend_key: vector<u8>,
+    /// Bitcoin recipient
+    recipient: vector<u8>,
+    amount: u64, // in satoshi
+}
+
 //
 // Functions
 //
@@ -242,6 +260,15 @@ public fun mint(
         } else {
             contract.inactive_user_balances.add(recipient, amount);
         };
+        event::emit(InactiveDepositEvent {
+            bitcoin_spend_key: deposit_spend_key,
+            recipient,
+            amount,
+            btc_tx_id: tx_id,
+            btc_block_height: height,
+            btc_tx_index: tx_index,
+        });
+
         // TODO: add event for inactive deposit
 
         return
@@ -272,6 +299,22 @@ public fun mint(
     });
 }
 
+/// Like mint, but records deposit to an inacitve address instead of minting.
+public fun record_inactive_deposit(
+    contract: &mut NbtcContract,
+    light_client: &LightClient,
+    deposit_spend_key: vector<u8>,
+    tx_bytes: vector<u8>,
+    proof: vector<vector<u8>>,
+    height: u64,
+    tx_index: u64,
+    // TODO: The `payload` parameter is reserved for future use related to advanced op_return instruction handling.
+    //       Implementation pending. Do not remove; will be used to support additional minting logic.
+    _payload: vector<u8>,
+    ops_arg: u32,
+    ctx: &mut TxContext,
+) {}
+
 /// redeem returns total amount of redeemed balance
 public fun redeem(
     contract: &mut NbtcContract,
@@ -288,7 +331,7 @@ public fun redeem(
 /// Allows user to redeem back deposited BTC to an inactive nBTC deposit spend key.
 public fun redeem_from_inactive(
     contract: &mut NbtcContract,
-    _bitcoin_recipient: vector<u8>,
+    bitcoin_recipient: vector<u8>,
     deposit_spend_key: vector<u8>,
     ctx: &mut TxContext,
 ): u64 {
@@ -297,16 +340,20 @@ public fun redeem_from_inactive(
     assert!(inactive_key_idx.is_some(), EInvalidDepositKey);
     let sender = ctx.sender();
     let key_idx = inactive_key_idx.extract();
-    let bal = contract.inactive_user_balances.remove(sender);
+    let amount = contract.inactive_user_balances.remove(sender);
     let total_bal = &mut contract.inactive_balances[key_idx];
-    *total_bal = *total_bal - bal;
+    *total_bal = *total_bal - amount;
 
-    // TODO: add event
+    event::emit(RedeemInactiveDepositEvent {
+        bitcoin_spend_key: deposit_spend_key,
+        recipient: bitcoin_recipient,
+        amount,
+    });
 
     // TODO: implement logic to guard burning
     // TODO: we can detele the btc public key when reserves of this key is zero
 
-    bal
+    amount
 }
 
 /// update_version updates the contract.version to the latest, making the usage of the older versions not possible
