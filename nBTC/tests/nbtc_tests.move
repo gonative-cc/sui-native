@@ -47,8 +47,8 @@ fun mint_and_assert(
     ops_arg: u32,
 ) {
     let TestData { tx_bytes, proof, height, tx_index, expected_recipient, expected_amount } = data;
-
-    ctr.mint(lc, tx_bytes, proof, height, tx_index, vector[], ops_arg, scenario.ctx());
+    let key = ctr.bitcoin_spend_key();
+    ctr.mint(lc, key, tx_bytes, proof, height, tx_index, vector[], ops_arg, scenario.ctx());
     test_scenario::next_tx(scenario, sender);
 
     let coin = take_from_address<Coin<NBTC>>(scenario, expected_recipient);
@@ -179,9 +179,11 @@ fun test_nbtc_mint_fail_amount_is_zero() {
     // Use a different treasury address so the payment to our main treasury is not found.
     let (lc, mut ctr, mut scenario) = setup(x"509a651dd392e1bc125323f629b67d65cca3d4ff", sender);
     let data = get_valid_mint_data();
+    let spend_key = ctr.bitcoin_spend_key();
 
     ctr.mint(
         &lc,
+        spend_key,
         data.tx_bytes,
         data.proof,
         data.height,
@@ -202,10 +204,12 @@ fun test_nbtc_mint_fail_tx_already_used() {
     let sender = @0x1;
     let (lc, mut ctr, mut scenario) = setup(NBTC_PHK, sender);
     let data = get_valid_mint_data();
+    let spend_key = ctr.bitcoin_spend_key();
 
     // First mint, should succeed
     ctr.mint(
         &lc,
+        spend_key,
         data.tx_bytes,
         data.proof,
         data.height,
@@ -218,6 +222,7 @@ fun test_nbtc_mint_fail_tx_already_used() {
     // Second mint (double spend), should fail
     ctr.mint(
         &lc,
+        spend_key,
         data.tx_bytes,
         data.proof,
         data.height,

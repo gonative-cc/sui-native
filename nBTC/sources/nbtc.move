@@ -39,6 +39,8 @@ public struct NBTC has drop {}
 //
 
 #[error]
+const EInvalidDepositKey: vector<u8> = b"Not an nBTC deposit spend key";
+#[error]
 const ETxAlreadyUsed: vector<u8> = b"The Bitcoin transaction ID has been already used for minting";
 #[error]
 const EMintAmountIsZero: vector<u8> = b"BTC deposit must not be zero";
@@ -51,6 +53,9 @@ const EAlreadyUpdated: vector<u8> =
     b"The package version has been already updated to the latest one";
 #[error]
 const EInvalidOpsArg: vector<u8> = b"invalid mint ops_arg";
+#[error]
+const EDuplicatedKey: vector<u8> = b"duplicated key";
+
 //
 // Structs
 //
@@ -82,7 +87,7 @@ public struct NbtcContract has key, store {
     /// NOTE: for efficiencty, this vector must be sorted.
     inactive_spend_keys: vector<vector<u8>>,
     /// Maps user address to his BTC deposit (in case he deposited to an inactive key from the list
-    /// above).
+    /// above). TODO: must be per (spend_key, address)
     inactive_user_balances: Table<address, u64>,
     /// total balance per inactive key, indexed accordingly to inactive_spend_keys.
     inactive_balances: vector<u64>,
@@ -155,6 +160,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
 //
 
 /// Mints nBTC tokens after verifying a Bitcoin transaction proof.
+/// * `deposit_spend_key`: bitcoin spend pub key the user used for the UTXO nBTC deposit.
 /// * `tx_bytes`: raw, hex-encoded tx bytes.
 /// * `proof`: merkle proof for the tx.
 /// * `height`: block height, where the tx was included.
@@ -167,6 +173,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
 public fun mint(
     contract: &mut NbtcContract,
     light_client: &LightClient,
+    deposit_spend_key: vector<u8>,
     tx_bytes: vector<u8>,
     proof: vector<vector<u8>>,
     height: u64,
@@ -181,6 +188,11 @@ public fun mint(
     assert!(ops_arg == 0 || ops_arg == MINT_OP_APPLY_FEE, EInvalidOpsArg);
     let provided_lc_id = object::id(light_client);
     assert!(provided_lc_id == contract.get_light_client_id(), EUntrustedLightClient);
+    let mut inactive_key_idx = contract.inactive_key_idx(deposit_spend_key);
+    assert!(
+        deposit_spend_key == contract.bitcoin_spend_key || inactive_key_idx.is_some(),
+        EInvalidDepositKey,
+    );
 
     let mut r = reader::new(tx_bytes);
     let tx = tx::deserialize(&mut r);
@@ -198,14 +210,10 @@ public fun mint(
         proof,
         tx_index,
         &tx,
-        contract.bitcoin_spend_key,
+        deposit_spend_key,
     );
 
     assert!(amount > 0, EMintAmountIsZero);
-
-    // update total balance for reserves
-    contract.active_balance = contract.active_balance + amount;
-
     let mut recipient: address = contract.get_fallback_addr();
     if (op_return.is_some()) {
         let msg = op_return.extract();
@@ -223,6 +231,23 @@ public fun mint(
             }
         }
     };
+
+    if (inactive_key_idx.is_some()) {
+        let key_idx = inactive_key_idx.extract();
+        let bal = &mut contract.inactive_balances[key_idx];
+        *bal = *bal + amount;
+        if (contract.inactive_user_balances.contains(recipient)) {
+            let user_bal = &mut contract.inactive_user_balances[recipient];
+            *user_bal = *user_bal + amount;
+        } else {
+            contract.inactive_user_balances.add(recipient, amount);
+        };
+        // TODO: add event for inactive deposit
+
+        return
+    };
+
+    contract.active_balance = contract.active_balance + amount;
 
     let mut minted = contract.cap.mint_balance(amount);
     let mut fee_amount = 0;
@@ -251,6 +276,7 @@ public fun mint(
 public fun redeem(
     contract: &mut NbtcContract,
     coins: vector<Coin<NBTC>>,
+    _bitcoin_recipient: vector<u8>,
     _ctx: &mut TxContext,
 ): u64 {
     assert!(contract.version == VERSION, EVersionMismatch);
@@ -259,10 +285,40 @@ public fun redeem(
     coins.fold!(0, |total, c| total + coin::burn(&mut contract.cap, c))
 }
 
+/// Allows user to redeem back deposited BTC to an inactive nBTC deposit spend key.
+public fun redeem_from_inactive(
+    contract: &mut NbtcContract,
+    _bitcoin_recipient: vector<u8>,
+    deposit_spend_key: vector<u8>,
+    ctx: &mut TxContext,
+): u64 {
+    assert!(contract.version == VERSION, EVersionMismatch);
+    let mut inactive_key_idx = contract.inactive_key_idx(deposit_spend_key);
+    assert!(inactive_key_idx.is_some(), EInvalidDepositKey);
+    let sender = ctx.sender();
+    let key_idx = inactive_key_idx.extract();
+    let bal = contract.inactive_user_balances.remove(sender);
+    let total_bal = &mut contract.inactive_balances[key_idx];
+    *total_bal = *total_bal - bal;
+
+    // TODO: add event
+
+    // TODO: implement logic to guard burning
+    // TODO: we can detele the btc public key when reserves of this key is zero
+
+    bal
+}
+
 /// update_version updates the contract.version to the latest, making the usage of the older versions not possible
 public fun update_version(contract: &mut NbtcContract) {
     assert!(VERSION > contract.version, EAlreadyUpdated);
     contract.version = VERSION;
+}
+
+/// returns idx of key in in inactive_spend_keys or None if the key is not there
+public fun inactive_key_idx(contract: &mut NbtcContract, key: vector<u8>): Option<u64> {
+    // TODO: implement binary search
+    option::none()
 }
 
 //
@@ -279,7 +335,18 @@ public fun change_fees(_: &AdminCap, contract: &mut NbtcContract, mint_fee: u64)
 
 /// Set btc endpoint for deposit on nBTC, and set reserve of this endpoint is zero.
 /// In the case, we use this key before we will enable deposit endpoint again.
-public fun add_pkh(_: &AdminCap, contract: &mut NbtcContract, phk: vector<u8>) {}
+public fun add_spend_key(_: &AdminCap, contract: &mut NbtcContract, key: vector<u8>) {
+    let key_idx = contract.inactive_key_idx(key);
+    assert!(contract.bitcoin_spend_key != key && key_idx.is_none(), EDuplicatedKey);
+
+    let insert_idx = insert_ordered(&contract.inactive_spend_keys, contract.bitcoin_spend_key);
+    contract.inactive_spend_keys.insert(contract.bitcoin_spend_key, insert_idx);
+    contract.bitcoin_spend_key = key;
+    contract.inactive_balances.insert(insert_idx, 0);
+
+    // TODO:
+    // - make BTC transaction (using Ika) to move fomr the old key to the new key
+}
 
 //
 // View functions
@@ -305,9 +372,20 @@ public fun active_balance(contract: &NbtcContract): u64 {
     contract.active_balance
 }
 
-public fun bitcoin_spend_key(contract: &NbtcContract): &vector<u8> {
-    &contract.bitcoin_spend_key
+public fun bitcoin_spend_key(contract: &NbtcContract): vector<u8> {
+    contract.bitcoin_spend_key
 }
+
+//
+// Helper functions
+//
+
+/// inserts the new key in vector, keeping it ordered. Return insert index.
+public fun insert_ordered(v: &vector<vector<u8>>, key: vector<u8>): u64 {
+    // TODO: implement binary search
+    0
+}
+
 //
 // Testing
 //
