@@ -86,9 +86,10 @@ public struct NbtcContract has key, store {
     /// in that account. In such case we don't mint nBTC, but we allow the user to transfer it back.
     /// NOTE: for efficiencty, this vector must be sorted.
     inactive_spend_keys: vector<vector<u8>>,
-    /// Maps user address to his BTC deposit (in case he deposited to an inactive key from the list
+    /// Maps (bitcoin deposit key ++ user address) to his BTC deposit (in case he deposited to an
+    /// inactive key from the list
     /// above). TODO: must be per (spend_key, address)
-    inactive_user_balances: Table<address, u64>,
+    inactive_user_balances: Table<vector<u8>, u64>,
     /// total balance per inactive key, indexed accordingly to inactive_spend_keys.
     inactive_balances: vector<u64>,
     /// as in Balance<nBTC>
@@ -328,11 +329,13 @@ public fun record_inactive_deposit(
     let key_idx = inactive_key_idx.extract();
     let bal = &mut contract.inactive_balances[key_idx];
     *bal = *bal + amount;
-    if (contract.inactive_user_balances.contains(recipient)) {
-        let user_bal = &mut contract.inactive_user_balances[recipient];
+    let mut bal_key = deposit_spend_key; // makes a copy
+    bal_key.append(recipient.to_bytes());
+    if (contract.inactive_user_balances.contains(bal_key)) {
+        let user_bal = &mut contract.inactive_user_balances[bal_key];
         *user_bal = *user_bal + amount;
     } else {
-        contract.inactive_user_balances.add(recipient, amount);
+        contract.inactive_user_balances.add(bal_key, amount);
     };
     event::emit(InactiveDepositEvent {
         bitcoin_spend_key: deposit_spend_key,
@@ -366,7 +369,9 @@ public fun redeem_from_inactive(
     assert!(inactive_key_idx.is_some(), EInvalidDepositKey);
     let sender = ctx.sender();
     let key_idx = inactive_key_idx.extract();
-    let amount = contract.inactive_user_balances.remove(sender);
+    let mut bal_key = deposit_spend_key; // makes a copy
+    bal_key.append(sender.to_bytes());
+    let amount = contract.inactive_user_balances.remove(bal_key);
     let total_bal = &mut contract.inactive_balances[key_idx];
     *total_bal = *total_bal - amount;
 
