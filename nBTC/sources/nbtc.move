@@ -82,13 +82,13 @@ public struct NbtcContract has key, store {
     bitcoin_spend_key: vector<u8>,
     /// BTC balances for the current bitcoin_spend_key.
     active_balance: u64,
+    // TODO: consider using Table for inactive_spend_keys and inactive_balances
     /// If user, by mistake, will use inactive spend key, then we should protect from a BTC dedlock
     /// in that account. In such case we don't mint nBTC, but we allow the user to transfer it back.
     /// NOTE: for efficiencty, this vector must be sorted.
     inactive_spend_keys: vector<vector<u8>>,
     /// Maps (bitcoin deposit key ++ user address) to his BTC deposit (in case he deposited to an
-    /// inactive key from the list
-    /// above). TODO: must be per (spend_key, address)
+    /// inactive key from the list above).
     inactive_user_balances: Table<vector<u8>, u64>,
     /// total balance per inactive key, indexed accordingly to inactive_spend_keys.
     inactive_balances: vector<u64>,
