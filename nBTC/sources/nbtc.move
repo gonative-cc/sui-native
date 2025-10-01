@@ -76,6 +76,7 @@ public struct NbtcContract has key, store {
     fallback_addr: address,
     // TODO: change to taproot once Ika will support it
     bitcoin_pkh: vector<u8>,
+    /// total deposit balance for each active bitcoin pkh endpoint
     balances: VecMap<vector<u8>, u64>,
     /// as in Balance<nBTC>
     mint_fee: u64,
