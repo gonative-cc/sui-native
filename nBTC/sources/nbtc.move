@@ -12,6 +12,7 @@ use sui::coin::{Self, Coin, TreasuryCap};
 use sui::event;
 use sui::table::{Self, Table};
 use sui::url;
+use sui::vec_map::{Self, VecMap};
 
 //
 // Constant
@@ -51,7 +52,6 @@ const EAlreadyUpdated: vector<u8> =
     b"The package version has been already updated to the latest one";
 #[error]
 const EInvalidOpsArg: vector<u8> = b"invalid mint ops_arg";
-
 //
 // Structs
 //
@@ -75,7 +75,9 @@ public struct NbtcContract has key, store {
     bitcoin_lc: ID,
     fallback_addr: address,
     // TODO: change to taproot once Ika will support it
-    nbtc_bitcoin_pkh: vector<u8>,
+    bitcoin_pkh: vector<u8>,
+    /// total deposit balance for each active bitcoin pkh endpoint
+    balances: VecMap<vector<u8>, u64>,
     /// as in Balance<nBTC>
     mint_fee: u64,
     fees_collected: Balance<NBTC>,
@@ -120,7 +122,8 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         tx_ids: table::new<vector<u8>, bool>(ctx),
         bitcoin_lc: @bitcoin_lc.to_id(),
         fallback_addr: @fallback_addr,
-        nbtc_bitcoin_pkh,
+        bitcoin_pkh: nbtc_bitcoin_pkh,
+        balances: vec_map::from_keys_values(vector[nbtc_bitcoin_pkh], vector[0]),
         mint_fee: 10,
         fees_collected: balance::zero(),
     };
@@ -172,20 +175,28 @@ public fun mint(
     let tx = tx::deserialize(&mut r);
 
     let tx_id = tx.tx_id();
+
+    // Double spend prevent
+    assert!(!contract.tx_ids.contains(tx_id), ETxAlreadyUsed);
+    contract.tx_ids.add(tx_id, true);
+    // NOTE: We assume only one active key. We should handle mutiple nbtc active key in the
+    // future.
     let (mut amount, mut op_return) = verify_payment(
         light_client,
         height,
         proof,
         tx_index,
         &tx,
-        contract.nbtc_bitcoin_pkh,
+        contract.bitcoin_pkh,
     );
 
-    assert!(!contract.tx_ids.contains(tx_id), ETxAlreadyUsed);
     assert!(amount > 0, EMintAmountIsZero);
 
-    let mut recipient: address = contract.get_fallback_addr();
+    // update total balance for reserves
+    let total_balance = contract.balances.get_mut(&contract.bitcoin_pkh);
+    *total_balance = *total_balance + amount;
 
+    let mut recipient: address = contract.get_fallback_addr();
     if (op_return.is_some()) {
         let msg = op_return.extract();
         let mut msg_reader = reader::new(msg);
@@ -203,7 +214,6 @@ public fun mint(
         }
     };
 
-    contract.tx_ids.add(tx_id, true);
     let mut minted = contract.cap.mint_balance(amount);
     let mut fee_amount = 0;
 
@@ -235,6 +245,7 @@ public fun redeem(
 ): u64 {
     assert!(contract.version == VERSION, EVersionMismatch);
     // TODO: implement logic to guard burning
+    // TODO: we can detele the btc public key when reserves of this key is zero
     coins.fold!(0, |total, c| total + coin::burn(&mut contract.cap, c))
 }
 
@@ -254,6 +265,15 @@ public fun withdraw_fees(_: &OpCap, contract: &mut NbtcContract, ctx: &mut TxCon
 
 public fun change_fees(_: &AdminCap, contract: &mut NbtcContract, mint_fee: u64) {
     contract.mint_fee = mint_fee;
+}
+
+/// Set btc endpoint for deposit on nBTC, and set reserve of this endpoint is zero.
+/// In the case, we use this key before we will enable deposit endpoint again.
+public fun add_pkh(_: &AdminCap, contract: &mut NbtcContract, phk: vector<u8>) {
+    if (contract.balances.contains(&phk) == false) {
+        contract.balances.insert(phk, 0);
+    };
+    contract.bitcoin_pkh = phk;
 }
 
 //
@@ -276,6 +296,13 @@ public fun get_mint_fee(contract: &NbtcContract): u64 {
     contract.mint_fee
 }
 
+public fun balances(contract: &NbtcContract): &VecMap<vector<u8>, u64> {
+    &contract.balances
+}
+
+public fun bitcoin_pkh(contract: &NbtcContract): &vector<u8> {
+    &contract.bitcoin_pkh
+}
 //
 // Testing
 //
@@ -305,7 +332,8 @@ public(package) fun init_for_testing(
         tx_ids: table::new<vector<u8>, bool>(ctx),
         bitcoin_lc: bitcoin_lc.to_id(),
         fallback_addr,
-        nbtc_bitcoin_pkh,
+        bitcoin_pkh: nbtc_bitcoin_pkh,
+        balances: vec_map::from_keys_values(vector[nbtc_bitcoin_pkh], vector[0]),
         fees_collected: balance::zero(),
         mint_fee: 10,
     };
