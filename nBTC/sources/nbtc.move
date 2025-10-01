@@ -98,25 +98,16 @@ public struct NbtcContract has key, store {
 
 /// MintEvent is emitted when nBTC is successfully minted.
 public struct MintEvent has copy, drop {
+    /// Sui recipient
     recipient: address,
     amount: u64, // in satoshi
     fee: u64,
-    /// Bitcoin transaction ID
-    btc_tx_id: vector<u8>,
-    btc_block_height: u64,
-    /// index of the tx within the block.
-    btc_tx_index: u64,
 }
 
 public struct InactiveDepositEvent has copy, drop {
     bitcoin_spend_key: vector<u8>,
     recipient: address,
     amount: u64, // in satoshi
-    /// Bitcoin transaction ID
-    btc_tx_id: vector<u8>,
-    btc_block_height: u64,
-    /// index of the tx within the block.
-    btc_tx_index: u64,
 }
 
 public struct RedeemInactiveDepositEvent has copy, drop {
@@ -174,21 +165,11 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
 }
 
 //
-// Public functions
+// Helper methods
 //
 
-/// Mints nBTC tokens after verifying a Bitcoin transaction proof.
-/// * `deposit_spend_key`: bitcoin spend pub key the user used for the UTXO nBTC deposit.
-/// * `tx_bytes`: raw, hex-encoded tx bytes.
-/// * `proof`: merkle proof for the tx.
-/// * `height`: block height, where the tx was included.
-/// * `tx_index`: index of the tx within the block.
-/// * `payload`: additional argument that is related to the op_return instruction handling.
-/// * `ops_arg`: operation argument controlling fee application.
-///   - Pass `1` to apply minting fees.
-///   - Pass `0` to skip minting fees (for special cases or admin operations).
-/// Emits `MintEvent` if successful.
-public fun mint(
+/// make all checks and returns (Sui recipient, amount) tuple.
+fun verify_deposit(
     contract: &mut NbtcContract,
     light_client: &LightClient,
     deposit_spend_key: vector<u8>,
@@ -200,17 +181,11 @@ public fun mint(
     //       Implementation pending. Do not remove; will be used to support additional minting logic.
     _payload: vector<u8>,
     ops_arg: u32,
-    ctx: &mut TxContext,
-) {
+): (u64, address) {
     assert!(contract.version == VERSION, EVersionMismatch);
     assert!(ops_arg == 0 || ops_arg == MINT_OP_APPLY_FEE, EInvalidOpsArg);
     let provided_lc_id = object::id(light_client);
     assert!(provided_lc_id == contract.get_light_client_id(), EUntrustedLightClient);
-    let mut inactive_key_idx = contract.inactive_key_idx(deposit_spend_key);
-    assert!(
-        deposit_spend_key == contract.bitcoin_spend_key || inactive_key_idx.is_some(),
-        EInvalidDepositKey,
-    );
 
     let mut r = reader::new(tx_bytes);
     let tx = tx::deserialize(&mut r);
@@ -250,29 +225,47 @@ public fun mint(
         }
     };
 
-    if (inactive_key_idx.is_some()) {
-        let key_idx = inactive_key_idx.extract();
-        let bal = &mut contract.inactive_balances[key_idx];
-        *bal = *bal + amount;
-        if (contract.inactive_user_balances.contains(recipient)) {
-            let user_bal = &mut contract.inactive_user_balances[recipient];
-            *user_bal = *user_bal + amount;
-        } else {
-            contract.inactive_user_balances.add(recipient, amount);
-        };
-        event::emit(InactiveDepositEvent {
-            bitcoin_spend_key: deposit_spend_key,
-            recipient,
-            amount,
-            btc_tx_id: tx_id,
-            btc_block_height: height,
-            btc_tx_index: tx_index,
-        });
+    (amount, recipient)
+}
 
-        // TODO: add event for inactive deposit
+//
+// Public methods
+//
 
-        return
-    };
+/// Mints nBTC tokens after verifying a Bitcoin transaction proof.
+/// * `tx_bytes`: raw, hex-encoded tx bytes.
+/// * `proof`: merkle proof for the tx.
+/// * `height`: block height, where the tx was included.
+/// * `tx_index`: index of the tx within the block.
+/// * `payload`: additional argument that is related to the op_return instruction handling.
+/// * `ops_arg`: operation argument controlling fee application.
+///   - Pass `1` to apply minting fees.
+///   - Pass `0` to skip minting fees (for special cases or admin operations).
+/// Emits `MintEvent` if successful.
+public fun mint(
+    contract: &mut NbtcContract,
+    light_client: &LightClient,
+    tx_bytes: vector<u8>,
+    proof: vector<vector<u8>>,
+    height: u64,
+    tx_index: u64,
+    // TODO: The `payload` parameter is reserved for future use related to advanced op_return instruction handling.
+    //       Implementation pending. Do not remove; will be used to support additional minting logic.
+    payload: vector<u8>,
+    ops_arg: u32,
+    ctx: &mut TxContext,
+) {
+    let spend_key = contract.bitcoin_spend_key;
+    let (mut amount, recipient) = contract.verify_deposit(
+        light_client,
+        spend_key,
+        tx_bytes,
+        proof,
+        height,
+        tx_index,
+        payload,
+        ops_arg,
+    );
 
     contract.active_balance = contract.active_balance + amount;
 
@@ -293,27 +286,60 @@ public fun mint(
         recipient,
         amount,
         fee: fee_amount,
-        btc_tx_id: tx_id,
-        btc_block_height: height,
-        btc_tx_index: tx_index,
     });
 }
 
-/// Like mint, but records deposit to an inacitve address instead of minting.
+// TODO: test this function
+/// Like mint, but records deposit to an inacitve deposit_spend_key.
+/// This function is allows user to record and verify deposit to an inactive key (e.g. user
+/// by mistake used an old, inactive bitcoin deposit key) and recover that using
+/// `redeem_from_inactive` function call.
+/// Arguments are same as to `mint` with one extra argument:
+/// * `deposit_spend_key`: bitcoin spend pub key the user used for the UTXO nBTC deposit.
 public fun record_inactive_deposit(
     contract: &mut NbtcContract,
     light_client: &LightClient,
-    deposit_spend_key: vector<u8>,
     tx_bytes: vector<u8>,
     proof: vector<vector<u8>>,
     height: u64,
     tx_index: u64,
-    // TODO: The `payload` parameter is reserved for future use related to advanced op_return instruction handling.
-    //       Implementation pending. Do not remove; will be used to support additional minting logic.
-    _payload: vector<u8>,
+    payload: vector<u8>,
     ops_arg: u32,
-    ctx: &mut TxContext,
-) {}
+    deposit_spend_key: vector<u8>,
+) {
+    assert!(contract.version == VERSION, EVersionMismatch);
+    assert!(ops_arg == 0 || ops_arg == MINT_OP_APPLY_FEE, EInvalidOpsArg);
+    let provided_lc_id = object::id(light_client);
+    assert!(provided_lc_id == contract.get_light_client_id(), EUntrustedLightClient);
+    let mut inactive_key_idx = contract.inactive_key_idx(deposit_spend_key);
+    assert!(inactive_key_idx.is_some(), EInvalidDepositKey);
+
+    let (amount, recipient) = contract.verify_deposit(
+        light_client,
+        deposit_spend_key,
+        tx_bytes,
+        proof,
+        height,
+        tx_index,
+        payload,
+        ops_arg,
+    );
+
+    let key_idx = inactive_key_idx.extract();
+    let bal = &mut contract.inactive_balances[key_idx];
+    *bal = *bal + amount;
+    if (contract.inactive_user_balances.contains(recipient)) {
+        let user_bal = &mut contract.inactive_user_balances[recipient];
+        *user_bal = *user_bal + amount;
+    } else {
+        contract.inactive_user_balances.add(recipient, amount);
+    };
+    event::emit(InactiveDepositEvent {
+        bitcoin_spend_key: deposit_spend_key,
+        recipient,
+        amount,
+    });
+}
 
 /// redeem returns total amount of redeemed balance
 public fun redeem(
