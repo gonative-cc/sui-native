@@ -12,7 +12,6 @@ use sui::coin::{Self, Coin, TreasuryCap};
 use sui::event;
 use sui::table::{Self, Table};
 use sui::url;
-use sui::vec_map::{Self, VecMap};
 
 //
 // Constant
@@ -75,9 +74,18 @@ public struct NbtcContract has key, store {
     bitcoin_lc: ID,
     fallback_addr: address,
     // TODO: change to taproot once Ika will support it
-    bitcoin_pkh: vector<u8>,
-    /// total deposit balance for each active bitcoin pkh endpoint
-    balances: VecMap<vector<u8>, u64>,
+    bitcoin_spend_key: vector<u8>,
+    /// BTC balances for the current bitcoin_spend_key.
+    active_balance: u64,
+    /// If user, by mistake, will use inactive spend key, then we should protect from a BTC dedlock
+    /// in that account. In such case we don't mint nBTC, but we allow the user to transfer it back.
+    /// NOTE: for efficiencty, this vector must be sorted.
+    inactive_spend_keys: vector<vector<u8>>,
+    /// Maps user address to his BTC deposit (in case he deposited to an inactive key from the list
+    /// above).
+    inactive_user_balances: Table<address, u64>,
+    /// total balance per inactive key, indexed accordingly to inactive_spend_keys.
+    inactive_balances: vector<u64>,
     /// as in Balance<nBTC>
     mint_fee: u64,
     fees_collected: Balance<NBTC>,
@@ -112,8 +120,8 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
 
     // NOTE: we removed post deployment setup function and didn't want to implement PTB style
     // initialization, so we require setting the address before publishing the package.
-    let nbtc_bitcoin_pkh = b""; // TODO: valid bitcoin address
-    assert!(nbtc_bitcoin_pkh.length() >= 23);
+    let bitcoin_spend_key = b""; // TODO: valid bitcoin address
+    assert!(bitcoin_spend_key.length() >= 23);
     transfer::public_freeze_object(metadata);
     let contract = NbtcContract {
         id: object::new(ctx),
@@ -122,8 +130,11 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         tx_ids: table::new<vector<u8>, bool>(ctx),
         bitcoin_lc: @bitcoin_lc.to_id(),
         fallback_addr: @fallback_addr,
-        bitcoin_pkh: nbtc_bitcoin_pkh,
-        balances: vec_map::from_keys_values(vector[nbtc_bitcoin_pkh], vector[0]),
+        bitcoin_spend_key,
+        active_balance: 0,
+        inactive_spend_keys: vector[],
+        inactive_user_balances: table::new(ctx),
+        inactive_balances: vector[],
         mint_fee: 10,
         fees_collected: balance::zero(),
     };
@@ -187,14 +198,13 @@ public fun mint(
         proof,
         tx_index,
         &tx,
-        contract.bitcoin_pkh,
+        contract.bitcoin_spend_key,
     );
 
     assert!(amount > 0, EMintAmountIsZero);
 
     // update total balance for reserves
-    let total_balance = contract.balances.get_mut(&contract.bitcoin_pkh);
-    *total_balance = *total_balance + amount;
+    contract.active_balance = contract.active_balance + amount;
 
     let mut recipient: address = contract.get_fallback_addr();
     if (op_return.is_some()) {
@@ -269,12 +279,7 @@ public fun change_fees(_: &AdminCap, contract: &mut NbtcContract, mint_fee: u64)
 
 /// Set btc endpoint for deposit on nBTC, and set reserve of this endpoint is zero.
 /// In the case, we use this key before we will enable deposit endpoint again.
-public fun add_pkh(_: &AdminCap, contract: &mut NbtcContract, phk: vector<u8>) {
-    if (contract.balances.contains(&phk) == false) {
-        contract.balances.insert(phk, 0);
-    };
-    contract.bitcoin_pkh = phk;
-}
+public fun add_pkh(_: &AdminCap, contract: &mut NbtcContract, phk: vector<u8>) {}
 
 //
 // View functions
@@ -296,12 +301,12 @@ public fun get_mint_fee(contract: &NbtcContract): u64 {
     contract.mint_fee
 }
 
-public fun balances(contract: &NbtcContract): &VecMap<vector<u8>, u64> {
-    &contract.balances
+public fun active_balance(contract: &NbtcContract): u64 {
+    contract.active_balance
 }
 
-public fun bitcoin_pkh(contract: &NbtcContract): &vector<u8> {
-    &contract.bitcoin_pkh
+public fun bitcoin_spend_key(contract: &NbtcContract): &vector<u8> {
+    &contract.bitcoin_spend_key
 }
 //
 // Testing
@@ -311,7 +316,7 @@ public fun bitcoin_pkh(contract: &NbtcContract): &vector<u8> {
 public(package) fun init_for_testing(
     bitcoin_lc: address,
     fallback_addr: address,
-    nbtc_bitcoin_pkh: vector<u8>,
+    nbtc_bitcoin_spend_key: vector<u8>,
     ctx: &mut TxContext,
 ): NbtcContract {
     let witness = NBTC {};
@@ -332,8 +337,11 @@ public(package) fun init_for_testing(
         tx_ids: table::new<vector<u8>, bool>(ctx),
         bitcoin_lc: bitcoin_lc.to_id(),
         fallback_addr,
-        bitcoin_pkh: nbtc_bitcoin_pkh,
-        balances: vec_map::from_keys_values(vector[nbtc_bitcoin_pkh], vector[0]),
+        bitcoin_spend_key: nbtc_bitcoin_spend_key,
+        active_balance: 0,
+        inactive_spend_keys: vector[],
+        inactive_user_balances: table::new(ctx),
+        inactive_balances: vector[],
         fees_collected: balance::zero(),
         mint_fee: 10,
     };
