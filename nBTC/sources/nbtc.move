@@ -175,7 +175,7 @@ public fun mint(
 
     let tx_id = tx.tx_id();
 
-    // Double check prevent
+    // Double spend prevent
     assert!(!contract.tx_ids.contains(tx_id), ETxAlreadyUsed);
     contract.tx_ids.add(tx_id, true);
     // NOTE: We assume only one active key. We should handle mutiple nbtc active key in the
@@ -268,7 +268,7 @@ public fun change_fees(_: &AdminCap, contract: &mut NbtcContract, mint_fee: u64)
 
 /// Set btc endpoint for deposit on nBTC, and set reserve of this endpoint is zero.
 /// In the case, we use this key before we will enable deposit endpoint again.
-public fun add_phk(_: &AdminCap, contract: &mut NbtcContract, phk: vector<u8>) {
+public fun add_pkh(_: &AdminCap, contract: &mut NbtcContract, phk: vector<u8>) {
     if (contract.reserves.contains(&phk) == false) {
         contract.reserves.insert(phk, 0);
     };
