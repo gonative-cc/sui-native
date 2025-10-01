@@ -189,9 +189,9 @@ public fun mint(
         contract.bitcoin_pkh,
     );
 
-    // Because the amount can be zero in this case.
     assert!(amount > 0, EMintAmountIsZero);
 
+    // update total balance for reserves
     let reserve_amount = contract.reserves.get_mut(&contract.bitcoin_pkh);
     *reserve_amount = *reserve_amount + amount;
 
