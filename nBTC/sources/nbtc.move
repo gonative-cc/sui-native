@@ -76,7 +76,7 @@ public struct NbtcContract has key, store {
     fallback_addr: address,
     // TODO: change to taproot once Ika will support it
     bitcoin_pkh: vector<u8>,
-    reserves: VecMap<vector<u8>, u64>,
+    balances: VecMap<vector<u8>, u64>,
     /// as in Balance<nBTC>
     mint_fee: u64,
     fees_collected: Balance<NBTC>,
@@ -122,7 +122,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         bitcoin_lc: @bitcoin_lc.to_id(),
         fallback_addr: @fallback_addr,
         bitcoin_pkh: nbtc_bitcoin_pkh,
-        reserves: vec_map::from_keys_values(vector[nbtc_bitcoin_pkh], vector[0]),
+        balances: vec_map::from_keys_values(vector[nbtc_bitcoin_pkh], vector[0]),
         mint_fee: 10,
         fees_collected: balance::zero(),
     };
@@ -192,8 +192,8 @@ public fun mint(
     assert!(amount > 0, EMintAmountIsZero);
 
     // update total balance for reserves
-    let reserve_amount = contract.reserves.get_mut(&contract.bitcoin_pkh);
-    *reserve_amount = *reserve_amount + amount;
+    let total_balance = contract.balances.get_mut(&contract.bitcoin_pkh);
+    *total_balance = *total_balance + amount;
 
     let mut recipient: address = contract.get_fallback_addr();
     if (op_return.is_some()) {
@@ -269,8 +269,8 @@ public fun change_fees(_: &AdminCap, contract: &mut NbtcContract, mint_fee: u64)
 /// Set btc endpoint for deposit on nBTC, and set reserve of this endpoint is zero.
 /// In the case, we use this key before we will enable deposit endpoint again.
 public fun add_pkh(_: &AdminCap, contract: &mut NbtcContract, phk: vector<u8>) {
-    if (contract.reserves.contains(&phk) == false) {
-        contract.reserves.insert(phk, 0);
+    if (contract.balances.contains(&phk) == false) {
+        contract.balances.insert(phk, 0);
     };
     contract.bitcoin_pkh = phk;
 }
@@ -295,8 +295,8 @@ public fun get_mint_fee(contract: &NbtcContract): u64 {
     contract.mint_fee
 }
 
-public fun reserves(contract: &NbtcContract): &VecMap<vector<u8>, u64> {
-    &contract.reserves
+public fun balances(contract: &NbtcContract): &VecMap<vector<u8>, u64> {
+    &contract.balances
 }
 
 public fun bitcoin_pkh(contract: &NbtcContract): &vector<u8> {
@@ -332,7 +332,7 @@ public(package) fun init_for_testing(
         bitcoin_lc: bitcoin_lc.to_id(),
         fallback_addr,
         bitcoin_pkh: nbtc_bitcoin_pkh,
-        reserves: vec_map::from_keys_values(vector[nbtc_bitcoin_pkh], vector[0]),
+        balances: vec_map::from_keys_values(vector[nbtc_bitcoin_pkh], vector[0]),
         fees_collected: balance::zero(),
         mint_fee: 10,
     };
