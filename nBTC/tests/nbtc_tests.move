@@ -55,7 +55,6 @@ fun mint_and_assert(
     let amount = coin.value();
     if (ops_arg == MINT_OP_APPLY_FEE) assert_eq!(amount, expected_amount - ctr.get_mint_fee())
     else assert_eq!(amount, expected_amount);
-
     destroy(coin);
 }
 
@@ -129,6 +128,9 @@ fun test_nbtc_mint() {
         0,
     );
 
+    let reserves = ctr.reserves();
+    let total_resverses = 2 * get_valid_mint_data().expected_amount;
+    assert_eq!(*reserves.get(ctr.bitcoin_pkh()), total_resverses);
     destroy(lc);
     destroy(ctr);
     scenario.end();
@@ -160,7 +162,11 @@ fun test_mint_with_fee() {
 
     // mint with fallback should take fee as well.
     assert_eq!(ctr.get_fees_collected(), 2*ctr.get_mint_fee());
-
+    let reserves = ctr.reserves();
+    let total_resverses =
+        get_fallback_mint_data().expected_amount +
+    get_valid_mint_data().expected_amount;
+    assert_eq!(*reserves.get(ctr.bitcoin_pkh()), total_resverses);
     destroy(lc);
     destroy(ctr);
     scenario.end();

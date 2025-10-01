@@ -12,7 +12,7 @@ use sui::coin::{Self, Coin, TreasuryCap};
 use sui::event;
 use sui::table::{Self, Table};
 use sui::url;
-use sui::vec_set::{Self, VecSet};
+use sui::vec_map::{Self, VecMap};
 
 //
 // Constant
@@ -52,12 +52,6 @@ const EAlreadyUpdated: vector<u8> =
     b"The package version has been already updated to the latest one";
 #[error]
 const EInvalidOpsArg: vector<u8> = b"invalid mint ops_arg";
-#[error]
-const ERemoveActiveKey: vector<u8> = b"Remove active key";
-#[error]
-const EDisableKeyNotInKeySet: vector<u8> = b"Disable key not in key set";
-#[error]
-const EEnableKeyNotInKeySet: vector<u8> = b"Enable key not in key set";
 //
 // Structs
 //
@@ -81,8 +75,8 @@ public struct NbtcContract has key, store {
     bitcoin_lc: ID,
     fallback_addr: address,
     // TODO: change to taproot once Ika will support it
-    nbtc_bitcoin_pkhs: VecSet<vector<u8>>,
-    nbtc_active_keys: VecSet<vector<u8>>,
+    bitcoin_pkh: vector<u8>,
+    reserves: VecMap<vector<u8>, u64>,
     /// as in Balance<nBTC>
     mint_fee: u64,
     fees_collected: Balance<NBTC>,
@@ -127,8 +121,8 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         tx_ids: table::new<vector<u8>, bool>(ctx),
         bitcoin_lc: @bitcoin_lc.to_id(),
         fallback_addr: @fallback_addr,
-        nbtc_bitcoin_pkhs: vec_set::singleton(nbtc_bitcoin_pkh),
-        nbtc_active_keys: vec_set::singleton(nbtc_bitcoin_pkh),
+        bitcoin_pkh: nbtc_bitcoin_pkh,
+        reserves: vec_map::from_keys_values(vector[nbtc_bitcoin_pkh], vector[0]),
         mint_fee: 10,
         fees_collected: balance::zero(),
     };
@@ -186,61 +180,60 @@ public fun mint(
     contract.tx_ids.add(tx_id, true);
     // NOTE: We assume only one active key. We should handle mutiple nbtc active key in the
     // future.
-    contract.nbtc_active_keys.keys().do_ref!(|pkh| {
-        let (mut amount, mut op_return) = verify_payment(
-            light_client,
-            height,
-            proof,
-            tx_index,
-            &tx,
-            *pkh,
-        );
+    let (mut amount, mut op_return) = verify_payment(
+        light_client,
+        height,
+        proof,
+        tx_index,
+        &tx,
+        contract.bitcoin_pkh,
+    );
 
-        // TODO: handle case mutiple keys active at one time.
-        // Because the amount can be zero in this case.
-        assert!(amount > 0, EMintAmountIsZero);
+    // Because the amount can be zero in this case.
+    assert!(amount > 0, EMintAmountIsZero);
 
-        let mut recipient: address = contract.get_fallback_addr();
+    let reserve_amount = contract.reserves.get_mut(&contract.bitcoin_pkh);
+    *reserve_amount = *reserve_amount + amount;
 
-        if (op_return.is_some()) {
-            let msg = op_return.extract();
-            let mut msg_reader = reader::new(msg);
-            let flag = msg_reader.read_byte();
-            if (flag == 0x00) {
-                if (msg_reader.readable(32)) {
-                    recipient = address::from_bytes(msg_reader.read(32));
-                };
+    let mut recipient: address = contract.get_fallback_addr();
+    if (op_return.is_some()) {
+        let msg = op_return.extract();
+        let mut msg_reader = reader::new(msg);
+        let flag = msg_reader.read_byte();
+        if (flag == 0x00) {
+            if (msg_reader.readable(32)) {
+                recipient = address::from_bytes(msg_reader.read(32));
+            };
 
-                // For flag=0x0 we expect only 32 bytes. If the stream is longer (more data), then
-                // the format is invalid, so moving recipient to fallback.
-                if (!msg_reader.end_stream()) {
-                    recipient = contract.get_fallback_addr();
-                }
+            // For flag=0x0 we expect only 32 bytes. If the stream is longer (more data), then
+            // the format is invalid, so moving recipient to fallback.
+            if (!msg_reader.end_stream()) {
+                recipient = contract.get_fallback_addr();
             }
-        };
+        }
+    };
 
-        let mut minted = contract.cap.mint_balance(amount);
-        let mut fee_amount = 0;
+    let mut minted = contract.cap.mint_balance(amount);
+    let mut fee_amount = 0;
 
-        if (ops_arg == MINT_OP_APPLY_FEE) {
-            fee_amount = amount.min(contract.mint_fee);
-            let fee = minted.split(fee_amount);
-            amount = amount - fee_amount;
-            contract.fees_collected.join(fee);
-        };
+    if (ops_arg == MINT_OP_APPLY_FEE) {
+        fee_amount = amount.min(contract.mint_fee);
+        let fee = minted.split(fee_amount);
+        amount = amount - fee_amount;
+        contract.fees_collected.join(fee);
+    };
 
-        if (amount > 0) transfer::public_transfer(coin::from_balance(minted, ctx), recipient)
-        else minted.destroy_zero();
+    if (amount > 0) transfer::public_transfer(coin::from_balance(minted, ctx), recipient)
+    else minted.destroy_zero();
 
-        event::emit(MintEvent {
-            recipient,
-            amount,
-            fee: fee_amount,
-            btc_tx_id: tx_id,
-            btc_block_height: height,
-            btc_tx_index: tx_index,
-        });
-    })
+    event::emit(MintEvent {
+        recipient,
+        amount,
+        fee: fee_amount,
+        btc_tx_id: tx_id,
+        btc_block_height: height,
+        btc_tx_index: tx_index,
+    });
 }
 
 /// redeem returns total amount of redeemed balance
@@ -251,6 +244,7 @@ public fun redeem(
 ): u64 {
     assert!(contract.version == VERSION, EVersionMismatch);
     // TODO: implement logic to guard burning
+    // TODO: we can detele the btc public key when reserves of this key is zero
     coins.fold!(0, |total, c| total + coin::burn(&mut contract.cap, c))
 }
 
@@ -272,23 +266,13 @@ public fun change_fees(_: &AdminCap, contract: &mut NbtcContract, mint_fee: u64)
     contract.mint_fee = mint_fee;
 }
 
+/// Set btc endpoint for deposit on nBTC, and set reserve of this endpoint is zero.
+/// In the case, we use this key before we will enable deposit endpoint again.
 public fun add_phk(_: &AdminCap, contract: &mut NbtcContract, phk: vector<u8>) {
-    contract.nbtc_bitcoin_pkhs.insert(phk);
-}
-
-public fun remove_phk(_: &AdminCap, contract: &mut NbtcContract, phk: vector<u8>) {
-    assert!(!contract.nbtc_active_keys.contains(&phk), ERemoveActiveKey);
-    contract.nbtc_bitcoin_pkhs.remove(&phk);
-}
-
-public fun disable_key(_: &AdminCap, contract: &mut NbtcContract, phk: vector<u8>) {
-    assert!(contract.nbtc_bitcoin_pkhs.contains(&phk), EDisableKeyNotInKeySet);
-    contract.nbtc_active_keys.remove(&phk);
-}
-
-public fun enable_key(_: &AdminCap, contract: &mut NbtcContract, phk: vector<u8>) {
-    assert!(contract.nbtc_bitcoin_pkhs.contains(&phk), EEnableKeyNotInKeySet);
-    contract.nbtc_active_keys.insert(phk);
+    if (contract.reserves.contains(&phk) == false) {
+        contract.reserves.insert(phk, 0);
+    };
+    contract.bitcoin_pkh = phk;
 }
 
 //
@@ -311,14 +295,13 @@ public fun get_mint_fee(contract: &NbtcContract): u64 {
     contract.mint_fee
 }
 
-public fun active_keys(contract: &NbtcContract): &vector<vector<u8>> {
-    contract.nbtc_active_keys.keys()
+public fun reserves(contract: &NbtcContract): &VecMap<vector<u8>, u64> {
+    &contract.reserves
 }
 
-public fun all_keys(contract: &NbtcContract): &vector<vector<u8>> {
-    contract.nbtc_bitcoin_pkhs.keys()
+public fun bitcoin_pkh(contract: &NbtcContract): &vector<u8> {
+    &contract.bitcoin_pkh
 }
-
 //
 // Testing
 //
@@ -348,8 +331,8 @@ public(package) fun init_for_testing(
         tx_ids: table::new<vector<u8>, bool>(ctx),
         bitcoin_lc: bitcoin_lc.to_id(),
         fallback_addr,
-        nbtc_bitcoin_pkhs: vec_set::singleton(nbtc_bitcoin_pkh),
-        nbtc_active_keys: vec_set::singleton(nbtc_bitcoin_pkh),
+        bitcoin_pkh: nbtc_bitcoin_pkh,
+        reserves: vec_map::from_keys_values(vector[nbtc_bitcoin_pkh], vector[0]),
         fees_collected: balance::zero(),
         mint_fee: 10,
     };
