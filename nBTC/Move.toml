@@ -5,9 +5,8 @@ license = "MPL-2.0"
 authors = ["Native"]
 
 [dependencies]
-bitcoin_spv = { git = "https://github.com/gonative-cc/sui-bitcoin-spv.git", subdir = "./packages/bitcoin_spv", rev = "master" }
-bitcoin_parser = { git = "https://github.com/gonative-cc/sui-bitcoin-spv.git", subdir = "./packages/bitcoin_parser", rev = "master", override = true }
-
+bitcoin_spv = {local = "../bitcoin_spv"}
+bitcoin_parser = {local = "../bitcoin_parser"}
 # For remote import, use the `{ git = "...", subdir = "...", rev = "..." }`.
 # Revision can be a branch, a tag, and a commit hash.
 # MyRemotePackage = { git = "https://some.remote/host.git", subdir = "remote/path", rev = "main" }
