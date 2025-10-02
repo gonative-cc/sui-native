@@ -3,8 +3,6 @@
 
 # Module `bitcoin_parser::input`
 
-
-
 -  [Struct `Input`](#bitcoin_parser_input_Input)
 -  [Function `new`](#bitcoin_parser_input_new)
 -  [Function `tx_id`](#bitcoin_parser_input_tx_id)
@@ -14,13 +12,10 @@
 -  [Function `decode`](#bitcoin_parser_input_decode)
 -  [Function `encode`](#bitcoin_parser_input_encode)
 
-
 <pre><code><b>use</b> <a href="../bitcoin_parser/encoding.md#bitcoin_parser_encoding">bitcoin_parser::encoding</a>;
 <b>use</b> <a href="../bitcoin_parser/reader.md#bitcoin_parser_reader">bitcoin_parser::reader</a>;
 <b>use</b> <a href="../dependencies/std/vector.md#std_vector">std::vector</a>;
 </code></pre>
-
-
 
 <a name="bitcoin_parser_input_Input"></a>
 
@@ -28,15 +23,11 @@
 
 Input in btc transaction
 
-
 <pre><code><b>public</b> <b>struct</b> <a href="../bitcoin_parser/input.md#bitcoin_parser_input_Input">Input</a> <b>has</b> <b>copy</b>, drop, store
 </code></pre>
 
-
-
 <details>
 <summary>Fields</summary>
-
 
 <dl>
 <dt>
@@ -61,23 +52,17 @@ Input in btc transaction
 </dd>
 </dl>
 
-
 </details>
 
 <a name="bitcoin_parser_input_new"></a>
 
 ## Function `new`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_parser/input.md#bitcoin_parser_input_new">new</a>(<a href="../bitcoin_parser/input.md#bitcoin_parser_input_tx_id">tx_id</a>: vector&lt;u8&gt;, <a href="../bitcoin_parser/input.md#bitcoin_parser_input_vout">vout</a>: vector&lt;u8&gt;, <a href="../bitcoin_parser/input.md#bitcoin_parser_input_script_sig">script_sig</a>: vector&lt;u8&gt;, <a href="../bitcoin_parser/input.md#bitcoin_parser_input_sequence">sequence</a>: vector&lt;u8&gt;): <a href="../bitcoin_parser/input.md#bitcoin_parser_input_Input">bitcoin_parser::input::Input</a>
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_parser/input.md#bitcoin_parser_input_new">new</a>(
     <a href="../bitcoin_parser/input.md#bitcoin_parser_input_tx_id">tx_id</a>: vector&lt;u8&gt;,
@@ -94,31 +79,22 @@ Input in btc transaction
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_parser_input_tx_id"></a>
 
 ## Function `tx_id`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_parser/input.md#bitcoin_parser_input_tx_id">tx_id</a>(<a href="../bitcoin_parser/input.md#bitcoin_parser_input">input</a>: &<a href="../bitcoin_parser/input.md#bitcoin_parser_input_Input">bitcoin_parser::input::Input</a>): vector&lt;u8&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_parser/input.md#bitcoin_parser_input_tx_id">tx_id</a>(<a href="../bitcoin_parser/input.md#bitcoin_parser_input">input</a>: &<a href="../bitcoin_parser/input.md#bitcoin_parser_input_Input">Input</a>): vector&lt;u8&gt; {
     <a href="../bitcoin_parser/input.md#bitcoin_parser_input">input</a>.<a href="../bitcoin_parser/input.md#bitcoin_parser_input_tx_id">tx_id</a>
 }
 </code></pre>
-
-
 
 </details>
 
@@ -126,23 +102,16 @@ Input in btc transaction
 
 ## Function `vout`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_parser/input.md#bitcoin_parser_input_vout">vout</a>(<a href="../bitcoin_parser/input.md#bitcoin_parser_input">input</a>: &<a href="../bitcoin_parser/input.md#bitcoin_parser_input_Input">bitcoin_parser::input::Input</a>): vector&lt;u8&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_parser/input.md#bitcoin_parser_input_vout">vout</a>(<a href="../bitcoin_parser/input.md#bitcoin_parser_input">input</a>: &<a href="../bitcoin_parser/input.md#bitcoin_parser_input_Input">Input</a>): vector&lt;u8&gt; {
     <a href="../bitcoin_parser/input.md#bitcoin_parser_input">input</a>.<a href="../bitcoin_parser/input.md#bitcoin_parser_input_vout">vout</a>
 }
 </code></pre>
-
-
 
 </details>
 
@@ -150,23 +119,16 @@ Input in btc transaction
 
 ## Function `script_sig`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_parser/input.md#bitcoin_parser_input_script_sig">script_sig</a>(<a href="../bitcoin_parser/input.md#bitcoin_parser_input">input</a>: &<a href="../bitcoin_parser/input.md#bitcoin_parser_input_Input">bitcoin_parser::input::Input</a>): vector&lt;u8&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_parser/input.md#bitcoin_parser_input_script_sig">script_sig</a>(<a href="../bitcoin_parser/input.md#bitcoin_parser_input">input</a>: &<a href="../bitcoin_parser/input.md#bitcoin_parser_input_Input">Input</a>): vector&lt;u8&gt; {
     <a href="../bitcoin_parser/input.md#bitcoin_parser_input">input</a>.<a href="../bitcoin_parser/input.md#bitcoin_parser_input_script_sig">script_sig</a>
 }
 </code></pre>
-
-
 
 </details>
 
@@ -174,23 +136,16 @@ Input in btc transaction
 
 ## Function `sequence`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_parser/input.md#bitcoin_parser_input_sequence">sequence</a>(<a href="../bitcoin_parser/input.md#bitcoin_parser_input">input</a>: &<a href="../bitcoin_parser/input.md#bitcoin_parser_input_Input">bitcoin_parser::input::Input</a>): vector&lt;u8&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_parser/input.md#bitcoin_parser_input_sequence">sequence</a>(<a href="../bitcoin_parser/input.md#bitcoin_parser_input">input</a>: &<a href="../bitcoin_parser/input.md#bitcoin_parser_input_Input">Input</a>): vector&lt;u8&gt; {
     <a href="../bitcoin_parser/input.md#bitcoin_parser_input">input</a>.<a href="../bitcoin_parser/input.md#bitcoin_parser_input_sequence">sequence</a>
 }
 </code></pre>
-
-
 
 </details>
 
@@ -198,16 +153,11 @@ Input in btc transaction
 
 ## Function `decode`
 
-
-
 <pre><code><b>public</b>(package) <b>fun</b> <a href="../bitcoin_parser/input.md#bitcoin_parser_input_decode">decode</a>(r: &<b>mut</b> <a href="../bitcoin_parser/reader.md#bitcoin_parser_reader_Reader">bitcoin_parser::reader::Reader</a>): <a href="../bitcoin_parser/input.md#bitcoin_parser_input_Input">bitcoin_parser::input::Input</a>
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b>(package) <b>fun</b> <a href="../bitcoin_parser/input.md#bitcoin_parser_input_decode">decode</a>(r: &<b>mut</b> Reader): <a href="../bitcoin_parser/input.md#bitcoin_parser_input_Input">Input</a> {
     <b>let</b> <a href="../bitcoin_parser/input.md#bitcoin_parser_input_tx_id">tx_id</a> = r.read(32);
@@ -224,24 +174,17 @@ Input in btc transaction
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_parser_input_encode"></a>
 
 ## Function `encode`
 
-
-
 <pre><code><b>public</b>(package) <b>fun</b> <a href="../bitcoin_parser/input.md#bitcoin_parser_input_encode">encode</a>(<a href="../bitcoin_parser/input.md#bitcoin_parser_input">input</a>: &<a href="../bitcoin_parser/input.md#bitcoin_parser_input_Input">bitcoin_parser::input::Input</a>): vector&lt;u8&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b>(package) <b>fun</b> <a href="../bitcoin_parser/input.md#bitcoin_parser_input_encode">encode</a>(<a href="../bitcoin_parser/input.md#bitcoin_parser_input">input</a>: &<a href="../bitcoin_parser/input.md#bitcoin_parser_input_Input">Input</a>): vector&lt;u8&gt; {
     <b>let</b> <b>mut</b> raw_input = vector[];
@@ -253,7 +196,5 @@ Input in btc transaction
     raw_input
 }
 </code></pre>
-
-
 
 </details>

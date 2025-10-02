@@ -3,13 +3,10 @@
 
 # Module `(bitcoin_spv=0x0)::block_header`
 
-
-
 -  [Constants](#@Constants_0)
 -  [Function `target`](#(bitcoin_spv=0x0)_block_header_target)
 -  [Function `calc_work`](#(bitcoin_spv=0x0)_block_header_calc_work)
 -  [Function `pow_check`](#(bitcoin_spv=0x0)_block_header_pow_check)
-
 
 <pre><code><b>use</b> (bitcoin_parser=0x0)::crypto;
 <b>use</b> (bitcoin_parser=0x0)::encoding;
@@ -24,44 +21,30 @@
 <b>use</b> <a href="../dependencies/std/vector.md#std_vector">std::vector</a>;
 </code></pre>
 
-
-
 <a name="@Constants_0"></a>
 
 ## Constants
 
-
 <a name="(bitcoin_spv=0x0)_block_header_EPoW"></a>
-
-
 
 <pre><code>#[error]
 <b>const</b> <a href="../bitcoin_spv/header.md#(bitcoin_spv=0x0)_block_header_EPoW">EPoW</a>: vector&lt;u8&gt; = b"The block hash does not meet the <a href="../bitcoin_spv/header.md#(bitcoin_spv=0x0)_block_header_target">target</a> difficulty (Proof-of-Work check failed)";
 </code></pre>
 
-
-
 <a name="(bitcoin_spv=0x0)_block_header_target"></a>
 
 ## Function `target`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/header.md#(bitcoin_spv=0x0)_block_header_target">target</a>(header: &(bitcoin_parser=0x0)::header::BlockHeader): u256
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/header.md#(bitcoin_spv=0x0)_block_header_target">target</a>(header: &BlockHeader): u256 {
     bits_to_target(header.bits())
 }
 </code></pre>
-
-
 
 </details>
 
@@ -69,16 +52,11 @@
 
 ## Function `calc_work`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/header.md#(bitcoin_spv=0x0)_block_header_calc_work">calc_work</a>(header: &(bitcoin_parser=0x0)::header::BlockHeader): u256
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/header.md#(bitcoin_spv=0x0)_block_header_calc_work">calc_work</a>(header: &BlockHeader): u256 {
     // We compute the total expected hashes or expected "<a href="../bitcoin_spv/header.md#(bitcoin_spv=0x0)_block_header_calc_work">calc_work</a>".
@@ -95,8 +73,6 @@
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="(bitcoin_spv=0x0)_block_header_pow_check"></a>
@@ -105,15 +81,11 @@
 
 checks if the block headers meet PoW target requirements. Panics otherewise.
 
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/header.md#(bitcoin_spv=0x0)_block_header_pow_check">pow_check</a>(header: &(bitcoin_parser=0x0)::header::BlockHeader)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/header.md#(bitcoin_spv=0x0)_block_header_pow_check">pow_check</a>(header: &BlockHeader) {
     <b>let</b> work = header.block_hash();
@@ -121,7 +93,5 @@ checks if the block headers meet PoW target requirements. Panics otherewise.
     <b>assert</b>!(<a href="../bitcoin_spv/header.md#(bitcoin_spv=0x0)_block_header_target">target</a> &gt;= to_u256(work), <a href="../bitcoin_spv/header.md#(bitcoin_spv=0x0)_block_header_EPoW">EPoW</a>);
 }
 </code></pre>
-
-
 
 </details>

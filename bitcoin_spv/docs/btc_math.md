@@ -3,8 +3,6 @@
 
 # Module `(bitcoin_spv=0x0)::btc_math`
 
-
-
 -  [Constants](#@Constants_0)
 -  [Function `to_u256`](#(bitcoin_spv=0x0)_btc_math_to_u256)
 -  [Function `bytes_of`](#(bitcoin_spv=0x0)_btc_math_bytes_of)
@@ -12,26 +10,19 @@
 -  [Function `target_to_bits`](#(bitcoin_spv=0x0)_btc_math_target_to_bits)
 -  [Function `bits_to_target`](#(bitcoin_spv=0x0)_btc_math_bits_to_target)
 
-
 <pre><code></code></pre>
-
-
 
 <a name="@Constants_0"></a>
 
 ## Constants
 
-
 <a name="(bitcoin_spv=0x0)_btc_math_EInvalidLength"></a>
 
 === Errors ===
 
-
 <pre><code>#[error]
 <b>const</b> <a href="../bitcoin_spv/btc_math.md#(bitcoin_spv=0x0)_btc_math_EInvalidLength">EInvalidLength</a>: vector&lt;u8&gt; = b"The input vector <b>has</b> an invalid length";
 </code></pre>
-
-
 
 <a name="(bitcoin_spv=0x0)_btc_math_to_u256"></a>
 
@@ -39,15 +30,11 @@
 
 Converts 32 bytes in little endian format to u256 number.
 
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/btc_math.md#(bitcoin_spv=0x0)_btc_math_to_u256">to_u256</a>(v: vector&lt;u8&gt;): u256
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/btc_math.md#(bitcoin_spv=0x0)_btc_math_to_u256">to_u256</a>(v: vector&lt;u8&gt;): u256 {
     <b>assert</b>!(v.length() == 32, <a href="../bitcoin_spv/btc_math.md#(bitcoin_spv=0x0)_btc_math_EInvalidLength">EInvalidLength</a>);
@@ -61,8 +48,6 @@ Converts 32 bytes in little endian format to u256 number.
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="(bitcoin_spv=0x0)_btc_math_bytes_of"></a>
@@ -71,15 +56,11 @@ Converts 32 bytes in little endian format to u256 number.
 
 number of bytes to represent number.
 
-
 <pre><code><b>fun</b> <a href="../bitcoin_spv/btc_math.md#(bitcoin_spv=0x0)_btc_math_bytes_of">bytes_of</a>(number: u256): u8
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_spv/btc_math.md#(bitcoin_spv=0x0)_btc_math_bytes_of">bytes_of</a>(number: u256): u8 {
     <b>let</b> <b>mut</b> b: u8 = 255;
@@ -91,8 +72,6 @@ number of bytes to represent number.
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="(bitcoin_spv=0x0)_btc_math_get_last_32_bits"></a>
@@ -101,22 +80,16 @@ number of bytes to represent number.
 
 Returns last 32 bits of a number.
 
-
 <pre><code><b>fun</b> <a href="../bitcoin_spv/btc_math.md#(bitcoin_spv=0x0)_btc_math_get_last_32_bits">get_last_32_bits</a>(number: u256): u32
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_spv/btc_math.md#(bitcoin_spv=0x0)_btc_math_get_last_32_bits">get_last_32_bits</a>(number: u256): u32 {
     (number & 0xffffffff) <b>as</b> u32
 }
 </code></pre>
-
-
 
 </details>
 
@@ -131,17 +104,13 @@ format of bits = <1 byte for exponent><3 bytes for coefficient>
 target = coefficient * 2^ (coefficient - 3) (note: 3 = bytes length of the coefficient).
 Caution:
 The first significant byte for the coefficient must be below 80. If it's not, you have to take the preceding 00 as the first byte.
-More & examples: https://learnmeabitcoin.com/technical/block/bits.
-
+More & examples: <https://learnmeabitcoin.com/technical/block/bits>.
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/btc_math.md#(bitcoin_spv=0x0)_btc_math_target_to_bits">target_to_bits</a>(target: u256): u32
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/btc_math.md#(bitcoin_spv=0x0)_btc_math_target_to_bits">target_to_bits</a>(target: u256): u32 {
     // TODO: Handle case nagative target?
@@ -171,8 +140,6 @@ More & examples: https://learnmeabitcoin.com/technical/block/bits.
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="(bitcoin_spv=0x0)_btc_math_bits_to_target"></a>
@@ -181,15 +148,11 @@ More & examples: https://learnmeabitcoin.com/technical/block/bits.
 
 Converts bits to target. See documentation to the function above for more details.
 
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/btc_math.md#(bitcoin_spv=0x0)_btc_math_bits_to_target">bits_to_target</a>(bits: u32): u256
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/btc_math.md#(bitcoin_spv=0x0)_btc_math_bits_to_target">bits_to_target</a>(bits: u32): u256 {
     <b>let</b> exponent = bits &gt;&gt; 3*8;
@@ -205,7 +168,5 @@ Converts bits to target. See documentation to the function above for more detail
     target
 }
 </code></pre>
-
-
 
 </details>
