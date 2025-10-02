@@ -31,5 +31,6 @@ jobs:
         with:
           globs: |
           ${{ steps.changed-files.outputs.all_changed_files }}
-          !**/docs
+          !bitcoin_spv/docs
+          !bitcoin_parser/docs
           separator: ","
