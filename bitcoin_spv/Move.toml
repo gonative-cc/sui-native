@@ -1,28 +1,25 @@
 [package]
-name = "nBTC"
+name = "bitcoin_spv"
 edition = "2024.beta"
 license = "MPL-2.0"
 authors = ["Native"]
 
 [dependencies]
-bitcoin_spv = {local = "../bitcoin_spv"}
-bitcoin_parser = {local = "../bitcoin_parser"}
 # For remote import, use the `{ git = "...", subdir = "...", rev = "..." }`.
 # Revision can be a branch, a tag, and a commit hash.
-# MyRemotePackage = { git = "https://some.remote/host.git", subdir = "remote/path", rev = "main" }
-
 # For local dependencies use `local = path`. Path is relative to the package root
-# Local = { local = "../path/to" }
+bitcoin_parser = { local = "../bitcoin_parser" }
 
 # To resolve a version conflict and force a specific version for dependency
 # override use `override = true`
 # Override = { local = "../conflicting/version", override = true }
 
 [addresses]
-nbtc = "0x0"
-# TODO: need to set these addresses for mainnet
-bitcoin_lc = "0x1001"
-fallback_addr = "0x1002"
+bitcoin_spv = "0x0"
+
+# Named addresses will be accessible in Move as `@name`. They're also exported:
+# for example, `std = "0x1"` is exported by the Standard Library.
+# alice = "0xA11CE"
 
 [dev-dependencies]
 # The dev-dependencies section allows overriding dependencies for `--test` and

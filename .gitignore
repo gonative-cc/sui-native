@@ -138,3 +138,6 @@ dist
 contrib/scripts/*.json
 
 build
+
+.trace
+.coverage_map.mvcov

@@ -6,9 +6,9 @@
 OP=${1:-test}
 
 for name in $(ls -1 */Move.toml); do
-    d=$(dirname $name)
-    echo "==> running" $OP "in" $d
-    cd $d
-    sui move $OP || exit 1
-    cd -
+	d=$(dirname $name)
+	echo "==> running" $OP "in" $d
+	cd $d
+	sui move test -i 5000000 || exit 1
+	cd -
 done
