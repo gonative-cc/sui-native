@@ -21,6 +21,8 @@ Change log entries are to be added to the Unreleased section and in one of the f
 
 ### Features
 
+- Move bitcoin_parser and bitcoin_spv packages to sui-native
+
 ### Breaking Changes
 
 ### Bug Fixes
