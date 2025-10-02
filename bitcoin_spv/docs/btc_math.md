@@ -1,14 +1,13 @@
-
 <a name="(bitcoin_spv=0x0)_btc_math"></a>
 
 # Module `(bitcoin_spv=0x0)::btc_math`
 
--  [Constants](#@Constants_0)
--  [Function `to_u256`](#(bitcoin_spv=0x0)_btc_math_to_u256)
--  [Function `bytes_of`](#(bitcoin_spv=0x0)_btc_math_bytes_of)
--  [Function `get_last_32_bits`](#(bitcoin_spv=0x0)_btc_math_get_last_32_bits)
--  [Function `target_to_bits`](#(bitcoin_spv=0x0)_btc_math_target_to_bits)
--  [Function `bits_to_target`](#(bitcoin_spv=0x0)_btc_math_bits_to_target)
+- [Constants](#@Constants_0)
+- [Function `to_u256`](<#(bitcoin_spv=0x0)_btc_math_to_u256>)
+- [Function `bytes_of`](<#(bitcoin_spv=0x0)_btc_math_bytes_of>)
+- [Function `get_last_32_bits`](<#(bitcoin_spv=0x0)_btc_math_get_last_32_bits>)
+- [Function `target_to_bits`](<#(bitcoin_spv=0x0)_btc_math_target_to_bits>)
+- [Function `bits_to_target`](<#(bitcoin_spv=0x0)_btc_math_bits_to_target>)
 
 <pre><code></code></pre>
 
@@ -101,7 +100,7 @@ target => bits conversion function.
 target is the number you need to get below to mine a block - it defines the difficulty.
 The bits field contains a compact representation of the target.
 format of bits = <1 byte for exponent><3 bytes for coefficient>
-target = coefficient * 2^ (coefficient - 3) (note: 3 = bytes length of the coefficient).
+target = coefficient \* 2^ (coefficient - 3) (note: 3 = bytes length of the coefficient).
 Caution:
 The first significant byte for the coefficient must be below 80. If it's not, you have to take the preceding 00 as the first byte.
 More & examples: <https://learnmeabitcoin.com/technical/block/bits>.

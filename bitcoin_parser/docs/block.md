@@ -1,12 +1,11 @@
-
 <a name="bitcoin_parser_block"></a>
 
 # Module `bitcoin_parser::block`
 
--  [Struct `Block`](#bitcoin_parser_block_Block)
--  [Function `new`](#bitcoin_parser_block_new)
--  [Function `txns`](#bitcoin_parser_block_txns)
--  [Function `header`](#bitcoin_parser_block_header)
+- [Struct `Block`](#bitcoin_parser_block_Block)
+- [Function `new`](#bitcoin_parser_block_new)
+- [Function `txns`](#bitcoin_parser_block_txns)
+- [Function `header`](#bitcoin_parser_block_header)
 
 <pre><code><b>use</b> <a href="../bitcoin_parser/crypto.md#bitcoin_parser_crypto">bitcoin_parser::crypto</a>;
 <b>use</b> <a href="../bitcoin_parser/encoding.md#bitcoin_parser_encoding">bitcoin_parser::encoding</a>;

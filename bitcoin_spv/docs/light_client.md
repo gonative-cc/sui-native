@@ -1,40 +1,39 @@
-
 <a name="(bitcoin_spv=0x0)_light_client"></a>
 
 # Module `(bitcoin_spv=0x0)::light_client`
 
--  [Struct `NewLightClientEvent`](#(bitcoin_spv=0x0)_light_client_NewLightClientEvent)
--  [Struct `InsertedHeadersEvent`](#(bitcoin_spv=0x0)_light_client_InsertedHeadersEvent)
--  [Struct `ForkBeyondFinalityEvent`](#(bitcoin_spv=0x0)_light_client_ForkBeyondFinalityEvent)
--  [Struct `LightClient`](#(bitcoin_spv=0x0)_light_client_LightClient)
--  [Constants](#@Constants_0)
--  [Function `init`](#(bitcoin_spv=0x0)_light_client_init)
--  [Function `new_light_client`](#(bitcoin_spv=0x0)_light_client_new_light_client)
--  [Function `initialize_light_client`](#(bitcoin_spv=0x0)_light_client_initialize_light_client)
--  [Function `insert_headers`](#(bitcoin_spv=0x0)_light_client_insert_headers)
--  [Function `insert_light_block`](#(bitcoin_spv=0x0)_light_client_insert_light_block)
--  [Function `remove_light_block`](#(bitcoin_spv=0x0)_light_client_remove_light_block)
--  [Function `set_block_hash_by_height`](#(bitcoin_spv=0x0)_light_client_set_block_hash_by_height)
--  [Function `append_block`](#(bitcoin_spv=0x0)_light_client_append_block)
--  [Function `insert_header`](#(bitcoin_spv=0x0)_light_client_insert_header)
--  [Function `extend_chain`](#(bitcoin_spv=0x0)_light_client_extend_chain)
--  [Function `cleanup`](#(bitcoin_spv=0x0)_light_client_cleanup)
--  [Function `head_height`](#(bitcoin_spv=0x0)_light_client_head_height)
--  [Function `head_hash`](#(bitcoin_spv=0x0)_light_client_head_hash)
--  [Function `head`](#(bitcoin_spv=0x0)_light_client_head)
--  [Function `finalized_height`](#(bitcoin_spv=0x0)_light_client_finalized_height)
--  [Function `verify_tx`](#(bitcoin_spv=0x0)_light_client_verify_tx)
--  [Function `params`](#(bitcoin_spv=0x0)_light_client_params)
--  [Function `client_id`](#(bitcoin_spv=0x0)_light_client_client_id)
--  [Function `relative_ancestor`](#(bitcoin_spv=0x0)_light_client_relative_ancestor)
--  [Function `calc_next_required_difficulty`](#(bitcoin_spv=0x0)_light_client_calc_next_required_difficulty)
--  [Function `calc_past_median_time`](#(bitcoin_spv=0x0)_light_client_calc_past_median_time)
--  [Function `get_light_block_by_hash`](#(bitcoin_spv=0x0)_light_client_get_light_block_by_hash)
--  [Function `exist`](#(bitcoin_spv=0x0)_light_client_exist)
--  [Function `get_block_hash_by_height`](#(bitcoin_spv=0x0)_light_client_get_block_hash_by_height)
--  [Function `get_light_block_by_height`](#(bitcoin_spv=0x0)_light_client_get_light_block_by_height)
--  [Function `retarget_algorithm`](#(bitcoin_spv=0x0)_light_client_retarget_algorithm)
--  [Function `update_version`](#(bitcoin_spv=0x0)_light_client_update_version)
+- [Struct `NewLightClientEvent`](<#(bitcoin_spv=0x0)_light_client_NewLightClientEvent>)
+- [Struct `InsertedHeadersEvent`](<#(bitcoin_spv=0x0)_light_client_InsertedHeadersEvent>)
+- [Struct `ForkBeyondFinalityEvent`](<#(bitcoin_spv=0x0)_light_client_ForkBeyondFinalityEvent>)
+- [Struct `LightClient`](<#(bitcoin_spv=0x0)_light_client_LightClient>)
+- [Constants](#@Constants_0)
+- [Function `init`](<#(bitcoin_spv=0x0)_light_client_init>)
+- [Function `new_light_client`](<#(bitcoin_spv=0x0)_light_client_new_light_client>)
+- [Function `initialize_light_client`](<#(bitcoin_spv=0x0)_light_client_initialize_light_client>)
+- [Function `insert_headers`](<#(bitcoin_spv=0x0)_light_client_insert_headers>)
+- [Function `insert_light_block`](<#(bitcoin_spv=0x0)_light_client_insert_light_block>)
+- [Function `remove_light_block`](<#(bitcoin_spv=0x0)_light_client_remove_light_block>)
+- [Function `set_block_hash_by_height`](<#(bitcoin_spv=0x0)_light_client_set_block_hash_by_height>)
+- [Function `append_block`](<#(bitcoin_spv=0x0)_light_client_append_block>)
+- [Function `insert_header`](<#(bitcoin_spv=0x0)_light_client_insert_header>)
+- [Function `extend_chain`](<#(bitcoin_spv=0x0)_light_client_extend_chain>)
+- [Function `cleanup`](<#(bitcoin_spv=0x0)_light_client_cleanup>)
+- [Function `head_height`](<#(bitcoin_spv=0x0)_light_client_head_height>)
+- [Function `head_hash`](<#(bitcoin_spv=0x0)_light_client_head_hash>)
+- [Function `head`](<#(bitcoin_spv=0x0)_light_client_head>)
+- [Function `finalized_height`](<#(bitcoin_spv=0x0)_light_client_finalized_height>)
+- [Function `verify_tx`](<#(bitcoin_spv=0x0)_light_client_verify_tx>)
+- [Function `params`](<#(bitcoin_spv=0x0)_light_client_params>)
+- [Function `client_id`](<#(bitcoin_spv=0x0)_light_client_client_id>)
+- [Function `relative_ancestor`](<#(bitcoin_spv=0x0)_light_client_relative_ancestor>)
+- [Function `calc_next_required_difficulty`](<#(bitcoin_spv=0x0)_light_client_calc_next_required_difficulty>)
+- [Function `calc_past_median_time`](<#(bitcoin_spv=0x0)_light_client_calc_past_median_time>)
+- [Function `get_light_block_by_hash`](<#(bitcoin_spv=0x0)_light_client_get_light_block_by_hash>)
+- [Function `exist`](<#(bitcoin_spv=0x0)_light_client_exist>)
+- [Function `get_block_hash_by_height`](<#(bitcoin_spv=0x0)_light_client_get_block_hash_by_height>)
+- [Function `get_light_block_by_height`](<#(bitcoin_spv=0x0)_light_client_get_light_block_by_height>)
+- [Function `retarget_algorithm`](<#(bitcoin_spv=0x0)_light_client_retarget_algorithm>)
+- [Function `update_version`](<#(bitcoin_spv=0x0)_light_client_update_version>)
 
 <pre><code><b>use</b> (bitcoin_parser=0x0)::crypto;
 <b>use</b> (bitcoin_parser=0x0)::encoding;
@@ -291,7 +290,7 @@ LightClient constructor. Create light client and verify data.
 *start_height: height of the first trusted header
 *trusted_headers: List of trusted headers in hex format.
 *parent_chain_work: chain_work at parent block of start_height block.
-*confirmation_depth: the depth from which a block is considered <code>confirmed</code>.
+\*confirmation_depth: the depth from which a block is considered <code>confirmed</code>.
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_new_light_client">new_light_client</a>(<a href="../bitcoin_spv/params.md#(bitcoin_spv=0x0)_params">params</a>: (bitcoin_spv=0x0)::<a href="../bitcoin_spv/params.md#(bitcoin_spv=0x0)_params_Params">params::Params</a>, start_height: u64, trusted_headers: vector&lt;(bitcoin_parser=0x0)::header::BlockHeader&gt;, parent_chain_work: u256, confirmation_depth: u64, ctx: &<b>mut</b> <a href="../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): (bitcoin_spv=0x0)::<a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_LightClient">light_client::LightClient</a>
 </code></pre>
@@ -545,8 +544,8 @@ the cleanup.
 Insert new header to bitcoin spv
 
 - <code>parent</code>: hash of the parent block, must be already recorded in the light client.
-NOTE: this function doesn't do fork checks and overwrites the current fork. So it must be
-only called internally.
+  NOTE: this function doesn't do fork checks and overwrites the current fork. So it must be
+  only called internally.
 
 <pre><code><b>public</b>(package) <b>fun</b> <a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_insert_header">insert_header</a>(lc: &<b>mut</b> (bitcoin_spv=0x0)::<a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_LightClient">light_client::LightClient</a>, parent: &(bitcoin_spv=0x0)::<a href="../bitcoin_spv/light_block.md#(bitcoin_spv=0x0)_light_block_LightBlock">light_block::LightBlock</a>, header: (bitcoin_parser=0x0)::header::BlockHeader): (bitcoin_spv=0x0)::<a href="../bitcoin_spv/light_block.md#(bitcoin_spv=0x0)_light_block_LightBlock">light_block::LightBlock</a>
 </code></pre>
@@ -596,7 +595,7 @@ NOTE: we need to pass <code>parent</code> block to assure we are creating a chai
 following scenario, where headers that we insert don't form a chain:
 
 A = {parent: Z}
-Chain = X-Y-Z  // existing chain
+Chain = X-Y-Z // existing chain
 headers = [A, A, A]
 
 the insert would try to insert A multiple times:

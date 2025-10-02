@@ -1,20 +1,19 @@
-
 <a name="(bitcoin_spv=0x0)_params"></a>
 
 # Module `(bitcoin_spv=0x0)::params`
 
--  [Struct `Params`](#(bitcoin_spv=0x0)_params_Params)
--  [Constants](#@Constants_0)
--  [Function `mainnet`](#(bitcoin_spv=0x0)_params_mainnet)
--  [Function `testnet`](#(bitcoin_spv=0x0)_params_testnet)
--  [Function `regtest`](#(bitcoin_spv=0x0)_params_regtest)
--  [Function `blocks_pre_retarget`](#(bitcoin_spv=0x0)_params_blocks_pre_retarget)
--  [Function `power_limit`](#(bitcoin_spv=0x0)_params_power_limit)
--  [Function `power_limit_bits`](#(bitcoin_spv=0x0)_params_power_limit_bits)
--  [Function `target_timespan`](#(bitcoin_spv=0x0)_params_target_timespan)
--  [Function `pow_no_retargeting`](#(bitcoin_spv=0x0)_params_pow_no_retargeting)
--  [Function `is_correct_init_height`](#(bitcoin_spv=0x0)_params_is_correct_init_height)
--  [Function `skip_difficulty_check`](#(bitcoin_spv=0x0)_params_skip_difficulty_check)
+- [Struct `Params`](<#(bitcoin_spv=0x0)_params_Params>)
+- [Constants](#@Constants_0)
+- [Function `mainnet`](<#(bitcoin_spv=0x0)_params_mainnet>)
+- [Function `testnet`](<#(bitcoin_spv=0x0)_params_testnet>)
+- [Function `regtest`](<#(bitcoin_spv=0x0)_params_regtest>)
+- [Function `blocks_pre_retarget`](<#(bitcoin_spv=0x0)_params_blocks_pre_retarget>)
+- [Function `power_limit`](<#(bitcoin_spv=0x0)_params_power_limit>)
+- [Function `power_limit_bits`](<#(bitcoin_spv=0x0)_params_power_limit_bits>)
+- [Function `target_timespan`](<#(bitcoin_spv=0x0)_params_target_timespan>)
+- [Function `pow_no_retargeting`](<#(bitcoin_spv=0x0)_params_pow_no_retargeting>)
+- [Function `is_correct_init_height`](<#(bitcoin_spv=0x0)_params_is_correct_init_height>)
+- [Function `skip_difficulty_check`](<#(bitcoin_spv=0x0)_params_skip_difficulty_check>)
 
 <pre><code></code></pre>
 

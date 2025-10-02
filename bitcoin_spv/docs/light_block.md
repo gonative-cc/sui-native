@@ -1,13 +1,12 @@
-
 <a name="(bitcoin_spv=0x0)_light_block"></a>
 
 # Module `(bitcoin_spv=0x0)::light_block`
 
--  [Struct `LightBlock`](#(bitcoin_spv=0x0)_light_block_LightBlock)
--  [Function `new_light_block`](#(bitcoin_spv=0x0)_light_block_new_light_block)
--  [Function `height`](#(bitcoin_spv=0x0)_light_block_height)
--  [Function `header`](#(bitcoin_spv=0x0)_light_block_header)
--  [Function `chain_work`](#(bitcoin_spv=0x0)_light_block_chain_work)
+- [Struct `LightBlock`](<#(bitcoin_spv=0x0)_light_block_LightBlock>)
+- [Function `new_light_block`](<#(bitcoin_spv=0x0)_light_block_new_light_block>)
+- [Function `height`](<#(bitcoin_spv=0x0)_light_block_height>)
+- [Function `header`](<#(bitcoin_spv=0x0)_light_block_header>)
+- [Function `chain_work`](<#(bitcoin_spv=0x0)_light_block_chain_work>)
 
 <pre><code><b>use</b> (bitcoin_parser=0x0)::crypto;
 <b>use</b> (bitcoin_parser=0x0)::encoding;

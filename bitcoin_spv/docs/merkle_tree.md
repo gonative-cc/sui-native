@@ -1,11 +1,10 @@
-
 <a name="(bitcoin_spv=0x0)_merkle_tree"></a>
 
 # Module `(bitcoin_spv=0x0)::merkle_tree`
 
--  [Constants](#@Constants_0)
--  [Function `merkle_hash`](#(bitcoin_spv=0x0)_merkle_tree_merkle_hash)
--  [Function `verify_merkle_proof`](#(bitcoin_spv=0x0)_merkle_tree_verify_merkle_proof)
+- [Constants](#@Constants_0)
+- [Function `merkle_hash`](<#(bitcoin_spv=0x0)_merkle_tree_merkle_hash>)
+- [Function `verify_merkle_proof`](<#(bitcoin_spv=0x0)_merkle_tree_verify_merkle_proof>)
 
 <pre><code><b>use</b> (bitcoin_parser=0x0)::crypto;
 <b>use</b> <a href="../dependencies/std/hash.md#std_hash">std::hash</a>;
@@ -57,10 +56,10 @@ BTC doesn't recognize different between 64 bytes Tx and internal merkle tree nod
 We modified the merkle tree verify algorithm inspire by this solution:
 
 - <https://bitslog.com/2018/08/21/simple-change-to-the-bitcoin-merkleblock-command-to-protect-from-leaf-node-weakness-in-transaction-merkle-tree/>
-Gist: instead of computing new merkle node = HASH256(X||Y) where X, Y is children nodes;
-we compute new merkle node = HASH256(SHA256(X), Y) or node=HASH256(X, SHA256(Y)),
-depending if we are coming from left or right.
-The trade off here is we need more hash execution.
+  Gist: instead of computing new merkle node = HASH256(X||Y) where X, Y is children nodes;
+  we compute new merkle node = HASH256(SHA256(X), Y) or node=HASH256(X, SHA256(Y)),
+  depending if we are coming from left or right.
+  The trade off here is we need more hash execution.
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/merkle_tree.md#(bitcoin_spv=0x0)_merkle_tree_verify_merkle_proof">verify_merkle_proof</a>(root: vector&lt;u8&gt;, merkle_path: vector&lt;vector&lt;u8&gt;&gt;, tx_id: vector&lt;u8&gt;, tx_index: u64): bool
 </code></pre>

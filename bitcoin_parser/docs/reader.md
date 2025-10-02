@@ -1,20 +1,19 @@
-
 <a name="bitcoin_parser_reader"></a>
 
 # Module `bitcoin_parser::reader`
 
--  [Struct `Reader`](#bitcoin_parser_reader_Reader)
--  [Constants](#@Constants_0)
--  [Function `new`](#bitcoin_parser_reader_new)
--  [Function `readable`](#bitcoin_parser_reader_readable)
--  [Function `end_stream`](#bitcoin_parser_reader_end_stream)
--  [Function `read`](#bitcoin_parser_reader_read)
--  [Function `peek`](#bitcoin_parser_reader_peek)
--  [Function `read_u32`](#bitcoin_parser_reader_read_u32)
--  [Function `read_compact_size`](#bitcoin_parser_reader_read_compact_size)
--  [Function `read_byte`](#bitcoin_parser_reader_read_byte)
--  [Function `next_opcode`](#bitcoin_parser_reader_next_opcode)
--  [Function `isOpSuccess`](#bitcoin_parser_reader_isOpSuccess)
+- [Struct `Reader`](#bitcoin_parser_reader_Reader)
+- [Constants](#@Constants_0)
+- [Function `new`](#bitcoin_parser_reader_new)
+- [Function `readable`](#bitcoin_parser_reader_readable)
+- [Function `end_stream`](#bitcoin_parser_reader_end_stream)
+- [Function `read`](#bitcoin_parser_reader_read)
+- [Function `peek`](#bitcoin_parser_reader_peek)
+- [Function `read_u32`](#bitcoin_parser_reader_read_u32)
+- [Function `read_compact_size`](#bitcoin_parser_reader_read_compact_size)
+- [Function `read_byte`](#bitcoin_parser_reader_read_byte)
+- [Function `next_opcode`](#bitcoin_parser_reader_next_opcode)
+- [Function `isOpSuccess`](#bitcoin_parser_reader_isOpSuccess)
 
 <pre><code><b>use</b> <a href="../bitcoin_parser/encoding.md#bitcoin_parser_encoding">bitcoin_parser::encoding</a>;
 </code></pre>

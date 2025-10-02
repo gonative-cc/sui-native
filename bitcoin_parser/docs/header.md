@@ -1,18 +1,17 @@
-
 <a name="bitcoin_parser_header"></a>
 
 # Module `bitcoin_parser::header`
 
--  [Struct `BlockHeader`](#bitcoin_parser_header_BlockHeader)
--  [Constants](#@Constants_0)
--  [Function `new`](#bitcoin_parser_header_new)
--  [Function `block_hash`](#bitcoin_parser_header_block_hash)
--  [Function `version`](#bitcoin_parser_header_version)
--  [Function `parent`](#bitcoin_parser_header_parent)
--  [Function `merkle_root`](#bitcoin_parser_header_merkle_root)
--  [Function `timestamp`](#bitcoin_parser_header_timestamp)
--  [Function `bits`](#bitcoin_parser_header_bits)
--  [Function `nonce`](#bitcoin_parser_header_nonce)
+- [Struct `BlockHeader`](#bitcoin_parser_header_BlockHeader)
+- [Constants](#@Constants_0)
+- [Function `new`](#bitcoin_parser_header_new)
+- [Function `block_hash`](#bitcoin_parser_header_block_hash)
+- [Function `version`](#bitcoin_parser_header_version)
+- [Function `parent`](#bitcoin_parser_header_parent)
+- [Function `merkle_root`](#bitcoin_parser_header_merkle_root)
+- [Function `timestamp`](#bitcoin_parser_header_timestamp)
+- [Function `bits`](#bitcoin_parser_header_bits)
+- [Function `nonce`](#bitcoin_parser_header_nonce)
 
 <pre><code><b>use</b> <a href="../bitcoin_parser/crypto.md#bitcoin_parser_crypto">bitcoin_parser::crypto</a>;
 <b>use</b> <a href="../bitcoin_parser/encoding.md#bitcoin_parser_encoding">bitcoin_parser::encoding</a>;

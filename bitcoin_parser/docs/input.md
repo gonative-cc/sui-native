@@ -1,16 +1,15 @@
-
 <a name="bitcoin_parser_input"></a>
 
 # Module `bitcoin_parser::input`
 
--  [Struct `Input`](#bitcoin_parser_input_Input)
--  [Function `new`](#bitcoin_parser_input_new)
--  [Function `tx_id`](#bitcoin_parser_input_tx_id)
--  [Function `vout`](#bitcoin_parser_input_vout)
--  [Function `script_sig`](#bitcoin_parser_input_script_sig)
--  [Function `sequence`](#bitcoin_parser_input_sequence)
--  [Function `decode`](#bitcoin_parser_input_decode)
--  [Function `encode`](#bitcoin_parser_input_encode)
+- [Struct `Input`](#bitcoin_parser_input_Input)
+- [Function `new`](#bitcoin_parser_input_new)
+- [Function `tx_id`](#bitcoin_parser_input_tx_id)
+- [Function `vout`](#bitcoin_parser_input_vout)
+- [Function `script_sig`](#bitcoin_parser_input_script_sig)
+- [Function `sequence`](#bitcoin_parser_input_sequence)
+- [Function `decode`](#bitcoin_parser_input_decode)
+- [Function `encode`](#bitcoin_parser_input_encode)
 
 <pre><code><b>use</b> <a href="../bitcoin_parser/encoding.md#bitcoin_parser_encoding">bitcoin_parser::encoding</a>;
 <b>use</b> <a href="../bitcoin_parser/reader.md#bitcoin_parser_reader">bitcoin_parser::reader</a>;

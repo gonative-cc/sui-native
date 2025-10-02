@@ -1,25 +1,24 @@
-
 <a name="bitcoin_parser_tx"></a>
 
 # Module `bitcoin_parser::tx`
 
--  [Struct `InputWitness`](#bitcoin_parser_tx_InputWitness)
--  [Struct `Transaction`](#bitcoin_parser_tx_Transaction)
--  [Constants](#@Constants_0)
--  [Function `new_witness`](#bitcoin_parser_tx_new_witness)
--  [Function `new`](#bitcoin_parser_tx_new)
--  [Function `items`](#bitcoin_parser_tx_items)
--  [Function `version`](#bitcoin_parser_tx_version)
--  [Function `inputs`](#bitcoin_parser_tx_inputs)
--  [Function `outputs`](#bitcoin_parser_tx_outputs)
--  [Function `witness`](#bitcoin_parser_tx_witness)
--  [Function `locktime`](#bitcoin_parser_tx_locktime)
--  [Function `input_at`](#bitcoin_parser_tx_input_at)
--  [Function `output_at`](#bitcoin_parser_tx_output_at)
--  [Function `is_witness`](#bitcoin_parser_tx_is_witness)
--  [Function `tx_id`](#bitcoin_parser_tx_tx_id)
--  [Function `deserialize`](#bitcoin_parser_tx_deserialize)
--  [Function `is_coinbase`](#bitcoin_parser_tx_is_coinbase)
+- [Struct `InputWitness`](#bitcoin_parser_tx_InputWitness)
+- [Struct `Transaction`](#bitcoin_parser_tx_Transaction)
+- [Constants](#@Constants_0)
+- [Function `new_witness`](#bitcoin_parser_tx_new_witness)
+- [Function `new`](#bitcoin_parser_tx_new)
+- [Function `items`](#bitcoin_parser_tx_items)
+- [Function `version`](#bitcoin_parser_tx_version)
+- [Function `inputs`](#bitcoin_parser_tx_inputs)
+- [Function `outputs`](#bitcoin_parser_tx_outputs)
+- [Function `witness`](#bitcoin_parser_tx_witness)
+- [Function `locktime`](#bitcoin_parser_tx_locktime)
+- [Function `input_at`](#bitcoin_parser_tx_input_at)
+- [Function `output_at`](#bitcoin_parser_tx_output_at)
+- [Function `is_witness`](#bitcoin_parser_tx_is_witness)
+- [Function `tx_id`](#bitcoin_parser_tx_tx_id)
+- [Function `deserialize`](#bitcoin_parser_tx_deserialize)
+- [Function `is_coinbase`](#bitcoin_parser_tx_is_coinbase)
 
 <pre><code><b>use</b> <a href="../bitcoin_parser/crypto.md#bitcoin_parser_crypto">bitcoin_parser::crypto</a>;
 <b>use</b> <a href="../bitcoin_parser/encoding.md#bitcoin_parser_encoding">bitcoin_parser::encoding</a>;

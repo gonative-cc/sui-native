@@ -1,12 +1,11 @@
-
 <a name="(bitcoin_spv=0x0)_block_header"></a>
 
 # Module `(bitcoin_spv=0x0)::block_header`
 
--  [Constants](#@Constants_0)
--  [Function `target`](#(bitcoin_spv=0x0)_block_header_target)
--  [Function `calc_work`](#(bitcoin_spv=0x0)_block_header_calc_work)
--  [Function `pow_check`](#(bitcoin_spv=0x0)_block_header_pow_check)
+- [Constants](#@Constants_0)
+- [Function `target`](<#(bitcoin_spv=0x0)_block_header_target>)
+- [Function `calc_work`](<#(bitcoin_spv=0x0)_block_header_calc_work>)
+- [Function `pow_check`](<#(bitcoin_spv=0x0)_block_header_pow_check>)
 
 <pre><code><b>use</b> (bitcoin_parser=0x0)::crypto;
 <b>use</b> (bitcoin_parser=0x0)::encoding;

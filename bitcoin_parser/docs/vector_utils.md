@@ -1,10 +1,9 @@
-
 <a name="bitcoin_parser_vector_utils"></a>
 
 # Module `bitcoin_parser::vector_utils`
 
--  [Constants](#@Constants_0)
--  [Function `vector_slice`](#bitcoin_parser_vector_utils_vector_slice)
+- [Constants](#@Constants_0)
+- [Function `vector_slice`](#bitcoin_parser_vector_utils_vector_slice)
 
 <pre><code></code></pre>
 

@@ -1,9 +1,8 @@
-
 <a name="bitcoin_parser_crypto"></a>
 
 # Module `bitcoin_parser::crypto`
 
--  [Function `hash256`](#bitcoin_parser_crypto_hash256)
+- [Function `hash256`](#bitcoin_parser_crypto_hash256)
 
 <pre><code><b>use</b> <a href="../dependencies/std/hash.md#std_hash">std::hash</a>;
 </code></pre>

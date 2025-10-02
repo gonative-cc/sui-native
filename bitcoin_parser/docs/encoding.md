@@ -1,13 +1,12 @@
-
 <a name="bitcoin_parser_encoding"></a>
 
 # Module `bitcoin_parser::encoding`
 
--  [Constants](#@Constants_0)
--  [Function `le_bytes_to_u64`](#bitcoin_parser_encoding_le_bytes_to_u64)
--  [Function `u64_to_varint_bytes`](#bitcoin_parser_encoding_u64_to_varint_bytes)
--  [Function `u32_to_le_bytes`](#bitcoin_parser_encoding_u32_to_le_bytes)
--  [Function `u64_to_le_bytes`](#bitcoin_parser_encoding_u64_to_le_bytes)
+- [Constants](#@Constants_0)
+- [Function `le_bytes_to_u64`](#bitcoin_parser_encoding_le_bytes_to_u64)
+- [Function `u64_to_varint_bytes`](#bitcoin_parser_encoding_u64_to_varint_bytes)
+- [Function `u32_to_le_bytes`](#bitcoin_parser_encoding_u32_to_le_bytes)
+- [Function `u64_to_le_bytes`](#bitcoin_parser_encoding_u64_to_le_bytes)
 
 <pre><code></code></pre>
 

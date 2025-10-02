@@ -1,27 +1,26 @@
-
 <a name="bitcoin_parser_output"></a>
 
 # Module `bitcoin_parser::output`
 
--  [Struct `Output`](#bitcoin_parser_output_Output)
--  [Constants](#@Constants_0)
--  [Function `new`](#bitcoin_parser_output_new)
--  [Function `amount_bytes`](#bitcoin_parser_output_amount_bytes)
--  [Function `amount`](#bitcoin_parser_output_amount)
--  [Function `script_pubkey`](#bitcoin_parser_output_script_pubkey)
--  [Function `is_P2SH`](#bitcoin_parser_output_is_P2SH)
--  [Function `is_P2WSH`](#bitcoin_parser_output_is_P2WSH)
--  [Function `is_P2PHK`](#bitcoin_parser_output_is_P2PHK)
--  [Function `is_op_return`](#bitcoin_parser_output_is_op_return)
--  [Function `is_P2WPHK`](#bitcoin_parser_output_is_P2WPHK)
--  [Function `is_taproot`](#bitcoin_parser_output_is_taproot)
--  [Function `extract_public_key_hash`](#bitcoin_parser_output_extract_public_key_hash)
--  [Function `extract_script_hash`](#bitcoin_parser_output_extract_script_hash)
--  [Function `extract_witness_script_hash`](#bitcoin_parser_output_extract_witness_script_hash)
--  [Function `extract_taproot`](#bitcoin_parser_output_extract_taproot)
--  [Function `op_return`](#bitcoin_parser_output_op_return)
--  [Function `decode`](#bitcoin_parser_output_decode)
--  [Function `encode`](#bitcoin_parser_output_encode)
+- [Struct `Output`](#bitcoin_parser_output_Output)
+- [Constants](#@Constants_0)
+- [Function `new`](#bitcoin_parser_output_new)
+- [Function `amount_bytes`](#bitcoin_parser_output_amount_bytes)
+- [Function `amount`](#bitcoin_parser_output_amount)
+- [Function `script_pubkey`](#bitcoin_parser_output_script_pubkey)
+- [Function `is_P2SH`](#bitcoin_parser_output_is_P2SH)
+- [Function `is_P2WSH`](#bitcoin_parser_output_is_P2WSH)
+- [Function `is_P2PHK`](#bitcoin_parser_output_is_P2PHK)
+- [Function `is_op_return`](#bitcoin_parser_output_is_op_return)
+- [Function `is_P2WPHK`](#bitcoin_parser_output_is_P2WPHK)
+- [Function `is_taproot`](#bitcoin_parser_output_is_taproot)
+- [Function `extract_public_key_hash`](#bitcoin_parser_output_extract_public_key_hash)
+- [Function `extract_script_hash`](#bitcoin_parser_output_extract_script_hash)
+- [Function `extract_witness_script_hash`](#bitcoin_parser_output_extract_witness_script_hash)
+- [Function `extract_taproot`](#bitcoin_parser_output_extract_taproot)
+- [Function `op_return`](#bitcoin_parser_output_op_return)
+- [Function `decode`](#bitcoin_parser_output_decode)
+- [Function `encode`](#bitcoin_parser_output_encode)
 
 <pre><code><b>use</b> <a href="../bitcoin_parser/encoding.md#bitcoin_parser_encoding">bitcoin_parser::encoding</a>;
 <b>use</b> <a href="../bitcoin_parser/reader.md#bitcoin_parser_reader">bitcoin_parser::reader</a>;

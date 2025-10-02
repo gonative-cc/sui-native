@@ -1,11 +1,10 @@
-
 <a name="(bitcoin_spv=0x0)_utils"></a>
 
 # Module `(bitcoin_spv=0x0)::utils`
 
--  [Constants](#@Constants_0)
--  [Function `slice`](#(bitcoin_spv=0x0)_utils_slice)
--  [Function `nth_element`](#(bitcoin_spv=0x0)_utils_nth_element)
+- [Constants](#@Constants_0)
+- [Function `slice`](<#(bitcoin_spv=0x0)_utils_slice>)
+- [Function `nth_element`](<#(bitcoin_spv=0x0)_utils_nth_element>)
 
 <pre><code></code></pre>
 
