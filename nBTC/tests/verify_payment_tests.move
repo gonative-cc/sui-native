@@ -65,7 +65,7 @@ fun verify_payment_happy_cases() {
         proof,
         tx_index,
         &transaction,
-        x"e6228f7a5ee6b15c7cccfd9f9cb7e86992610845",
+        x"76a914e6228f7a5ee6b15c7cccfd9f9cb7e8699261084588ac",
     );
 
     assert_eq!(tx_id, x"754e4a84a89272e24d8968a37222648ced57d533e4d8cf2b24980658dd16fb6d");
@@ -115,7 +115,7 @@ fun verify_payment_with_P2WPHK_output_happy_cases() {
         proof,
         tx_index,
         &transaction,
-        x"e6228f7a5ee6b15c7cccfd9f9cb7e86992610845",
+        x"0014e6228f7a5ee6b15c7cccfd9f9cb7e86992610845",
     );
 
     assert_eq!(tx_id, x"df88e4ad22477438db0a80979cf3dea033aa968c97fe06270f8864941a30649b");
