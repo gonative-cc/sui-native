@@ -25,6 +25,8 @@ Change log entries are to be added to the Unreleased section and in one of the f
 
 ### Breaking Changes
 
+- Refactored the `nBTC` `verify_payment` function logic to be script based. It no longer parses transaction outputs to extract a Public Key Hash. Instead, it performs comparison of the full `scriptPubKey` against the `scriptPubKey` from the provided transaction.
+
 ### Bug Fixes
 
 ## v0.0.1 (YYYY-MM-DD)
