@@ -6,7 +6,6 @@ module bitcoin_parser::output_tests;
 use bitcoin_parser::output;
 use std::unit_test::assert_eq;
 
-
 #[test]
 fun op_return_script_happy_cases() {
     let data = vector[

@@ -177,7 +177,10 @@ fun test_mint_with_fee() {
 fun test_nbtc_mint_fail_amount_is_zero() {
     let sender = @0x1;
     // Use a different treasury address so the payment to our main treasury is not found.
-    let (lc, mut ctr, mut scenario) = setup(x"76a914509a651dd392e1bc125323f629b67d65cca3d4ff88ac", sender);
+    let (lc, mut ctr, mut scenario) = setup(
+        x"76a914509a651dd392e1bc125323f629b67d65cca3d4ff88ac",
+        sender,
+    );
     let data = get_valid_mint_data();
 
     ctr.mint(
