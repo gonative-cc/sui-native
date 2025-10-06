@@ -11,7 +11,7 @@ It's the first ever synthetic BTC that is
 - custody-less,
 - keeps the true Web3 ethos.
 - rightmost trust minimized (read about [nBTC trust model](https://x.com/goNativeCC/status/1899487861939806641))
-- NBTC_BITCOIN_PKH = 0xce9f3ad7d227c66e9744d052821c20d18a2ea78f. Corresponds to `tb1qe60n447jylrxa96y6pfgy8pq6x9zafu09ky7cq` address on Bitcoin testnet.
+- NBTC_BITCOIN_SCRIPT_PUBKEY = 0x0014ce9f3ad7d227c66e9744d052821c20d18a2ea78f. Corresponds to `tb1qe60n447jylrxa96y6pfgy8pq6x9zafu09ky7cq` address on Bitcoin testnet.
 
 ## Deployment
 
