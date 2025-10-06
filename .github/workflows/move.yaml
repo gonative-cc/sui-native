@@ -20,6 +20,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
       - name: run Sui Move test
         run: bash ./contrib/run-move-tests.sh test
 
