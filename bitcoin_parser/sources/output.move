@@ -77,27 +77,9 @@ public fun is_P2WSH(output: &Output): bool {
 	script[1] == OP_DATA_32
 }
 
-public fun is_P2PHK(output: &Output): bool {
-    let script = output.script_pubkey();
-
-    script.length() == 25 &&
-		script[0] == OP_DUP &&
-		script[1] == OP_HASH160 &&
-		script[2] == OP_DATA_20 &&
-		script[23] == OP_EQUALVERIFY &&
-		script[24] == OP_CHECKSIG
-}
-
 public fun is_op_return(output: &Output): bool {
     let script = output.script_pubkey;
     script.length() > 0 && script[0] == OP_RETURN
-}
-
-public fun is_P2WPHK(output: &Output): bool {
-    let script = output.script_pubkey;
-    script.length() == 22 &&
-        script[0] == OP_0 &&
-        script[1] == OP_DATA_20
 }
 
 public fun is_taproot(output: &Output): bool {
@@ -105,20 +87,6 @@ public fun is_taproot(output: &Output): bool {
     script.length() == 34 &&
 	script[0] == OP_1 &&
 	script[1] == OP_DATA_32
-}
-
-// TODO: add support script addresses.
-// TODO: check and verify the address to make sure we support it. Return error otherwise
-/// extracts public key hash (PKH) from the output in P2PHK or P2WPKH
-/// returns an empty vector in case it was not able to extract it
-public fun extract_public_key_hash(output: &Output): Option<vector<u8>> {
-    let script = output.script_pubkey;
-    if (output.is_P2PHK()) {
-        return option::some(vector_slice(&script, 3, 23))
-    } else if (output.is_P2WPHK()) {
-        return option::some(vector_slice(&script, 2, 22))
-    };
-    option::none()
 }
 
 public fun extract_script_hash(output: &Output): Option<vector<u8>> {

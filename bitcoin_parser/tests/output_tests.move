@@ -6,27 +6,6 @@ module bitcoin_parser::output_tests;
 use bitcoin_parser::output;
 use std::unit_test::assert_eq;
 
-#[test]
-fun pkh_script_happy_cases() {
-    let output = &output::new(100, x"76a91455ae51684c43435da751ac8d2173b2652eb6410588ac");
-    assert_eq!(output.is_P2PHK(), true);
-    assert_eq!(
-        output.extract_public_key_hash(),
-        option::some(x"55ae51684c43435da751ac8d2173b2652eb64105"),
-    );
-    let output = &output::new(10, x"79a9140fef69f3ac0d9d0473a318ae508875ad0eae3dcc88ac");
-    assert_eq!(output.is_P2PHK(), false);
-    let output = &output::new(10, x"0014841b80d2cc75f5345c482af96294d04fdd66b2b7");
-    assert_eq!(output.is_P2WPHK(), true);
-    assert_eq!(
-        output.extract_public_key_hash(),
-        option::some(x"841b80d2cc75f5345c482af96294d04fdd66b2b7"),
-    );
-    let output = &output::new(10, x"0101"); // arbitrary script
-    assert_eq!(output.is_P2PHK(), false);
-    assert_eq!(output.is_P2WPHK(), false);
-    assert_eq!(output.extract_public_key_hash(), option::none());
-}
 
 #[test]
 fun op_return_script_happy_cases() {
