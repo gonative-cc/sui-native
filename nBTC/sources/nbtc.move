@@ -75,8 +75,8 @@ public struct NbtcContract has key, store {
     bitcoin_lc: ID,
     fallback_addr: address,
     // TODO: change to taproot once Ika will support it
-    bitcoin_pkh: vector<u8>,
-    /// total deposit balance for each active bitcoin pkh endpoint
+    bitcoin_script_pubkey: vector<u8>,
+    /// total deposit balance for each active bitcoin script_pubkey endpoint
     balances: VecMap<vector<u8>, u64>,
     /// as in Balance<nBTC>
     mint_fee: u64,
@@ -112,8 +112,8 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
 
     // NOTE: we removed post deployment setup function and didn't want to implement PTB style
     // initialization, so we require setting the address before publishing the package.
-    let nbtc_bitcoin_pkh = b""; // TODO: valid bitcoin address
-    assert!(nbtc_bitcoin_pkh.length() >= 23);
+    let nbtc_bitcoin_script_pubkey = b""; // TODO: valid bitcoin address
+    assert!(nbtc_bitcoin_script_pubkey.length() >= 22);
     transfer::public_freeze_object(metadata);
     let contract = NbtcContract {
         id: object::new(ctx),
@@ -122,8 +122,8 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         tx_ids: table::new<vector<u8>, bool>(ctx),
         bitcoin_lc: @bitcoin_lc.to_id(),
         fallback_addr: @fallback_addr,
-        bitcoin_pkh: nbtc_bitcoin_pkh,
-        balances: vec_map::from_keys_values(vector[nbtc_bitcoin_pkh], vector[0]),
+        bitcoin_script_pubkey: nbtc_bitcoin_script_pubkey,
+        balances: vec_map::from_keys_values(vector[nbtc_bitcoin_script_pubkey], vector[0]),
         mint_fee: 10,
         fees_collected: balance::zero(),
     };
@@ -187,13 +187,13 @@ public fun mint(
         proof,
         tx_index,
         &tx,
-        contract.bitcoin_pkh,
+        contract.bitcoin_script_pubkey,
     );
 
     assert!(amount > 0, EMintAmountIsZero);
 
     // update total balance for reserves
-    let total_balance = contract.balances.get_mut(&contract.bitcoin_pkh);
+    let total_balance = contract.balances.get_mut(&contract.bitcoin_script_pubkey);
     *total_balance = *total_balance + amount;
 
     let mut recipient: address = contract.get_fallback_addr();
@@ -269,11 +269,11 @@ public fun change_fees(_: &AdminCap, contract: &mut NbtcContract, mint_fee: u64)
 
 /// Set btc endpoint for deposit on nBTC, and set reserve of this endpoint is zero.
 /// In the case, we use this key before we will enable deposit endpoint again.
-public fun add_pkh(_: &AdminCap, contract: &mut NbtcContract, phk: vector<u8>) {
-    if (contract.balances.contains(&phk) == false) {
-        contract.balances.insert(phk, 0);
+public fun add_script_pubkey(_: &AdminCap, contract: &mut NbtcContract, script_pubkey: vector<u8>) {
+    if (contract.balances.contains(&script_pubkey) == false) {
+        contract.balances.insert(script_pubkey, 0);
     };
-    contract.bitcoin_pkh = phk;
+    contract.bitcoin_script_pubkey = script_pubkey;
 }
 
 //
@@ -300,8 +300,8 @@ public fun balances(contract: &NbtcContract): &VecMap<vector<u8>, u64> {
     &contract.balances
 }
 
-public fun bitcoin_pkh(contract: &NbtcContract): &vector<u8> {
-    &contract.bitcoin_pkh
+public fun bitcoin_script_pubkey(contract: &NbtcContract): &vector<u8> {
+    &contract.bitcoin_script_pubkey
 }
 //
 // Testing
@@ -311,7 +311,7 @@ public fun bitcoin_pkh(contract: &NbtcContract): &vector<u8> {
 public(package) fun init_for_testing(
     bitcoin_lc: address,
     fallback_addr: address,
-    nbtc_bitcoin_pkh: vector<u8>,
+    nbtc_bitcoin_script_pubkey: vector<u8>,
     ctx: &mut TxContext,
 ): NbtcContract {
     let witness = NBTC {};
@@ -332,8 +332,8 @@ public(package) fun init_for_testing(
         tx_ids: table::new<vector<u8>, bool>(ctx),
         bitcoin_lc: bitcoin_lc.to_id(),
         fallback_addr,
-        bitcoin_pkh: nbtc_bitcoin_pkh,
-        balances: vec_map::from_keys_values(vector[nbtc_bitcoin_pkh], vector[0]),
+        bitcoin_script_pubkey: nbtc_bitcoin_script_pubkey,
+        balances: vec_map::from_keys_values(vector[nbtc_bitcoin_script_pubkey], vector[0]),
         fees_collected: balance::zero(),
         mint_fee: 10,
     };
