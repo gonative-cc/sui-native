@@ -80,6 +80,21 @@ The `mint` function includes a mechanism for applying a minting fee. This is con
 
 The fee is calculated as `min(amount, contract.mint_fee)`, where `amount` is the value of the Bitcoin deposit and `mint_fee` is a value configured in the `nBTCContract` by the admin. The collected fees are stored in the contract and can be withdrawn by the operator.
 
+## Status Changes
+
+The system that automates the whole process assigns statuses in the following manner:
+
+```mermaid
+flowchart LR
+    Broadcasting -- "Indexer scans for new Bitcoin blocks" --> Confirming
+    Confirming -- "Tx gets more confirmations (new blocks mined on top)" --> Finalized
+    Confirming -- "Bitcoin re-org detected" --> Reorg
+    Reorg -- "Tx included in new block" --> Confirming
+    Finalized -- "Minting on Sui successful" --> Minted
+    Finalized -- "Minting on Sui failed" --> Failed
+    Failed -- "Retry" --> Finalized
+```
+
 ## Example mint script
 
 NOTE: we are working on a fullstack app to automate the minting process.
