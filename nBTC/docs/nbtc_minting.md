@@ -80,7 +80,7 @@ The `mint` function includes a mechanism for applying a minting fee. This is con
 
 The fee is calculated as `min(amount, contract.mint_fee)`, where `amount` is the value of the Bitcoin deposit and `mint_fee` is a value configured in the `nBTCContract` by the admin. The collected fees are stored in the contract and can be withdrawn by the operator.
 
-## Status Changes
+## Tx Status Transition Diagram
 
 The system that automates the whole process assigns statuses in the following manner:
 
