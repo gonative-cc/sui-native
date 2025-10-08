@@ -43,8 +43,8 @@ graph TD
 nBTC package expects handling instructions in the OP_RETURN data. This is handled right after minting to determine what to do with the newly minted `nBTC`.
 The first byte of the OP_RETURN data is the `payload_type`, which dictates how the rest of the data is interpreted:
 
-- `payload_type=0x00`: (`0x00<recipient>`) **Direct Transfer**. The contract expects the rest of the `OP_RETURN` data to be _exactly_ 32 bytes representing the recipient's Sui address. If the data is not 32 bytes long, the mint will be sent to the contract's `fallback_addr` instead.
-- `payload_type=0x01`: (`0x01<script_hash>`) **Orchestrator**. This type expects a hash of a script.The full script must be provided to the user. Orchestrator will check if the script matches the recorded hash.
+- `0x00<recipient>`: Direct Transfer. The contract expects the rest of the `OP_RETURN` data to be _exactly_ 32 bytes representing the recipient's Sui address. If the data is not 32 bytes long, the mint will be sent to the contract's `fallback_addr` instead.
+- `0x01<script_hash>`: Orchestrator. This type expects a hash of a script. The full script must be provided by the user. Orchestrator will check if the script matches the recorded hash.
 - Other values are reserved for the future versions of the protocol. Note: 2 could be zklogin instructions.
 
 Today, only the simple transfer to a recipient is supported. Orchestrator will be implemented later.
