@@ -16,6 +16,7 @@ Packages:
 
 - [Alpha Testnet](INTEGRATIONS-testnet-alpha.md)
 - [Bitcoin Executor contracts](https://github.com/gonative-cc/sui-native/tree/master/bitcoin_executor#deployed-smart-contracts)
+- [Testnet-v2](nBTC/docs/testnet-v2.md)
 
 ## Contributing
 
