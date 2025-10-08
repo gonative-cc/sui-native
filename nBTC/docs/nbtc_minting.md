@@ -1,5 +1,11 @@
 # nBTC Minting
 
+> **Testnet V2 Environment**
+>
+> For developers looking to test the nBTC minting process, a comprehensive guide to the Testnet V2 setup, including deployed package IDs, network details, and user guides, is available here:
+>
+> - **[nBTC Testnet V2 Setup](./testnet-v2.md)**
+
 ## Minting nBTC process
 
 1. A user sends BTC to the `nBTC` dwallet address (on Bitcoin network).
