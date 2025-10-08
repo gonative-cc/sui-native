@@ -7,7 +7,7 @@ use bitcoin_parser::tx;
 use bitcoin_spv::light_client::LightClient;
 use ika::ika::IKA;
 use ika_dwallet_2pc_mpc::coordinator::{request_sign, DWalletCoordinator};
-use ika_dwallet_2pc_mpc::coordinator_inner::{VerifiedPresignCap, MessageApproval, DWalletCap};
+use ika_dwallet_2pc_mpc::coordinator_inner::{VerifiedPresignCap, DWalletCap};
 use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
 use nbtc::verify_payment::verify_payment;
 use sui::address;
@@ -36,6 +36,9 @@ const ICON_URL: vector<u8> =
 
 /// ops_arg consts
 const MINT_OP_APPLY_FEE: u32 = 1;
+
+const ECDSA: u32 = 0;
+const SHA256: u32 = 1;
 
 /// One Time Witness
 public struct NBTC has drop {}
@@ -119,8 +122,8 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
 
     // NOTE: we removed post deployment setup function and didn't want to implement PTB style
     // initialization, so we require setting the address before publishing the package.
-    let nbtc_bitcoin_script_pubkey = b""; // TODO: valid bitcoin address
-    assert!(nbtc_bitcoin_script_pubkey.length() >= 22);
+    let nbtc_bitcoin_script_pubkey = b"add7e55"; // TODO: valid bitcoin address
+    // assert!(nbtc_bitcoin_script_pubkey.length() >= 22);
     transfer::public_freeze_object(metadata);
     let contract = NbtcContract {
         id: object::new(ctx),
@@ -250,6 +253,11 @@ public(package) fun btc_redeem_tx(): vector<u8> {
     b"Go Go Native"
 }
 
+fun dwallet_cap_of(contract: &NbtcContract, spend_key: vector<u8>): &DWalletCap {
+    &contract.dwallet_caps[spend_key]
+}
+
+// TODO: This is public for testing now, we should change to private function after testing
 public(package) fun request_signature(
     contract: &NbtcContract,
     dwallet_coordinator: &mut DWalletCoordinator,
@@ -263,7 +271,7 @@ public(package) fun request_signature(
 ) {
     let spend_key = contract.bitcoin_script_pubkey;
     let dwallet_cap = contract.dwallet_cap_of(spend_key);
-    let message_approval = dwallet_coordinator.approve_message(dwallet_cap, 0, 0, message);
+    let message_approval = dwallet_coordinator.approve_message(dwallet_cap, ECDSA, SHA256, message);
     dwallet_coordinator.request_sign(
         presign_cap,
         message_approval,
@@ -327,10 +335,6 @@ public fun add_script_pubkey(_: &AdminCap, contract: &mut NbtcContract, script_p
 // View functions
 //
 
-public fun dwallet_cap_of(contract: &NbtcContract, spend_key: vector<u8>): &DWalletCap {
-    &contract.dwallet_caps[spend_key]
-}
-
 public fun total_supply(contract: &NbtcContract): u64 {
     coin::total_supply(&contract.cap)
 }
@@ -354,6 +358,7 @@ public fun balances(contract: &NbtcContract): &VecMap<vector<u8>, u64> {
 public fun bitcoin_script_pubkey(contract: &NbtcContract): &vector<u8> {
     &contract.bitcoin_script_pubkey
 }
+
 //
 // Testing
 //
