@@ -5,6 +5,8 @@ module nbtc::nbtc;
 use bitcoin_parser::reader;
 use bitcoin_parser::tx;
 use bitcoin_spv::light_client::LightClient;
+use ika_dwallet_2pc_mpc::coordinator::{request_sign, DWalletCoordinator};
+use ika_dwallet_2pc_mpc::coordinator_inner::{VerifiedPresignCap, MessageApproval, DWalletCap};
 use nbtc::verify_payment::verify_payment;
 use sui::address;
 use sui::balance::{Self, Balance};
@@ -81,6 +83,8 @@ public struct NbtcContract has key, store {
     /// as in Balance<nBTC>
     mint_fee: u64,
     fees_collected: Balance<NBTC>,
+    // dwallet cap for request sign action for redeem nBTC
+    dwallet_caps: Table<vector<u8>, DWalletCap>,
 }
 
 /// MintEvent is emitted when nBTC is successfully minted.
@@ -125,6 +129,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         bitcoin_script_pubkey: nbtc_bitcoin_script_pubkey,
         balances: vec_map::from_keys_values(vector[nbtc_bitcoin_script_pubkey], vector[0]),
         mint_fee: 10,
+        dwallet_caps: table::new(ctx),
         fees_collected: balance::zero(),
     };
     transfer::public_share_object(contract);
@@ -237,6 +242,25 @@ public fun mint(
     });
 }
 
+/// BTC redeem transaction, this transfer BTC from NBTC treasury to user account
+public(package) fun btc_redeem_tx(): vector<u8> {
+    b"Go Go Native"
+}
+
+// public(package) fun request_signature(
+//     contract: &mut NbtcContract,
+//     dWalletCoordinator: &mut DWalletCoordinator,
+//     presign_cap: VerifiedPresignCap,
+//     message: vector<u8>,
+//     message_centralized_signature: vector<u8>,
+//     session_identifier: SessionIdentifier,
+//     payment_ika: &mut Coin<IKA>,
+//     payment_sui: &mut Coin<SUI>,
+//     ctx: &mut TxContext,
+// ) {
+//     let message
+//     request_sign(dWalletCoordinator, presign_cap, )
+// }
 /// redeem returns total amount of redeemed balance
 public fun redeem(
     contract: &mut NbtcContract,
@@ -336,6 +360,7 @@ public(package) fun init_for_testing(
         balances: vec_map::from_keys_values(vector[nbtc_bitcoin_script_pubkey], vector[0]),
         fees_collected: balance::zero(),
         mint_fee: 10,
+        dwallet_caps: table::new(ctx),
     };
     contract
 }
