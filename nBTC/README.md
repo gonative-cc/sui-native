@@ -11,15 +11,10 @@ It's the first ever synthetic BTC that is
 - custody-less,
 - keeps the true Web3 ethos.
 - rightmost trust minimized (read about [nBTC trust model](https://x.com/goNativeCC/status/1899487861939806641))
-- NBTC_BITCOIN_SCRIPT_PUBKEY = 0x0014ce9f3ad7d227c66e9744d052821c20d18a2ea78f. Corresponds to `tb1qe60n447jylrxa96y6pfgy8pq6x9zafu09ky7cq` address on Bitcoin testnet.
 
-## Deployment
+## Deployed Contracts
 
-We need to run PTB with 2 transactions: publish nbtc + move call for setup method.
-
-## Deployed contracts
-
-See the main [README](../README.md#deployed-objects--packages) file.
+For information on deployed packages and object IDs on testnet/mainnet, please see the main [README](../README.md#deployed-objects--packages) file.
 
 ## Package Functions
 
@@ -32,9 +27,10 @@ See the main [README](../README.md#deployed-objects--packages) file.
 
 ### Dependencies
 
-- `bitcoin-spv`: This package depends on a Bitcoin SPV light client to verify txs from Bitcoin https://github.com/gonative-cc/move-bitcoin-spv.
+- `bitcoin_spv`: An on-chain Bitcoin SPV light client for verifying Bitcoin transactions.
+- `bitcoin_parser`: A library for parsing Bitcoin data structures (blocks, transactions).
 
 ## Documentation
 
-- [Setup](./docs/nbtc_setup.md)
-- [Minting](./docs/nbtc_minting.md)
+- [nBTC Setup](./docs/nbtc_setup.md)
+- [nBTC Minting Process](./docs/nbtc_minting.md)
