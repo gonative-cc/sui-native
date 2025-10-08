@@ -4,14 +4,17 @@
 
 The Testnet V2 setup is designed to provide a simplified testing environment for nBTC. It consists of packages deployed on the Sui Testnet that interact with our private Bitcoin devnet.
 
-For this setup we use our own Bitcoin devnet because
-- ... list ux and devx issues of the Bitcoin testnet
+For this setup we use our own Bitcoin devnet because the public Bitcoin testnets have several issues that make them unsuitable for reliable testing:
+
+- Bitcoin Testnet3 tokens acutally have value, which makes them unusable for testing
+- Frequent reorganizations sometimes exceeding 30 blocks
+- Unreliable faucets
 
 Key characteristics:
 
 - Sui Network: testnet.
-- Bitcoin Network: 
-  - block time: 2min, 
+- Bitcoin Network:
+  - block time: 2min,
   - required confirmations: 4 - so time to finality is 8min.
 - wallet integration: through our private Bitcoin node, details in the [byield](https://byield.gonative.cc/) UI.
 
