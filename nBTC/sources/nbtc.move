@@ -305,6 +305,15 @@ public fun change_fees(_: &AdminCap, contract: &mut NbtcContract, mint_fee: u64)
     contract.mint_fee = mint_fee;
 }
 
+public fun add_dwallet_cap(
+    _: &AdminCap,
+    contract: &mut NbtcContract,
+    spend_key: vector<u8>,
+    dwallet_cap: DWalletCap,
+) {
+    contract.dwallet_caps.add(spend_key, dwallet_cap);
+}
+
 /// Set btc endpoint for deposit on nBTC, and set reserve of this endpoint is zero.
 /// In the case, we use this key before we will enable deposit endpoint again.
 public fun add_script_pubkey(_: &AdminCap, contract: &mut NbtcContract, script_pubkey: vector<u8>) {
