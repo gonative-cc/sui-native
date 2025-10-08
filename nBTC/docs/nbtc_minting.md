@@ -83,7 +83,7 @@ The `mint` function includes a mechanism for applying a minting fee. This is con
 - **`ops_arg=0`**: No fee is applied. The full amount of minted nBTC is transferred to the recipient.
 - **`ops_arg=1`**: The minting fee is applied. The constant `MINT_OP_APPLY_FEE` is set to `1` for this purpose.
 
-The fee is calculated as `min(amount, contract.mint_fee)`, where `amount` is the value of the Bitcoin deposit and `mint_fee` is a value configured in the `nBTCContract` by the admin. The collected fees are stored in the contract and can be withdrawn by the operator.
+The fee is calculated as `min(amount, contract.mint_fee)`, where `amount` is the value of the Bitcoin deposit and `mint_fee` is a value configured in the `nBTCContract` by the admin. The fee is then deducted from the minted nBTC, and the remainder is transferred to the recipient. The collected fees are stored in the contract and can be withdrawn by the operator.
 
 ## Tx Status Transition Diagram
 
