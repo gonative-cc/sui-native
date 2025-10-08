@@ -5,13 +5,16 @@ module nbtc::nbtc;
 use bitcoin_parser::reader;
 use bitcoin_parser::tx;
 use bitcoin_spv::light_client::LightClient;
+use ika::ika::IKA;
 use ika_dwallet_2pc_mpc::coordinator::{request_sign, DWalletCoordinator};
 use ika_dwallet_2pc_mpc::coordinator_inner::{VerifiedPresignCap, MessageApproval, DWalletCap};
+use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
 use nbtc::verify_payment::verify_payment;
 use sui::address;
 use sui::balance::{Self, Balance};
 use sui::coin::{Self, Coin, TreasuryCap};
 use sui::event;
+use sui::sui::SUI;
 use sui::table::{Self, Table};
 use sui::url;
 use sui::vec_map::{Self, VecMap};
@@ -247,20 +250,31 @@ public(package) fun btc_redeem_tx(): vector<u8> {
     b"Go Go Native"
 }
 
-// public(package) fun request_signature(
-//     contract: &mut NbtcContract,
-//     dWalletCoordinator: &mut DWalletCoordinator,
-//     presign_cap: VerifiedPresignCap,
-//     message: vector<u8>,
-//     message_centralized_signature: vector<u8>,
-//     session_identifier: SessionIdentifier,
-//     payment_ika: &mut Coin<IKA>,
-//     payment_sui: &mut Coin<SUI>,
-//     ctx: &mut TxContext,
-// ) {
-//     let message
-//     request_sign(dWalletCoordinator, presign_cap, )
-// }
+public(package) fun request_signature(
+    contract: &NbtcContract,
+    dwallet_coordinator: &mut DWalletCoordinator,
+    presign_cap: VerifiedPresignCap,
+    message: vector<u8>,
+    message_centralized_signature: vector<u8>,
+    session_identifier: SessionIdentifier,
+    payment_ika: &mut Coin<IKA>,
+    payment_sui: &mut Coin<SUI>,
+    ctx: &mut TxContext,
+) {
+    let spend_key = contract.bitcoin_script_pubkey;
+    let dwallet_cap = contract.dwallet_cap_of(spend_key);
+    let message_approval = dwallet_coordinator.approve_message(dwallet_cap, 0, 0, message);
+    dwallet_coordinator.request_sign(
+        presign_cap,
+        message_approval,
+        message_centralized_signature,
+        session_identifier,
+        payment_ika,
+        payment_sui,
+        ctx,
+    );
+}
+
 /// redeem returns total amount of redeemed balance
 public fun redeem(
     contract: &mut NbtcContract,
@@ -303,6 +317,10 @@ public fun add_script_pubkey(_: &AdminCap, contract: &mut NbtcContract, script_p
 //
 // View functions
 //
+
+public fun dwallet_cap_of(contract: &NbtcContract, spend_key: vector<u8>): &DWalletCap {
+    &contract.dwallet_caps[spend_key]
+}
 
 public fun total_supply(contract: &NbtcContract): u64 {
     coin::total_supply(&contract.cap)

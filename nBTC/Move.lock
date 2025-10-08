@@ -2,8 +2,8 @@
 
 [move]
 version = 3
-manifest_digest = "04C48E6C329E48AD4C340C8AD6C8E9827A8736C33004E6238B39935975212BAB"
-deps_digest = "CAFAD8A7CF51067FB4358215BECB86BD100DD64E57C2AC8A7AE7D74B688F5965"
+manifest_digest = "144546B8460ED50CC14BBB1C5B2C73FA5696F5C2D19ACD4F1739E16C5C31A6F9"
+deps_digest = "04732BFEF428F74DE262001DC455D76B909EBC394B034A9A15CC095E4BDD9CEF"
 dependencies = [
   { id = "Bridge", name = "Bridge" },
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -11,6 +11,7 @@ dependencies = [
   { id = "SuiSystem", name = "SuiSystem" },
   { id = "bitcoin_parser", name = "bitcoin_parser" },
   { id = "bitcoin_spv", name = "bitcoin_spv" },
+  { id = "ika", name = "ika" },
   { id = "ika_dwallet_2pc_mpc", name = "ika_dwallet_2pc_mpc" },
 ]
 
