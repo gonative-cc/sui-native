@@ -2,23 +2,27 @@
 
 ## Overview
 
-The Testnet V2 setup is designed to provide a simplified testing environment for nBTC. It consists of packages deployed on the Sui Testnet that interact with a custom, private Bitcoin regtest network and a UI.
+The Testnet V2 setup is designed to provide a simplified testing environment for nBTC. It consists of packages deployed on the Sui Testnet that interact with our private Bitcoin devnet.
+
+For this setup we use our own Bitcoin devnet because
+- ... list ux and devx issues of the Bitcoin testnet
 
 Key characteristics:
 
 - Sui Network: testnet.
-- Bitcoin Network: A private, single-node Bitcoin regtest. This network is controlled by the Native team, allowing for predictable block generation and faster transaction confirmations.
-- Faster Confirmations: The Bitcoin regtest network produces a new block every 2 minutes. The required confirmation depth for minting nBTC is set to 4 blocks, resulting in a total waiting time of aprox. 8 minutes.
-- User Interaction: A dedicated UI dashboard is available for users to mint nBTC, simplifying the process of interacting with the system.
+- Bitcoin Network: 
+  - block time: 2min, 
+  - required confirmations: 4 - so time to finality is 8min.
+- wallet integration: through our private Bitcoin node, details in the [byield](https://byield.gonative.cc/) UI.
 
 ## Minting Flow
 
 ```mermaid
 sequenceDiagram
     participant User
-    participant MintingPage
+    participant BYield["BYield minting page"]
     participant Wallet
-    participant BitcoinRegtest
+    participant Bitcoin["Bitcoin Node"]
     participant Indexer
     participant nBTC_Contract as nBTC Contract
     participant SPV
@@ -54,7 +58,7 @@ sequenceDiagram
   - `nBTC`: The core package that manages the minting and wrapping of nBTC tokens.
 - Bitcoin Regtest Network: A private, single-node Bitcoin network configured for a 2-minute block time.
 - Relayer: An off-chain service that monitors the Bitcoin network for new blocks and submits them to the `bitcoin_spv` light client on Sui and to the cloudflare indexer.
-- Cloudflare Indexer: An off-chain service that indexes Bitcoin transaction data and provides merkle proofs required for minting.
+- Indexer: An off-chain service that indexes Bitcoin transaction data and provides merkle proofs required for minting.
 - Minting UI: A web page that allows users to initiate nBTC mints. It is integrated with the Xverse wallet.
 
 ## Deployed Packages & Objects (Sui Testnet)
