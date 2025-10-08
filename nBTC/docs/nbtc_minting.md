@@ -92,12 +92,14 @@ The system that automates the whole process assigns statuses in the following ma
 ```mermaid
 flowchart LR
     Broadcasting -- "Indexer scans for new Bitcoin blocks" --> Confirming
+    Broadcasting -- "Tx not included in a block" --> Dropped
     Confirming -- "Tx gets more confirmations (new blocks mined on top)" --> Finalized
     Confirming -- "Bitcoin re-org detected" --> Reorg
-    Reorg -- "Tx included in new block" --> Confirming
+    Reorg -- "Block again part of the chain" --> Confirming
     Finalized -- "Minting on Sui successful" --> Minted
     Finalized -- "Minting on Sui failed" --> Failed
-    Failed -- "Retry" --> Finalized
+    Failed -- "Retry" --> Minted
+    Failed -- "Retry" --> Failed
 ```
 
 ## Example mint script
