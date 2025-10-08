@@ -16,11 +16,11 @@ Open the `nBTC/sources/nbtc.move` file and locate the `init` function. You must 
 
 **Key values to edit:**
 
-- **`nbtc_bitcoin_script_pubkey`**: The hex-encoded `scriptPubKey` of your Bitcoin deposit address.
+- **`nbtc_spend_key`**: The hex-encoded `scriptPubKey` of your Bitcoin deposit address.
 - **`@bitcoin_lc.to_id()`**: The Object ID of your `LightClient` contract. (move.toml)
 - **`@fallback_addr`**: A default Sui address to receive funds if a mint's `OP_RETURN` is invalid. (move.toml)
 
-  **CRITICAL**: The `nbtc_bitcoin_script_pubkey` value must be the **full `scriptPubKey`**, not just a Public Key Hash (PKH). An incorrect value will cause all minting transactions to fail.
+  **CRITICAL**: The `nbtc_spend_key` value must be the **full `scriptPubKey`**, not just a Public Key Hash (PKH). An incorrect value will cause all minting transactions to fail.
 
 ### 2. Publish the Package
 

@@ -1,5 +1,10 @@
 # nBTC Minting
 
+## Definitions
+
+- dwallet: Ika dwallet. In the context of nBTC, this is the `contract` that holds the Bitcoin. [see more](https://github.com/dwallet-labs/ika/blob/main/docs/docs/core-concepts/dwallets.md)
+- spend_key: The public key script (`scriptPubKey`) for the dwallet address.
+
 ## Minting nBTC process
 
 1. A user sends BTC to the `nBTC` dwallet address (on Bitcoin network).
@@ -7,7 +12,7 @@
 1. Native system detects such transaction and calls the `mint` function of the `nBTC` Sui object, providing the BTC transfer details and the proof of the transaction and extra data provided by the user.
    - Note: the system is permissionless: anyone can handle the proof generation and calling mint function.
 1. The nBTC module checks if the Bitcoin transaction was not already processed (To prevent double spends).
-1. The `mint` function uses a configured Bitcoin SPV Light Client (identified by `LIGHT_CLIENT_ID`) to verify the transaction's inclusion in a block. It then finds the total amount sent to the `bitcoin_script_pubkey` (dwallet) registered in the contract by performing a comparison on the transaction's outputs.
+1. The `mint` function uses a configured Bitcoin SPV Light Client (identified by `LIGHT_CLIENT_ID`) to verify the transaction's inclusion in a block. It then finds the total amount sent to the `spend_key` (dwallet) registered in the contract by performing a comparison on the transaction's outputs.
 1. Once the verification is successful and the BTC transaction hasn't been used before, the module mints the corresponding amount of `nBTC` Sui Coins.
 1. The new `nBTC` Coins are sent to a Sui address or a package, based on the instruction in `OP_RETURN`.
 1. If the `OP_RETURN` data is missing or is invalid, `nBTC` is sent to `FALLBACK_ADDRESS`.
