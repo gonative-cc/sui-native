@@ -254,6 +254,11 @@ public fun btc_redeem_tx(): vector<u8> {
     b"Go Go Native"
 }
 
+/// message: payload should sign by Ika
+/// public_nbtc_signature the signature sign by public nbtc dwallet
+/// session_identifier: signing session for this sign request.
+/// payment_ika and payment_sui require for create for signature on Ika.
+/// Ika reponse this request asynchronous in other tx
 public(package) fun request_signature(
     contract: &NbtcContract,
     dwallet_coordinator: &mut DWalletCoordinator,
@@ -265,10 +270,11 @@ public(package) fun request_signature(
     payment_sui: &mut Coin<SUI>,
     ctx: &mut TxContext,
 ) {
+    // TODO: Handle case Ika send token back to user if we paid more than require fee.
+    // TODO: Verify dwallet_coordinator corrent coordinator of Ika
     let spend_key = contract.bitcoin_spend_key;
     let dwallet_cap = &contract.dwallet_caps[spend_key];
     let message_approval = dwallet_coordinator.approve_message(dwallet_cap, ECDSA, SHA256, message);
-    // TODO: Handle case Ika send token back to user if we paid more than require fee.
     dwallet_coordinator.request_sign(
         presign_cap,
         message_approval,
@@ -318,6 +324,7 @@ public fun add_dwallet_cap(
     spend_key: vector<u8>,
     dwallet_cap: DWalletCap,
 ) {
+    // TODO: Verify spend_key derive from dwallet public key
     contract.dwallet_caps.add(spend_key, dwallet_cap);
 }
 
