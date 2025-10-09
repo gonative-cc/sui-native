@@ -83,7 +83,7 @@ public struct NbtcContract has key, store {
     bitcoin_lc: ID,
     fallback_addr: address,
     // TODO: change to taproot once Ika will support it
-    bitcoin_script_pubkey: vector<u8>,
+    bitcoin_spend_key: vector<u8>,
     /// total deposit balance for each active bitcoin script_pubkey endpoint
     balances: VecMap<vector<u8>, u64>,
     /// as in Balance<nBTC>
@@ -122,8 +122,8 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
 
     // NOTE: we removed post deployment setup function and didn't want to implement PTB style
     // initialization, so we require setting the address before publishing the package.
-    let nbtc_bitcoin_script_pubkey = b"add7e55"; // TODO: valid bitcoin address
-    // assert!(nbtc_bitcoin_script_pubkey.length() >= 22);
+    let nbtc_bitcoin_spend_key = b""; // TODO: valid bitcoin address
+    assert!(nbtc_bitcoin_spend_key.length() >= 22);
     transfer::public_freeze_object(metadata);
     let contract = NbtcContract {
         id: object::new(ctx),
@@ -132,8 +132,8 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         tx_ids: table::new<vector<u8>, bool>(ctx),
         bitcoin_lc: @bitcoin_lc.to_id(),
         fallback_addr: @fallback_addr,
-        bitcoin_script_pubkey: nbtc_bitcoin_script_pubkey,
-        balances: vec_map::from_keys_values(vector[nbtc_bitcoin_script_pubkey], vector[0]),
+        bitcoin_spend_key: nbtc_bitcoin_spend_key,
+        balances: vec_map::from_keys_values(vector[nbtc_bitcoin_spend_key], vector[0]),
         mint_fee: 10,
         dwallet_caps: table::new(ctx),
         fees_collected: balance::zero(),
@@ -198,13 +198,13 @@ public fun mint(
         proof,
         tx_index,
         &tx,
-        contract.bitcoin_script_pubkey,
+        contract.bitcoin_spend_key,
     );
 
     assert!(amount > 0, EMintAmountIsZero);
 
     // update total balance for reserves
-    let total_balance = contract.balances.get_mut(&contract.bitcoin_script_pubkey);
+    let total_balance = contract.balances.get_mut(&contract.bitcoin_spend_key);
     *total_balance = *total_balance + amount;
 
     let mut recipient: address = contract.get_fallback_addr();
@@ -326,7 +326,7 @@ public fun add_script_pubkey(_: &AdminCap, contract: &mut NbtcContract, script_p
     if (contract.balances.contains(&script_pubkey) == false) {
         contract.balances.insert(script_pubkey, 0);
     };
-    contract.bitcoin_script_pubkey = script_pubkey;
+    contract.bitcoin_spend_key = script_pubkey;
 }
 
 //
@@ -353,8 +353,8 @@ public fun balances(contract: &NbtcContract): &VecMap<vector<u8>, u64> {
     &contract.balances
 }
 
-public fun bitcoin_script_pubkey(contract: &NbtcContract): &vector<u8> {
-    &contract.bitcoin_script_pubkey
+public fun bitcoin_spend_key(contract: &NbtcContract): &vector<u8> {
+    &contract.bitcoin_spend_key
 }
 
 //
@@ -365,7 +365,7 @@ public fun bitcoin_script_pubkey(contract: &NbtcContract): &vector<u8> {
 public(package) fun init_for_testing(
     bitcoin_lc: address,
     fallback_addr: address,
-    nbtc_bitcoin_script_pubkey: vector<u8>,
+    nbtc_bitcoin_spend_key: vector<u8>,
     ctx: &mut TxContext,
 ): NbtcContract {
     let witness = NBTC {};
@@ -386,8 +386,8 @@ public(package) fun init_for_testing(
         tx_ids: table::new<vector<u8>, bool>(ctx),
         bitcoin_lc: bitcoin_lc.to_id(),
         fallback_addr,
-        bitcoin_script_pubkey: nbtc_bitcoin_script_pubkey,
-        balances: vec_map::from_keys_values(vector[nbtc_bitcoin_script_pubkey], vector[0]),
+        bitcoin_spend_key: nbtc_bitcoin_spend_key,
+        balances: vec_map::from_keys_values(vector[nbtc_bitcoin_spend_key], vector[0]),
         fees_collected: balance::zero(),
         mint_fee: 10,
         dwallet_caps: table::new(ctx),

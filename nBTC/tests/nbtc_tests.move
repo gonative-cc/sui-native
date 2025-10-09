@@ -130,7 +130,7 @@ fun test_nbtc_mint() {
 
     let balances = ctr.balances();
     let total_amount_expected = 2 * get_valid_mint_data().expected_amount;
-    assert_eq!(*balances.get(ctr.bitcoin_script_pubkey()), total_amount_expected);
+    assert_eq!(*balances.get(ctr.bitcoin_spend_key()), total_amount_expected);
     destroy(lc);
     destroy(ctr);
     scenario.end();
@@ -166,7 +166,7 @@ fun test_mint_with_fee() {
     let total_amount_expected =
         get_fallback_mint_data().expected_amount +
     get_valid_mint_data().expected_amount;
-    assert_eq!(*total_amount.get(ctr.bitcoin_script_pubkey()), total_amount_expected);
+    assert_eq!(*total_amount.get(ctr.bitcoin_spend_key()), total_amount_expected);
     destroy(lc);
     destroy(ctr);
     scenario.end();

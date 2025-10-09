@@ -8,40 +8,30 @@ Before starting, ensure your Sui CLI is configured and you have the **Object ID*
 
 ## Deployment & Setup
 
-The process involves two steps: publishing the package and then calling the `setup` function to configure it.
+The deployment process has been simplified. Instead of a two-step process with a post-publish `setup` function, the contract is now configured _before_ publishing by editing the `init` function directly in the source code.
 
-### 1. Publish the Package
+### 1. Configure the Contract Source
 
-This command deploys the contract and creates the `WrappedTreasuryCap` object.
+Open the `nBTC/sources/nbtc.move` file and locate the `init` function. You must edit the placeholder values in this function before publishing.
+
+**Key values to edit:**
+
+- **`nbtc_spend_key`**: The hex-encoded `scriptPubKey` of your Bitcoin deposit address.
+- **`@bitcoin_lc.to_id()`**: The Object ID of your `LightClient` contract. (move.toml)
+- **`@fallback_addr`**: A default Sui address to receive funds if a mint's `OP_RETURN` is invalid. (move.toml)
+
+  **CRITICAL**: The `nbtc_spend_key` value must be the **full `scriptPubKey`**, not just a Public Key Hash (PKH). An incorrect value will cause all minting transactions to fail.
+
+### 2. Publish the Package
+
+Once you have edited the `init` function and `move.toml` with your configuration, publish the package:
 
 ```bash
-sui client publish
+sui client publish --gas-budget 500000000
 ```
 
-From the command's output, save the new **Package ID** and the **`WrappedTreasuryCap` Object ID**.
+From the command's output, you can find your new **Package ID** and other created objects.
 
-### 2. Configure the Treasury
+### 3. Post-Deployment Administration
 
-Next, call the one-time `setup` function to link the treasury to your light client and Bitcoin escrow address.
-
-```bash
-sui client call \
-  --package <YOUR_NBTC_PACKAGE_ID> \
-  --module nbtc \
-  --function setup \
-  --args <YOUR_WRAPPED_TREASURY_ID> <LIGHT_CLIENT_OBJECT_ID> <FALLBACK_SUI_ADDRESS> <YOUR_BTC_ESCROW_PKH_HEX> \
-```
-
-**Argument Breakdown:**
-
-- **`<YOUR_WRAPPED_TREASURY_ID>`**: The `WrappedTreasuryCap` ID from the publish step.
-
-- **`<LIGHT_CLIENT_OBJECT_ID>`**: The `LightClient` object ID from your prerequisites.
-
-- **`<FALLBACK_SUI_ADDRESS>`**: A Sui address to receive funds if a mint's `OP_RETURN` is invalid.
-
-- **`<YOUR_BTC_ESCROW_PKH_HEX>`**: The hex-encoded Public Key Hash of your Bitcoin deposit address.
-
-  **CRITICAL**: This value must be the **20-byte Public Key Hash (PKH)** only, _not_ the full `scriptPubKey`. An incorrect value will cause all minting transactions to fail.
-  - **Correct (PKH only):** `0x9201782d57fa256bc74146871bb662f099c1f539`
-  - **Incorrect (with script prefix):** `0x00149201782d57fa256bc74146871bb662f099c1f539`
+After deployment, the `AdminCap` holder can change the active Bitcoin deposit script at any time by calling the `add_script_pubkey` function.
