@@ -265,7 +265,7 @@ public(package) fun request_signature(
     payment_sui: &mut Coin<SUI>,
     ctx: &mut TxContext,
 ) {
-    let spend_key = contract.bitcoin_script_pubkey;
+    let spend_key = contract.bitcoin_spend_key;
     let dwallet_cap = &contract.dwallet_caps[spend_key];
     let message_approval = dwallet_coordinator.approve_message(dwallet_cap, ECDSA, SHA256, message);
     dwallet_coordinator.request_sign(
