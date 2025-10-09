@@ -20,7 +20,7 @@ lint-fix-all:
 ##                              Build & Test                                 ##
 ###############################################################################
 
-build: .git/hooks/pre-commit
+build: ../.git/hooks/pre-commit
 	@sui move build
 
 test:
@@ -29,7 +29,7 @@ test:
 test-coverage:
 	sui move test --gas-limit 5000000 --coverage
 
-.PHONY: test test-coverage
+.PHONY: test test-coverage build
 
 
 ###############################################################################
@@ -53,4 +53,3 @@ gen-docs:
 ##                                Infrastructure                             ##
 ###############################################################################
 
-# To setup bitcoin, use Native Relayer.
