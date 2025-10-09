@@ -248,16 +248,12 @@ public fun mint(
     });
 }
 
-/// BTC redeem transaction, this transfer BTC from NBTC treasury to user account
-public(package) fun btc_redeem_tx(): vector<u8> {
+// TODO: Implement logic for generate the redeem transaction data
+// This can be offchain or onchain depends on algorithm we design.
+public fun btc_redeem_tx(): vector<u8> {
     b"Go Go Native"
 }
 
-fun dwallet_cap_of(contract: &NbtcContract, spend_key: vector<u8>): &DWalletCap {
-    &contract.dwallet_caps[spend_key]
-}
-
-// TODO: This is public for testing now, we should change to private function after testing
 public(package) fun request_signature(
     contract: &NbtcContract,
     dwallet_coordinator: &mut DWalletCoordinator,
@@ -270,7 +266,7 @@ public(package) fun request_signature(
     ctx: &mut TxContext,
 ) {
     let spend_key = contract.bitcoin_script_pubkey;
-    let dwallet_cap = contract.dwallet_cap_of(spend_key);
+    let dwallet_cap = &contract.dwallet_caps[spend_key];
     let message_approval = dwallet_coordinator.approve_message(dwallet_cap, ECDSA, SHA256, message);
     dwallet_coordinator.request_sign(
         presign_cap,
@@ -313,6 +309,8 @@ public fun change_fees(_: &AdminCap, contract: &mut NbtcContract, mint_fee: u64)
     contract.mint_fee = mint_fee;
 }
 
+/// Set a dwallet_cap for related BTC spend_key.
+/// BTC spend_key must derive from dwallet public key which is control by dwallet_cap.
 public fun add_dwallet_cap(
     _: &AdminCap,
     contract: &mut NbtcContract,
