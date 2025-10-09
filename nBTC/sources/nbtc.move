@@ -89,7 +89,7 @@ public struct NbtcContract has key, store {
     /// as in Balance<nBTC>
     mint_fee: u64,
     fees_collected: Balance<NBTC>,
-    // dwallet cap for request sign action for redeem nBTC
+    // mapping a spend_key to related dWallet cap for issue signature
     dwallet_caps: Table<vector<u8>, DWalletCap>,
 }
 
@@ -259,7 +259,7 @@ public(package) fun request_signature(
     dwallet_coordinator: &mut DWalletCoordinator,
     presign_cap: VerifiedPresignCap,
     message: vector<u8>,
-    message_centralized_signature: vector<u8>,
+    public_nbtc_signature: vector<u8>,
     session_identifier: SessionIdentifier,
     payment_ika: &mut Coin<IKA>,
     payment_sui: &mut Coin<SUI>,
@@ -268,10 +268,11 @@ public(package) fun request_signature(
     let spend_key = contract.bitcoin_spend_key;
     let dwallet_cap = &contract.dwallet_caps[spend_key];
     let message_approval = dwallet_coordinator.approve_message(dwallet_cap, ECDSA, SHA256, message);
+    // TODO: Handle case Ika send token back to user if we paid more than require fee.
     dwallet_coordinator.request_sign(
         presign_cap,
         message_approval,
-        message_centralized_signature,
+        public_nbtc_signature,
         session_identifier,
         payment_ika,
         payment_sui,
