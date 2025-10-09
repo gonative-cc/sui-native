@@ -5,11 +5,16 @@ module nbtc::nbtc;
 use bitcoin_parser::reader;
 use bitcoin_parser::tx;
 use bitcoin_spv::light_client::LightClient;
+use ika::ika::IKA;
+use ika_dwallet_2pc_mpc::coordinator::{request_sign, DWalletCoordinator};
+use ika_dwallet_2pc_mpc::coordinator_inner::{VerifiedPresignCap, DWalletCap};
+use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
 use nbtc::verify_payment::verify_payment;
 use sui::address;
 use sui::balance::{Self, Balance};
 use sui::coin::{Self, Coin, TreasuryCap};
 use sui::event;
+use sui::sui::SUI;
 use sui::table::{Self, Table};
 use sui::url;
 use sui::vec_map::{Self, VecMap};
@@ -31,6 +36,9 @@ const ICON_URL: vector<u8> =
 
 /// ops_arg consts
 const MINT_OP_APPLY_FEE: u32 = 1;
+
+const ECDSA: u32 = 0;
+const SHA256: u32 = 1;
 
 /// One Time Witness
 public struct NBTC has drop {}
@@ -81,6 +89,8 @@ public struct NbtcContract has key, store {
     /// as in Balance<nBTC>
     mint_fee: u64,
     fees_collected: Balance<NBTC>,
+    // mapping a spend_key to related dWallet cap for issue signature
+    dwallet_caps: Table<vector<u8>, DWalletCap>,
 }
 
 /// MintEvent is emitted when nBTC is successfully minted.
@@ -125,6 +135,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         bitcoin_spend_key: nbtc_bitcoin_spend_key,
         balances: vec_map::from_keys_values(vector[nbtc_bitcoin_spend_key], vector[0]),
         mint_fee: 10,
+        dwallet_caps: table::new(ctx),
         fees_collected: balance::zero(),
     };
     transfer::public_share_object(contract);
@@ -237,6 +248,44 @@ public fun mint(
     });
 }
 
+// TODO: Implement logic for generate the redeem transaction data
+// This can be offchain or onchain depends on algorithm we design.
+public fun btc_redeem_tx(): vector<u8> {
+    b"Go Go Native"
+}
+
+/// message: payload should sign by Ika
+/// public_nbtc_signature the signature sign by public nbtc dwallet
+/// session_identifier: signing session for this sign request.
+/// payment_ika and payment_sui require for create for signature on Ika.
+/// Ika reponse this request asynchronous in other tx
+public(package) fun request_signature(
+    contract: &NbtcContract,
+    dwallet_coordinator: &mut DWalletCoordinator,
+    presign_cap: VerifiedPresignCap,
+    message: vector<u8>,
+    public_nbtc_signature: vector<u8>,
+    session_identifier: SessionIdentifier,
+    payment_ika: &mut Coin<IKA>,
+    payment_sui: &mut Coin<SUI>,
+    ctx: &mut TxContext,
+) {
+    // TODO: Handle case Ika send token back to user if we paid more than require fee.
+    // TODO: Verify dwallet_coordinator corrent coordinator of Ika
+    let spend_key = contract.bitcoin_spend_key;
+    let dwallet_cap = &contract.dwallet_caps[spend_key];
+    let message_approval = dwallet_coordinator.approve_message(dwallet_cap, ECDSA, SHA256, message);
+    dwallet_coordinator.request_sign(
+        presign_cap,
+        message_approval,
+        public_nbtc_signature,
+        session_identifier,
+        payment_ika,
+        payment_sui,
+        ctx,
+    );
+}
+
 /// redeem returns total amount of redeemed balance
 public fun redeem(
     contract: &mut NbtcContract,
@@ -265,6 +314,18 @@ public fun withdraw_fees(_: &OpCap, contract: &mut NbtcContract, ctx: &mut TxCon
 
 public fun change_fees(_: &AdminCap, contract: &mut NbtcContract, mint_fee: u64) {
     contract.mint_fee = mint_fee;
+}
+
+/// Set a dwallet_cap for related BTC spend_key.
+/// BTC spend_key must derive from dwallet public key which is control by dwallet_cap.
+public fun add_dwallet_cap(
+    _: &AdminCap,
+    contract: &mut NbtcContract,
+    spend_key: vector<u8>,
+    dwallet_cap: DWalletCap,
+) {
+    // TODO: Verify spend_key derive from dwallet public key
+    contract.dwallet_caps.add(spend_key, dwallet_cap);
 }
 
 /// Set btc endpoint for deposit on nBTC, and set reserve of this endpoint is zero.
@@ -303,6 +364,7 @@ public fun balances(contract: &NbtcContract): &VecMap<vector<u8>, u64> {
 public fun bitcoin_spend_key(contract: &NbtcContract): &vector<u8> {
     &contract.bitcoin_spend_key
 }
+
 //
 // Testing
 //
@@ -336,6 +398,7 @@ public(package) fun init_for_testing(
         balances: vec_map::from_keys_values(vector[nbtc_bitcoin_spend_key], vector[0]),
         fees_collected: balance::zero(),
         mint_fee: 10,
+        dwallet_caps: table::new(ctx),
     };
     contract
 }

@@ -7,6 +7,8 @@ authors = ["Native"]
 [dependencies]
 bitcoin_spv = {local = "../bitcoin_spv"}
 bitcoin_parser = {local = "../bitcoin_parser"}
+ika_dwallet_2pc_mpc = {git = "https://github.com/dwallet-labs/ika.git", subdir = "deployed_contracts/testnet/ika_dwallet_2pc_mpc", rev = "main"}
+ika = {git = "https://github.com/dwallet-labs/ika.git", subdir = "deployed_contracts/testnet/ika", rev = "main"}
 # For remote import, use the `{ git = "...", subdir = "...", rev = "..." }`.
 # Revision can be a branch, a tag, and a commit hash.
 # MyRemotePackage = { git = "https://some.remote/host.git", subdir = "remote/path", rev = "main" }
