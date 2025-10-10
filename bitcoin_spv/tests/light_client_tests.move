@@ -343,3 +343,17 @@ fun test_update_version_fail() {
     update_version(&mut lc);
     abort
 }
+
+#[test]
+fun test_verify_blocks() {
+    let sender = @0x01;
+    let mut scenario = test_scenario::begin(sender);
+    let ctx = scenario.ctx();
+    let lc = new_lc_for_test(ctx);
+    let valid_hash = x"67c8c7e8515c552d74707468a84d2fda2da63d65cbec01000000000000000000";
+    let invalid_hash = x"0d6ff0cb1d8eb9452f6578fafd41c5435dbfae6dbd5a01000000000000000000";
+    let expected_results = vector[true, false];
+    assert_eq!(lc.verify_blocks(vector[valid_hash, invalid_hash]), expected_results);
+    sui::test_utils::destroy(lc);
+    scenario.end();
+}
