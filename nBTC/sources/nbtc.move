@@ -92,18 +92,19 @@ public struct NbtcContract has key, store {
     // mapping a spend_key to related dWallet cap for issue signature
     dwallet_caps: Table<vector<u8>, DWalletCap>,
     redeem_requests: Table<ID, RedeemRequest>,
+    nbtc_lock: Table<ID, Coin<NBTC>>,
 }
 
 public enum RedeemStatus has copy, drop, store {
     Lock,
     TxCompose,
     SignatureRequest,
-    Competed,
+    Executed,
+    Completed,
 }
 
 public struct RedeemRequest has key, store {
     id: UID,
-    coin: Coin<NBTC>,
     btc_receiver: vector<u8>,
     status: RedeemStatus,
 }
@@ -121,6 +122,7 @@ public struct MintEvent has copy, drop {
 }
 
 public struct RedeemRequestEvent has copy, drop {
+    request_id: ID,
     btc_receiver: vector<u8>,
     amount: u64, // redeem about in sats
     status: RedeemStatus,
@@ -157,6 +159,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         mint_fee: 10,
         dwallet_caps: table::new(ctx),
         redeem_requests: table::new(ctx),
+        nbtc_lock: table::new(ctx),
         fees_collected: balance::zero(),
     };
     transfer::public_share_object(contract);
@@ -174,6 +177,14 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
 //
 // Public functions
 //
+
+/// check request is executed on BTC network
+public fun is_executed(r: &RedeemRequest): bool {
+    match (r.status) {
+        RedeemStatus::Executed => true,
+        _ => false,
+    }
+}
 
 /// Mints nBTC tokens after verifying a Bitcoin transaction proof.
 /// * `tx_bytes`: raw, hex-encoded tx bytes.
@@ -319,29 +330,40 @@ public fun request_redeem(
     coin: Coin<NBTC>,
     btc_receiver: vector<u8>,
     ctx: &mut TxContext,
-) {
+): ID {
     assert!(contract.version == VERSION, EVersionMismatch);
 
     let amount = coin.value();
     let request = RedeemRequest {
         id: object::new(ctx),
-        coin,
         btc_receiver,
         status: RedeemStatus::Lock,
     };
 
-    contract.redeem_requests.add(request.id.to_inner(), request);
-
+    let request_id = request.id.to_inner();
+    contract.redeem_requests.add(request_id, request);
+    contract.nbtc_lock.add(request_id, coin);
     event::emit(RedeemRequestEvent {
+        request_id,
         amount,
         btc_receiver,
         status: RedeemStatus::Lock,
     });
-    // TODO: implement logic to guard burning
-    // TODO: we can detele the btc public key when reserves of this key is zero
+
+    request_id
 }
 
-public fun burn_token(btc_tx: vector<u8>) {}
+public fun burn_token(contract: &mut NbtcContract, redeem_id: ID) {
+    // TODO: we can detele the btc public key when reserves of this key is zero
+    // TODO: implement logic to guard burning
+    let redeem = &mut contract.redeem_requests[redeem_id];
+    assert!(redeem.is_executed());
+
+    let redeemed_coin = contract.nbtc_lock.remove(redeem_id);
+    contract.cap.burn(redeemed_coin);
+
+    redeem.status = RedeemStatus::Completed;
+}
 
 /// update_version updates the contract.version to the latest, making the usage of the older versions not possible
 public fun update_version(contract: &mut NbtcContract) {
@@ -410,6 +432,31 @@ public fun bitcoin_spend_key(contract: &NbtcContract): &vector<u8> {
     &contract.bitcoin_spend_key
 }
 
+public fun redeem_request(contract: &NbtcContract, request_id: ID): &RedeemRequest {
+    &contract.redeem_requests[request_id]
+}
+
+public fun btc_receiver(r: &RedeemRequest): &vector<u8> {
+    &r.btc_receiver
+}
+
+public fun status(r: &RedeemRequest): &RedeemStatus {
+    &r.status
+}
+
+public fun is_lock(r: &RedeemRequest): bool {
+    match (r.status) {
+        RedeemStatus::Lock => true,
+        _ => false,
+    }
+}
+
+public fun is_completed(r: &RedeemRequest): bool {
+    match (r.status) {
+        RedeemStatus::Completed => true,
+        _ => false,
+    }
+}
 //
 // Testing
 //
@@ -443,8 +490,9 @@ public(package) fun init_for_testing(
         balances: vec_map::from_keys_values(vector[nbtc_bitcoin_spend_key], vector[0]),
         fees_collected: balance::zero(),
         mint_fee: 10,
-        lock: table::new(ctx),
         dwallet_caps: table::new(ctx),
+        nbtc_lock: table::new(ctx),
+        redeem_requests: table::new(ctx),
     };
     contract
 }
@@ -452,4 +500,19 @@ public(package) fun init_for_testing(
 #[test_only]
 public fun get_fees_collected(contract: &NbtcContract): u64 {
     contract.fees_collected.value()
+}
+
+#[test_only]
+public fun set_redeem_status_to_executed(contract: &mut NbtcContract, redeem_id: ID) {
+    let r = contract.redeem_requests.borrow_mut(redeem_id);
+    r.status = RedeemStatus::Executed
+}
+
+#[test_only]
+public fun create_nbtc_for_testing(
+    contract: &mut NbtcContract,
+    value: u64,
+    ctx: &mut TxContext,
+): Coin<NBTC> {
+    contract.cap.mint(value, ctx)
 }

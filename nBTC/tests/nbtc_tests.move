@@ -85,7 +85,10 @@ fun get_fallback_mint_data(): TestData {
 }
 
 #[test_only]
-fun setup(nbtc_bitcoin_addr: vector<u8>, sender: address): (LightClient, NbtcContract, Scenario) {
+public fun setup(
+    nbtc_bitcoin_addr: vector<u8>,
+    sender: address,
+): (LightClient, NbtcContract, Scenario) {
     let mut scenario = test_scenario::begin(sender);
 
     let headers = vector[
