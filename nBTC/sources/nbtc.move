@@ -60,6 +60,8 @@ const EAlreadyUpdated: vector<u8> =
     b"The package version has been already updated to the latest one";
 #[error]
 const EInvalidOpsArg: vector<u8> = b"invalid mint ops_arg";
+#[error]
+const ERedeemNotExecute: vector<u8> = b"redeem request not execute on btc network";
 //
 // Structs
 //
@@ -357,7 +359,7 @@ public fun burn_token(contract: &mut NbtcContract, redeem_id: ID) {
     // TODO: we can detele the btc public key when reserves of this key is zero
     // TODO: implement logic to guard burning
     let redeem = &mut contract.redeem_requests[redeem_id];
-    assert!(redeem.is_executed());
+    assert!(redeem.is_executed(), ERedeemNotExecute);
 
     let redeemed_coin = contract.nbtc_lock.remove(redeem_id);
     contract.cap.burn(redeemed_coin);
@@ -438,10 +440,6 @@ public fun redeem_request(contract: &NbtcContract, request_id: ID): &RedeemReque
 
 public fun btc_receiver(r: &RedeemRequest): &vector<u8> {
     &r.btc_receiver
-}
-
-public fun status(r: &RedeemRequest): &RedeemStatus {
-    &r.status
 }
 
 public fun is_lock(r: &RedeemRequest): bool {

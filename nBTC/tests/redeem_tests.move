@@ -29,6 +29,7 @@ fun create_redeem_request_happy_case() {
     contract.burn_token(redeem_id);
 
     assert_eq!(contract.redeem_request(redeem_id).is_completed(), true);
+    // TODO: verify nbtc token is burned
     destroy(_lc);
     destroy(contract);
     scenario.end();
