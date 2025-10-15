@@ -91,6 +91,21 @@ public struct NbtcContract has key, store {
     fees_collected: Balance<NBTC>,
     // mapping a spend_key to related dWallet cap for issue signature
     dwallet_caps: Table<vector<u8>, DWalletCap>,
+    redeem_requests: Table<ID, RedeemRequest>,
+}
+
+public enum RedeemStatus has copy, drop, store {
+    Lock,
+    TxCompose,
+    SignatureRequest,
+    Competed,
+}
+
+public struct RedeemRequest has key, store {
+    id: UID,
+    coin: Coin<NBTC>,
+    btc_receiver: vector<u8>,
+    status: RedeemStatus,
 }
 
 /// MintEvent is emitted when nBTC is successfully minted.
@@ -105,6 +120,11 @@ public struct MintEvent has copy, drop {
     btc_tx_index: u64,
 }
 
+public struct RedeemRequestEvent has copy, drop {
+    btc_receiver: vector<u8>,
+    amount: u64, // redeem about in sats
+    status: RedeemStatus,
+}
 //
 // Functions
 //
@@ -136,6 +156,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         balances: vec_map::from_keys_values(vector[nbtc_bitcoin_spend_key], vector[0]),
         mint_fee: 10,
         dwallet_caps: table::new(ctx),
+        redeem_requests: table::new(ctx),
         fees_collected: balance::zero(),
     };
     transfer::public_share_object(contract);
@@ -250,7 +271,8 @@ public fun mint(
 
 // TODO: Implement logic for generate the redeem transaction data
 // This can be offchain or onchain depends on algorithm we design.
-public fun btc_redeem_tx(): vector<u8> {
+// NOTE: This is unsign transaction
+public fun btc_redeem_unsign_tx(_receiver: vector<u8>): vector<u8> {
     b"Go Go Native"
 }
 
@@ -269,7 +291,7 @@ public(package) fun request_signature(
     payment_ika: &mut Coin<IKA>,
     payment_sui: &mut Coin<SUI>,
     ctx: &mut TxContext,
-) {
+): ID {
     // TODO: Handle case Ika send token back to user if we paid more than require fee.
     // TODO: Verify dwallet_coordinator corrent coordinator of Ika
     let spend_key = contract.bitcoin_spend_key;
@@ -284,19 +306,42 @@ public(package) fun request_signature(
         payment_sui,
         ctx,
     );
+
+    // NOTE: This return
+    object::id_from_bytes(b"This is mock sign id")
 }
 
-/// redeem returns total amount of redeemed balance
-public fun redeem(
+/// Create Redeem request and lock nbtc token for burn after redeem complete
+/// coin: nBTC coin need to redeem
+/// btc_receiver: spend key of receiver
+public fun request_redeem(
     contract: &mut NbtcContract,
-    coins: vector<Coin<NBTC>>,
-    _ctx: &mut TxContext,
-): u64 {
+    coin: Coin<NBTC>,
+    btc_receiver: vector<u8>,
+    ctx: &mut TxContext,
+) {
     assert!(contract.version == VERSION, EVersionMismatch);
+
+    let amount = coin.value();
+    let request = RedeemRequest {
+        id: object::new(ctx),
+        coin,
+        btc_receiver,
+        status: RedeemStatus::Lock,
+    };
+
+    contract.redeem_requests.add(request.id.to_inner(), request);
+
+    event::emit(RedeemRequestEvent {
+        amount,
+        btc_receiver,
+        status: RedeemStatus::Lock,
+    });
     // TODO: implement logic to guard burning
     // TODO: we can detele the btc public key when reserves of this key is zero
-    coins.fold!(0, |total, c| total + coin::burn(&mut contract.cap, c))
 }
+
+public fun burn_token(btc_tx: vector<u8>) {}
 
 /// update_version updates the contract.version to the latest, making the usage of the older versions not possible
 public fun update_version(contract: &mut NbtcContract) {
@@ -398,6 +443,7 @@ public(package) fun init_for_testing(
         balances: vec_map::from_keys_values(vector[nbtc_bitcoin_spend_key], vector[0]),
         fees_collected: balance::zero(),
         mint_fee: 10,
+        lock: table::new(ctx),
         dwallet_caps: table::new(ctx),
     };
     contract
