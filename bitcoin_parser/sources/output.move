@@ -168,7 +168,7 @@ public fun op_return(output: &Output): Option<vector<u8>> {
     };
     if (script[1] == OP_PUSHDATA1) {
         // script = OP_RETURN OP_PUSHDATA1 <1 bytes>    DATA
-        //          |      4 bytes                  |  the rest |
+        //          |      3 bytes                  |  the rest |
         return option::some(vector_slice(&script, 3, script.length()))
     };
     if (script[1] == OP_PUSHDATA2) {

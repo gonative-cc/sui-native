@@ -30,7 +30,7 @@ public fun verify_payment(
     receiver_script_pubkey: vector<u8>,
 ): (u64, Option<vector<u8>>) {
     let mut amount = 0;
-    let mut op_msg = option::none();
+    let mut op_return = option::none();
     let tx_id = transaction.tx_id();
 
     assert!(lc.verify_tx(height, tx_id, proof, tx_index), ETxNotInBlock);
@@ -38,10 +38,11 @@ public fun verify_payment(
     outputs.do!(|o| {
         if (o.script_pubkey() == receiver_script_pubkey) {
             amount = amount + o.amount();
-        } else if (o.is_op_return()) {
-            op_msg = o.op_return();
+        } else if (o.is_op_return() && op_return.is_none()) {
+            // we select the first OP RETURN
+            op_return = o.op_return();
         }
     });
 
-    (amount, op_msg)
+    (amount, op_return)
 }
