@@ -38,11 +38,11 @@ public fun verify_payment(
     outputs.do!(|o| {
         if (o.script_pubkey() == receiver_script_pubkey) {
             amount = amount + o.amount();
-        } else if (o.is_op_return() && op_msg.is_none()) {
+        } else if (o.is_op_return() && op_return.is_none()) {
             // we select the first OP RETURN
-            op_msg = o.op_return();
+            op_return = o.op_return();
         }
     });
 
-    (amount, op_msg)
+    (amount, op_return)
 }
