@@ -13,10 +13,10 @@ use nbtc::verify_payment::verify_payment;
 use sui::address;
 use sui::balance::{Self, Balance};
 use sui::coin::{Self, Coin, TreasuryCap};
+use sui::coin_registry;
 use sui::event;
 use sui::sui::SUI;
 use sui::table::{Self, Table};
-use sui::url;
 use sui::vec_map::{Self, VecMap};
 
 //
@@ -40,9 +40,6 @@ const MINT_OP_APPLY_FEE: u32 = 1;
 const ECDSA: u32 = 0;
 const SHA256: u32 = 1;
 
-/// One Time Witness
-public struct NBTC has drop {}
-
 //
 // Errors
 //
@@ -60,9 +57,13 @@ const EAlreadyUpdated: vector<u8> =
     b"The package version has been already updated to the latest one";
 #[error]
 const EInvalidOpsArg: vector<u8> = b"invalid mint ops_arg";
+
 //
 // Structs
 //
+
+/// Coin type identifier (`Coin<package_object::mycoin::MYCOIN>`) and One Time Witness.
+public struct NBTC has drop {}
 
 /// Operator capability. Created only once in the `init` function.
 public struct OpCap has key, store { id: UID }
@@ -110,21 +111,22 @@ public struct MintEvent has copy, drop {
 //
 
 fun init(witness: NBTC, ctx: &mut TxContext) {
-    let (treasury_cap, metadata) = coin::create_currency<NBTC>(
+    let (builder, treasury_cap) = coin_registry::new_currency_with_otw(
         witness,
         DECIMALS,
-        SYMBOL,
-        NAME,
-        DESCRIPTION,
-        option::some(url::new_unsafe_from_bytes(ICON_URL)),
+        SYMBOL.to_string(),
+        NAME.to_string(),
+        DESCRIPTION.to_string(),
+        ICON_URL.to_string(),
         ctx,
     );
+
+    let metadata_cap = builder.finalize(ctx);
 
     // NOTE: we removed post deployment setup function and didn't want to implement PTB style
     // initialization, so we require setting the address before publishing the package.
     let nbtc_bitcoin_spend_key = b""; // TODO: valid bitcoin address
     assert!(nbtc_bitcoin_spend_key.length() >= 22);
-    transfer::public_freeze_object(metadata);
     let contract = NbtcContract {
         id: object::new(ctx),
         version: VERSION,
@@ -139,6 +141,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         fees_collected: balance::zero(),
     };
     transfer::public_share_object(contract);
+    transfer::public_transfer(metadata_cap, ctx.sender());
 
     transfer::transfer(
         OpCap { id: object::new(ctx) },
