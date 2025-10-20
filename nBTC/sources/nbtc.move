@@ -60,6 +60,7 @@ const EAlreadyUpdated: vector<u8> =
     b"The package version has been already updated to the latest one";
 #[error]
 const EInvalidOpsArg: vector<u8> = b"invalid mint ops_arg";
+
 //
 // Structs
 //
@@ -91,6 +92,37 @@ public struct NbtcContract has key, store {
     fees_collected: Balance<NBTC>,
     // mapping a spend_key to related dWallet cap for issue signature
     dwallet_caps: Table<vector<u8>, DWalletCap>,
+    // TODO: probably we should have UTXOs / nbtc pubkey
+    utxos: Table<u64, Utxo>,
+    next_utxo: u64,
+    redeem_requests: Table<u64, RedeemRequest>,
+    next_redeem_req: u64,
+}
+
+// TODO: we need to store them by owner (the owner key)
+// owner: address,   // The Sui address that deposited this UTXO
+public struct Utxo has store {
+    tx_id: u256,
+    vout: u32,
+    value: u64,
+}
+
+public enum RedeemStatus has copy, drop, store {
+    Resolving, // finding the best UTXOs
+    Signing,
+    Signed,
+}
+
+public struct RedeemRequest has store {
+    // TODO: maybe we don't need the ID?
+    id: UID,
+    redeemer: address, // TODO: maybe not needed
+    /// Bitcoin spent key (address)
+    recipient: vector<u8>,
+    status: RedeemStatus,
+    amount: u64,
+    inputs: vector<Utxo>,
+    reminder_output: Utxo,
 }
 
 /// MintEvent is emitted when nBTC is successfully minted.
@@ -103,6 +135,8 @@ public struct MintEvent has copy, drop {
     btc_block_height: u64,
     /// index of the tx within the block.
     btc_tx_index: u64,
+    /// index in the utxos Table
+    utxo_idx: u64,
 }
 
 //
@@ -137,6 +171,10 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         mint_fee: 10,
         dwallet_caps: table::new(ctx),
         fees_collected: balance::zero(),
+        utxos: table::new<u64, Utxo>(ctx),
+        next_utxo: 0,
+        redeem_requests: table::new<u64, RedeemRequest>(ctx),
+        next_redeem_req: 0,
     };
     transfer::public_share_object(contract);
 
@@ -225,6 +263,10 @@ public fun mint(
         }
     };
 
+    // TODO: extract and record UTXOs
+    let utxo_idx = contract.next_utxo;
+    contract.next_utxo = contract.next_utxo + 1;
+
     let mut minted = contract.cap.mint_balance(amount);
     let mut fee_amount = 0;
 
@@ -245,6 +287,7 @@ public fun mint(
         btc_tx_id: tx_id,
         btc_block_height: height,
         btc_tx_index: tx_index,
+        utxo_idx,
     });
 }
 
