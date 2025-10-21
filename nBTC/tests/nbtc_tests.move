@@ -47,7 +47,6 @@ fun mint_and_assert(
     ops_arg: u32,
 ) {
     let TestData { tx_bytes, proof, height, tx_index, expected_recipient, expected_amount } = data;
-
     ctr.mint(lc, tx_bytes, proof, height, tx_index, vector[], ops_arg, scenario.ctx());
     test_scenario::next_tx(scenario, sender);
 
@@ -128,9 +127,9 @@ fun test_nbtc_mint() {
         0,
     );
 
-    let balances = ctr.balances();
+    let balance = ctr.active_balance();
     let total_amount_expected = 2 * get_valid_mint_data().expected_amount;
-    assert_eq!(*balances.get(ctr.bitcoin_spend_key()), total_amount_expected);
+    assert_eq!(balance, total_amount_expected);
     destroy(lc);
     destroy(ctr);
     scenario.end();
@@ -162,11 +161,11 @@ fun test_mint_with_fee() {
 
     // mint with fallback should take fee as well.
     assert_eq!(ctr.get_fees_collected(), 2*ctr.get_mint_fee());
-    let total_amount = ctr.balances();
+    let total_amount = ctr.active_balance();
     let total_amount_expected =
         get_fallback_mint_data().expected_amount +
     get_valid_mint_data().expected_amount;
-    assert_eq!(*total_amount.get(ctr.bitcoin_spend_key()), total_amount_expected);
+    assert_eq!(total_amount, total_amount_expected);
     destroy(lc);
     destroy(ctr);
     scenario.end();
