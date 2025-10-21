@@ -255,6 +255,13 @@ public(package) fun inactive_key_idx(contract: &NbtcContract, key: vector<u8>): 
     option::none()
 }
 
+fun inactive_bal_key(deposit_spend_key: &vector<u8>, recipient: address): vector<u8> {
+    let mut bal_key = *deposit_spend_key; // makes a copy
+    // collistion is not possible, because recipient is constant size
+    bal_key.append(recipient.to_bytes());
+    bal_key
+}
+
 //
 // Public methods
 //
@@ -357,8 +364,8 @@ public fun record_inactive_deposit(
     let key_idx = inactive_key_idx.extract();
     let bal = &mut contract.inactive_balances[key_idx];
     *bal = *bal + amount;
-    let mut bal_key = deposit_spend_key; // makes a copy
-    bal_key.append(recipient.to_bytes());
+
+    let bal_key = contract.inactive_bal_key(&deposit_spend_key, recipient);
     if (contract.inactive_user_balances.contains(bal_key)) {
         let user_bal = &mut contract.inactive_user_balances[bal_key];
         *user_bal = *user_bal + amount;
