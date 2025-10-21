@@ -13,11 +13,15 @@
 		"format:move": "prettier-move --config .prettier-move.json -w",
 		"format:move-all": "prettier-move --config .prettier-move.json -w **/*.move",
 		"test": "bun test"
-  },
+	},
 	"dependencies": {
+		"@ika.xyz/sdk": "^0.1.1",
+		"axios": "^1.12.2",
 		"bip32": "5.0.0-rc.0",
 		"bip39": "^3.1.0",
 		"bitcoinjs-lib": "^6.1.7",
+		"commander": "^14.0.1",
+		"dotenv": "^17.2.3",
 		"tiny-secp256k1": "^2.2.3"
 	},
 	"devDependencies": {
