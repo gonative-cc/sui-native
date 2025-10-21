@@ -5,11 +5,16 @@ module nbtc::nbtc;
 use bitcoin_parser::reader;
 use bitcoin_parser::tx;
 use bitcoin_spv::light_client::LightClient;
+use ika::ika::IKA;
+use ika_dwallet_2pc_mpc::coordinator::{request_sign, DWalletCoordinator};
+use ika_dwallet_2pc_mpc::coordinator_inner::{VerifiedPresignCap, DWalletCap};
+use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
 use nbtc::verify_payment::verify_payment;
 use sui::address;
 use sui::balance::{Self, Balance};
 use sui::coin::{Self, Coin, TreasuryCap};
 use sui::event;
+use sui::sui::SUI;
 use sui::table::{Self, Table};
 use sui::url;
 
@@ -22,14 +27,17 @@ const VERSION: u32 = 1;
 
 /// Coin Metadata
 const DECIMALS: u8 = 8;
-const SYMBOL: vector<u8> = b"nBTC";
-const NAME: vector<u8> = b"nBTC";
+const SYMBOL: vector<u8> = b"nBTC-v0.3";
+const NAME: vector<u8> = b"Native nBTC v0.3";
 const DESCRIPTION: vector<u8> = b"Native synthetic BTC";
 const ICON_URL: vector<u8> =
     b"https://raw.githubusercontent.com/gonative-cc/sui-native/master/assets/nbtc.svg";
 
 /// ops_arg consts
 const MINT_OP_APPLY_FEE: u32 = 1;
+
+const ECDSA: u32 = 0;
+const SHA256: u32 = 1;
 
 /// One Time Witness
 public struct NBTC has drop {}
@@ -98,6 +106,8 @@ public struct NbtcContract has key, store {
     /// as in Balance<nBTC>
     mint_fee: u64,
     fees_collected: Balance<NBTC>,
+    // mapping a spend_key to related dWallet cap for issue signature
+    dwallet_caps: Table<vector<u8>, DWalletCap>,
 }
 
 /// MintEvent is emitted when nBTC is successfully minted.
@@ -139,7 +149,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
     // NOTE: we removed post deployment setup function and didn't want to implement PTB style
     // initialization, so we require setting the address before publishing the package.
     let bitcoin_spend_key = b""; // TODO: valid bitcoin address
-    assert!(bitcoin_spend_key.length() >= 23);
+    assert!(bitcoin_spend_key.length() >= 22);
     transfer::public_freeze_object(metadata);
     let contract = NbtcContract {
         id: object::new(ctx),
@@ -154,6 +164,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         inactive_user_balances: table::new(ctx),
         inactive_balances: vector[],
         mint_fee: 10,
+        dwallet_caps: table::new(ctx),
         fees_collected: balance::zero(),
     };
     transfer::public_share_object(contract);
@@ -359,6 +370,38 @@ public fun record_inactive_deposit(
     });
 }
 
+/// message: payload should sign by Ika
+/// public_nbtc_signature the signature sign by public nbtc dwallet
+/// session_identifier: signing session for this sign request.
+/// payment_ika and payment_sui require for create for signature on Ika.
+/// Ika reponse this request asynchronous in other tx
+public(package) fun request_signature(
+    contract: &NbtcContract,
+    dwallet_coordinator: &mut DWalletCoordinator,
+    presign_cap: VerifiedPresignCap,
+    message: vector<u8>,
+    public_nbtc_signature: vector<u8>,
+    session_identifier: SessionIdentifier,
+    payment_ika: &mut Coin<IKA>,
+    payment_sui: &mut Coin<SUI>,
+    ctx: &mut TxContext,
+) {
+    // TODO: Handle case Ika send token back to user if we paid more than require fee.
+    // TODO: Verify dwallet_coordinator corrent coordinator of Ika
+    let spend_key = contract.bitcoin_spend_key;
+    let dwallet_cap = &contract.dwallet_caps[spend_key];
+    let message_approval = dwallet_coordinator.approve_message(dwallet_cap, ECDSA, SHA256, message);
+    dwallet_coordinator.request_sign(
+        presign_cap,
+        message_approval,
+        public_nbtc_signature,
+        session_identifier,
+        payment_ika,
+        payment_sui,
+        ctx,
+    );
+}
+
 /// redeem initiates nBTC redemption and BTC withdraw process.
 /// Returns total amount of redeemed balance.
 public fun redeem(
@@ -371,6 +414,12 @@ public fun redeem(
     // TODO: implement logic to guard burning and manage UTXOs
     // TODO: we can call remove_inactive_spend_key if reserves of this key is zero
     coins.fold!(0, |total, c| total + coin::burn(&mut contract.cap, c))
+}
+
+// TODO: Implement logic for generate the redeem transaction data
+// This can be offchain or onchain depends on algorithm we design.
+public fun btc_redeem_tx(): vector<u8> {
+    b"Go Go Native"
 }
 
 /// Allows user to withdraw back deposited BTC that used an inactive deposit spend key.
@@ -426,6 +475,18 @@ public fun withdraw_fees(_: &OpCap, contract: &mut NbtcContract, ctx: &mut TxCon
 
 public fun change_fees(_: &AdminCap, contract: &mut NbtcContract, mint_fee: u64) {
     contract.mint_fee = mint_fee;
+}
+
+/// Set a dwallet_cap for related BTC spend_key.
+/// BTC spend_key must derive from dwallet public key which is control by dwallet_cap.
+public fun add_dwallet_cap(
+    _: &AdminCap,
+    contract: &mut NbtcContract,
+    spend_key: vector<u8>,
+    dwallet_cap: DWalletCap,
+) {
+    // TODO: Verify spend_key derive from dwallet public key
+    contract.dwallet_caps.add(spend_key, dwallet_cap);
 }
 
 /// Set btc endpoint for deposit on nBTC, and set reserve of this endpoint is zero.
@@ -527,6 +588,7 @@ public(package) fun init_for_testing(
         inactive_balances: vector[],
         fees_collected: balance::zero(),
         mint_fee: 10,
+        dwallet_caps: table::new(ctx),
     };
     contract
 }

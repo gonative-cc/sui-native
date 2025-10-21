@@ -16,24 +16,27 @@ lint-fix-all:
 
 .PHONY: setup lint-git lint lint-all lint-fix-all
 
-
 ###############################################################################
 ##                              Build & Test                                 ##
 ###############################################################################
 
-build:
+build: ../.git/hooks/pre-commit
 	@sui move build
 
 test:
-	@sui move test
+	@sui move test --gas-limit 5000000
 
 test-coverage:
-	echo TODO
-# sui move test --coverage
-# sui move coverage
+	sui move test --gas-limit 5000000 --coverage
 
-.PHONY: build test test-coverage
+.PHONY: test test-coverage build
 
+
+###############################################################################
+##                                Infrastructure                             ##
+###############################################################################
+
+# To setup bitcoin, use Native Relayer.
 ###############################################################################
 ##                                   Docs                                    ##
 ###############################################################################
@@ -50,4 +53,3 @@ gen-docs:
 ##                                Infrastructure                             ##
 ###############################################################################
 
-# To setup bitcoin, use Native Relayer.

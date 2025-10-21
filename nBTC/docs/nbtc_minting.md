@@ -1,5 +1,10 @@
 # nBTC Minting
 
+## Definitions
+
+- dwallet: Ika dwallet. In the context of nBTC, this is the `contract` that holds the Bitcoin. [see more](https://github.com/dwallet-labs/ika/blob/main/docs/docs/core-concepts/dwallets.md)
+- spend_key: The public key script (`scriptPubKey`) for the dwallet address.
+
 ## Minting nBTC process
 
 1. A user sends BTC to the `nBTC` dwallet address (on Bitcoin network).
@@ -7,7 +12,7 @@
 1. Native system detects such transaction and calls the `mint` function of the `nBTC` Sui object, providing the BTC transfer details and the proof of the transaction and extra data provided by the user.
    - Note: the system is permissionless: anyone can handle the proof generation and calling mint function.
 1. The nBTC module checks if the Bitcoin transaction was not already processed (To prevent double spends).
-1. The `mint` function uses a configured Bitcoin SPV Light Client (identified by `LIGHT_CLIENT_ID`) to verify the transaction proof. It checks that BTC was sent to the correct `nBTC` dwallet address, using P2WPHK script with the correct amount, and the Bitcoin transaction contains UTXO with OP_RETURN.
+1. The `mint` function uses a configured Bitcoin SPV Light Client (identified by `LIGHT_CLIENT_ID`) to verify the transaction's inclusion in a block. It then finds the total amount sent to the `spend_key` (dwallet) registered in the contract by performing a comparison on the transaction's outputs.
 1. Once the verification is successful and the BTC transaction hasn't been used before, the module mints the corresponding amount of `nBTC` Sui Coins.
 1. The new `nBTC` Coins are sent to a Sui address or a package, based on the instruction in `OP_RETURN`.
 1. If the `OP_RETURN` data is missing or is invalid, `nBTC` is sent to `FALLBACK_ADDRESS`.
@@ -16,9 +21,15 @@
 
 ```mermaid
 graph TD
-    A["User sends BTC to the nBTC dwallet address <br> including instructions in OP_RETURN"] --> B("BTC Transaction Proof (SPV) is created");
-    B --> C["User or Native calls mint function on nBTC Sui object <br> (Provides Proof, TX Details)"];
-    C --> D("Module uses <br> Bitcoin SPV Light Client");
+    A["User sends BTC to the nBTC dwallet address <br> including instructions in OP_RETURN"] --> B("BTC Mint Transaction is detected");
+
+    subgraph Cloudflare Worker
+        direction LR
+        B --> S1["Fetches nBTC transaction <br> and builds Merkle proof"];
+        S1 --> S2["Calls `mint` function on nBTC contract<br> (Provides Proof, TX Details)"];
+    end
+
+    S2 --> D("Module uses <br> Bitcoin SPV Light Client");
     D --> E{"SPV Client verifies the transaction proof"};
     E -- Verification Successful --> F{"Checks in nBTC module: <br> 1. Has BTC TX ID been already used? <br> 2. Is the BTC amount > 0?"};
 
@@ -34,11 +45,11 @@ graph TD
 
 ## Handling nBTC after minting
 
-nBTC package expects handling instructions in the OP_RETURN data. This is handled right after minting. It determines what to do with the newly minted `nBTC`.
-The first byte of the OP_RETURN determines the type of the instructions (we use hex notation below):
+nBTC package expects handling instructions in the OP_RETURN data. This is handled right after minting to determine what to do with the newly minted `nBTC`.
+The first byte of the OP_RETURN data is the `payload_type`, which dictates how the rest of the data is interpreted:
 
-- `0x00<recipient>`: simple transfer to a recipient. Right after the first byte (`0x00`), a valid Sui address is expected.
-- `0x01<script_hash>`: Orchestrator. Right after `1` a hash of a script is expected. Full script must be provided to the user. Orchestrator will check if the script matches the recorded hash.
+- `0x00<recipient>`: Direct Transfer. The contract expects the rest of the `OP_RETURN` data to be _exactly_ 32 bytes representing the recipient's Sui address. If the data is not 32 bytes long, the mint will be sent to the contract's `fallback_addr` instead.
+- `0x01<script_hash>`: Orchestrator. This type expects a hash of a script. The full script must be provided by the user. Orchestrator will check if the script matches the recorded hash.
 - Other values are reserved for the future versions of the protocol. Note: 2 could be zklogin instructions.
 
 Today, only the simple transfer to a recipient is supported. Orchestrator will be implemented later.
@@ -65,74 +76,70 @@ flowchart TD
     O --> Other["..."]
 ```
 
+## Minting Fees
+
+The `mint` function includes a mechanism for applying a minting fee. This is controlled by the `ops_arg` parameter.
+
+- **`ops_arg=0`**: No fee is applied. The full amount of minted nBTC is transferred to the recipient.
+- **`ops_arg=1`**: The minting fee is applied. The constant `MINT_OP_APPLY_FEE` is set to `1` for this purpose.
+
+The fee is calculated as `min(amount, contract.mint_fee)`, where `amount` is the value of the Bitcoin deposit and `mint_fee` is a value configured in the `nBTCContract` by the admin. The fee is then deducted from the minted nBTC, and the remainder is transferred to the recipient. The collected fees are stored in the contract and can be withdrawn by the operator.
+
+## Tx Status Transition Diagram
+
+The system that automates the whole process assigns statuses in the following manner:
+
+```mermaid
+flowchart LR
+    Broadcasting -- "Indexer scans for new Bitcoin blocks" --> Confirming
+    Broadcasting -- "Tx not included in a block" --> Dropped
+    Confirming -- "Tx gets more confirmations (new blocks mined on top)" --> Finalized
+    Confirming -- "Bitcoin re-org detected" --> Reorg
+    Reorg -- "Block again part of the chain" --> Confirming
+    Finalized -- "Minting on Sui successful" --> Minted
+    Finalized -- "Minting on Sui failed" --> Failed
+    Failed -- "Retry" --> Minted
+    Failed -- "Retry" --> Failed
+```
+
 ## Example mint script
 
 NOTE: we are working on a fullstack app to automate the minting process.
 
-Use the `scripts/create_btc_mint_data.sh` script to extract the necessary transaction details and generate the Merkle proof required for verification on Sui. Provide the Bitcoin transaction ID (txid) as an argument to the script. The script gathers the following data needed for the `nbtc::mint` function:
+To call the `mint` function, you first need to acquire several arguments from the Bitcoin blockchain related to your deposit transaction. A helper script like `scripts/create_btc_mint_data.sh` can be used to gather this data. You must provide the Bitcoin transaction ID (txid) to the script.
 
-- `version`: Transaction version.
-- `input_count`: Number of transaction inputs.
-- `inputs`: Raw transaction input data.
-- `output_count`: Number of transaction outputs.
-- `outputs`: Raw transaction output data.
-- `lock_time`: Transaction lock time.
+**Required Arguments:**
+
+- `tx_bytes`: The raw, hex-encoded Bitcoin transaction.
 - `height`: The Bitcoin block height containing the transaction.
-- `proof`: The Merkle proof branches.
+- `proof`: The Merkle proof branches for the transaction's inclusion in the block.
 - `tx_index`: The index of the transaction within the block.
 
-Command:
+**Conceptual `sui client call`:**
+
+Once you have the arguments, you can construct the call to the `mint` function. The example below shows the structure of the command.
 
 ```bash
-# Replace with the actual Bitcoin transaction ID
-TXID="897addd511f0a4c1ddc3dc3e9a14ba2174a6fa49388764db5bde4e946f8b8b1a"
-bash scripts/create_btc_mint_data.sh ${TXID}
-```
+# Example arguments. Use the actual output from your helper script.
+CONTRACT_ID="0x..."
+LIGHT_CLIENT_ID="0x..."
+TX_BYTES="0x0100..."
+PROOF='["0x...", "0x..."]'
+HEIGHT=12345
+TX_INDEX=42
+# ops_arg: 1 to apply fees, 0 to skip
+OPS_ARG=1
 
-Example Output:
-
-```json
-{
-  "version": "0x02000000",
-  "input_count": 1,
-  "inputs": "0x6541bc8d572ae0f7f8ac9b9bca552a46dc4d08f15ae36c77d2c62155280bfdeb0000000000fdffffff",
-  "output_count": 3,
-  "outputs": "0x3818000000000000160014ce9f3ad7d227c66e9744d052821c20d18a2ea78f7440000000000000160014781b0cd92c0e80a4e750377298088f485b0488440000000000000000226a20c76280db47f593b58118ac78c257f0bfa5bbfef6be2eff385f4e32a781f76945",
-  "lock_time": "0x00000000",
-  "height": 76507,
-  "proof": [
-    "0xde226d5af97afd52fe43e537c47f120a93f9fdfb105f138f1474fabbe2981627",
-    "0xc47bf897df6339821127e91e1d25fb4a978fce79f7e991a46ae743990f0baaf8",
-    "0x233bae6fdbdfba8333d2b669aad199dff0acd6e12c9a9d4418532440617fb0e7",
-    "0x1ed089632e4cdd6a59332fb5cde4623fa6b99b1fe75f934094e2bfbadb390903",
-    "0xc27f3f65f1a800c402714cb42d9ea88ecbb33a2a582357aaed7ccddd248e4ff7",
-    "0x6677179cd73d5a871a50d8c367eab417c2994b0c3b7edd6cecda7214946c51c8",
-    "0x684890fec2f023f7dcab4b8a0bcc602e684aaa4a7dbcbeeafb9cf3fa865cc96d",
-    "0x8a2dbae03754865f1494962014bcec88d33a1525d3c95831e05a95a1008773b0",
-    "0x11675fdff932f17a11efab6b68b1c962dff9fe6a5b48f22f69a07a4ce00fd021",
-    "0x597fa1ac0c53ca801614c92d63fd5af9ac79ec06ab3e74d53961c5981961930c",
-    "0xdf00775cc7cd94cce99db46fe8803fdc64120119959a3eb417f23f7991c672c6"
-  ],
-  "tx_index": 51
-}
-```
-
-Use the extracted data to call the `nbtc::mint` function. Command:
-
-```bash
-sui client call --package 0x5419f6e223f18a9141e91a42286f2783eee27bf2667422c2100afc7b2296731b \
+sui client call --package <YOUR_NBTC_PACKAGE_ID> \
     --module nbtc \
     --function mint \
-    --args 0x47336d196275369fb52a200682a865a4bffdc9469d755d418d7e985c376ace35 \
-            0x4f989d395bb13b4913b483016641eb7c9cacfd88d2a1ba91523d0542a52af9e4 \
-            0x02000000 \
-            1 \
-            0x6541bc8d572ae0f7f8ac9b9bca552a46dc4d08f15ae36c77d2c62155280bfdeb0000000000fdffffff \
-            3 \
-            0x3818000000000000160014ce9f3ad7d227c66e9744d052821c20d18a2ea78f7440000000000000160014781b0cd92c0e80a4e750377298088f485b0488440000000000000000226a20c76280db47f593b58118ac78c257f0bfa5bbfef6be2eff385f4e32a781f76945 \
-            0x00000000 \
-             '['"0xde226d5af97afd52fe43e537c47f120a93f9fdfb105f138f1474fabbe2981627"','"0xc47bf897df6339821127e91e1d25fb4a978fce79f7e991a46ae743990f0baaf8"','"0x233bae6fdbdfba8333d2b669aad199dff0acd6e12c9a9d4418532440617fb0e7"','"0x1ed089632e4cdd6a59332fb5cde4623fa6b99b1fe75f934094e2bfbadb390903"','"0xc27f3f65f1a800c402714cb42d9ea88ecbb33a2a582357aaed7ccddd248e4ff7"','"0x6677179cd73d5a871a50d8c367eab417c2994b0c3b7edd6cecda7214946c51c8"','"0x684890fec2f023f7dcab4b8a0bcc602e684aaa4a7dbcbeeafb9cf3fa865cc96d"','"0x8a2dbae03754865f1494962014bcec88d33a1525d3c95831e05a95a1008773b0"','"0x11675fdff932f17a11efab6b68b1c962dff9fe6a5b48f22f69a07a4ce00fd021"','"0x597fa1ac0c53ca801614c92d63fd5af9ac79ec06ab3e74d53961c5981961930c"','"0xdf00775cc7cd94cce99db46fe8803fdc64120119959a3eb417f23f7991c672c6"']' \
-            76507 \
-            51 \
+    --args ${CONTRACT_ID} \
+           ${LIGHT_CLIENT_ID} \
+           ${TX_BYTES} \
+           ${PROOF} \
+           ${HEIGHT} \
+           ${TX_INDEX} \
+           "[]" \
+           ${OPS_ARG} \
     --gas-budget 100000000
 ```

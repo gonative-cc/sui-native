@@ -65,7 +65,7 @@ fun verify_payment_happy_cases() {
         proof,
         tx_index,
         &transaction,
-        x"e6228f7a5ee6b15c7cccfd9f9cb7e86992610845",
+        x"76a914e6228f7a5ee6b15c7cccfd9f9cb7e8699261084588ac",
     );
 
     assert_eq!(tx_id, x"754e4a84a89272e24d8968a37222648ced57d533e4d8cf2b24980658dd16fb6d");
@@ -102,7 +102,7 @@ fun verify_payment_with_P2WPHK_output_happy_cases() {
     // empty because only one transaction
     let proof = vector[];
 
-    let tx_index = 604;
+    let tx_index = 0;
 
     let mut r = reader::new(
         x"01000000018c0bfefccb5755874ea0872a17b0d682c84981eed93fccd3ef86556f51f21522010000006a47304402204bbbefdc49e7289b0f36fe8c7623e93ff7ff751664d63caf49c1d9d8a4cbefd402200582f12a9490bdf8e6980025c08f83c43c50bc472706e3a38e7f1a972404bc4d0121035533036f3a7e9dc4c76e9d3697eb9d573aa76844baaadda347893a793797b639ffffffff0410270000000000001976a914303962c3ad29f08d13d98218ceeb7057e9bc184888ac10270000000000001976a914c6a3b95415d3fe9a9161c4b5100c1b6f2ad1e90c88ac00000000000000000d6a0b68656c6c6f20776f726c64e549060000000000160014e6228f7a5ee6b15c7cccfd9f9cb7e8699261084500000000",
@@ -115,11 +115,62 @@ fun verify_payment_with_P2WPHK_output_happy_cases() {
         proof,
         tx_index,
         &transaction,
-        x"e6228f7a5ee6b15c7cccfd9f9cb7e86992610845",
+        x"0014e6228f7a5ee6b15c7cccfd9f9cb7e86992610845",
     );
 
     assert_eq!(tx_id, x"df88e4ad22477438db0a80979cf3dea033aa968c97fe06270f8864941a30649b");
     assert_eq!(amount, 412133);
+    assert_eq!(message.extract(), x"68656c6c6f20776f726c64");
+    sui::test_utils::destroy(lc);
+    scenario.end();
+}
+
+#[test]
+fun verify_payment_with_mutiple_op_return_happy_cases() {
+    let sender = @0x01;
+    let mut scenario = test_scenario::begin(sender);
+    let start_block_height = 0;
+    let headers = vector[
+        // only one transaction
+        header::new(
+            x"020000005d42717a33dd7046b6ca5fa33f14a7318b8221ce5b6909040000000000000000d8960c58576b2813a74910080540eafa2077d5ea0284e308956e6da01cb4c1225c843a5473691f184c13685d",
+        ),
+    ];
+
+    let ctx = scenario.ctx();
+    let confirmation_depth = 1;
+
+    let lc = new_light_client(
+        bitcoin_spv::params::mainnet(),
+        start_block_height,
+        headers,
+        0,
+        confirmation_depth,
+        ctx,
+    );
+
+    // empty because only one transaction
+    let proof = vector[];
+
+    let tx_index = 0;
+
+    let mut r = reader::new(
+        // we have 2 op return one end with 64, one end with 65.
+        x"01000000018c0bfefccb5755874ea0872a17b0d682c84981eed93fccd3ef86556f51f21522010000006a47304402204bbbefdc49e7289b0f36fe8c7623e93ff7ff751664d63caf49c1d9d8a4cbefd402200582f12a9490bdf8e6980025c08f83c43c50bc472706e3a38e7f1a972404bc4d0121035533036f3a7e9dc4c76e9d3697eb9d573aa76844baaadda347893a793797b639ffffffff0200000000000000000d6a0b68656c6c6f20776f726c6400000000000000000d6a0b68656c6c6f20776f726c6500000000",
+    );
+    let transaction = tx::deserialize(&mut r);
+    let tx_id = transaction.tx_id();
+    let (amount, mut message) = verify_payment(
+        &lc,
+        start_block_height,
+        proof,
+        tx_index,
+        &transaction,
+        x"0014e6228f7a5ee6b15c7cccfd9f9cb7e86992610845",
+    );
+
+    assert_eq!(tx_id, x"d8960c58576b2813a74910080540eafa2077d5ea0284e308956e6da01cb4c122");
+    assert_eq!(amount, 0);
     assert_eq!(message.extract(), x"68656c6c6f20776f726c64");
     sui::test_utils::destroy(lc);
     scenario.end();
