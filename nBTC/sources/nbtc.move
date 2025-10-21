@@ -55,6 +55,8 @@ const EAlreadyUpdated: vector<u8> =
 const EInvalidOpsArg: vector<u8> = b"invalid mint ops_arg";
 #[error]
 const EDuplicatedKey: vector<u8> = b"duplicated key";
+#[error]
+const EBalanceNotEmpty: vector<u8> = b"balance not empty";
 
 //
 // Structs
@@ -86,7 +88,7 @@ public struct NbtcContract has key, store {
     // TODO: consider using Table for inactive_spend_keys and inactive_balances
     /// If user, by mistake, will use inactive spend key, then we should protect from a BTC dedlock
     /// in that account. In such case we don't mint nBTC, but we allow the user to transfer it back.
-    /// NOTE: for efficiencty, this vector must be sorted.
+    /// Keys can be removed and the order is not guaranteed to be same as the insertion order.
     inactive_spend_keys: vector<vector<u8>>,
     /// Maps (bitcoin deposit key ++ user address) to his BTC deposit (in case he deposited to an
     /// inactive key from the list above).
@@ -230,6 +232,17 @@ fun verify_deposit(
     (amount, recipient)
 }
 
+/// returns idx of key in in inactive_spend_keys or None if the key is not there.
+public(package) fun inactive_key_idx(contract: &NbtcContract, key: vector<u8>): Option<u64> {
+    let mut i = contract.inactive_spend_keys.length();
+    if (i ==0) return option::none();
+    i = i-1;
+    while (i >= 0) {
+        if (contract.inactive_spend_keys[i] == key) return option::some(i);
+    };
+    option::none()
+}
+
 //
 // Public methods
 //
@@ -294,7 +307,7 @@ public fun mint(
 
 // TODO: test this function
 /// Like mint, but records deposit to an inacitve deposit_spend_key.
-/// This function is allows user to record and verify deposit to an inactive key (e.g. user
+/// This function allows user to record and verify deposit to an inactive key (e.g. user
 /// by mistake used an old, inactive bitcoin deposit key) and recover that using
 /// `redeem_from_inactive` function call.
 /// Arguments are same as to `mint` with one extra argument:
@@ -346,7 +359,8 @@ public fun record_inactive_deposit(
     });
 }
 
-/// redeem returns total amount of redeemed balance
+/// redeem initiates nBTC redemption and BTC withdraw process.
+/// Returns total amount of redeemed balance.
 public fun redeem(
     contract: &mut NbtcContract,
     coins: vector<Coin<NBTC>>,
@@ -354,13 +368,15 @@ public fun redeem(
     _ctx: &mut TxContext,
 ): u64 {
     assert!(contract.version == VERSION, EVersionMismatch);
-    // TODO: implement logic to guard burning
-    // TODO: we can detele the btc public key when reserves of this key is zero
+    // TODO: implement logic to guard burning and manage UTXOs
+    // TODO: we can call remove_inactive_spend_key if reserves of this key is zero
     coins.fold!(0, |total, c| total + coin::burn(&mut contract.cap, c))
 }
 
-/// Allows user to redeem back deposited BTC to an inactive nBTC deposit spend key.
-public fun redeem_from_inactive(
+/// Allows user to withdraw back deposited BTC that used an inactive deposit spend key.
+/// When user deposits to an inactive Bitcoin key, nBTC is not minted.
+/// See docs of the record_inactive_deposit function.
+public fun withdraw_inactive_deposit(
     contract: &mut NbtcContract,
     bitcoin_recipient: vector<u8>,
     deposit_spend_key: vector<u8>,
@@ -389,17 +405,16 @@ public fun redeem_from_inactive(
     amount
 }
 
-/// update_version updates the contract.version to the latest, making the usage of the older versions not possible
+/// update_version updates the contract.version to the latest, making the usage of the older
+/// versions not possible
 public fun update_version(contract: &mut NbtcContract) {
     assert!(VERSION > contract.version, EAlreadyUpdated);
     contract.version = VERSION;
 }
 
-/// returns idx of key in in inactive_spend_keys or None if the key is not there
-public fun inactive_key_idx(contract: &mut NbtcContract, key: vector<u8>): Option<u64> {
-    // TODO: implement binary search
-    option::none()
-}
+/// Merge existing UTXOs to a new, aggregated one assigned to the current active spend key.
+/// Used for moving funds from an inactive spend key to an active one.
+public fun merge_utxos(_: &mut NbtcContract, _num_utxos: u16) {}
 
 //
 // Admin functions
@@ -419,13 +434,21 @@ public fun add_spend_key(_: &AdminCap, contract: &mut NbtcContract, key: vector<
     let key_idx = contract.inactive_key_idx(key);
     assert!(contract.bitcoin_spend_key != key && key_idx.is_none(), EDuplicatedKey);
 
-    let insert_idx = insert_ordered(&contract.inactive_spend_keys, contract.bitcoin_spend_key);
-    contract.inactive_spend_keys.insert(contract.bitcoin_spend_key, insert_idx);
+    contract.inactive_spend_keys.push_back(contract.bitcoin_spend_key);
     contract.bitcoin_spend_key = key;
-    contract.inactive_balances.insert(insert_idx, 0);
+    contract.inactive_balances.push_back(contract.active_balance);
+    contract.active_balance = 0;
+}
 
-    // TODO:
-    // - make BTC transaction (using Ika) to move from the old key to the new key
+public fun remove_inactive_spend_key(_: &AdminCap, contract: &mut NbtcContract, key_idx: u64) {
+    // TODO: need to decide if we want to keep balance check. Technically, it's not needed
+    // if we can provide public signature to the merge_coins
+    // NOTE: we don't check inactive_user_balance here because this is out of our control and the
+    // spend key is recorded as a part of the Table key.
+
+    assert!(contract.inactive_balances[key_idx] == 0, EBalanceNotEmpty);
+    contract.inactive_balances.swap_remove(key_idx);
+    contract.inactive_spend_keys.swap_remove(key_idx);
 }
 
 //
@@ -452,18 +475,20 @@ public fun active_balance(contract: &NbtcContract): u64 {
     contract.active_balance
 }
 
+// TODO: we should also have bitcoin spend key address
 public fun bitcoin_spend_key(contract: &NbtcContract): vector<u8> {
     contract.bitcoin_spend_key
 }
 
-//
-// Helper functions
-//
-
-/// inserts the new key in vector, keeping it ordered. Return insert index.
-public fun insert_ordered(v: &vector<vector<u8>>, key: vector<u8>): u64 {
-    // TODO: implement binary search
-    0
+/// from: the index of the first key to include in the returned list. If it's >= length of the
+///    inactive keys list, then empty list is returned.
+/// to: the index of the first key to exclude from the returned list. If it's 0 then
+///    the length of the inactive keys list is used.
+public fun inactive_spend_keys(contract: &NbtcContract, from: u64, to: u64): vector<vector<u8>> {
+    let len = contract.inactive_spend_keys.length();
+    if (from > 0) return vector[];
+    let to = if (to == 0 || to > len) len else to;
+    vector::tabulate!(from-to, |i| contract.inactive_spend_keys[from+i])
 }
 
 //
