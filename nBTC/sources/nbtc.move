@@ -79,6 +79,7 @@ public struct NbtcContract has key, store {
     bitcoin_lc: ID,
     fallback_addr: address,
     // TODO: change to taproot once Ika will support it
+    /// Active "user shard" of the bitcoin private key.
     bitcoin_spend_key: vector<u8>,
     /// BTC balances for the current bitcoin_spend_key.
     active_balance: u64,
@@ -169,7 +170,8 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
 // Helper methods
 //
 
-/// make all checks and returns (Sui recipient, amount) tuple.
+/// make all checks. Returns (Sui recipient, amount) tuple.
+/// See mint function for documentation about parameters.
 fun verify_deposit(
     contract: &mut NbtcContract,
     light_client: &LightClient,
@@ -178,8 +180,7 @@ fun verify_deposit(
     proof: vector<vector<u8>>,
     height: u64,
     tx_index: u64,
-    // TODO: The `payload` parameter is reserved for future use related to advanced op_return instruction handling.
-    //       Implementation pending. Do not remove; will be used to support additional minting logic.
+    // see mint function for information about payload argument.
     _payload: vector<u8>,
     ops_arg: u32,
 ): (u64, address) {
@@ -198,7 +199,7 @@ fun verify_deposit(
     contract.tx_ids.add(tx_id, true);
     // NOTE: We assume only one active key. We should handle mutiple nbtc active key in the
     // future.
-    let (mut amount, mut op_return) = verify_payment(
+    let (amount, mut op_return) = verify_payment(
         light_client,
         height,
         proof,
@@ -238,7 +239,7 @@ fun verify_deposit(
 /// * `proof`: merkle proof for the tx.
 /// * `height`: block height, where the tx was included.
 /// * `tx_index`: index of the tx within the block.
-/// * `payload`: additional argument that is related to the op_return instruction handling.
+/// * `payload`: additional argument for the op_return instruction handling.
 /// * `ops_arg`: operation argument controlling fee application.
 ///   - Pass `1` to apply minting fees.
 ///   - Pass `0` to skip minting fees (for special cases or admin operations).
@@ -250,8 +251,9 @@ public fun mint(
     proof: vector<vector<u8>>,
     height: u64,
     tx_index: u64,
-    // TODO: The `payload` parameter is reserved for future use related to advanced op_return instruction handling.
-    //       Implementation pending. Do not remove; will be used to support additional minting logic.
+    // The `payload` parameter is reserved for advanced op_return instruction handling.
+    // Implementation pending. Do not remove; will be used to support additional minting logic,
+    // while keeping stable API.
     payload: vector<u8>,
     ops_arg: u32,
     ctx: &mut TxContext,
@@ -423,7 +425,7 @@ public fun add_spend_key(_: &AdminCap, contract: &mut NbtcContract, key: vector<
     contract.inactive_balances.insert(insert_idx, 0);
 
     // TODO:
-    // - make BTC transaction (using Ika) to move fomr the old key to the new key
+    // - make BTC transaction (using Ika) to move from the old key to the new key
 }
 
 //
