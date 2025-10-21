@@ -98,7 +98,7 @@ public struct NbtcContract has key, store {
     /// in that account. In such case we don't mint nBTC, but we allow the user to transfer it back.
     /// Keys can be removed and the order is not guaranteed to be same as the insertion order.
     inactive_spend_keys: vector<vector<u8>>,
-    /// Maps (bitcoin deposit key ++ user address) to his BTC deposit (in case he deposited to an
+    /// Maps (bitcoin deposit key ++ user address) to its BTC deposit (in case he deposited to an
     /// inactive key from the list above).
     inactive_user_balances: Table<vector<u8>, u64>,
     /// total balance per inactive key, indexed accordingly to inactive_spend_keys.
@@ -116,6 +116,8 @@ public struct MintEvent has copy, drop {
     recipient: address,
     amount: u64, // in satoshi
     fee: u64,
+    // TODO: change to address
+    bitcoin_spend_key: vector<u8>,
 }
 
 public struct InactiveDepositEvent has copy, drop {
@@ -243,7 +245,7 @@ fun verify_deposit(
     (amount, recipient)
 }
 
-/// returns idx of key in in inactive_spend_keys or None if the key is not there.
+/// returns idx of key in in `inactive_spend_keys` or None if the key is not there.
 public(package) fun inactive_key_idx(contract: &NbtcContract, key: vector<u8>): Option<u64> {
     let mut i = contract.inactive_spend_keys.length();
     if (i ==0) return option::none();
@@ -322,6 +324,7 @@ public fun mint(
         recipient,
         amount,
         fee: fee_amount,
+        bitcoin_spend_key: spend_key,
     });
 }
 
@@ -332,6 +335,7 @@ public fun mint(
 /// `redeem_from_inactive` function call.
 /// Arguments are same as to `mint` with one extra argument:
 /// * `deposit_spend_key`: bitcoin spend pub key the user used for the UTXO nBTC deposit.
+/// Emits `InactiveDepositEvent`.
 public fun record_inactive_deposit(
     contract: &mut NbtcContract,
     light_client: &LightClient,
