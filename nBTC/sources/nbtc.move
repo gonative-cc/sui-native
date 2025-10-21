@@ -365,7 +365,7 @@ public fun record_inactive_deposit(
     let bal = &mut contract.inactive_balances[key_idx];
     *bal = *bal + amount;
 
-    let bal_key = contract.inactive_bal_key(&deposit_spend_key, recipient);
+    let bal_key = inactive_bal_key(&deposit_spend_key, recipient);
     if (contract.inactive_user_balances.contains(bal_key)) {
         let user_bal = &mut contract.inactive_user_balances[bal_key];
         *user_bal = *user_bal + amount;
