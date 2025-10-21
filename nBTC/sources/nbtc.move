@@ -94,7 +94,7 @@ public struct NbtcContract has key, store {
     /// BTC balances for the current bitcoin_spend_key.
     active_balance: u64,
     // TODO: consider using Table for inactive_spend_keys and inactive_balances
-    /// If user, by mistake, will use inactive spend key, then we should protect from a BTC dedlock
+    /// If user, by mistake, will use inactive spend key, then we should protect from a BTC deadlock
     /// in that account. In such case we don't mint nBTC, but we allow the user to transfer it back.
     /// Keys can be removed and the order is not guaranteed to be same as the insertion order.
     inactive_spend_keys: vector<vector<u8>>,
@@ -250,6 +250,7 @@ public(package) fun inactive_key_idx(contract: &NbtcContract, key: vector<u8>): 
     i = i-1;
     while (i >= 0) {
         if (contract.inactive_spend_keys[i] == key) return option::some(i);
+        i = i -1;
     };
     option::none()
 }
@@ -293,6 +294,7 @@ public fun mint(
         payload,
         ops_arg,
     );
+    assert!(amount > 0, EMintAmountIsZero);
 
     contract.active_balance = contract.active_balance + amount;
 
@@ -449,7 +451,7 @@ public fun withdraw_inactive_deposit(
     });
 
     // TODO: implement logic to guard burning
-    // TODO: we can detele the btc public key when reserves of this key is zero
+    // TODO: we can delete the btc public key when reserves of this key is zero
 
     amount
 }
@@ -507,6 +509,7 @@ public fun remove_inactive_spend_key(_: &AdminCap, contract: &mut NbtcContract, 
     // NOTE: we don't check inactive_user_balance here because this is out of our control and the
     // spend key is recorded as a part of the Table key.
 
+    assert!(contract.inactive_balances.length() > key_idx, EInvalidDepositKey);
     assert!(contract.inactive_balances[key_idx] == 0, EBalanceNotEmpty);
     contract.inactive_balances.swap_remove(key_idx);
     contract.inactive_spend_keys.swap_remove(key_idx);
@@ -547,9 +550,9 @@ public fun bitcoin_spend_key(contract: &NbtcContract): vector<u8> {
 ///    the length of the inactive keys list is used.
 public fun inactive_spend_keys(contract: &NbtcContract, from: u64, to: u64): vector<vector<u8>> {
     let len = contract.inactive_spend_keys.length();
-    if (from > 0) return vector[];
+    if (from >= len) return vector[];
     let to = if (to == 0 || to > len) len else to;
-    vector::tabulate!(from-to, |i| contract.inactive_spend_keys[from+i])
+    vector::tabulate!(to-from, |i| contract.inactive_spend_keys[from+i])
 }
 
 //
