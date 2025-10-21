@@ -62,7 +62,7 @@ const EInvalidOpsArg: vector<u8> = b"invalid mint ops_arg";
 // Structs
 //
 
-/// Coin type identifier (`Coin<package_object::mycoin::MYCOIN>`) and One Time Witness.
+/// Coin type identifier (`Coin<package_object::nbtc::NBTC>`) and One Time Witness.
 public struct NBTC has drop {}
 
 /// Operator capability. Created only once in the `init` function.
