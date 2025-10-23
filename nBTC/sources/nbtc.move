@@ -533,6 +533,10 @@ public fun remove_inactive_spend_key(_: &AdminCap, contract: &mut NbtcContract, 
 // View functions
 //
 
+public fun utxos(contract: &NbtcContract): &Table<OutPoint, UTXOData> {
+    &contract.utxos
+}
+
 public fun total_supply(contract: &NbtcContract): u64 {
     coin::total_supply(&contract.cap)
 }
