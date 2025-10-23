@@ -186,3 +186,22 @@ public fun is_coinbase(tx: &Transaction): bool {
     tx.inputs.length() == 1 && tx.inputs[0].vout() == x"ffffffff" &&
         tx.inputs[0].tx_id() ==  x"0000000000000000000000000000000000000000000000000000000000000000"
 }
+
+public fun new_unsign_segwit_tx(
+    inputs: vector<Input>,
+    outputs: vector<Output>,
+    locktime: vector<u8>,
+): Transaction {
+    Transaction {
+        version: x"02000000", // default version for segwit
+        marker: option::some(0),
+        flag: option::some(1),
+        inputs,
+        outputs,
+        witness: vector[],
+        locktime,
+        // TODO: Add method to compute tx_id
+        // in the current version, the transaction id only compute when we parse tx from bytes.
+        tx_id: vector::empty(),
+    }
+}

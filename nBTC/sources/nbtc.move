@@ -2,6 +2,7 @@
 
 module nbtc::nbtc;
 
+use bitcoin_executor::utxo::{OutPoint, Data as UTXOData};
 use bitcoin_parser::reader;
 use bitcoin_parser::tx;
 use bitcoin_spv::light_client::LightClient;
@@ -106,6 +107,7 @@ public struct NbtcContract has key, store {
     /// as in Balance<nBTC>
     mint_fee: u64,
     fees_collected: Balance<NBTC>,
+    utxos: Table<OutPoint, UTXOData>,
     // mapping a spend_key to related dWallet cap for issue signature
     dwallet_caps: Table<vector<u8>, DWalletCap>,
 }
@@ -166,6 +168,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         inactive_user_balances: table::new(ctx),
         inactive_balances: vector[],
         mint_fee: 10,
+        utxos: table::new(ctx),
         dwallet_caps: table::new(ctx),
         fees_collected: balance::zero(),
     };

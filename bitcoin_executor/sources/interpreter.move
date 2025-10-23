@@ -3,10 +3,10 @@
 module bitcoin_executor::interpreter;
 
 use bitcoin_executor::btc_encoding;
+use bitcoin_executor::executor_utils as utils;
 use bitcoin_executor::ripemd160;
 use bitcoin_executor::sighash;
 use bitcoin_executor::stack::{Self, Stack};
-use bitcoin_executor::utils;
 use bitcoin_parser::crypto::hash256;
 use bitcoin_parser::encoding::u64_to_le_bytes;
 use bitcoin_parser::input;
