@@ -37,5 +37,5 @@ public fun compose_withdraw_unsign_tx(
         output::new(user_receive_amount, receiver_spend_key),
         output::new(remain_amount, nbtc_contract.bitcoin_spend_key()),
     ];
-    new_unsign_segwit_tx(inps, vector[])
+    new_unsign_segwit_tx(inps, outs)
 }
