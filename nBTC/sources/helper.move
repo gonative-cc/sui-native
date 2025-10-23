@@ -11,7 +11,7 @@ const DEFAULT_SEQUENCE: vector<u8> = x"ffffffff"; // no lock time, no Replace By
 
 public fun compose_withdraw_unsign_tx(
     nbtc_contract: &NbtcContract,
-    selected_outpoint: vector<OutPoint>,
+    selected_outpoints: vector<OutPoint>,
     receiver_spend_key: vector<u8>,
     withdraw_amount: u64,
     fee: u64,
@@ -19,7 +19,7 @@ public fun compose_withdraw_unsign_tx(
     let utxos_set = nbtc_contract.utxos();
     let mut total_spend = 0;
     let mut inps = vector[];
-    selected_outpoint.do!(|outpoint| {
+    selected_outpoints.do!(|outpoint| {
         let utxo = utxos_set[outpoint];
         total_spend = total_spend + utxo.output().amount();
         let inp = input::new(

@@ -608,6 +608,7 @@ public(package) fun init_for_testing(
         inactive_user_balances: table::new(ctx),
         inactive_balances: vector[],
         fees_collected: balance::zero(),
+        utxos: table::new(ctx),
         mint_fee: 10,
         dwallet_caps: table::new(ctx),
     };
