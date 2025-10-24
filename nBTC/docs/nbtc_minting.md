@@ -44,6 +44,7 @@ graph TD
 ```
 
 ## Handling nBTC after minting
+
 The nBTC package expects handling instructions in the OP_RETURN data. This is handled right after minting to determine what to do with the newly minted `nBTC`.
 The first byte of the OP_RETURN data is the `payload_type`, which dictates how the rest of the data is interpreted:
 
