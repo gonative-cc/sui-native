@@ -9,7 +9,6 @@ import { BufferWriter } from 'bitcoinjs-lib/src/bufferutils';
 import { sha256 } from "@noble/hashes/sha2.js";
 import * as varuint from 'varuint-bitcoin'
 
-import axios from 'axios';
 import { publicKeyFromDWalletOutput, type DWallet, type SharedDWallet } from '@ika.xyz/sdk';
 import { sign_message } from './sign';
 import { createIkaClient, createSuiClient } from './common';
@@ -120,9 +119,9 @@ function txBytesToSign(
 // Getting the unspent transaction output for a given address
 async function getUTXOs(address: string) {
 	const utxoUrl = `http://localhost:3002/address/${address}/utxo`;
-	const { data: utxos } = await axios.get(utxoUrl);
+	let response = await fetch(utxoUrl);
 
-	console.log(utxos)
+	let utxos = (await response.json()) as any[];
 	if (utxos.length === 0) {
 		throw new Error('No UTXOs found for this address');
 	}
@@ -134,8 +133,8 @@ async function sendBTCTx(txHex: string) {
 
 	const broadcastUrl = `http://localhost:3002/tx`;
 	try {
-		const response = await axios.post(broadcastUrl, txHex);
-		console.log('Transaction Broadcasted:', response.data);
+		const response = await fetch(broadcastUrl, { headers: { 'Content-Type': 'application/json' }, method: "POST", body: txHex });
+		console.log('Transaction Broadcasted:', await response.body?.text());
 		return 0;
 	} catch (error) {
 		console.error('Error broadcasting transaction:', error);
