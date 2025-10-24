@@ -151,9 +151,7 @@ async function getBTCAddress(dWalletID: string) {
 	const dWallet = await ikaClient.getDWalletInParticularState(
 		dWalletID,
 		'Active',
-		{
-			timeout: 300000,
-		}
+		{ timeout: 300000 }
 	);
 
 	let publicKey = await publicKeyFromDWalletOutput(Uint8Array.from(dWallet.state.Active?.public_output as number[]));
