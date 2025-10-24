@@ -28,8 +28,6 @@ export function destroyEmptyIkaToken(
 }
 
 export async function generateKeypair() {
-	// let seed = await bip39.mnemonicToSeed(process.env.MNEMONIC);
-	// const userKeypair = Ed25519Keypair.deriveKeypairFromSeed(toHex(seed));
 	const seed = new Uint8Array(randomBytes(32));
 	const userKeypair = Ed25519Keypair.deriveKeypairFromSeed(toHex(new Uint8Array(randomBytes(32))));
 	const userShareEncryptionKeys = await UserShareEncryptionKeys.fromRootSeedKey(
