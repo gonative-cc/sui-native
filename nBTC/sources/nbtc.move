@@ -115,8 +115,7 @@ public struct NbtcContract has key, store {
     next_redeem_req: u64,
 }
 
-// TODO: we need to store them by owner (the owner key)
-// owner: address,   // The Sui address that deposited this UTXO
+// TODO: we need to store them by owner (the nBTC key)?
 public struct Utxo has store {
     tx_id: u256,
     vout: u32,
@@ -127,12 +126,13 @@ public enum RedeemStatus has copy, drop, store {
     Resolving, // finding the best UTXOs
     Signing,
     Signed,
+    Confirmed,
 }
 
 public struct RedeemRequest has store {
     // TODO: maybe we don't need the ID?
     id: UID,
-    redeemer: address, // TODO: maybe not needed
+    redeemer: address, // TODO: maybe it's not needed
     /// Bitcoin spent key (address)
     recipient: vector<u8>,
     status: RedeemStatus,
@@ -147,7 +147,7 @@ public struct MintEvent has copy, drop {
     recipient: address,
     amount: u64, // in satoshi
     fee: u64,
-    // TODO: change to address
+    // TODO: maybe we should change to bitcoin address format?
     bitcoin_spend_key: vector<u8>,
     btc_tx_id: vector<u8>,
 }
