@@ -12,6 +12,68 @@ use std::unit_test::assert_eq;
 use sui::test_scenario;
 
 #[test]
+#[expected_failure]
+fun verify_payment_reject_p2pkh() {
+    let sender = @0x01;
+    let mut scenario = test_scenario::begin(sender);
+    let start_block_height = 325001;
+    let headers = vector[
+        x"020000005d42717a33dd7046b6ca5fa33f14a7318b8221ce5b6909040000000000000000d7ee3bfa38399e87f302a41b388f33df29bf3ecb3552ed208a4869e17870a74d5c843a5473691f184c13685d",
+        x"02000000467aa6383f1aad95ed5c4eee2dc10a97ebb1f79760446a0000000000000000004586bab85aa954c20675b8603c2bc68b53a3da5b0d25a8a03dc3a274ab8c981409863a5473691f186b9c6345",
+        x"020000002e4fd5261bc0c9e663d32f4bbbb3253e3a8f8e5759f7ae070000000000000000046c024dcdabcc5f3071d8f44e030dba6b9ae7e30336523be2a767c68b0e3ba684863a5473691f180220726b",
+        x"02000000ae4bcf449c0e9ea803a663bb09c45f221b62b206353e1e0f000000000000000010638f6182860aa213236fbce7bafc9b68a6f8826d3f05482c4e8cd7465ec9824c8c3a5473691f185c90957a",
+        x"02000000c331af5f49fd96014b398d9541b4d252a8a4235c2797d90b00000000000000003ac10882c715806ec7b557b9de9fd786c0380718335e2ae2c1fbee9fb1465aa03b8c3a5473691f187cd8568e",
+    ].map!(|h| header::new(h));
+
+    let ctx = scenario.ctx();
+    let confirmation_depth = 5; // => the block 325001 has enough confirmations.
+    let lc = new_light_client(
+        bitcoin_spv::params::mainnet(),
+        start_block_height,
+        headers,
+        0,
+        confirmation_depth,
+        ctx,
+    );
+    // merkle proof of transaction id gen by proof.py in scripts folder.
+
+    let proof = vector[
+        x"38636d3258913a5c593a17323ddb0f34e1596b77c2860d67296f124f97df8376",
+        x"fd6fd6c1d48b37c044911cda5795854e5efdfdb947d7eb806ad8ace6c946683a",
+        x"a17bd716526b15b4605a0775c5d3944fa65870f375db94cd76db1d824e78efe6",
+        x"75d8e49d7be1d7a8bf971256cc8af5d208e3da0412f756af66141a6ba9ed74a5",
+        x"9d69430ab8f262ede0e5b25652e361937a4f96c4400b764ff8d81abeef620852",
+        x"f32111d27d0765ef0cbf7093a8e16e3c2c69bb1bc11d05af7e28b82361402244",
+        x"2f894c0db71838edd489501fff01befe343d013ee3a75e83ec35d561d9abad19",
+        x"e6a7942ff80cdaef030d915a5300d19700bf37e8c10fab7959e47178e0b74f69",
+        x"888039325588c2afd748854fd66c565d1e25d0b18d9f00fe9c881a6830cf3614",
+        x"90aa501ce00f5bc4b756feba07161ff89db6b9c3cf0d632e3c93d08b5bfac2c4",
+        x"e99c4dfa417d61179440f88baf7e9fb798c744eb1139dbd15ea90d6ab3ccb8aa",
+    ];
+
+    let tx_index = 604;
+    let mut r = reader::new(
+        x"01000000018c0bfefccb5755874ea0872a17b0d682c84981eed93fccd3ef86556f51f21522010000006a47304402204bbbefdc49e7289b0f36fe8c7623e93ff7ff751664d63caf49c1d9d8a4cbefd402200582f12a9490bdf8e6980025c08f83c43c50bc472706e3a38e7f1a972404bc4d0121035533036f3a7e9dc4c76e9d3697eb9d573aa76844baaadda347893a793797b639ffffffff0410270000000000001976a914303962c3ad29f08d13d98218ceeb7057e9bc184888ac10270000000000001976a914c6a3b95415d3fe9a9161c4b5100c1b6f2ad1e90c88ac00000000000000000d6a0b68656c6c6f20776f726c64e5490600000000001976a914e6228f7a5ee6b15c7cccfd9f9cb7e8699261084588ac00000000",
+    );
+    let transaction = tx::deserialize(&mut r);
+
+    // Tx: 6dfb16dd580698242bcfd8e433d557ed8c642272a368894de27292a8844a4e75 (Height 303,699)
+    // from mainnet
+    // This should fail because we're using a P2PKH scriptPubKey instead of P2WPKH
+    verify_payment(
+        &lc,
+        start_block_height,
+        proof,
+        tx_index,
+        &transaction,
+        x"76a914e6228f7a5ee6b15c7cccfd9f9cb7e8699261084588ac",
+    );
+
+    sui::test_utils::destroy(lc);
+    scenario.end();
+}
+
+#[test]
 fun verify_payment_happy_cases() {
     let sender = @0x01;
     let mut scenario = test_scenario::begin(sender);
@@ -65,11 +127,12 @@ fun verify_payment_happy_cases() {
         proof,
         tx_index,
         &transaction,
-        x"76a914e6228f7a5ee6b15c7cccfd9f9cb7e8699261084588ac",
+        x"0014e6228f7a5ee6b15c7cccfd9f9cb7e86992610845",
     );
 
     assert_eq!(tx_id, x"754e4a84a89272e24d8968a37222648ced57d533e4d8cf2b24980658dd16fb6d");
-    assert_eq!(amount, 412133);
+    // Transaction outputs are P2PKH, but we're looking for P2WPKH, so amount should be 0
+    assert_eq!(amount, 0);
     assert_eq!(message.extract(), x"68656c6c6f20776f726c64");
     sui::test_utils::destroy(lc);
     scenario.end();
@@ -227,7 +290,7 @@ fun verify_payment_for_tx_not_in_block_shoul_fail() {
         proof,
         tx_index,
         &transaction,
-        x"e6228f7a5ee6b15c7cccfd9f9cb7e86992610845",
+        x"0014e6228f7a5ee6b15c7cccfd9f9cb7e86992610845",
     );
 
     sui::test_utils::destroy(lc);
@@ -285,7 +348,7 @@ fun verify_payment_on_block_not_finalize_should_fail() {
         proof,
         tx_index,
         &transaction,
-        x"e6228f7a5ee6b15c7cccfd9f9cb7e86992610845",
+        x"0014e6228f7a5ee6b15c7cccfd9f9cb7e86992610845",
     );
 
     sui::test_utils::destroy(lc);

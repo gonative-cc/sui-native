@@ -96,7 +96,7 @@ fun setup(nbtc_bitcoin_addr: vector<u8>, sender: address): (LightClient, NbtcCon
 
     let headers = vector[
         header::new(
-            x"00000020a97594d6b5b9369535da225d464bde7e0ae3794e9b270a010000000000000000addcae45a90f73dc68e3225b2d0be1c155bf9b0864f187e31203079c0b6d42c5bb27e8585a330218b119eaee",
+            x"00000020a97594d6b5b9369535da225d464bde7e0ae3794e9b270a01000000000000000017defeb5ade8b52f87cfc295abb46b911f467114c2fabd9e781384b045832020bb27e8585a330218b119eaee",
         ),
     ];
 
