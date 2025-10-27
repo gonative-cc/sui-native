@@ -108,6 +108,37 @@ public struct NbtcContract has key, store {
     fees_collected: Balance<NBTC>,
     // mapping a spend_key to related dWallet cap for issue signature
     dwallet_caps: Table<vector<u8>, DWalletCap>,
+    // TODO: probably we should have UTXOs / nbtc pubkey
+    utxos: Table<u64, Utxo>,
+    next_utxo: u64,
+    redeem_requests: Table<u64, RedeemRequest>,
+    next_redeem_req: u64,
+}
+
+// TODO: we need to store them by owner (the nBTC key)?
+public struct Utxo has store {
+    tx_id: u256, // TODO: this is 32-byte hash. we can also use vector<u8>
+    vout: u32,
+    value: u64,
+}
+
+public enum RedeemStatus has copy, drop, store {
+    Resolving, // finding the best UTXOs
+    Signing,
+    Signed,
+    Confirmed,
+}
+
+public struct RedeemRequest has store {
+    // TODO: maybe we don't need the ID?
+    id: UID,
+    redeemer: address, // TODO: maybe it's not needed
+    /// Bitcoin spent key (address)
+    recipient: vector<u8>,
+    status: RedeemStatus,
+    amount: u64,
+    inputs: vector<Utxo>,
+    remainder_output: Utxo,
 }
 
 /// MintEvent is emitted when nBTC is successfully minted.
@@ -116,8 +147,9 @@ public struct MintEvent has copy, drop {
     recipient: address,
     amount: u64, // in satoshi
     fee: u64,
-    // TODO: change to address
+    // TODO: maybe we should change to bitcoin address format?
     bitcoin_spend_key: vector<u8>,
+    btc_tx_id: vector<u8>,
 }
 
 public struct InactiveDepositEvent has copy, drop {
@@ -168,6 +200,10 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         mint_fee: 10,
         dwallet_caps: table::new(ctx),
         fees_collected: balance::zero(),
+        utxos: table::new<u64, Utxo>(ctx),
+        next_utxo: 0,
+        redeem_requests: table::new<u64, RedeemRequest>(ctx),
+        next_redeem_req: 0,
     };
     transfer::public_share_object(contract);
 
@@ -241,6 +277,10 @@ fun verify_deposit(
             }
         }
     };
+
+    // TODO: extract and record UTXOs
+    let utxo_idx = contract.next_utxo;
+    contract.next_utxo = contract.next_utxo + 1;
 
     (amount, recipient)
 }
@@ -325,6 +365,8 @@ public fun mint(
         amount,
         fee: fee_amount,
         bitcoin_spend_key: spend_key,
+        // TODO: utxo_idx,
+        btc_tx_id: vector[], // TODO: construct tx_id
     });
 }
 
@@ -603,6 +645,10 @@ public(package) fun init_for_testing(
         fees_collected: balance::zero(),
         mint_fee: 10,
         dwallet_caps: table::new(ctx),
+        redeem_requests: table::new(ctx),
+        utxos: table::new(ctx),
+        next_redeem_req: 0,
+        next_utxo: 0,
     };
     contract
 }
