@@ -619,3 +619,8 @@ public(package) fun init_for_testing(
 public fun get_fees_collected(contract: &NbtcContract): u64 {
     contract.fees_collected.value()
 }
+
+#[test_only]
+public(package) fun set_utxo(contract: &mut NbtcContract, outpoint: OutPoint, data: UTXOData) {
+    contract.utxos.add(outpoint, data)
+}

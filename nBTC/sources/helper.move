@@ -18,24 +18,24 @@ public fun compose_withdraw_unsign_tx(
 ): Transaction {
     let utxos_set = nbtc_contract.utxos();
     let mut total_spend = 0;
-    let mut inps = vector[];
-    selected_outpoints.do!(|outpoint| {
+    let inps = selected_outpoints.map!(|outpoint| {
         let utxo = utxos_set[outpoint];
         total_spend = total_spend + utxo.output().amount();
-        let inp = input::new(
+        input::new(
             outpoint.tx_id(),
             u32_to_le_bytes(outpoint.vout()),
             vector::empty(), // Because utxos is segwit format so script_sig field is empty
             DEFAULT_SEQUENCE,
-        );
+        )
     });
 
     let user_receive_amount = withdraw_amount - fee;
-    let remain_amount = total_spend - (user_receive_amount);
+    let remain_amount = total_spend - withdraw_amount;
 
-    let outs = vector[
-        output::new(user_receive_amount, receiver_spend_key),
-        output::new(remain_amount, nbtc_contract.bitcoin_spend_key()),
-    ];
+    let mut outs = vector[output::new(user_receive_amount, receiver_spend_key)];
+
+    if (remain_amount > 0) {
+        outs.push_back(output::new(remain_amount, nbtc_contract.bitcoin_spend_key()));
+    };
     new_unsign_segwit_tx(inps, outs)
 }

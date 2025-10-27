@@ -195,7 +195,7 @@ public fun new_unsign_segwit_tx(inputs: vector<Input>, outputs: vector<Output>):
         inputs,
         outputs,
         witness: vector[],
-        locktime: x"ffffffff", // no lock time
+        locktime: x"00000000", // no lock time
         // TODO: Add method to compute tx_id
         // in the current version, the transaction id only compute when we parse tx from bytes.
         tx_id: vector::empty(),
