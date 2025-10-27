@@ -2,12 +2,16 @@
 
 module nbtc::verify_payment;
 
+use bitcoin_parser::output;
 use bitcoin_parser::tx::Transaction;
 use bitcoin_spv::light_client::LightClient;
 
 #[error]
 const ETxNotInBlock: vector<u8> =
     b"The transaction is not included in a finalized block according to the Merkle proof";
+#[error]
+const EInvalidScriptPubKey: vector<u8> =
+    b"The receiver scriptPubKey must be a p2wpkh (Pay to Witness Public Key Hash) script";
 
 /// Verifies the transaction and parses outputs to calculates the payment to the receiver.
 /// To if you only want to verify if the tx is included in the block, you can use
@@ -20,7 +24,7 @@ const ETxNotInBlock: vector<u8> =
 /// * `proof`: merkle tree proof, this is the vector of 32bytes.
 /// * `tx_index`: index of transaction in block.
 /// * `transaction`: bitcoin transaction. Check transaction.move.
-/// * `receiver_script_pubkey`: The receiver's full scriptPubKey.
+/// * `receiver_script_pubkey`: The receiver's full scriptPubKey. Must be a p2wpkh script.
 public fun verify_payment(
     lc: &LightClient,
     height: u64,
@@ -29,6 +33,11 @@ public fun verify_payment(
     transaction: &Transaction,
     receiver_script_pubkey: vector<u8>,
 ): (u64, Option<vector<u8>>) {
+    // Verify that the receiver scriptPubKey is p2wpkh format
+    // P2WPKH format: OP_0 (0x00) + OP_DATA_20 (0x14) + 20 bytes pubkey hash = 22 bytes total
+    let temp_output = output::new(0, receiver_script_pubkey);
+    assert!(temp_output.is_P2WPHK(), EInvalidScriptPubKey);
+
     let mut amount = 0;
     let mut op_return = option::none();
     let tx_id = transaction.tx_id();
@@ -36,7 +45,7 @@ public fun verify_payment(
     assert!(lc.verify_tx(height, tx_id, proof, tx_index), ETxNotInBlock);
     let outputs = transaction.outputs();
     outputs.do!(|o| {
-        if (o.script_pubkey() == receiver_script_pubkey) {
+        if (o.script_pubkey() == temp_output.script_pubkey()) {
             amount = amount + o.amount();
         } else if (o.is_op_return() && op_return.is_none()) {
             // we select the first OP RETURN
