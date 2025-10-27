@@ -117,7 +117,7 @@ public struct NbtcContract has key, store {
 
 // TODO: we need to store them by owner (the nBTC key)?
 public struct Utxo has store {
-    tx_id: u256,
+    tx_id: u256, // TODO: this is 32-byte hash. we can also use vector<u8>
     vout: u32,
     value: u64,
 }
@@ -645,6 +645,10 @@ public(package) fun init_for_testing(
         fees_collected: balance::zero(),
         mint_fee: 10,
         dwallet_caps: table::new(ctx),
+        redeem_requests: table::new(ctx),
+        utxos: table::new(ctx),
+        next_redeem_req: 0,
+        next_utxo: 0,
     };
     contract
 }
