@@ -138,7 +138,7 @@ public struct RedeemRequest has store {
     status: RedeemStatus,
     amount: u64,
     inputs: vector<Utxo>,
-    reminder_output: Utxo,
+    remainder_output: Utxo,
 }
 
 /// MintEvent is emitted when nBTC is successfully minted.
