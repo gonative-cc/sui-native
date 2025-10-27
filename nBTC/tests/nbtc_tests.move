@@ -94,6 +94,8 @@ fun get_fallback_mint_data(): TestData {
 fun setup(nbtc_bitcoin_addr: vector<u8>, sender: address): (LightClient, NbtcContract, Scenario) {
     let mut scenario = test_scenario::begin(sender);
 
+    // Block header updated to match the new P2WPKH test transactions.
+    // The merkle root (bytes 36-68) was recalculated for the two test transactions with P2WPKH outputs.
     let headers = vector[
         header::new(
             x"00000020a97594d6b5b9369535da225d464bde7e0ae3794e9b270a01000000000000000017defeb5ade8b52f87cfc295abb46b911f467114c2fabd9e781384b045832020bb27e8585a330218b119eaee",
