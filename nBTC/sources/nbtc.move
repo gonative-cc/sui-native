@@ -9,7 +9,6 @@ use ika::ika::IKA;
 use ika_dwallet_2pc_mpc::coordinator::{request_sign, DWalletCoordinator};
 use ika_dwallet_2pc_mpc::coordinator_inner::{VerifiedPresignCap, DWalletCap};
 use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
-use nbtc::redeem_request::RedeemRequest;
 use nbtc::utxo::Utxo;
 use nbtc::verify_payment::verify_payment;
 use sui::address;
@@ -19,6 +18,7 @@ use sui::event;
 use sui::sui::SUI;
 use sui::table::{Self, Table};
 use sui::url;
+use sui::vec_map::VecMap;
 
 //
 // Constant
@@ -67,7 +67,10 @@ const EInvalidOpsArg: vector<u8> = b"invalid mint ops_arg";
 const EDuplicatedKey: vector<u8> = b"duplicated key";
 #[error]
 const EBalanceNotEmpty: vector<u8> = b"balance not empty";
-
+#[error]
+const ENotReadlyForSign: vector<u8> = b"redeem tx not ready for sign";
+#[error]
+const EInputAlreadyRequestSignature: vector<u8> = b"The input has been requested signature";
 //
 // Structs
 //
@@ -141,6 +144,45 @@ public struct RedeemInactiveDepositEvent has copy, drop {
     amount: u64, // in satoshi
 }
 
+public enum RedeemStatus has copy, drop, store {
+    Resolving, // finding the best UTXOs
+    Signing,
+    Signed,
+    Confirmed,
+}
+
+public struct RedeemRequest has store {
+    // TODO: maybe we don't need the ID?
+    redeemer: address, // TODO: maybe it's not needed
+    /// Bitcoin spent key (address)
+    recipient: vector<u8>,
+    status: RedeemStatus,
+    amount: u64,
+    inputs: vector<Utxo>,
+    remainder_output: Utxo,
+    signatures_map: VecMap<u32, ID>,
+}
+
+public fun sign_hash(r: &RedeemRequest, input_idx: u32): vector<u8> {
+    x"ffffff"
+}
+
+public fun requested_sign(r: &RedeemRequest, input_idx: u32): bool {
+    false
+}
+
+public(package) fun set_sign_id(r: &mut RedeemRequest, input_idx: u32, sign_id: ID) {}
+
+public fun is_signing(status: &RedeemStatus): bool {
+    match (status) {
+        RedeemStatus::Signing => true,
+        _ => false,
+    }
+}
+
+public fun status(r: &RedeemRequest): &RedeemStatus {
+    &r.status
+}
 //
 // Functions
 //
@@ -434,13 +476,35 @@ public(package) fun request_signature(
     sign_id
 }
 
-public fun request_sign_for_redeem_request(
+public fun request_sign_for_input(
     contract: &mut NbtcContract,
-    request_id: u64,
-    input_idx: u64,
+    dwallet_coordinator: &mut DWalletCoordinator,
+    request: &mut RedeemRequest,
+    input_idx: u32,
+    presign_cap: VerifiedPresignCap,
+    session_identifier: SessionIdentifier,
+    public_nbtc_signature: vector<u8>,
+    payment_ika: &mut Coin<IKA>,
+    payment_sui: &mut Coin<SUI>,
+    ctx: &mut TxContext,
 ) {
-    let request = &contract.redeem_requests[request_id];
-    assert!(request.status().is_signing(), 0);
+    assert!(request.status().is_signing(), ENotReadlyForSign);
+    assert!(request.requested_sign(input_idx), EInputAlreadyRequestSignature);
+
+    // This should include other information for create sign hash
+    let sign_hash = request.sign_hash(input_idx);
+
+    let sign_id = contract.request_signature(
+        dwallet_coordinator,
+        presign_cap,
+        sign_hash,
+        public_nbtc_signature,
+        session_identifier,
+        payment_ika,
+        payment_sui,
+        ctx,
+    );
+    request.set_sign_id(input_idx, sign_id);
 }
 
 /// redeem initiates nBTC redemption and BTC withdraw process.
@@ -593,7 +657,6 @@ public fun inactive_spend_keys(contract: &NbtcContract, from: u64, to: u64): vec
     let to = if (to == 0 || to > len) len else to;
     vector::tabulate!(to-from, |i| contract.inactive_spend_keys[from+i])
 }
-
 //
 // Testing
 //
