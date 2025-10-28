@@ -7,6 +7,7 @@ use bitcoin_executor::utxo::{new_outpoint, new_data};
 use bitcoin_parser::encoding::u64_to_le_bytes;
 use bitcoin_parser::output;
 use nbtc::helper::compose_withdraw_unsign_tx;
+use nbtc::nbtc::new_utxo;
 use nbtc::nbtc_tests::setup;
 use std::unit_test::assert_eq;
 use sui::test_utils::destroy;
@@ -18,18 +19,18 @@ fun create_unsign_reedem_tx_happy_case() {
     let (lc, mut ctr, mut scenario) = setup(nbtc_spend_key, sender);
 
     let outpoint = vector[
-        new_outpoint(x"c22646a7af0b3862c27dadab84cfb4a58dd9e1e4a417e7517bff7f05ae4c575e", 1),
-        new_outpoint(x"2879c6bf4c92618ae198e516c9414629ad7499bd94fe71a3f1614b76ab4fe3c6", 0),
+        new_utxo(x"c22646a7af0b3862c27dadab84cfb4a58dd9e1e4a417e7517bff7f05ae4c575e", 1, 9979700),
+        new_utxo(x"2879c6bf4c92618ae198e516c9414629ad7499bd94fe71a3f1614b76ab4fe3c6", 0, 10000000),
     ];
 
-    ctr.set_utxo(
-        outpoint[0],
-        new_data(0, false, output::new(9979700, x"0014e8340a12dd2c95e5fedc8b088a81dcac42c106fb")),
-    );
-    ctr.set_utxo(
-        outpoint[1],
-        new_data(0, false, output::new(10000000, x"0014e8340a12dd2c95e5fedc8b088a81dcac42c106fb")),
-    );
+    // ctr.set_utxo(
+    //     outpoint[0],
+    //     new_data(0, false, output::new(9979700, x"0014e8340a12dd2c95e5fedc8b088a81dcac42c106fb")),
+    // );
+    // ctr.set_utxo(
+    //     outpoint[1],
+    //     new_data(0, false, output::new(10000000, x"0014e8340a12dd2c95e5fedc8b088a81dcac42c106fb")),
+    // );
     let amount = 12000150;
     let fee = 150;
     let tx = compose_withdraw_unsign_tx(

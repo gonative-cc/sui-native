@@ -107,7 +107,6 @@ public struct NbtcContract has key, store {
     /// as in Balance<nBTC>
     mint_fee: u64,
     fees_collected: Balance<NBTC>,
-    utxos: Table<OutPoint, UTXOData>,
     // mapping a spend_key to related dWallet cap for issue signature
     dwallet_caps: Table<vector<u8>, DWalletCap>,
     // TODO: probably we should have UTXOs / nbtc pubkey
@@ -118,8 +117,8 @@ public struct NbtcContract has key, store {
 }
 
 // TODO: we need to store them by owner (the nBTC key)?
-public struct Utxo has store {
-    tx_id: u256, // TODO: this is 32-byte hash. we can also use vector<u8>
+public struct Utxo has copy, drop, store {
+    tx_id: vector<u8>,
     vout: u32,
     value: u64,
 }
@@ -203,7 +202,6 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         utxos: table::new(ctx),
         dwallet_caps: table::new(ctx),
         fees_collected: balance::zero(),
-        utxos: table::new<u64, Utxo>(ctx),
         next_utxo: 0,
         redeem_requests: table::new<u64, RedeemRequest>(ctx),
         next_redeem_req: 0,
@@ -220,6 +218,13 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
     );
 }
 
+public fun new_utxo(tx_id: vector<u8>, vout: u32, value: u64): Utxo {
+    Utxo {
+        tx_id,
+        vout,
+        value,
+    }
+}
 //
 // Helper methods
 //
@@ -575,10 +580,6 @@ public fun remove_inactive_spend_key(_: &AdminCap, contract: &mut NbtcContract, 
 // View functions
 //
 
-public fun utxos(contract: &NbtcContract): &Table<OutPoint, UTXOData> {
-    &contract.utxos
-}
-
 public fun total_supply(contract: &NbtcContract): u64 {
     coin::total_supply(&contract.cap)
 }
@@ -602,6 +603,18 @@ public fun active_balance(contract: &NbtcContract): u64 {
 // TODO: we should also have bitcoin spend key address
 public fun bitcoin_spend_key(contract: &NbtcContract): vector<u8> {
     contract.bitcoin_spend_key
+}
+
+public fun tx_id(utxo: &Utxo): vector<u8> {
+    utxo.tx_id
+}
+
+public fun vout(utxo: &Utxo): u32 {
+    utxo.vout
+}
+
+public fun value(utxo: &Utxo): u64 {
+    utxo.value
 }
 
 /// from: the index of the first key to include in the returned list. If it's >= length of the
@@ -654,7 +667,6 @@ public(package) fun init_for_testing(
         mint_fee: 10,
         dwallet_caps: table::new(ctx),
         redeem_requests: table::new(ctx),
-        utxos: table::new(ctx),
         next_redeem_req: 0,
         next_utxo: 0,
     };
@@ -664,9 +676,4 @@ public(package) fun init_for_testing(
 #[test_only]
 public fun get_fees_collected(contract: &NbtcContract): u64 {
     contract.fees_collected.value()
-}
-
-#[test_only]
-public(package) fun set_utxo(contract: &mut NbtcContract, outpoint: OutPoint, data: UTXOData) {
-    contract.utxos.add(outpoint, data)
 }
