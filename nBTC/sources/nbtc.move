@@ -9,6 +9,7 @@ use ika::ika::IKA;
 use ika_dwallet_2pc_mpc::coordinator::{request_sign, DWalletCoordinator};
 use ika_dwallet_2pc_mpc::coordinator_inner::{VerifiedPresignCap, DWalletCap};
 use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
+use nbtc::utxo::Utxo;
 use nbtc::verify_payment::verify_payment;
 use sui::address;
 use sui::balance::{Self, Balance};
@@ -115,13 +116,6 @@ public struct NbtcContract has key, store {
     next_redeem_req: u64,
 }
 
-// TODO: we need to store them by owner (the nBTC key)?
-public struct Utxo has store {
-    tx_id: u256, // TODO: this is 32-byte hash. we can also use vector<u8>
-    vout: u32,
-    value: u64,
-}
-
 public enum RedeemStatus has copy, drop, store {
     Resolving, // finding the best UTXOs
     Signing,
@@ -129,7 +123,7 @@ public enum RedeemStatus has copy, drop, store {
     Confirmed,
 }
 
-public struct RedeemRequest has store {
+public struct RedeemRequest has key, store {
     // TODO: maybe we don't need the ID?
     id: UID,
     redeemer: address, // TODO: maybe it's not needed
@@ -456,6 +450,15 @@ public(package) fun request_signature(
         ctx,
     );
     sign_id
+}
+
+public fun request_sign_for_redeem_request(
+    contract: &mut NbtcContract,
+    request_id: u64,
+    input_idx: u64,
+) {
+    let request = &contract.redeem_requests[request_id];
+    let redeemStatus = &request.status;
 }
 
 /// redeem initiates nBTC redemption and BTC withdraw process.
