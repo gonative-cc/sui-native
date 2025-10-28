@@ -1,13 +1,14 @@
 module nbtc::helper;
 
-use bitcoin_executor::utxo::{OutPoint, Data as UTXOData};
 use bitcoin_parser::encoding::u32_to_le_bytes;
 use bitcoin_parser::input;
 use bitcoin_parser::output;
 use bitcoin_parser::tx::{Transaction, new_unsign_segwit_tx};
 use nbtc::nbtc::{NbtcContract, Utxo};
 
-const DEFAULT_SEQUENCE: vector<u8> = x"ffffffff"; // no lock time, no Replace By Fee
+// https://learnmeabitcoin.com/technical/transaction/input/sequence/
+// It disables RBF and disables locktime field.
+const DEFAULT_SEQUENCE: vector<u8> = x"ffffffff";
 
 public fun compose_withdraw_unsign_tx(
     nbtc_contract: &NbtcContract,

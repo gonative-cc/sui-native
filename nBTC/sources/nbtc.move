@@ -2,7 +2,6 @@
 
 module nbtc::nbtc;
 
-use bitcoin_executor::utxo::{OutPoint, Data as UTXOData};
 use bitcoin_parser::reader;
 use bitcoin_parser::tx;
 use bitcoin_spv::light_client::LightClient;

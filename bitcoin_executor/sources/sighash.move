@@ -2,7 +2,7 @@
 
 module bitcoin_executor::sighash;
 
-use bitcoin_executor::executor_utils as utils;
+use bitcoin_executor::executor_utils;
 use bitcoin_parser::crypto::hash256;
 use bitcoin_parser::encoding::u32_to_le_bytes;
 use bitcoin_parser::input;
@@ -40,7 +40,7 @@ public fun create_segwit_preimage(
         });
         hash256(all_prevouts_concat)
     } else {
-        utils::zerohash_32bytes() // 32 zero bytes if ANYONECANPAY
+        executor_utils::zerohash_32bytes() // 32 zero bytes if ANYONECANPAY
     };
     preimage.append(hash_prevouts);
 
@@ -58,7 +58,7 @@ public fun create_segwit_preimage(
         });
         hash256(all_sequences_concatenated)
     } else {
-        utils::zerohash_32bytes()
+        executor_utils::zerohash_32bytes()
     };
     preimage.append(hash_sequence);
 
@@ -67,7 +67,7 @@ public fun create_segwit_preimage(
     preimage.append(current_input.tx_id());
     preimage.append(current_input.vout());
 
-    preimage.append(utils::script_to_var_bytes(input_script));
+    preimage.append(executor_utils::script_to_var_bytes(input_script));
     preimage.append(amount_spent_by_this_input);
     preimage.append(current_input.sequence());
 
@@ -79,7 +79,9 @@ public fun create_segwit_preimage(
         transaction.outputs().length().do!(|i| {
             let output_ref = transaction.output_at(i);
             all_outputs_concat.append(output_ref.amount_bytes());
-            all_outputs_concat.append(utils::script_to_var_bytes(&output_ref.script_pubkey()));
+            all_outputs_concat.append(
+                executor_utils::script_to_var_bytes(&output_ref.script_pubkey()),
+            );
         });
         hash256(all_outputs_concat)
     } else if (
@@ -89,11 +91,11 @@ public fun create_segwit_preimage(
         let mut single_output_concatenated = vector[];
         single_output_concatenated.append(output_to_sign.amount_bytes());
         single_output_concatenated.append(
-            utils::script_to_var_bytes(&output_to_sign.script_pubkey()),
+            executor_utils::script_to_var_bytes(&output_to_sign.script_pubkey()),
         );
         hash256(single_output_concatenated)
     } else {
-        utils::zerohash_32bytes()
+        executor_utils::zerohash_32bytes()
     };
     preimage.append(hash_outputs);
     preimage.append(transaction.locktime());
