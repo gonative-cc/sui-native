@@ -440,13 +440,13 @@ public(package) fun request_signature(
     payment_ika: &mut Coin<IKA>,
     payment_sui: &mut Coin<SUI>,
     ctx: &mut TxContext,
-) {
+): ID {
     // TODO: Handle case Ika send token back to user if we paid more than require fee.
     // TODO: Verify dwallet_coordinator corrent coordinator of Ika
     let spend_key = contract.bitcoin_spend_key;
     let dwallet_cap = &contract.dwallet_caps[spend_key];
     let message_approval = dwallet_coordinator.approve_message(dwallet_cap, ECDSA, SHA256, message);
-    dwallet_coordinator.request_sign(
+    let sign_id = dwallet_coordinator.request_sign_and_return_id(
         presign_cap,
         message_approval,
         public_nbtc_signature,
@@ -455,6 +455,7 @@ public(package) fun request_signature(
         payment_sui,
         ctx,
     );
+    sign_id
 }
 
 /// redeem initiates nBTC redemption and BTC withdraw process.
