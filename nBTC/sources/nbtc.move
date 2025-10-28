@@ -9,6 +9,7 @@ use ika::ika::IKA;
 use ika_dwallet_2pc_mpc::coordinator::{request_sign, DWalletCoordinator};
 use ika_dwallet_2pc_mpc::coordinator_inner::{VerifiedPresignCap, DWalletCap};
 use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
+use nbtc::redeem_request::RedeemRequest;
 use nbtc::utxo::Utxo;
 use nbtc::verify_payment::verify_payment;
 use sui::address;
@@ -114,25 +115,6 @@ public struct NbtcContract has key, store {
     next_utxo: u64,
     redeem_requests: Table<u64, RedeemRequest>,
     next_redeem_req: u64,
-}
-
-public enum RedeemStatus has copy, drop, store {
-    Resolving, // finding the best UTXOs
-    Signing,
-    Signed,
-    Confirmed,
-}
-
-public struct RedeemRequest has key, store {
-    // TODO: maybe we don't need the ID?
-    id: UID,
-    redeemer: address, // TODO: maybe it's not needed
-    /// Bitcoin spent key (address)
-    recipient: vector<u8>,
-    status: RedeemStatus,
-    amount: u64,
-    inputs: vector<Utxo>,
-    remainder_output: Utxo,
 }
 
 /// MintEvent is emitted when nBTC is successfully minted.
@@ -458,7 +440,7 @@ public fun request_sign_for_redeem_request(
     input_idx: u64,
 ) {
     let request = &contract.redeem_requests[request_id];
-    let redeemStatus = &request.status;
+    assert!(request.status().is_signing(), 0);
 }
 
 /// redeem initiates nBTC redemption and BTC withdraw process.
