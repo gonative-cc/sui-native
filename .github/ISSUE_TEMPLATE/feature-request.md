@@ -3,8 +3,6 @@ name: Feature Request
 about: Create a proposal to request a feature
 ---
 
-## Summary
-
 ## Context
 
 ### Why do we need this feature? What problems may be addressed by introducing this feature?
