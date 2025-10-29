@@ -479,7 +479,7 @@ public(package) fun request_signature(
 public fun request_signature_for_input(
     contract: &mut NbtcContract,
     dwallet_coordinator: &mut DWalletCoordinator,
-    request: &mut RedeemRequest,
+    request_id: u64,
     input_idx: u32,
     presign_cap: VerifiedPresignCap,
     session_identifier: SessionIdentifier,
@@ -488,22 +488,28 @@ public fun request_signature_for_input(
     payment_sui: &mut Coin<SUI>,
     ctx: &mut TxContext,
 ) {
-    assert!(request.status().is_signing(), ENotReadlyForSign);
-    assert!(request.requested_sign(input_idx), EInputAlreadyRequestSignature);
+    let sign_id = {
+        let mut request = contract.redeem_requests.borrow_mut(request_id);
+        assert!(request.status().is_signing(), ENotReadlyForSign);
+        assert!(request.requested_sign(input_idx), EInputAlreadyRequestSignature);
 
-    // This should include other information for create sign hash
-    let sign_hash = request.sign_hash(input_idx);
+        // This should include other information for create sign hash
+        let sign_hash = request.sign_hash(input_idx);
+        contract.request_signature(
+            dwallet_coordinator,
+            presign_cap,
+            sign_hash,
+            public_nbtc_signature,
+            session_identifier,
+            payment_ika,
+            payment_sui,
+            ctx,
+        )
+    };
 
-    let sign_id = contract.request_signature(
-        dwallet_coordinator,
-        presign_cap,
-        sign_hash,
-        public_nbtc_signature,
-        session_identifier,
-        payment_ika,
-        payment_sui,
-        ctx,
-    );
+    let mut request = contract.redeem_requests.borrow_mut(request_id);
+
+    // record the sign_id
     request.set_sign_id(input_idx, sign_id);
 }
 
@@ -526,6 +532,17 @@ public fun redeem(
 public fun btc_redeem_tx(): vector<u8> {
     b"Go Go Native"
 }
+
+// TODO: Better name for this
+// public fun finalize_signature(contract: r: &mut RedeemRequest, input_idx: u32, sign_id: ID) {
+//
+//
+//     // let pk = dwallet public key
+//     // get singature from sign_id
+//     // verify this is valid with public key input
+//     // update the id for signature.
+// }
+//
 
 /// Allows user to withdraw back deposited BTC that used an inactive deposit spend key.
 /// When user deposits to an inactive Bitcoin key, nBTC is not minted.
