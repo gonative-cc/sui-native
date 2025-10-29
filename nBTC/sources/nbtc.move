@@ -159,18 +159,18 @@ public struct RedeemRequest has store {
     status: RedeemStatus,
     amount: u64,
     inputs: vector<Utxo>,
-    sign_hashes: vector<vector<u8>>,
+    sign_hashes: VecMap<u32, vector<u8>>,
     remainder_output: Utxo,
     sign_ids: Table<ID, bool>,
     signatures_map: VecMap<u32, ID>,
 }
 
 public fun sign_hash(r: &RedeemRequest, input_idx: u32): vector<u8> {
-    x"ffffff"
+    r.sign_hashes.try_get(&input_idx).extract_or!(x"ffff")
 }
 
 public fun requested_sign(r: &RedeemRequest, input_idx: u32): bool {
-    false
+    r.signatures_map.contains(&input_idx)
 }
 
 public fun is_signing(status: &RedeemStatus): bool {
@@ -190,7 +190,7 @@ public(package) fun set_sign_data(
     sign_hash: vector<u8>,
     sign_id: ID,
 ) {
-    *(&mut r.sign_hashes[input_idx as u64]) = sign_hash;
+    r.sign_hashes.insert(input_idx, sign_hash);
     r.sign_ids.add(sign_id, true);
 }
 //
