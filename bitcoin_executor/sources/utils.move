@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
-module bitcoin_executor::utils;
+module bitcoin_executor::executor_utils;
 
 use std::u64::do;
 
