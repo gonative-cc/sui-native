@@ -3,7 +3,7 @@
 module bitcoin_executor::interpreter;
 
 use bitcoin_executor::btc_encoding;
-use bitcoin_executor::executor_utils as utils;
+use bitcoin_executor::executor_utils;
 use bitcoin_executor::ripemd160;
 use bitcoin_executor::sighash;
 use bitcoin_executor::stack::{Self, Stack};
@@ -557,7 +557,7 @@ fun op_size(ip: &mut Interpreter): u64 {
         return ETopStackEmpty
     };
     let size = top_element.extract().length();
-    ip.stack.push(utils::u64_to_cscriptnum(size));
+    ip.stack.push(executor_utils::u64_to_cscriptnum(size));
     SUCCESS
 }
 
@@ -605,7 +605,7 @@ fun op_checksig(ip: &mut Interpreter): u64 {
     let mut sig_bytes = sig_bytes.extract();
 
     if (sig_bytes.is_empty()) {
-        ip.stack.push(utils::vector_false());
+        ip.stack.push(executor_utils::vector_false());
         return SUCCESS
     };
 
@@ -624,9 +624,9 @@ fun op_checksig(ip: &mut Interpreter): u64 {
     );
 
     if (signature_is_valid) {
-        ip.stack.push(utils::vector_true());
+        ip.stack.push(executor_utils::vector_true());
     } else {
-        ip.stack.push(utils::vector_false());
+        ip.stack.push(executor_utils::vector_false());
     };
     SUCCESS
 }
