@@ -4,7 +4,7 @@ module nbtc::helper_tests;
 use bitcoin_executor::interpreter::create_p2wpkh_scriptcode;
 use bitcoin_executor::sighash::create_segwit_preimage;
 use bitcoin_parser::encoding::u64_to_le_bytes;
-use nbtc::helper::compose_withdraw_unsign_tx;
+use nbtc::helper::compose_withdraw_tx;
 use nbtc::nbtc::new_utxo;
 use nbtc::nbtc_tests::setup;
 use std::unit_test::assert_eq;
@@ -23,7 +23,7 @@ fun create_unsign_reedem_tx_happy_case() {
 
     let amount = 12000150;
     let fee = 150;
-    let tx = compose_withdraw_unsign_tx(
+    let tx = compose_withdraw_tx(
         &ctr,
         utxos,
         x"00149b622481f0407714dd3ef4850a02ffbdc19dfa96",

@@ -10,7 +10,7 @@ use nbtc::nbtc::{NbtcContract, Utxo};
 // It disables RBF and disables locktime field.
 const DEFAULT_SEQUENCE: vector<u8> = x"ffffffff";
 
-public fun compose_withdraw_unsign_tx(
+public fun compose_withdraw_tx(
     nbtc_contract: &NbtcContract,
     utxos: vector<Utxo>,
     receiver_spend_key: vector<u8>,
