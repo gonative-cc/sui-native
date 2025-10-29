@@ -924,7 +924,7 @@ fun test_op_checksig() {
     ip.op_checksig();
 
     assert_eq!(ip.stack.size(), 1);
-    assert_eq!(ip.stack.top().destroy_some(), utils::vector_true());
+    assert_eq!(ip.stack.top().destroy_some(), executor_utils::vector_true());
 }
 
 #[test]
