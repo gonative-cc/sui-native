@@ -7,6 +7,7 @@ authors = ["Native"]
 [dependencies]
 bitcoin_spv = {local = "../bitcoin_spv"}
 bitcoin_parser = {local = "../bitcoin_parser"}
+bitcoin_executor = {local = "../bitcoin_executor"}
 ika_dwallet_2pc_mpc = {git = "https://github.com/dwallet-labs/ika.git", subdir = "deployed_contracts/testnet/ika_dwallet_2pc_mpc", rev = "main"}
 ika = {git = "https://github.com/dwallet-labs/ika.git", subdir = "deployed_contracts/testnet/ika", rev = "main"}
 # For remote import, use the `{ git = "...", subdir = "...", rev = "..." }`.

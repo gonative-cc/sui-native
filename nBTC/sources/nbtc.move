@@ -116,8 +116,8 @@ public struct NbtcContract has key, store {
 }
 
 // TODO: we need to store them by owner (the nBTC key)?
-public struct Utxo has store {
-    tx_id: u256, // TODO: this is 32-byte hash. we can also use vector<u8>
+public struct Utxo has copy, drop, store {
+    tx_id: vector<u8>,
     vout: u32,
     value: u64,
 }
@@ -198,9 +198,9 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         inactive_user_balances: table::new(ctx),
         inactive_balances: vector[],
         mint_fee: 10,
+        utxos: table::new(ctx),
         dwallet_caps: table::new(ctx),
         fees_collected: balance::zero(),
-        utxos: table::new<u64, Utxo>(ctx),
         next_utxo: 0,
         redeem_requests: table::new<u64, RedeemRequest>(ctx),
         next_redeem_req: 0,
@@ -217,6 +217,13 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
     );
 }
 
+public fun new_utxo(tx_id: vector<u8>, vout: u32, value: u64): Utxo {
+    Utxo {
+        tx_id,
+        vout,
+        value,
+    }
+}
 //
 // Helper methods
 //
@@ -592,6 +599,18 @@ public fun bitcoin_spend_key(contract: &NbtcContract): vector<u8> {
     contract.bitcoin_spend_key
 }
 
+public fun tx_id(utxo: &Utxo): vector<u8> {
+    utxo.tx_id
+}
+
+public fun vout(utxo: &Utxo): u32 {
+    utxo.vout
+}
+
+public fun value(utxo: &Utxo): u64 {
+    utxo.value
+}
+
 /// from: the index of the first key to include in the returned list. If it's >= length of the
 ///    inactive keys list, then empty list is returned.
 /// to: the index of the first key to exclude from the returned list. If it's 0 then
@@ -638,10 +657,10 @@ public(package) fun init_for_testing(
         inactive_user_balances: table::new(ctx),
         inactive_balances: vector[],
         fees_collected: balance::zero(),
+        utxos: table::new(ctx),
         mint_fee: 10,
         dwallet_caps: table::new(ctx),
         redeem_requests: table::new(ctx),
-        utxos: table::new(ctx),
         next_redeem_req: 0,
         next_utxo: 0,
     };

@@ -2,13 +2,14 @@
 
 [move]
 version = 3
-manifest_digest = "144546B8460ED50CC14BBB1C5B2C73FA5696F5C2D19ACD4F1739E16C5C31A6F9"
-deps_digest = "04732BFEF428F74DE262001DC455D76B909EBC394B034A9A15CC095E4BDD9CEF"
+manifest_digest = "213838426F0E159071F4DAE37CE58510092EAF6999DCC88C120F8968D3F48E50"
+deps_digest = "8227D341C0550A37580C10FA45FE148A465225149C69D179737E0FE454AD6AEC"
 dependencies = [
   { id = "Bridge", name = "Bridge" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
   { id = "SuiSystem", name = "SuiSystem" },
+  { id = "bitcoin_executor", name = "bitcoin_executor" },
   { id = "bitcoin_parser", name = "bitcoin_parser" },
   { id = "bitcoin_spv", name = "bitcoin_spv" },
   { id = "ika", name = "ika" },
@@ -44,6 +45,18 @@ source = { git = "https://github.com/MystenLabs/sui.git", rev = "f63c9fc78e2171f
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
+]
+
+[[move.package]]
+id = "bitcoin_executor"
+source = { local = "../bitcoin_executor" }
+
+dependencies = [
+  { id = "Bridge", name = "Bridge" },
+  { id = "MoveStdlib", name = "MoveStdlib" },
+  { id = "Sui", name = "Sui" },
+  { id = "SuiSystem", name = "SuiSystem" },
+  { id = "bitcoin_parser", name = "bitcoin_parser" },
 ]
 
 [[move.package]]
