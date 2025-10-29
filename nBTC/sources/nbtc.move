@@ -476,7 +476,7 @@ public(package) fun request_signature(
     sign_id
 }
 
-public fun request_sign_for_input(
+public fun request_signature_for_input(
     contract: &mut NbtcContract,
     dwallet_coordinator: &mut DWalletCoordinator,
     request: &mut RedeemRequest,
