@@ -159,7 +159,9 @@ public struct RedeemRequest has store {
     status: RedeemStatus,
     amount: u64,
     inputs: vector<Utxo>,
+    sign_hashes: vector<vector<u8>>,
     remainder_output: Utxo,
+    sign_ids: Table<ID, bool>,
     signatures_map: VecMap<u32, ID>,
 }
 
@@ -171,8 +173,6 @@ public fun requested_sign(r: &RedeemRequest, input_idx: u32): bool {
     false
 }
 
-public(package) fun set_sign_id(r: &mut RedeemRequest, input_idx: u32, sign_id: ID) {}
-
 public fun is_signing(status: &RedeemStatus): bool {
     match (status) {
         RedeemStatus::Signing => true,
@@ -182,6 +182,16 @@ public fun is_signing(status: &RedeemStatus): bool {
 
 public fun status(r: &RedeemRequest): &RedeemStatus {
     &r.status
+}
+
+public(package) fun set_sign_data(
+    r: &mut RedeemRequest,
+    input_idx: u32,
+    sign_hash: vector<u8>,
+    sign_id: ID,
+) {
+    *(&mut r.sign_hashes[input_idx as u64]) = sign_hash;
+    r.sign_ids.add(sign_id, true);
 }
 //
 // Functions
@@ -488,14 +498,14 @@ public fun request_signature_for_input(
     payment_sui: &mut Coin<SUI>,
     ctx: &mut TxContext,
 ) {
-    let sign_id = {
+    let (sign_id, sign_hash) = {
         let mut request = contract.redeem_requests.borrow_mut(request_id);
         assert!(request.status().is_signing(), ENotReadlyForSign);
         assert!(request.requested_sign(input_idx), EInputAlreadyRequestSignature);
 
         // This should include other information for create sign hash
         let sign_hash = request.sign_hash(input_idx);
-        contract.request_signature(
+        let sign_id = contract.request_signature(
             dwallet_coordinator,
             presign_cap,
             sign_hash,
@@ -504,13 +514,12 @@ public fun request_signature_for_input(
             payment_ika,
             payment_sui,
             ctx,
-        )
+        );
+        (sign_id, sign_hash)
     };
 
-    let mut request = contract.redeem_requests.borrow_mut(request_id);
-
-    // record the sign_id
-    request.set_sign_id(input_idx, sign_id);
+    let request = contract.redeem_requests.borrow_mut(request_id);
+    request.set_sign_data(input_idx, sign_hash, sign_id);
 }
 
 /// redeem initiates nBTC redemption and BTC withdraw process.
@@ -534,14 +543,12 @@ public fun btc_redeem_tx(): vector<u8> {
 }
 
 // TODO: Better name for this
-// public fun finalize_signature(contract: r: &mut RedeemRequest, input_idx: u32, sign_id: ID) {
-//
-//
-//     // let pk = dwallet public key
-//     // get singature from sign_id
-//     // verify this is valid with public key input
-//     // update the id for signature.
-// }
+public fun finalize_signature(
+    contract: &NbtcContract,
+    redeem_id: u64,
+    input_idx: u32,
+    sign_id: ID,
+) {}
 //
 
 /// Allows user to withdraw back deposited BTC that used an inactive deposit spend key.
