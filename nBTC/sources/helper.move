@@ -12,7 +12,7 @@ use nbtc::nbtc_utxo::Utxo;
 const DEFAULT_SEQUENCE: vector<u8> = x"ffffffff";
 
 public fun compose_withdraw_tx(
-    nbtc_contract: &NbtcContract,
+    bitcoin_spend_key: vector<u8>,
     utxos: vector<Utxo>,
     receiver_spend_key: vector<u8>,
     withdraw_amount: u64,
@@ -39,7 +39,7 @@ public fun compose_withdraw_tx(
     let mut outs = vector[output::new(user_receive_amount, receiver_spend_key)];
 
     if (remain_amount > 0) {
-        outs.push_back(output::new(remain_amount, nbtc_contract.bitcoin_spend_key()));
+        outs.push_back(output::new(remain_amount, bitcoin_spend_key));
     };
     new_unsign_segwit_tx(inps, outs)
 }

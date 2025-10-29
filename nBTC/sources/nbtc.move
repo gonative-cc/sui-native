@@ -2,13 +2,18 @@
 
 module nbtc::nbtc;
 
+use bitcoin_executor::interpreter::create_p2wpkh_scriptcode;
+use bitcoin_executor::sighash::create_segwit_preimage;
+use bitcoin_parser::encoding::u64_to_le_bytes;
 use bitcoin_parser::reader;
 use bitcoin_parser::tx;
+use bitcoin_parser::utils::slice;
 use bitcoin_spv::light_client::LightClient;
 use ika::ika::IKA;
 use ika_dwallet_2pc_mpc::coordinator::{request_sign, DWalletCoordinator};
 use ika_dwallet_2pc_mpc::coordinator_inner::{VerifiedPresignCap, DWalletCap};
 use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
+use nbtc::helper::compose_withdraw_tx;
 use nbtc::nbtc_utxo::Utxo;
 use nbtc::verify_payment::verify_payment;
 use sui::address;
@@ -40,6 +45,8 @@ const MINT_OP_APPLY_FEE: u32 = 1;
 
 const ECDSA: u32 = 0;
 const SHA256: u32 = 1;
+
+use fun slice as vector.slice;
 
 /// One Time Witness
 public struct NBTC has drop {}
@@ -160,13 +167,31 @@ public struct RedeemRequest has store {
     amount: u64,
     inputs: vector<Utxo>,
     sign_hashes: VecMap<u32, vector<u8>>,
-    remainder_output: Utxo,
     sign_ids: Table<ID, bool>,
     signatures_map: VecMap<u32, ID>,
 }
 
-public fun sign_hash(r: &RedeemRequest, input_idx: u32): vector<u8> {
-    r.sign_hashes.try_get(&input_idx).extract_or!(x"ffff")
+/// Return sign hash for input_idx-th in redeem transaction
+public fun sign_hash(r: &RedeemRequest, contract: &NbtcContract, input_idx: u32): vector<u8> {
+    r.sign_hashes.try_get(&input_idx).extract_or!({
+        let tx = compose_withdraw_tx(
+            contract.bitcoin_spend_key,
+            r.inputs,
+            r.recipient,
+            r.amount,
+            150, // TODO:: Set fee at parameter, or query from oracle
+        );
+        let script_code = create_p2wpkh_scriptcode(
+            contract.bitcoin_spend_key.slice(2, 22) // nbtc public key hash
+        );
+        create_segwit_preimage(
+            &tx,
+            input_idx as u64, // input index
+            &script_code, // segwit nbtc spend key
+            u64_to_le_bytes(r.inputs[input_idx as u64].value()), // amount
+            0x01, // SIGNHASH_ALL
+        )
+    })
 }
 
 public fun requested_sign(r: &RedeemRequest, input_idx: u32): bool {
@@ -481,6 +506,11 @@ public(package) fun request_signature(
     sign_id
 }
 
+/// Request signing for specific input in redeem transaction,
+/// We will:
+///  - compute the sign hash for specific input
+///  - Request signature from Ika
+///  - Record sing_id and other recomputeable data
 public fun request_signature_for_input(
     contract: &mut NbtcContract,
     dwallet_coordinator: &mut DWalletCoordinator,
@@ -493,13 +523,14 @@ public fun request_signature_for_input(
     payment_sui: &mut Coin<SUI>,
     ctx: &mut TxContext,
 ) {
+    // TODO: refactor this code, current struct is fix object ownership error model
     let (sign_id, sign_hash) = {
         let mut request = contract.redeem_requests.borrow_mut(request_id);
         assert!(request.status().is_signing(), ENotReadlyForSign);
         assert!(request.requested_sign(input_idx), EInputAlreadyRequestSignature);
 
         // This should include other information for create sign hash
-        let sign_hash = request.sign_hash(input_idx);
+        let sign_hash = request.sign_hash(contract, input_idx);
         let sign_id = contract.request_signature(
             dwallet_coordinator,
             presign_cap,
@@ -549,16 +580,20 @@ public fun verify_signature(
     assert!(r.sign_ids.contains(sign_id), 0); // invalid Sign ID
     // TODO: ensure we get right spend key, because this spend key can also inactive_spend_key
     let spend_key = contract.bitcoin_spend_key;
-
     let dwallet_cap = &contract.dwallet_caps[spend_key];
     let dwallet_id = dwallet_cap.dwallet_id();
     let signature = dwallet_coordinator
         .get_dwallet(dwallet_id)
         .get_sign_session(sign_id)
         .get_sign_signature();
+
     // TODO: validate signature for tx input
 
     r.signatures_map.insert(input_idx, sign_id);
+
+    if (r.signatures_map.length() == r.inputs.length()) {
+        r.status = RedeemStatus::Signed;
+    }
 }
 //
 
