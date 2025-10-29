@@ -9,7 +9,7 @@ use ika::ika::IKA;
 use ika_dwallet_2pc_mpc::coordinator::{request_sign, DWalletCoordinator};
 use ika_dwallet_2pc_mpc::coordinator_inner::{VerifiedPresignCap, DWalletCap};
 use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
-use nbtc::utxo::Utxo;
+use nbtc::nbtc_utxo::Utxo;
 use nbtc::verify_payment::verify_payment;
 use sui::address;
 use sui::balance::{Self, Balance};
@@ -118,32 +118,6 @@ public struct NbtcContract has key, store {
     next_utxo: u64,
     redeem_requests: Table<u64, RedeemRequest>,
     next_redeem_req: u64,
-}
-
-// TODO: we need to store them by owner (the nBTC key)?
-public struct Utxo has copy, drop, store {
-    tx_id: vector<u8>,
-    vout: u32,
-    value: u64,
-}
-
-public enum RedeemStatus has copy, drop, store {
-    Resolving, // finding the best UTXOs
-    Signing,
-    Signed,
-    Confirmed,
-}
-
-public struct RedeemRequest has store {
-    // TODO: maybe we don't need the ID?
-    id: UID,
-    redeemer: address, // TODO: maybe it's not needed
-    /// Bitcoin spent key (address)
-    recipient: vector<u8>,
-    status: RedeemStatus,
-    amount: u64,
-    inputs: vector<Utxo>,
-    remainder_output: Utxo,
 }
 
 /// MintEvent is emitted when nBTC is successfully minted.
@@ -271,13 +245,6 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
     );
 }
 
-public fun new_utxo(tx_id: vector<u8>, vout: u32, value: u64): Utxo {
-    Utxo {
-        tx_id,
-        vout,
-        value,
-    }
-}
 //
 // Helper methods
 //
@@ -713,18 +680,6 @@ public fun active_balance(contract: &NbtcContract): u64 {
 // TODO: we should also have bitcoin spend key address
 public fun bitcoin_spend_key(contract: &NbtcContract): vector<u8> {
     contract.bitcoin_spend_key
-}
-
-public fun tx_id(utxo: &Utxo): vector<u8> {
-    utxo.tx_id
-}
-
-public fun vout(utxo: &Utxo): u32 {
-    utxo.vout
-}
-
-public fun value(utxo: &Utxo): u64 {
-    utxo.value
 }
 
 /// from: the index of the first key to include in the returned list. If it's >= length of the

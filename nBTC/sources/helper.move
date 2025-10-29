@@ -4,7 +4,8 @@ use bitcoin_parser::encoding::u32_to_le_bytes;
 use bitcoin_parser::input;
 use bitcoin_parser::output;
 use bitcoin_parser::tx::{Transaction, new_unsign_segwit_tx};
-use nbtc::nbtc::{NbtcContract, Utxo};
+use nbtc::nbtc::NbtcContract;
+use nbtc::nbtc_utxo::Utxo;
 
 // https://learnmeabitcoin.com/technical/transaction/input/sequence/
 // It disables RBF and disables locktime field.

@@ -1,4 +1,5 @@
-module nbtc::utxo;
+// TODO: Refactor to bitcoinlib
+module nbtc::nbtc_utxo;
 
 // TODO: we need to store them by owner (the nBTC key)?
 public struct Utxo has copy, drop, store {

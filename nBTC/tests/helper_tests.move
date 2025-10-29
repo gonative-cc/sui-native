@@ -5,8 +5,8 @@ use bitcoin_executor::interpreter::create_p2wpkh_scriptcode;
 use bitcoin_executor::sighash::create_segwit_preimage;
 use bitcoin_parser::encoding::u64_to_le_bytes;
 use nbtc::helper::compose_withdraw_tx;
-use nbtc::nbtc::new_utxo;
 use nbtc::nbtc_tests::setup;
+use nbtc::nbtc_utxo::new_utxo;
 use std::unit_test::assert_eq;
 use sui::test_utils::destroy;
 
