@@ -287,14 +287,9 @@ fun verify_deposit(
 
 /// returns idx of key in in `inactive_spend_keys` or None if the key is not there.
 public(package) fun inactive_key_idx(contract: &NbtcContract, key: vector<u8>): Option<u64> {
-    let mut i = contract.inactive_spend_keys.length();
-    if (i ==0) return option::none();
-    i = i-1;
-    while (i >= 0) {
-        if (contract.inactive_spend_keys[i] == key) return option::some(i);
-        i = i -1;
-    };
-    option::none()
+    contract.inactive_spend_keys.find_index!(|inactive_spend_key| {
+        inactive_spend_key == key
+    })
 }
 
 fun inactive_bal_key(deposit_spend_key: &vector<u8>, recipient: address): vector<u8> {
