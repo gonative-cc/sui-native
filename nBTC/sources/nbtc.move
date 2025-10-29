@@ -543,12 +543,28 @@ public fun btc_redeem_tx(): vector<u8> {
 }
 
 // TODO: Better name for this
-public fun finalize_signature(
-    contract: &NbtcContract,
+public fun verify_signature(
+    contract: &mut NbtcContract,
+    dwallet_coordinator: &DWalletCoordinator,
     redeem_id: u64,
     input_idx: u32,
     sign_id: ID,
-) {}
+) {
+    let r = contract.redeem_requests.borrow_mut(redeem_id);
+    assert!(r.sign_ids.contains(sign_id), 0); // invalid Sign ID
+    // TODO: ensure we get right spend key, because this spend key can also inactive_spend_key
+    let spend_key = contract.bitcoin_spend_key;
+
+    let dwallet_cap = &contract.dwallet_caps[spend_key];
+    let dwallet_id = dwallet_cap.dwallet_id();
+    let signature = dwallet_coordinator
+        .get_dwallet(dwallet_id)
+        .get_sign_session(sign_id)
+        .get_sign_signature();
+    // TODO: validate signature for tx input
+
+    r.signatures_map.insert(input_idx, sign_id);
+}
 //
 
 /// Allows user to withdraw back deposited BTC that used an inactive deposit spend key.
