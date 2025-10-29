@@ -270,13 +270,6 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
     );
 }
 
-public fun new_utxo(tx_id: vector<u8>, vout: u32, value: u64): Utxo {
-    Utxo {
-        tx_id,
-        vout,
-        value,
-    }
-}
 //
 // Helper methods
 //
@@ -722,18 +715,6 @@ public fun active_balance(contract: &NbtcContract): u64 {
 // TODO: we should also have bitcoin spend key address
 public fun bitcoin_spend_key(contract: &NbtcContract): vector<u8> {
     contract.bitcoin_spend_key
-}
-
-public fun tx_id(utxo: &Utxo): vector<u8> {
-    utxo.tx_id
-}
-
-public fun vout(utxo: &Utxo): u32 {
-    utxo.vout
-}
-
-public fun value(utxo: &Utxo): u64 {
-    utxo.value
 }
 
 /// from: the index of the first key to include in the returned list. If it's >= length of the
