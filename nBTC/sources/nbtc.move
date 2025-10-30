@@ -75,7 +75,7 @@ const EDuplicatedKey: vector<u8> = b"duplicated key";
 #[error]
 const EBalanceNotEmpty: vector<u8> = b"balance not empty";
 #[error]
-const ENotReadlyForSign: vector<u8> = b"redeem tx not ready for sign";
+const ENotReadlyForSign: vector<u8> = b"redeem tx is not ready for signing";
 #[error]
 const EInputAlreadyRequestSignature: vector<u8> = b"The input has been requested signature";
 //
