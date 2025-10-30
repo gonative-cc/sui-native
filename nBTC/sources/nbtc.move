@@ -17,6 +17,7 @@ use sui::event;
 use sui::sui::SUI;
 use sui::table::{Self, Table};
 use sui::url;
+use sui::vec_map::VecMap;
 
 //
 // Constant
@@ -139,6 +140,7 @@ public struct RedeemRequest has store {
     amount: u64,
     inputs: vector<Utxo>,
     remainder_output: Utxo,
+    signature_maps: VecMap<u32, vector<u8>>,
 }
 
 /// MintEvent is emitted when nBTC is successfully minted.
