@@ -78,6 +78,9 @@ const EBalanceNotEmpty: vector<u8> = b"balance not empty";
 const ENotReadlyForSign: vector<u8> = b"redeem tx is not ready for signing";
 #[error]
 const EInputAlredyUsed: vector<u8> = b"this input has been already used in other signature request";
+#[error]
+const ERedemTxNotCompleteSigning: vector<u8> = b"Redeem tx not complete signing";
+
 //
 // Structs
 //
@@ -120,6 +123,8 @@ public struct NbtcContract has key, store {
     fees_collected: Balance<NBTC>,
     // mapping a spend_key to related dWallet cap for issue signature
     dwallet_caps: Table<vector<u8>, DWalletCap>,
+    // mapping dwallet id to public key
+    dwallet_pks: Table<ID, vector<u8>>,
     // TODO: probably we should have UTXOs / nbtc pubkey
     utxos: Table<u64, Utxo>,
     next_utxo: u64,
@@ -168,7 +173,7 @@ public struct RedeemRequest has store {
     inputs: vector<Utxo>,
     sign_hashes: VecMap<u32, vector<u8>>,
     sign_ids: Table<ID, bool>,
-    signatures_map: VecMap<u32, ID>,
+    signatures_map: VecMap<u32, vector<u8>>,
 }
 
 /// Returns signature hash for input_idx-th in redeem transaction
@@ -253,6 +258,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         mint_fee: 10,
         utxos: table::new(ctx),
         dwallet_caps: table::new(ctx),
+        dwallet_pks: table::new(ctx),
         fees_collected: balance::zero(),
         next_utxo: 0,
         redeem_requests: table::new<u64, RedeemRequest>(ctx),
@@ -336,6 +342,38 @@ fun verify_deposit(
     contract.next_utxo = contract.next_utxo + 1;
 
     (amount, recipient)
+}
+
+public fun raw_signed_tx(contract: &NbtcContract, request_id: u64): vector<u8> {
+    let r = &contract.redeem_requests[request_id];
+    assert!(r.status == RedeemStatus::Signed, ERedemTxNotCompleteSigning);
+
+    let spend_key = contract.bitcoin_spend_key;
+    let dwallet_cap = &contract.dwallet_caps[spend_key];
+    let mut tx = compose_withdraw_tx(
+        contract.bitcoin_spend_key,
+        r.inputs,
+        r.recipient,
+        r.amount,
+        150, // TODO:: Set fee at parameter, or query from oracle
+    );
+    let dwallet_id = dwallet_cap.dwallet_id();
+    let public_key = contract.dwallet_pks[dwallet_id];
+
+    let mut witnesses = vector[];
+    r.inputs.length().do!(|i| {
+        witnesses.push_back(
+            tx::new_witness(vector[
+                // signature
+                *r.signatures_map.get(&(i as u32)),
+                public_key,
+            ]),
+        );
+    });
+
+    tx.set_witness(witnesses);
+
+    tx.serialize_segwit()
 }
 
 /// returns idx of key in in `inactive_spend_keys` or None if the key is not there.
@@ -582,14 +620,14 @@ public fun verify_signature(
     let spend_key = contract.bitcoin_spend_key;
     let dwallet_cap = &contract.dwallet_caps[spend_key];
     let dwallet_id = dwallet_cap.dwallet_id();
-    let signature = dwallet_coordinator
+    let mut signature = dwallet_coordinator
         .get_dwallet(dwallet_id)
         .get_sign_session(sign_id)
         .get_sign_signature();
 
     // TODO: validate signature for tx input
 
-    r.signatures_map.insert(input_idx, sign_id);
+    r.signatures_map.insert(input_idx, signature.extract());
 
     if (r.signatures_map.length() == r.inputs.length()) {
         r.status = RedeemStatus::Signed;
@@ -727,6 +765,22 @@ public fun inactive_spend_keys(contract: &NbtcContract, from: u64, to: u64): vec
     let to = if (to == 0 || to > len) len else to;
     vector::tabulate!(to-from, |i| contract.inactive_spend_keys[from+i])
 }
+
+public(package) fun get_sign_signature(
+    contract: &NbtcContract,
+    dwallet_coordinator: &DWalletCoordinator,
+    spend_key: vector<u8>,
+    sign_id: ID,
+): vector<u8> {
+    let dwallet_cap = &contract.dwallet_caps[spend_key];
+    let dwallet_id = dwallet_cap.dwallet_id();
+    let mut signature = dwallet_coordinator
+        .get_dwallet(dwallet_id)
+        .get_sign_session(sign_id)
+        .get_sign_signature();
+
+    signature.extract()
+}
 //
 // Testing
 //
@@ -775,4 +829,14 @@ public(package) fun init_for_testing(
 #[test_only]
 public fun get_fees_collected(contract: &NbtcContract): u64 {
     contract.fees_collected.value()
+}
+
+#[test_only]
+public fun dwallet_caps(contract: &NbtcContract, spend_key: vector<u8>): &DwalletCap {
+    &contract.dwallet_caps[spend_key]
+}
+
+#[test_only]
+public fun dwallet_pks_of(contract: &NbtcContract, id: ID): vector<u8> {
+    contract.dwallet_pks[id]
 }

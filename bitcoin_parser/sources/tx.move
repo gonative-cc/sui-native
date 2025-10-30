@@ -103,6 +103,10 @@ public fun tx_id(tx: &Transaction): vector<u8> {
     tx.tx_id
 }
 
+public fun set_witness(tx: &mut Transaction, witness: vector<InputWitness>) {
+    tx.witness = witness;
+}
+
 public fun deserialize(r: &mut Reader): Transaction {
     let tx = parse_tx(r);
     assert!(r.end_stream(), ETxReaderHasRemainingData);
