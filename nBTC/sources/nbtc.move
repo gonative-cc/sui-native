@@ -527,7 +527,7 @@ public fun request_signature_for_input(
     let (sign_id, sign_hash) = {
         let mut request = contract.redeem_requests.borrow_mut(request_id);
         assert!(request.status().is_signing(), ENotReadlyForSign);
-        assert!(request.requested_sign(input_idx), EInputAlreadyRequestSignature);
+        assert!(request.requested_sign(input_idx), EInputAlredyUsed);
 
         // This should include other information for create sign hash
         let sign_hash = request.sign_hash(contract, input_idx);
