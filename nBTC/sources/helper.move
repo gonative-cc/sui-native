@@ -4,14 +4,15 @@ use bitcoin_parser::encoding::u32_to_le_bytes;
 use bitcoin_parser::input;
 use bitcoin_parser::output;
 use bitcoin_parser::tx::{Transaction, new_unsign_segwit_tx};
-use nbtc::nbtc::{NbtcContract, Utxo};
+use nbtc::nbtc::NbtcContract;
+use nbtc::nbtc_utxo::Utxo;
 
 // https://learnmeabitcoin.com/technical/transaction/input/sequence/
 // It disables RBF and disables locktime field.
 const DEFAULT_SEQUENCE: vector<u8> = x"ffffffff";
 
 public fun compose_withdraw_tx(
-    nbtc_contract: &NbtcContract,
+    bitcoin_spend_key: vector<u8>,
     utxos: vector<Utxo>,
     receiver_spend_key: vector<u8>,
     withdraw_amount: u64,
@@ -38,7 +39,7 @@ public fun compose_withdraw_tx(
     let mut outs = vector[output::new(user_receive_amount, receiver_spend_key)];
 
     if (remain_amount > 0) {
-        outs.push_back(output::new(remain_amount, nbtc_contract.bitcoin_spend_key()));
+        outs.push_back(output::new(remain_amount, bitcoin_spend_key));
     };
     new_unsign_segwit_tx(inps, outs)
 }
