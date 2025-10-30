@@ -171,7 +171,7 @@ public struct RedeemRequest has store {
     signatures_map: VecMap<u32, ID>,
 }
 
-/// Return sign hash for input_idx-th in redeem transaction
+/// Returns signature hash for input_idx-th in redeem transaction
 public fun sign_hash(r: &RedeemRequest, contract: &NbtcContract, input_idx: u32): vector<u8> {
     r.sign_hashes.try_get(&input_idx).extract_or!({
         let tx = compose_withdraw_tx(
