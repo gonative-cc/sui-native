@@ -77,7 +77,7 @@ const EBalanceNotEmpty: vector<u8> = b"balance not empty";
 #[error]
 const ENotReadlyForSign: vector<u8> = b"redeem tx is not ready for signing";
 #[error]
-const EInputAlreadyRequestSignature: vector<u8> = b"The input has been requested signature";
+const EInputAlredyUsed: vector<u8> = b"this input has been already used in other signature request";
 //
 // Structs
 //
