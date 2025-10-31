@@ -819,6 +819,7 @@ public(package) fun init_for_testing(
         utxos: table::new(ctx),
         mint_fee: 10,
         dwallet_caps: table::new(ctx),
+        dwallet_pks: table::new(ctx),
         redeem_requests: table::new(ctx),
         next_redeem_req: 0,
         next_utxo: 0,
@@ -832,7 +833,7 @@ public fun get_fees_collected(contract: &NbtcContract): u64 {
 }
 
 #[test_only]
-public fun dwallet_caps(contract: &NbtcContract, spend_key: vector<u8>): &DwalletCap {
+public fun dwallet_caps(contract: &NbtcContract, spend_key: vector<u8>): &DWalletCap {
     &contract.dwallet_caps[spend_key]
 }
 
