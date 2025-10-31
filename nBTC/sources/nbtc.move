@@ -23,7 +23,7 @@ use sui::event;
 use sui::sui::SUI;
 use sui::table::{Self, Table};
 use sui::url;
-use sui::vec_map::VecMap;
+use sui::vec_map::{Self, VecMap};
 
 //
 // Constant
@@ -840,4 +840,35 @@ public fun dwallet_caps(contract: &NbtcContract, spend_key: vector<u8>): &DWalle
 #[test_only]
 public fun dwallet_pks_of(contract: &NbtcContract, id: ID): vector<u8> {
     contract.dwallet_pks[id]
+}
+
+#[test_only]
+public fun create_redeem_request_for_testing(
+    contract: &mut NbtcContract,
+    request_id: u64,
+    redeemer: address,
+    recipient: vector<u8>,
+    amount: u64,
+    inputs: vector<Utxo>,
+    signatures: vector<vector<u8>>,
+    ctx: &mut TxContext,
+) {
+    contract
+        .redeem_requests
+        .add(
+            request_id,
+            RedeemRequest {
+                redeemer,
+                recipient,
+                status: RedeemStatus::Signed,
+                amount,
+                inputs,
+                sign_hashes: vec_map::empty(),
+                sign_ids: table::new(ctx),
+                signatures_map: vec_map::from_keys_values(
+                    vector::tabulate!(signatures.length(), |i| i as u32),
+                    signatures,
+                ),
+            },
+        )
 }
