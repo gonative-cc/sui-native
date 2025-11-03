@@ -58,7 +58,7 @@ fun rol(x: u32, i: u8): u32 {
     return (x << i) | (x >> (32 - i))
 }
 
-fun Round(a: &mut u32, b: u32, c: &mut u32, d: u32, e: u32, f: u32, x: u32, k: u32, r: u8) {
+fun Round(a: &mut u32, _b: u32, c: &mut u32, _d: u32, e: u32, f: u32, x: u32, k: u32, r: u8) {
     let m = 0xffffffff;
     let mut tmp = *a as u64;
     tmp = (tmp + (f as u64)) & m;

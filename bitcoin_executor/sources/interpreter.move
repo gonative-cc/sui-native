@@ -3,15 +3,21 @@
 module bitcoin_executor::interpreter;
 
 use bitcoin_executor::btc_encoding;
-use bitcoin_executor::executor_utils;
 use bitcoin_executor::ripemd160;
-use bitcoin_executor::sighash;
 use bitcoin_executor::stack::{Self, Stack};
 use bitcoin_lib::crypto::hash256;
-use bitcoin_lib::encoding::u64_to_le_bytes;
+use bitcoin_lib::encoding::{
+    u64_to_le_bytes,
+    vector_false,
+    vector_true,
+    u64_to_cscriptnum,
+    zerohash_32bytes,
+    script_to_var_bytes
+};
 use bitcoin_lib::input;
 use bitcoin_lib::output;
 use bitcoin_lib::reader::{Self, Reader};
+use bitcoin_lib::sighash;
 use bitcoin_lib::tx::{Self, Transaction};
 use std::hash::sha2_256;
 
@@ -557,7 +563,7 @@ fun op_size(ip: &mut Interpreter): u64 {
         return ETopStackEmpty
     };
     let size = top_element.extract().length();
-    ip.stack.push(executor_utils::u64_to_cscriptnum(size));
+    ip.stack.push(u64_to_cscriptnum(size));
     SUCCESS
 }
 
@@ -605,7 +611,7 @@ fun op_checksig(ip: &mut Interpreter): u64 {
     let mut sig_bytes = sig_bytes.extract();
 
     if (sig_bytes.is_empty()) {
-        ip.stack.push(executor_utils::vector_false());
+        ip.stack.push(vector_false());
         return SUCCESS
     };
 
@@ -624,9 +630,9 @@ fun op_checksig(ip: &mut Interpreter): u64 {
     );
 
     if (signature_is_valid) {
-        ip.stack.push(executor_utils::vector_true());
+        ip.stack.push(vector_true());
     } else {
-        ip.stack.push(executor_utils::vector_false());
+        ip.stack.push(vector_false());
     };
     SUCCESS
 }
@@ -924,7 +930,7 @@ fun test_op_checksig() {
     ip.op_checksig();
 
     assert_eq!(ip.stack.size(), 1);
-    assert_eq!(ip.stack.top().destroy_some(), executor_utils::vector_true());
+    assert_eq!(ip.stack.top().destroy_some(), vector_true());
 }
 
 #[test]

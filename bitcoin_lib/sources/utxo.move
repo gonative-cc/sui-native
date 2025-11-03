@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
-module bitcoin_executor::utxo;
+module bitcoin_lib::utxo;
 
 use bitcoin_lib::encoding::le_bytes_to_u64;
 use bitcoin_lib::input::Input;
