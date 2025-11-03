@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #[test_only]
-module bitcoin_parser::tx_tests;
+module bitcoin_lib::tx_tests;
 
-use bitcoin_parser::input;
-use bitcoin_parser::output;
-use bitcoin_parser::reader;
-use bitcoin_parser::tx::{Self, ETxReaderHasRemainingData};
+use bitcoin_lib::input;
+use bitcoin_lib::output;
+use bitcoin_lib::reader;
+use bitcoin_lib::tx::{Self, ETxReaderHasRemainingData};
 use std::unit_test::assert_eq;
 
 #[test]

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
 
-module bitcoin_parser::header;
+module bitcoin_lib::header;
 
-use bitcoin_parser::crypto::hash256;
-use bitcoin_parser::reader;
+use bitcoin_lib::crypto::hash256;
+use bitcoin_lib::reader;
 
 // === Constants ===
 const BLOCK_HEADER_SIZE: u64 = 80;

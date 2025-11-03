@@ -2,7 +2,7 @@
 
 module bitcoin_spv::light_client;
 
-use bitcoin_parser::header::BlockHeader;
+use bitcoin_lib::header::BlockHeader;
 use bitcoin_spv::block_header::{calc_work, pow_check, target};
 use bitcoin_spv::btc_math::target_to_bits;
 use bitcoin_spv::light_block::{LightBlock, new_light_block};

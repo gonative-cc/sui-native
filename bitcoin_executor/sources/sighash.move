@@ -3,11 +3,11 @@
 module bitcoin_executor::sighash;
 
 use bitcoin_executor::executor_utils;
-use bitcoin_parser::crypto::hash256;
-use bitcoin_parser::encoding::u32_to_le_bytes;
-use bitcoin_parser::input;
-use bitcoin_parser::output;
-use bitcoin_parser::tx::{Self, Transaction};
+use bitcoin_lib::crypto::hash256;
+use bitcoin_lib::encoding::u32_to_le_bytes;
+use bitcoin_lib::input;
+use bitcoin_lib::output;
+use bitcoin_lib::tx::{Self, Transaction};
 
 #[test_only]
 use std::unit_test::assert_eq;

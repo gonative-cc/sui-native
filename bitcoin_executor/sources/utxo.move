@@ -2,10 +2,10 @@
 
 module bitcoin_executor::utxo;
 
-use bitcoin_parser::encoding::le_bytes_to_u64;
-use bitcoin_parser::input::Input;
-use bitcoin_parser::output::Output;
-use bitcoin_parser::vector_utils::vector_slice;
+use bitcoin_lib::encoding::le_bytes_to_u64;
+use bitcoin_lib::input::Input;
+use bitcoin_lib::output::Output;
+use bitcoin_lib::vector_utils::vector_slice;
 
 const OP_0: u8 = 0x00;
 const OP_DATA_20: u8 = 0x14;

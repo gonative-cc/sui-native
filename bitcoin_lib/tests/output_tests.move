@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #[test_only]
-module bitcoin_parser::output_tests;
+module bitcoin_lib::output_tests;
 
-use bitcoin_parser::output;
+use bitcoin_lib::output;
 use std::unit_test::assert_eq;
 
 #[test]

@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MPL-2.0
 
-module bitcoin_parser::tx;
+module bitcoin_lib::tx;
 
-use bitcoin_parser::crypto::hash256;
-use bitcoin_parser::encoding::u64_to_varint_bytes;
-use bitcoin_parser::input::{Self, Input};
-use bitcoin_parser::output::{Self, Output};
-use bitcoin_parser::reader::Reader;
+use bitcoin_lib::crypto::hash256;
+use bitcoin_lib::encoding::u64_to_varint_bytes;
+use bitcoin_lib::input::{Self, Input};
+use bitcoin_lib::output::{Self, Output};
+use bitcoin_lib::reader::Reader;
 
 #[error]
 const ETxReaderHasRemainingData: vector<u8> = b"Reader has remaining data";

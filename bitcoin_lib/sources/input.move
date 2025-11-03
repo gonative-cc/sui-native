@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
 
-module bitcoin_parser::input;
+module bitcoin_lib::input;
 
-use bitcoin_parser::encoding::u64_to_varint_bytes;
-use bitcoin_parser::reader::Reader;
+use bitcoin_lib::encoding::u64_to_varint_bytes;
+use bitcoin_lib::reader::Reader;
 
 /// Input in btc transaction
 public struct Input has copy, drop, store {

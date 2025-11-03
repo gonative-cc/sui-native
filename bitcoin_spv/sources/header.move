@@ -2,7 +2,7 @@
 
 module bitcoin_spv::block_header;
 
-use bitcoin_parser::header::BlockHeader;
+use bitcoin_lib::header::BlockHeader;
 use bitcoin_spv::btc_math::{bits_to_target, to_u256};
 
 // === Errors ===

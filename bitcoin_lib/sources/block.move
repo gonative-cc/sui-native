@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MPL-2.0
 
-module bitcoin_parser::block;
+module bitcoin_lib::block;
 
-use bitcoin_parser::header::{Self, BlockHeader};
-use bitcoin_parser::reader;
-use bitcoin_parser::tx::{Self, Transaction};
+use bitcoin_lib::header::{Self, BlockHeader};
+use bitcoin_lib::reader;
+use bitcoin_lib::tx::{Self, Transaction};
 
 #[test_only]
 use std::unit_test::assert_eq;

@@ -7,12 +7,12 @@ use bitcoin_executor::executor_utils;
 use bitcoin_executor::ripemd160;
 use bitcoin_executor::sighash;
 use bitcoin_executor::stack::{Self, Stack};
-use bitcoin_parser::crypto::hash256;
-use bitcoin_parser::encoding::u64_to_le_bytes;
-use bitcoin_parser::input;
-use bitcoin_parser::output;
-use bitcoin_parser::reader::{Self, Reader};
-use bitcoin_parser::tx::{Self, Transaction};
+use bitcoin_lib::crypto::hash256;
+use bitcoin_lib::encoding::u64_to_le_bytes;
+use bitcoin_lib::input;
+use bitcoin_lib::output;
+use bitcoin_lib::reader::{Self, Reader};
+use bitcoin_lib::tx::{Self, Transaction};
 use std::hash::sha2_256;
 
 #[test_only]
