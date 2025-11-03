@@ -3,7 +3,7 @@
 module bitcoin_lib::sighash;
 
 use bitcoin_lib::crypto::hash256;
-use bitcoin_lib::encoding::{u32_to_le_bytes,zerohash_32bytes, script_to_var_bytes} ;
+use bitcoin_lib::encoding::{u32_to_le_bytes, zerohash_32bytes, script_to_var_bytes};
 use bitcoin_lib::input;
 use bitcoin_lib::output;
 use bitcoin_lib::tx::{Self, Transaction};
@@ -11,11 +11,39 @@ use bitcoin_lib::tx::{Self, Transaction};
 #[test_only]
 use std::unit_test::assert_eq;
 
+// TODO: use macro to create share constants
+
+/// These constants are the values of the official opcodes used on the btc wiki,
+/// in bitcoin core and in most if not all other references and software related
+/// to handling BTC scripts.
+/// https://github.com/btcsuite/btcd/blob/master/txscript/opcode.go
+const OP_PUSHBYTES_20: u8 = 0x14; // 20
+const OP_DUP: u8 = 0x76; // 118
+/// Compare the top two items on the stack and halts the script if they are not equal.
+const OP_EQUALVERIFY: u8 = 0x88; // 136
+const OP_HASH160: u8 = 0xa9; // 169
+// const OP_CODESEPARATOR: u8 = 0xab; // 171
+const OP_CHECKSIG: u8 = 0xac; // 172
 /// Sighash types
 const SIGHASH_ALL: u8 = 0x01;
 const SIGHASH_NONE: u8 = 0x02;
 const SIGHASH_SINGLE: u8 = 0x03;
 const SIGHASH_ANYONECANPAY_FLAG: u8 = 0x80;
+
+#[error]
+const EInvalidPKHLength: vector<u8> = b"PHK length must be 20";
+
+public fun create_p2wpkh_scriptcode(pkh: vector<u8>): vector<u8> {
+    assert!(pkh.length() == 20, EInvalidPKHLength);
+    let mut script = vector::empty<u8>();
+    script.push_back(OP_DUP);
+    script.push_back(OP_HASH160);
+    script.push_back(OP_PUSHBYTES_20);
+    script.append(pkh);
+    script.push_back(OP_EQUALVERIFY);
+    script.push_back(OP_CHECKSIG);
+    script
+}
 
 /// Constructs the BIP143 preimage for the Segwit hash signature.
 /// https://learnmeabitcoin.com/technical/keys/signature/ -> Segwit Algorithm

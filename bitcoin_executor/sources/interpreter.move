@@ -17,7 +17,7 @@ use bitcoin_lib::input;
 use bitcoin_lib::output;
 use bitcoin_lib::reader::{Self, Reader};
 use bitcoin_lib::ripemd160;
-use bitcoin_lib::sighash;
+use bitcoin_lib::sighash::{Self, create_p2wpkh_scriptcode};
 use bitcoin_lib::tx::{Self, Transaction};
 use std::hash::sha2_256;
 
@@ -635,18 +635,6 @@ fun op_checksig(ip: &mut Interpreter): u64 {
         ip.stack.push(vector_false());
     };
     SUCCESS
-}
-
-public fun create_p2wpkh_scriptcode(pkh: vector<u8>): vector<u8> {
-    assert!(pkh.length() == 20, EInvalidPKHLength);
-    let mut script = vector::empty<u8>();
-    script.push_back(OP_DUP);
-    script.push_back(OP_HASH160);
-    script.push_back(OP_PUSHBYTES_20);
-    script.append(pkh);
-    script.push_back(OP_EQUALVERIFY);
-    script.push_back(OP_CHECKSIG);
-    script
 }
 
 fun create_sighash(ip: &Interpreter, pub_key: vector<u8>, sighash_flag: u8): vector<u8> {

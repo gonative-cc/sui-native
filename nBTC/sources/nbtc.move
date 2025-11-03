@@ -2,10 +2,9 @@
 
 module nbtc::nbtc;
 
-use bitcoin_executor::interpreter::create_p2wpkh_scriptcode;
-use bitcoin_executor::sighash::create_segwit_preimage;
 use bitcoin_lib::encoding::u64_to_le_bytes;
 use bitcoin_lib::reader;
+use bitcoin_lib::sighash::{create_segwit_preimage, create_p2wpkh_scriptcode};
 use bitcoin_lib::tx;
 use bitcoin_lib::utils::slice;
 use bitcoin_spv::light_client::LightClient;
