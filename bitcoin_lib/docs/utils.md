@@ -1,22 +1,16 @@
-
 <a name="bitcoin_lib_executor_utils"></a>
 
 # Module `bitcoin_lib::executor_utils`
 
-
-
--  [Function `u64_to_cscriptnum`](#bitcoin_lib_executor_utils_u64_to_cscriptnum)
--  [Function `vector_true`](#bitcoin_lib_executor_utils_vector_true)
--  [Function `vector_false`](#bitcoin_lib_executor_utils_vector_false)
--  [Function `u64_to_varint_bytes`](#bitcoin_lib_executor_utils_u64_to_varint_bytes)
--  [Function `script_to_var_bytes`](#bitcoin_lib_executor_utils_script_to_var_bytes)
--  [Function `zerohash_32bytes`](#bitcoin_lib_executor_utils_zerohash_32bytes)
-
+- [Function `u64_to_cscriptnum`](#bitcoin_lib_executor_utils_u64_to_cscriptnum)
+- [Function `vector_true`](#bitcoin_lib_executor_utils_vector_true)
+- [Function `vector_false`](#bitcoin_lib_executor_utils_vector_false)
+- [Function `u64_to_varint_bytes`](#bitcoin_lib_executor_utils_u64_to_varint_bytes)
+- [Function `script_to_var_bytes`](#bitcoin_lib_executor_utils_script_to_var_bytes)
+- [Function `zerohash_32bytes`](#bitcoin_lib_executor_utils_zerohash_32bytes)
 
 <pre><code><b>use</b> <a href="../dependencies/std/vector.md#std_vector">std::vector</a>;
 </code></pre>
-
-
 
 <a name="bitcoin_lib_executor_utils_u64_to_cscriptnum"></a>
 
@@ -26,15 +20,11 @@ Converts u64 into the CScriptNum byte vector format.
 This is the format expected to be pushed onto the stack.
 https://github.com/bitcoin/bitcoin/blob/87ec923d3a7af7b30613174b41c6fb11671df466/src/script/script.h#L349
 
-
 <pre><code><b>public</b>(package) <b>fun</b> <a href="../bitcoin_lib/utils.md#bitcoin_lib_executor_utils_u64_to_cscriptnum">u64_to_cscriptnum</a>(n: u64): vector&lt;u8&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b>(package) <b>fun</b> <a href="../bitcoin_lib/utils.md#bitcoin_lib_executor_utils_u64_to_cscriptnum">u64_to_cscriptnum</a>(n: u64): vector&lt;u8&gt; {
     <b>let</b> <b>mut</b> result_bytes = vector::empty&lt;u8&gt;();
@@ -59,29 +49,20 @@ https://github.com/bitcoin/bitcoin/blob/87ec923d3a7af7b30613174b41c6fb11671df466
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_executor_utils_vector_true"></a>
 
 ## Function `vector_true`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/utils.md#bitcoin_lib_executor_utils_vector_true">vector_true</a>(): vector&lt;u8&gt;
 </code></pre>
-
-
 
 <details>
 <summary>Implementation</summary>
 
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/utils.md#bitcoin_lib_executor_utils_vector_true">vector_true</a>(): vector&lt;u8&gt; { vector[0x01] }
 </code></pre>
-
-
 
 </details>
 
@@ -89,21 +70,14 @@ https://github.com/bitcoin/bitcoin/blob/87ec923d3a7af7b30613174b41c6fb11671df466
 
 ## Function `vector_false`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/utils.md#bitcoin_lib_executor_utils_vector_false">vector_false</a>(): vector&lt;u8&gt;
 </code></pre>
-
-
 
 <details>
 <summary>Implementation</summary>
 
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/utils.md#bitcoin_lib_executor_utils_vector_false">vector_false</a>(): vector&lt;u8&gt; { vector[] }
 </code></pre>
-
-
 
 </details>
 
@@ -114,15 +88,11 @@ https://github.com/bitcoin/bitcoin/blob/87ec923d3a7af7b30613174b41c6fb11671df466
 Encodes a u64 into VarInt format.
 Adapted from go_native/move_spv_light_client
 
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/utils.md#bitcoin_lib_executor_utils_u64_to_varint_bytes">u64_to_varint_bytes</a>(n: u64): vector&lt;u8&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/utils.md#bitcoin_lib_executor_utils_u64_to_varint_bytes">u64_to_varint_bytes</a>(n: u64): vector&lt;u8&gt; {
     <b>let</b> <b>mut</b> ans = vector::empty&lt;u8&gt;();
@@ -152,8 +122,6 @@ Adapted from go_native/move_spv_light_client
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_executor_utils_script_to_var_bytes"></a>
@@ -162,15 +130,11 @@ Adapted from go_native/move_spv_light_client
 
 Prepends the VarInt encoding of the script len to the script.
 
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/utils.md#bitcoin_lib_executor_utils_script_to_var_bytes">script_to_var_bytes</a>(script: &vector&lt;u8&gt;): vector&lt;u8&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/utils.md#bitcoin_lib_executor_utils_script_to_var_bytes">script_to_var_bytes</a>(script: &vector&lt;u8&gt;): vector&lt;u8&gt; {
     <b>let</b> len = script.length();
@@ -180,8 +144,6 @@ Prepends the VarInt encoding of the script len to the script.
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_executor_utils_zerohash_32bytes"></a>
@@ -190,21 +152,15 @@ Prepends the VarInt encoding of the script len to the script.
 
 Returns a vector with 32 zero bytes.
 
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/utils.md#bitcoin_lib_executor_utils_zerohash_32bytes">zerohash_32bytes</a>(): vector&lt;u8&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/utils.md#bitcoin_lib_executor_utils_zerohash_32bytes">zerohash_32bytes</a>(): vector&lt;u8&gt; {
     vector::tabulate!(32, |_| 0)
 }
 </code></pre>
-
-
 
 </details>

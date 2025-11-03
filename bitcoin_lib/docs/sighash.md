@@ -1,13 +1,9 @@
-
 <a name="bitcoin_lib_sighash"></a>
 
 # Module `bitcoin_lib::sighash`
 
-
-
--  [Constants](#@Constants_0)
--  [Function `create_segwit_preimage`](#bitcoin_lib_sighash_create_segwit_preimage)
-
+- [Constants](#@Constants_0)
+- [Function `create_segwit_preimage`](#bitcoin_lib_sighash_create_segwit_preimage)
 
 <pre><code><b>use</b> <a href="../bitcoin_lib/crypto.md#bitcoin_lib_crypto">bitcoin_lib::crypto</a>;
 <b>use</b> <a href="../bitcoin_lib/encoding.md#bitcoin_lib_encoding">bitcoin_lib::encoding</a>;
@@ -22,49 +18,31 @@
 <b>use</b> <a href="../dependencies/std/vector.md#std_vector">std::vector</a>;
 </code></pre>
 
-
-
 <a name="@Constants_0"></a>
 
 ## Constants
-
 
 <a name="bitcoin_lib_sighash_SIGHASH_ALL"></a>
 
 Sighash types
 
-
 <pre><code><b>const</b> <a href="../bitcoin_lib/sighash.md#bitcoin_lib_sighash_SIGHASH_ALL">SIGHASH_ALL</a>: u8 = 1;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_sighash_SIGHASH_NONE"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/sighash.md#bitcoin_lib_sighash_SIGHASH_NONE">SIGHASH_NONE</a>: u8 = 2;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_sighash_SIGHASH_SINGLE"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/sighash.md#bitcoin_lib_sighash_SIGHASH_SINGLE">SIGHASH_SINGLE</a>: u8 = 3;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_sighash_SIGHASH_ANYONECANPAY_FLAG"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/sighash.md#bitcoin_lib_sighash_SIGHASH_ANYONECANPAY_FLAG">SIGHASH_ANYONECANPAY_FLAG</a>: u8 = 128;
 </code></pre>
-
-
 
 <a name="bitcoin_lib_sighash_create_segwit_preimage"></a>
 
@@ -73,15 +51,11 @@ Sighash types
 Constructs the BIP143 preimage for the Segwit hash signature.
 https://learnmeabitcoin.com/technical/keys/signature/ -> Segwit Algorithm
 
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/sighash.md#bitcoin_lib_sighash_create_segwit_preimage">create_segwit_preimage</a>(transaction: &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">bitcoin_lib::tx::Transaction</a>, input_idx_to_sign: u64, input_script: &vector&lt;u8&gt;, amount_spent_by_this_input: vector&lt;u8&gt;, sighash_type: u8): vector&lt;u8&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/sighash.md#bitcoin_lib_sighash_create_segwit_preimage">create_segwit_preimage</a>(
     transaction: &Transaction,
@@ -160,7 +134,5 @@ https://learnmeabitcoin.com/technical/keys/signature/ -> Segwit Algorithm
     preimage //Complete preimage data to be hashed (Once and later edcsa::verify will hash second time)
 }
 </code></pre>
-
-
 
 </details>

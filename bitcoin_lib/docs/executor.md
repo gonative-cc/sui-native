@@ -1,21 +1,17 @@
-
 <a name="bitcoin_lib_bitcoin_lib"></a>
 
 # Module `bitcoin_lib::bitcoin_lib`
 
-
-
--  [Struct `State`](#bitcoin_lib_bitcoin_lib_State)
--  [Constants](#@Constants_0)
--  [Function `init`](#bitcoin_lib_bitcoin_lib_init)
--  [Function `store`](#bitcoin_lib_bitcoin_lib_store)
--  [Function `spend`](#bitcoin_lib_bitcoin_lib_spend)
--  [Function `execute_block`](#bitcoin_lib_bitcoin_lib_execute_block)
--  [Function `validate_execution`](#bitcoin_lib_bitcoin_lib_validate_execution)
--  [Function `add_utxo`](#bitcoin_lib_bitcoin_lib_add_utxo)
--  [Function `spend_utxo`](#bitcoin_lib_bitcoin_lib_spend_utxo)
--  [Function `utxo_exists`](#bitcoin_lib_bitcoin_lib_utxo_exists)
-
+- [Struct `State`](#bitcoin_lib_bitcoin_lib_State)
+- [Constants](#@Constants_0)
+- [Function `init`](#bitcoin_lib_bitcoin_lib_init)
+- [Function `store`](#bitcoin_lib_bitcoin_lib_store)
+- [Function `spend`](#bitcoin_lib_bitcoin_lib_spend)
+- [Function `execute_block`](#bitcoin_lib_bitcoin_lib_execute_block)
+- [Function `validate_execution`](#bitcoin_lib_bitcoin_lib_validate_execution)
+- [Function `add_utxo`](#bitcoin_lib_bitcoin_lib_add_utxo)
+- [Function `spend_utxo`](#bitcoin_lib_bitcoin_lib_spend_utxo)
+- [Function `utxo_exists`](#bitcoin_lib_bitcoin_lib_utxo_exists)
 
 <pre><code><b>use</b> <a href="../bitcoin_lib/block.md#bitcoin_lib_block">bitcoin_lib::block</a>;
 <b>use</b> <a href="../bitcoin_lib/encoding.md#bitcoin_lib_btc_encoding">bitcoin_lib::btc_encoding</a>;
@@ -51,23 +47,17 @@
 <b>use</b> <a href="../dependencies/sui/vec_map.md#sui_vec_map">sui::vec_map</a>;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_bitcoin_lib_State"></a>
 
 ## Struct `State`
 
 State stores the utxo set
 
-
 <pre><code><b>public</b> <b>struct</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_State">State</a> <b>has</b> key, <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_store">store</a>
 </code></pre>
 
-
-
 <details>
 <summary>Fields</summary>
-
 
 <dl>
 <dt>
@@ -87,78 +77,51 @@ State stores the utxo set
 </dd>
 </dl>
 
-
 </details>
 
 <a name="@Constants_0"></a>
 
 ## Constants
 
-
 <a name="bitcoin_lib_bitcoin_lib_ECoinbaseNotMature"></a>
-
-
 
 <pre><code>#[error]
 <b>const</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_ECoinbaseNotMature">ECoinbaseNotMature</a>: vector&lt;u8&gt; = b"Coinbase <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a> is not spendable until it reaches maturity of 100 blocks";
 </code></pre>
 
-
-
 <a name="bitcoin_lib_bitcoin_lib_EInvalidTransaction"></a>
-
-
 
 <pre><code>#[error]
 <b>const</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_EInvalidTransaction">EInvalidTransaction</a>: vector&lt;u8&gt; = b"Invalid transaction";
 </code></pre>
 
-
-
 <a name="bitcoin_lib_bitcoin_lib_EInvalidCoinbase"></a>
-
-
 
 <pre><code>#[error]
 <b>const</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_EInvalidCoinbase">EInvalidCoinbase</a>: vector&lt;u8&gt; = b"Invalid coinbase transaction";
 </code></pre>
 
-
-
 <a name="bitcoin_lib_bitcoin_lib_EBlockEmpty"></a>
-
-
 
 <pre><code>#[error]
 <b>const</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_EBlockEmpty">EBlockEmpty</a>: vector&lt;u8&gt; = b"Block cannot empty";
 </code></pre>
 
-
-
 <a name="bitcoin_lib_bitcoin_lib_EUTXOInvalid"></a>
-
-
 
 <pre><code>#[error]
 <b>const</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_EUTXOInvalid">EUTXOInvalid</a>: vector&lt;u8&gt; = b"UTXO already <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_spend">spend</a>";
 </code></pre>
 
-
-
 <a name="bitcoin_lib_bitcoin_lib_init"></a>
 
 ## Function `init`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_init">init</a>(ctx: &<b>mut</b> <a href="../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_init">init</a>(ctx: &<b>mut</b> TxContext) {
     <b>let</b> state = <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_State">State</a> {
@@ -170,24 +133,17 @@ State stores the utxo set
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_bitcoin_lib_store"></a>
 
 ## Function `store`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_store">store</a>(state: &<b>mut</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_State">bitcoin_lib::bitcoin_lib::State</a>, <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">bitcoin_lib::tx::Transaction</a>, coinbase: bool)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_store">store</a>(state: &<b>mut</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_State">State</a>, <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: &Transaction, coinbase: bool) {
     <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>.outputs().length().do!(|index| {
@@ -204,24 +160,17 @@ State stores the utxo set
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_bitcoin_lib_spend"></a>
 
 ## Function `spend`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_spend">spend</a>(s: &<b>mut</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_State">bitcoin_lib::bitcoin_lib::State</a>, <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">bitcoin_lib::tx::Transaction</a>)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_spend">spend</a>(s: &<b>mut</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_State">State</a>, <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: &Transaction) {
     <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>.inputs().do!(|<a href="../bitcoin_lib/input.md#bitcoin_lib_input">input</a>| {
@@ -235,24 +184,17 @@ State stores the utxo set
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_bitcoin_lib_execute_block"></a>
 
 ## Function `execute_block`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_execute_block">execute_block</a>(state: &<b>mut</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_State">bitcoin_lib::bitcoin_lib::State</a>, raw_block: vector&lt;u8&gt;)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_execute_block">execute_block</a>(state: &<b>mut</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_State">State</a>, raw_block: vector&lt;u8&gt;) {
     <b>let</b> <a href="../bitcoin_lib/block.md#bitcoin_lib_block">block</a> = <a href="../bitcoin_lib/block.md#bitcoin_lib_block_new">block::new</a>(raw_block);
@@ -272,24 +214,17 @@ State stores the utxo set
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_bitcoin_lib_validate_execution"></a>
 
 ## Function `validate_execution`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_validate_execution">validate_execution</a>(state: &<a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_State">bitcoin_lib::bitcoin_lib::State</a>, <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">bitcoin_lib::tx::Transaction</a>): bool
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_validate_execution">validate_execution</a>(state: &<a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_State">State</a>, <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: Transaction): bool {
     <b>let</b> number_input = <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>.inputs().length();
@@ -316,8 +251,6 @@ State stores the utxo set
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_bitcoin_lib_add_utxo"></a>
@@ -326,22 +259,16 @@ State stores the utxo set
 
 Adds a new UTXO to the set
 
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_add_utxo">add_utxo</a>(state: &<b>mut</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_State">bitcoin_lib::bitcoin_lib::State</a>, outpoint: <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_OutPoint">bitcoin_lib::utxo::OutPoint</a>, info: <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_Data">bitcoin_lib::utxo::Data</a>)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_add_utxo">add_utxo</a>(state: &<b>mut</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_State">State</a>, outpoint: OutPoint, info: Data) {
     state.utxos.add(outpoint, info);
 }
 </code></pre>
-
-
 
 </details>
 
@@ -351,15 +278,11 @@ Adds a new UTXO to the set
 
 Spends a UTXO checks for existence and coinbase maturity, removes it, and returns its Info
 
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_spend_utxo">spend_utxo</a>(state: &<b>mut</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_State">bitcoin_lib::bitcoin_lib::State</a>, outpoint: <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_OutPoint">bitcoin_lib::utxo::OutPoint</a>, current_block_height: u64): <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_Data">bitcoin_lib::utxo::Data</a>
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_spend_utxo">spend_utxo</a>(state: &<b>mut</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_State">State</a>, outpoint: OutPoint, current_block_height: u64): Data {
     <b>let</b> utxo_info = state.utxos.borrow(outpoint);
@@ -370,8 +293,6 @@ Spends a UTXO checks for existence and coinbase maturity, removes it, and return
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_bitcoin_lib_utxo_exists"></a>
@@ -380,21 +301,15 @@ Spends a UTXO checks for existence and coinbase maturity, removes it, and return
 
 Checks if a UTXO exists in the set
 
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_utxo_exists">utxo_exists</a>(state: &<a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_State">bitcoin_lib::bitcoin_lib::State</a>, outpoint: <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_OutPoint">bitcoin_lib::utxo::OutPoint</a>): bool
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_utxo_exists">utxo_exists</a>(state: &<a href="../bitcoin_lib/executor.md#bitcoin_lib_bitcoin_lib_State">State</a>, outpoint: OutPoint): bool {
     state.utxos.contains(outpoint)
 }
 </code></pre>
-
-
 
 </details>

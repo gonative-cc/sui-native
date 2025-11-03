@@ -1,35 +1,24 @@
-
 <a name="bitcoin_lib_encoding"></a>
 
 # Module `bitcoin_lib::encoding`
 
-
-
--  [Constants](#@Constants_0)
--  [Function `le_bytes_to_u64`](#bitcoin_lib_encoding_le_bytes_to_u64)
--  [Function `u64_to_varint_bytes`](#bitcoin_lib_encoding_u64_to_varint_bytes)
--  [Function `u32_to_le_bytes`](#bitcoin_lib_encoding_u32_to_le_bytes)
--  [Function `u64_to_le_bytes`](#bitcoin_lib_encoding_u64_to_le_bytes)
-
+- [Constants](#@Constants_0)
+- [Function `le_bytes_to_u64`](#bitcoin_lib_encoding_le_bytes_to_u64)
+- [Function `u64_to_varint_bytes`](#bitcoin_lib_encoding_u64_to_varint_bytes)
+- [Function `u32_to_le_bytes`](#bitcoin_lib_encoding_u32_to_le_bytes)
+- [Function `u64_to_le_bytes`](#bitcoin_lib_encoding_u64_to_le_bytes)
 
 <pre><code></code></pre>
-
-
 
 <a name="@Constants_0"></a>
 
 ## Constants
 
-
 <a name="bitcoin_lib_encoding_EOverflowVector"></a>
-
-
 
 <pre><code>#[error]
 <b>const</b> <a href="../bitcoin_lib/encoding.md#bitcoin_lib_encoding_EOverflowVector">EOverflowVector</a>: vector&lt;u8&gt; = b"Can't covert vector to u64 b/c overflow";
 </code></pre>
-
-
 
 <a name="bitcoin_lib_encoding_le_bytes_to_u64"></a>
 
@@ -37,15 +26,11 @@
 
 Converts vector bytes in the little-endian form to a u64 integer
 
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/encoding.md#bitcoin_lib_encoding_le_bytes_to_u64">le_bytes_to_u64</a>(v: vector&lt;u8&gt;): u64
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/encoding.md#bitcoin_lib_encoding_le_bytes_to_u64">le_bytes_to_u64</a>(v: vector&lt;u8&gt;): u64 {
     <b>assert</b>!(v.length() &lt;= 8, <a href="../bitcoin_lib/encoding.md#bitcoin_lib_encoding_EOverflowVector">EOverflowVector</a>);
@@ -57,8 +42,6 @@ Converts vector bytes in the little-endian form to a u64 integer
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_encoding_u64_to_varint_bytes"></a>
@@ -68,15 +51,11 @@ Converts vector bytes in the little-endian form to a u64 integer
 Encodes a u64 into VarInt format.
 Adapted from go_native/move_spv_light_client
 
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/encoding.md#bitcoin_lib_encoding_u64_to_varint_bytes">u64_to_varint_bytes</a>(n: u64): vector&lt;u8&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/encoding.md#bitcoin_lib_encoding_u64_to_varint_bytes">u64_to_varint_bytes</a>(n: u64): vector&lt;u8&gt; {
     <b>let</b> <b>mut</b> ans = vector::empty&lt;u8&gt;();
@@ -106,8 +85,6 @@ Adapted from go_native/move_spv_light_client
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_encoding_u32_to_le_bytes"></a>
@@ -116,15 +93,11 @@ Adapted from go_native/move_spv_light_client
 
 Converts a u32 integer to a 4-byte little-endian vector<u8>.
 
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/encoding.md#bitcoin_lib_encoding_u32_to_le_bytes">u32_to_le_bytes</a>(val: u32): vector&lt;u8&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/encoding.md#bitcoin_lib_encoding_u32_to_le_bytes">u32_to_le_bytes</a>(val: u32): vector&lt;u8&gt; {
     <b>let</b> <b>mut</b> bytes = vector::empty&lt;u8&gt;();
@@ -136,8 +109,6 @@ Converts a u32 integer to a 4-byte little-endian vector<u8>.
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_encoding_u64_to_le_bytes"></a>
@@ -146,15 +117,11 @@ Converts a u32 integer to a 4-byte little-endian vector<u8>.
 
 Converts a u64 integer to an 8-byte little-endian vector<u8>.
 
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/encoding.md#bitcoin_lib_encoding_u64_to_le_bytes">u64_to_le_bytes</a>(val: u64): vector&lt;u8&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/encoding.md#bitcoin_lib_encoding_u64_to_le_bytes">u64_to_le_bytes</a>(val: u64): vector&lt;u8&gt; {
     <b>let</b> <b>mut</b> bytes = vector::empty&lt;u8&gt;();
@@ -169,7 +136,5 @@ Converts a u64 integer to an 8-byte little-endian vector<u8>.
     bytes
 }
 </code></pre>
-
-
 
 </details>

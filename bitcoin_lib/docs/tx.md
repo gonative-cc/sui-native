@@ -1,30 +1,26 @@
-
 <a name="bitcoin_lib_tx"></a>
 
 # Module `bitcoin_lib::tx`
 
-
-
--  [Struct `InputWitness`](#bitcoin_lib_tx_InputWitness)
--  [Struct `Transaction`](#bitcoin_lib_tx_Transaction)
--  [Constants](#@Constants_0)
--  [Function `new_witness`](#bitcoin_lib_tx_new_witness)
--  [Function `new`](#bitcoin_lib_tx_new)
--  [Function `items`](#bitcoin_lib_tx_items)
--  [Function `version`](#bitcoin_lib_tx_version)
--  [Function `inputs`](#bitcoin_lib_tx_inputs)
--  [Function `outputs`](#bitcoin_lib_tx_outputs)
--  [Function `witness`](#bitcoin_lib_tx_witness)
--  [Function `locktime`](#bitcoin_lib_tx_locktime)
--  [Function `input_at`](#bitcoin_lib_tx_input_at)
--  [Function `output_at`](#bitcoin_lib_tx_output_at)
--  [Function `is_witness`](#bitcoin_lib_tx_is_witness)
--  [Function `tx_id`](#bitcoin_lib_tx_tx_id)
--  [Function `deserialize`](#bitcoin_lib_tx_deserialize)
--  [Function `parse_tx`](#bitcoin_lib_tx_parse_tx)
--  [Function `is_coinbase`](#bitcoin_lib_tx_is_coinbase)
--  [Function `new_unsign_segwit_tx`](#bitcoin_lib_tx_new_unsign_segwit_tx)
-
+- [Struct `InputWitness`](#bitcoin_lib_tx_InputWitness)
+- [Struct `Transaction`](#bitcoin_lib_tx_Transaction)
+- [Constants](#@Constants_0)
+- [Function `new_witness`](#bitcoin_lib_tx_new_witness)
+- [Function `new`](#bitcoin_lib_tx_new)
+- [Function `items`](#bitcoin_lib_tx_items)
+- [Function `version`](#bitcoin_lib_tx_version)
+- [Function `inputs`](#bitcoin_lib_tx_inputs)
+- [Function `outputs`](#bitcoin_lib_tx_outputs)
+- [Function `witness`](#bitcoin_lib_tx_witness)
+- [Function `locktime`](#bitcoin_lib_tx_locktime)
+- [Function `input_at`](#bitcoin_lib_tx_input_at)
+- [Function `output_at`](#bitcoin_lib_tx_output_at)
+- [Function `is_witness`](#bitcoin_lib_tx_is_witness)
+- [Function `tx_id`](#bitcoin_lib_tx_tx_id)
+- [Function `deserialize`](#bitcoin_lib_tx_deserialize)
+- [Function `parse_tx`](#bitcoin_lib_tx_parse_tx)
+- [Function `is_coinbase`](#bitcoin_lib_tx_is_coinbase)
+- [Function `new_unsign_segwit_tx`](#bitcoin_lib_tx_new_unsign_segwit_tx)
 
 <pre><code><b>use</b> <a href="../bitcoin_lib/crypto.md#bitcoin_lib_crypto">bitcoin_lib::crypto</a>;
 <b>use</b> <a href="../bitcoin_lib/encoding.md#bitcoin_lib_encoding">bitcoin_lib::encoding</a>;
@@ -37,22 +33,15 @@
 <b>use</b> <a href="../dependencies/std/vector.md#std_vector">std::vector</a>;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_tx_InputWitness"></a>
 
 ## Struct `InputWitness`
 
-
-
 <pre><code><b>public</b> <b>struct</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_InputWitness">InputWitness</a> <b>has</b> <b>copy</b>, drop, store
 </code></pre>
 
-
-
 <details>
 <summary>Fields</summary>
-
 
 <dl>
 <dt>
@@ -62,7 +51,6 @@
 </dd>
 </dl>
 
-
 </details>
 
 <a name="bitcoin_lib_tx_Transaction"></a>
@@ -71,15 +59,11 @@
 
 BTC transaction
 
-
 <pre><code><b>public</b> <b>struct</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">Transaction</a> <b>has</b> <b>copy</b>, drop, store
 </code></pre>
 
-
-
 <details>
 <summary>Fields</summary>
-
 
 <dl>
 <dt>
@@ -124,38 +108,27 @@ BTC transaction
 </dd>
 </dl>
 
-
 </details>
 
 <a name="@Constants_0"></a>
 
 ## Constants
 
-
 <a name="bitcoin_lib_tx_ETxReaderHasRemainingData"></a>
-
-
 
 <pre><code>#[error]
 <b>const</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_ETxReaderHasRemainingData">ETxReaderHasRemainingData</a>: vector&lt;u8&gt; = b"Reader <b>has</b> remaining data";
 </code></pre>
 
-
-
 <a name="bitcoin_lib_tx_new_witness"></a>
 
 ## Function `new_witness`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_new_witness">new_witness</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_items">items</a>: vector&lt;vector&lt;u8&gt;&gt;): <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_InputWitness">bitcoin_lib::tx::InputWitness</a>
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_new_witness">new_witness</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_items">items</a>: vector&lt;vector&lt;u8&gt;&gt;): <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_InputWitness">InputWitness</a> {
     <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_InputWitness">InputWitness</a> {
@@ -163,8 +136,6 @@ BTC transaction
     }
 }
 </code></pre>
-
-
 
 </details>
 
@@ -174,15 +145,11 @@ BTC transaction
 
 Create a btc data
 
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_new">new</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_version">version</a>: vector&lt;u8&gt;, marker: <a href="../dependencies/std/option.md#std_option_Option">std::option::Option</a>&lt;u8&gt;, flag: <a href="../dependencies/std/option.md#std_option_Option">std::option::Option</a>&lt;u8&gt;, <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_inputs">inputs</a>: vector&lt;<a href="../bitcoin_lib/input.md#bitcoin_lib_input_Input">bitcoin_lib::input::Input</a>&gt;, <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_outputs">outputs</a>: vector&lt;<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">bitcoin_lib::output::Output</a>&gt;, <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_witness">witness</a>: vector&lt;<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_InputWitness">bitcoin_lib::tx::InputWitness</a>&gt;, <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_locktime">locktime</a>: vector&lt;u8&gt;, <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_tx_id">tx_id</a>: vector&lt;u8&gt;): <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">bitcoin_lib::tx::Transaction</a>
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_new">new</a>(
     <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_version">version</a>: vector&lt;u8&gt;,
@@ -207,31 +174,22 @@ Create a btc data
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_tx_items"></a>
 
 ## Function `items`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_items">items</a>(w: &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_InputWitness">bitcoin_lib::tx::InputWitness</a>): vector&lt;vector&lt;u8&gt;&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_items">items</a>(w: &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_InputWitness">InputWitness</a>): vector&lt;vector&lt;u8&gt;&gt; {
     w.<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_items">items</a>
 }
 </code></pre>
-
-
 
 </details>
 
@@ -239,23 +197,16 @@ Create a btc data
 
 ## Function `version`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_version">version</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">bitcoin_lib::tx::Transaction</a>): vector&lt;u8&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_version">version</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">Transaction</a>): vector&lt;u8&gt; {
     <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>.<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_version">version</a>
 }
 </code></pre>
-
-
 
 </details>
 
@@ -263,23 +214,16 @@ Create a btc data
 
 ## Function `inputs`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_inputs">inputs</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">bitcoin_lib::tx::Transaction</a>): vector&lt;<a href="../bitcoin_lib/input.md#bitcoin_lib_input_Input">bitcoin_lib::input::Input</a>&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_inputs">inputs</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">Transaction</a>): vector&lt;Input&gt; {
     <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>.<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_inputs">inputs</a>
 }
 </code></pre>
-
-
 
 </details>
 
@@ -287,23 +231,16 @@ Create a btc data
 
 ## Function `outputs`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_outputs">outputs</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">bitcoin_lib::tx::Transaction</a>): vector&lt;<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">bitcoin_lib::output::Output</a>&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_outputs">outputs</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">Transaction</a>): vector&lt;Output&gt; {
     <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>.<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_outputs">outputs</a>
 }
 </code></pre>
-
-
 
 </details>
 
@@ -311,23 +248,16 @@ Create a btc data
 
 ## Function `witness`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_witness">witness</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">bitcoin_lib::tx::Transaction</a>): vector&lt;<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_InputWitness">bitcoin_lib::tx::InputWitness</a>&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_witness">witness</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">Transaction</a>): vector&lt;<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_InputWitness">InputWitness</a>&gt; {
     <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>.<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_witness">witness</a>
 }
 </code></pre>
-
-
 
 </details>
 
@@ -335,23 +265,16 @@ Create a btc data
 
 ## Function `locktime`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_locktime">locktime</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">bitcoin_lib::tx::Transaction</a>): vector&lt;u8&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_locktime">locktime</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">Transaction</a>): vector&lt;u8&gt; {
     <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>.<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_locktime">locktime</a>
 }
 </code></pre>
-
-
 
 </details>
 
@@ -359,23 +282,16 @@ Create a btc data
 
 ## Function `input_at`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_input_at">input_at</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">bitcoin_lib::tx::Transaction</a>, idx: u64): &<a href="../bitcoin_lib/input.md#bitcoin_lib_input_Input">bitcoin_lib::input::Input</a>
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_input_at">input_at</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">Transaction</a>, idx: u64): &Input {
     &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>.<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_inputs">inputs</a>[idx]
 }
 </code></pre>
-
-
 
 </details>
 
@@ -383,23 +299,16 @@ Create a btc data
 
 ## Function `output_at`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_output_at">output_at</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">bitcoin_lib::tx::Transaction</a>, idx: u64): &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">bitcoin_lib::output::Output</a>
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_output_at">output_at</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">Transaction</a>, idx: u64): &Output {
     &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>.<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_outputs">outputs</a>[idx]
 }
 </code></pre>
-
-
 
 </details>
 
@@ -407,16 +316,11 @@ Create a btc data
 
 ## Function `is_witness`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_is_witness">is_witness</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">bitcoin_lib::tx::Transaction</a>): bool
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_is_witness">is_witness</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">Transaction</a>): bool {
     <b>if</b> (<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>.marker.is_none() || <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>.flag.is_none()) {
@@ -428,31 +332,22 @@ Create a btc data
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_tx_tx_id"></a>
 
 ## Function `tx_id`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_tx_id">tx_id</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">bitcoin_lib::tx::Transaction</a>): vector&lt;u8&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_tx_id">tx_id</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">Transaction</a>): vector&lt;u8&gt; {
     <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>.<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_tx_id">tx_id</a>
 }
 </code></pre>
-
-
 
 </details>
 
@@ -460,16 +355,11 @@ Create a btc data
 
 ## Function `deserialize`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_deserialize">deserialize</a>(r: &<b>mut</b> <a href="../bitcoin_lib/reader.md#bitcoin_lib_reader_Reader">bitcoin_lib::reader::Reader</a>): <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">bitcoin_lib::tx::Transaction</a>
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_deserialize">deserialize</a>(r: &<b>mut</b> Reader): <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">Transaction</a> {
     <b>let</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a> = <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_parse_tx">parse_tx</a>(r);
@@ -477,8 +367,6 @@ Create a btc data
     <b>return</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>
 }
 </code></pre>
-
-
 
 </details>
 
@@ -488,15 +376,11 @@ Create a btc data
 
 deserialise transaction from bytes
 
-
 <pre><code><b>public</b>(package) <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_parse_tx">parse_tx</a>(r: &<b>mut</b> <a href="../bitcoin_lib/reader.md#bitcoin_lib_reader_Reader">bitcoin_lib::reader::Reader</a>): <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">bitcoin_lib::tx::Transaction</a>
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b>(package) <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_parse_tx">parse_tx</a>(r: &<b>mut</b> Reader): <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">Transaction</a> {
     // transaction data without segwit.
@@ -563,24 +447,17 @@ deserialise transaction from bytes
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_tx_is_coinbase"></a>
 
 ## Function `is_coinbase`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_is_coinbase">is_coinbase</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">bitcoin_lib::tx::Transaction</a>): bool
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_is_coinbase">is_coinbase</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">Transaction</a>): bool {
     // TODO: check BIP34 and BIP141
@@ -589,24 +466,17 @@ deserialise transaction from bytes
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_tx_new_unsign_segwit_tx"></a>
 
 ## Function `new_unsign_segwit_tx`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_new_unsign_segwit_tx">new_unsign_segwit_tx</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_inputs">inputs</a>: vector&lt;<a href="../bitcoin_lib/input.md#bitcoin_lib_input_Input">bitcoin_lib::input::Input</a>&gt;, <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_outputs">outputs</a>: vector&lt;<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">bitcoin_lib::output::Output</a>&gt;): <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">bitcoin_lib::tx::Transaction</a>
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_new_unsign_segwit_tx">new_unsign_segwit_tx</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_inputs">inputs</a>: vector&lt;Input&gt;, <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_outputs">outputs</a>: vector&lt;Output&gt;): <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">Transaction</a> {
     <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">Transaction</a> {
@@ -623,7 +493,5 @@ deserialise transaction from bytes
     }
 }
 </code></pre>
-
-
 
 </details>

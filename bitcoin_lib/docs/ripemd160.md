@@ -1,57 +1,46 @@
-
 <a name="bitcoin_lib_ripemd160"></a>
 
 # Module `bitcoin_lib::ripemd160`
 
-
-
--  [Struct `Ripemd160`](#bitcoin_lib_ripemd160_Ripemd160)
--  [Function `new`](#bitcoin_lib_ripemd160_new)
--  [Function `bitnot`](#bitcoin_lib_ripemd160_bitnot)
--  [Function `f1`](#bitcoin_lib_ripemd160_f1)
--  [Function `f2`](#bitcoin_lib_ripemd160_f2)
--  [Function `f3`](#bitcoin_lib_ripemd160_f3)
--  [Function `f4`](#bitcoin_lib_ripemd160_f4)
--  [Function `f5`](#bitcoin_lib_ripemd160_f5)
--  [Function `rol`](#bitcoin_lib_ripemd160_rol)
--  [Function `Round`](#bitcoin_lib_ripemd160_Round)
--  [Function `R11`](#bitcoin_lib_ripemd160_R11)
--  [Function `R21`](#bitcoin_lib_ripemd160_R21)
--  [Function `R31`](#bitcoin_lib_ripemd160_R31)
--  [Function `R41`](#bitcoin_lib_ripemd160_R41)
--  [Function `R51`](#bitcoin_lib_ripemd160_R51)
--  [Function `R12`](#bitcoin_lib_ripemd160_R12)
--  [Function `R22`](#bitcoin_lib_ripemd160_R22)
--  [Function `R32`](#bitcoin_lib_ripemd160_R32)
--  [Function `R42`](#bitcoin_lib_ripemd160_R42)
--  [Function `R52`](#bitcoin_lib_ripemd160_R52)
--  [Function `transform`](#bitcoin_lib_ripemd160_transform)
--  [Function `write`](#bitcoin_lib_ripemd160_write)
--  [Function `finalize`](#bitcoin_lib_ripemd160_finalize)
--  [Function `veccopy`](#bitcoin_lib_ripemd160_veccopy)
--  [Function `writeLE64`](#bitcoin_lib_ripemd160_writeLE64)
--  [Function `writeLE32`](#bitcoin_lib_ripemd160_writeLE32)
--  [Function `readLE32`](#bitcoin_lib_ripemd160_readLE32)
-
+- [Struct `Ripemd160`](#bitcoin_lib_ripemd160_Ripemd160)
+- [Function `new`](#bitcoin_lib_ripemd160_new)
+- [Function `bitnot`](#bitcoin_lib_ripemd160_bitnot)
+- [Function `f1`](#bitcoin_lib_ripemd160_f1)
+- [Function `f2`](#bitcoin_lib_ripemd160_f2)
+- [Function `f3`](#bitcoin_lib_ripemd160_f3)
+- [Function `f4`](#bitcoin_lib_ripemd160_f4)
+- [Function `f5`](#bitcoin_lib_ripemd160_f5)
+- [Function `rol`](#bitcoin_lib_ripemd160_rol)
+- [Function `Round`](#bitcoin_lib_ripemd160_Round)
+- [Function `R11`](#bitcoin_lib_ripemd160_R11)
+- [Function `R21`](#bitcoin_lib_ripemd160_R21)
+- [Function `R31`](#bitcoin_lib_ripemd160_R31)
+- [Function `R41`](#bitcoin_lib_ripemd160_R41)
+- [Function `R51`](#bitcoin_lib_ripemd160_R51)
+- [Function `R12`](#bitcoin_lib_ripemd160_R12)
+- [Function `R22`](#bitcoin_lib_ripemd160_R22)
+- [Function `R32`](#bitcoin_lib_ripemd160_R32)
+- [Function `R42`](#bitcoin_lib_ripemd160_R42)
+- [Function `R52`](#bitcoin_lib_ripemd160_R52)
+- [Function `transform`](#bitcoin_lib_ripemd160_transform)
+- [Function `write`](#bitcoin_lib_ripemd160_write)
+- [Function `finalize`](#bitcoin_lib_ripemd160_finalize)
+- [Function `veccopy`](#bitcoin_lib_ripemd160_veccopy)
+- [Function `writeLE64`](#bitcoin_lib_ripemd160_writeLE64)
+- [Function `writeLE32`](#bitcoin_lib_ripemd160_writeLE32)
+- [Function `readLE32`](#bitcoin_lib_ripemd160_readLE32)
 
 <pre><code></code></pre>
-
-
 
 <a name="bitcoin_lib_ripemd160_Ripemd160"></a>
 
 ## Struct `Ripemd160`
 
-
-
 <pre><code><b>public</b> <b>struct</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_Ripemd160">Ripemd160</a> <b>has</b> <b>copy</b>, drop
 </code></pre>
 
-
-
 <details>
 <summary>Fields</summary>
-
 
 <dl>
 <dt>
@@ -71,23 +60,17 @@
 </dd>
 </dl>
 
-
 </details>
 
 <a name="bitcoin_lib_ripemd160_new"></a>
 
 ## Function `new`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_new">new</a>(): <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_Ripemd160">bitcoin_lib::ripemd160::Ripemd160</a>
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_new">new</a>(): <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_Ripemd160">Ripemd160</a> {
     <b>let</b> s = vector[0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0];
@@ -105,31 +88,22 @@
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_ripemd160_bitnot"></a>
 
 ## Function `bitnot`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_bitnot">bitnot</a>(x: u32): u32
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_bitnot">bitnot</a>(x: u32): u32 {
     0xffffffff - x
 }
 </code></pre>
-
-
 
 </details>
 
@@ -137,23 +111,16 @@
 
 ## Function `f1`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_f1">f1</a>(x: u32, y: u32, z: u32): u32
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_f1">f1</a>(x: u32, y: u32, z: u32): u32 {
     x^y^z
 }
 </code></pre>
-
-
 
 </details>
 
@@ -161,23 +128,16 @@
 
 ## Function `f2`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_f2">f2</a>(x: u32, y: u32, z: u32): u32
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_f2">f2</a>(x: u32, y: u32, z: u32): u32 {
     (x & y) | (<a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_bitnot">bitnot</a>(x) & z)
 }
 </code></pre>
-
-
 
 </details>
 
@@ -185,23 +145,16 @@
 
 ## Function `f3`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_f3">f3</a>(x: u32, y: u32, z: u32): u32
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_f3">f3</a>(x: u32, y: u32, z: u32): u32 {
     (x | <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_bitnot">bitnot</a>(y)) ^ z
 }
 </code></pre>
-
-
 
 </details>
 
@@ -209,23 +162,16 @@
 
 ## Function `f4`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_f4">f4</a>(x: u32, y: u32, z: u32): u32
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_f4">f4</a>(x: u32, y: u32, z: u32): u32 {
     (x & z) |(y & <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_bitnot">bitnot</a>(z))
 }
 </code></pre>
-
-
 
 </details>
 
@@ -233,23 +179,16 @@
 
 ## Function `f5`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_f5">f5</a>(x: u32, y: u32, z: u32): u32
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_f5">f5</a>(x: u32, y: u32, z: u32): u32 {
     x ^(y | <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_bitnot">bitnot</a>(z))
 }
 </code></pre>
-
-
 
 </details>
 
@@ -257,23 +196,16 @@
 
 ## Function `rol`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_rol">rol</a>(x: u32, i: u8): u32
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_rol">rol</a>(x: u32, i: u8): u32 {
     <b>return</b> (x &lt;&lt; i) | (x &gt;&gt; (32 - i))
 }
 </code></pre>
-
-
 
 </details>
 
@@ -281,16 +213,11 @@
 
 ## Function `Round`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_Round">Round</a>(a: &<b>mut</b> u32, b: u32, c: &<b>mut</b> u32, d: u32, e: u32, f: u32, x: u32, k: u32, r: u8)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_Round">Round</a>(a: &<b>mut</b> u32, b: u32, c: &<b>mut</b> u32, d: u32, e: u32, f: u32, x: u32, k: u32, r: u8) {
     <b>let</b> m = 0xffffffff;
@@ -303,24 +230,17 @@
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_ripemd160_R11"></a>
 
 ## Function `R11`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_R11">R11</a>(a: &<b>mut</b> u32, b: u32, c: &<b>mut</b> u32, d: u32, e: u32, x: u32, r: u8)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_R11">R11</a>(a: &<b>mut</b> u32, b: u32, c: &<b>mut</b> u32, d: u32, e: u32, x: u32, r: u8) {
     <b>let</b> t = <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_f1">f1</a>(b, *c, d);
@@ -328,24 +248,17 @@
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_ripemd160_R21"></a>
 
 ## Function `R21`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_R21">R21</a>(a: &<b>mut</b> u32, b: u32, c: &<b>mut</b> u32, d: u32, e: u32, x: u32, r: u8)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_R21">R21</a>(a: &<b>mut</b> u32, b: u32, c: &<b>mut</b> u32, d: u32, e: u32, x: u32, r: u8) {
     <b>let</b> t = <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_f2">f2</a>(b, *c, d);
@@ -353,24 +266,17 @@
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_ripemd160_R31"></a>
 
 ## Function `R31`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_R31">R31</a>(a: &<b>mut</b> u32, b: u32, c: &<b>mut</b> u32, d: u32, e: u32, x: u32, r: u8)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_R31">R31</a>(a: &<b>mut</b> u32, b: u32, c: &<b>mut</b> u32, d: u32, e: u32, x: u32, r: u8) {
     <b>let</b> t = <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_f3">f3</a>(b, *c, d);
@@ -378,24 +284,17 @@
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_ripemd160_R41"></a>
 
 ## Function `R41`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_R41">R41</a>(a: &<b>mut</b> u32, b: u32, c: &<b>mut</b> u32, d: u32, e: u32, x: u32, r: u8)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_R41">R41</a>(a: &<b>mut</b> u32, b: u32, c: &<b>mut</b> u32, d: u32, e: u32, x: u32, r: u8) {
     <b>let</b> t = <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_f4">f4</a>(b, *c, d);
@@ -403,24 +302,17 @@
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_ripemd160_R51"></a>
 
 ## Function `R51`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_R51">R51</a>(a: &<b>mut</b> u32, b: u32, c: &<b>mut</b> u32, d: u32, e: u32, x: u32, r: u8)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_R51">R51</a>(a: &<b>mut</b> u32, b: u32, c: &<b>mut</b> u32, d: u32, e: u32, x: u32, r: u8) {
     <b>let</b> t = <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_f5">f5</a>(b, *c, d);
@@ -428,24 +320,17 @@
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_ripemd160_R12"></a>
 
 ## Function `R12`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_R12">R12</a>(a: &<b>mut</b> u32, b: u32, c: &<b>mut</b> u32, d: u32, e: u32, x: u32, r: u8)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_R12">R12</a>(a: &<b>mut</b> u32, b: u32, c: &<b>mut</b> u32, d: u32, e: u32, x: u32, r: u8) {
     <b>let</b> t = <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_f5">f5</a>(b, *c, d);
@@ -453,24 +338,17 @@
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_ripemd160_R22"></a>
 
 ## Function `R22`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_R22">R22</a>(a: &<b>mut</b> u32, b: u32, c: &<b>mut</b> u32, d: u32, e: u32, x: u32, r: u8)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_R22">R22</a>(a: &<b>mut</b> u32, b: u32, c: &<b>mut</b> u32, d: u32, e: u32, x: u32, r: u8) {
     <b>let</b> t = <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_f4">f4</a>(b, *c, d);
@@ -478,24 +356,17 @@
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_ripemd160_R32"></a>
 
 ## Function `R32`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_R32">R32</a>(a: &<b>mut</b> u32, b: u32, c: &<b>mut</b> u32, d: u32, e: u32, x: u32, r: u8)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_R32">R32</a>(a: &<b>mut</b> u32, b: u32, c: &<b>mut</b> u32, d: u32, e: u32, x: u32, r: u8) {
     <b>let</b> t = <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_f3">f3</a>(b, *c, d);
@@ -503,24 +374,17 @@
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_ripemd160_R42"></a>
 
 ## Function `R42`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_R42">R42</a>(a: &<b>mut</b> u32, b: u32, c: &<b>mut</b> u32, d: u32, e: u32, x: u32, r: u8)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_R42">R42</a>(a: &<b>mut</b> u32, b: u32, c: &<b>mut</b> u32, d: u32, e: u32, x: u32, r: u8) {
     <b>let</b> t = <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_f2">f2</a>(b, *c, d);
@@ -528,24 +392,17 @@
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_ripemd160_R52"></a>
 
 ## Function `R52`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_R52">R52</a>(a: &<b>mut</b> u32, b: u32, c: &<b>mut</b> u32, d: u32, e: u32, x: u32, r: u8)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_R52">R52</a>(a: &<b>mut</b> u32, b: u32, c: &<b>mut</b> u32, d: u32, e: u32, x: u32, r: u8) {
     <b>let</b> t = <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_f1">f1</a>(b, *c, d);
@@ -553,24 +410,17 @@
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_ripemd160_transform"></a>
 
 ## Function `transform`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_transform">transform</a>(s: &<b>mut</b> vector&lt;u32&gt;, chunk: vector&lt;u8&gt;)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_transform">transform</a>(s: &<b>mut</b> vector&lt;u32&gt;, chunk: vector&lt;u8&gt;) {
     <b>let</b> <b>mut</b> a1 = s[0];
@@ -782,24 +632,17 @@
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_ripemd160_write"></a>
 
 ## Function `write`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_write">write</a>(h: &<b>mut</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_Ripemd160">bitcoin_lib::ripemd160::Ripemd160</a>, data: vector&lt;u8&gt;, len: u64)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_write">write</a>(h: &<b>mut</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_Ripemd160">Ripemd160</a>, data: vector&lt;u8&gt;, len: u64) {
     <b>let</b> end = len;
@@ -826,24 +669,17 @@
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_ripemd160_finalize"></a>
 
 ## Function `finalize`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_finalize">finalize</a>(h: &<b>mut</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_Ripemd160">bitcoin_lib::ripemd160::Ripemd160</a>): vector&lt;u8&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_finalize">finalize</a>(h: &<b>mut</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_Ripemd160">Ripemd160</a>): vector&lt;u8&gt; {
     <b>let</b> <b>mut</b> pad: vector&lt;u8&gt; = vector[0x80];
@@ -872,24 +708,17 @@
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_ripemd160_veccopy"></a>
 
 ## Function `veccopy`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_veccopy">veccopy</a>(dest: &<b>mut</b> vector&lt;u8&gt;, dest_start: u64, src: vector&lt;u8&gt;, src_start: u64, len: u64)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_veccopy">veccopy</a>(dest: &<b>mut</b> vector&lt;u8&gt;, dest_start: u64, src: vector&lt;u8&gt;, src_start: u64, len: u64) {
     <b>let</b> <b>mut</b> i = dest_start;
@@ -905,24 +734,17 @@
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_ripemd160_writeLE64"></a>
 
 ## Function `writeLE64`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_writeLE64">writeLE64</a>(v: &<b>mut</b> vector&lt;u8&gt;, start_index: u64, x: u64)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_writeLE64">writeLE64</a>(v: &<b>mut</b> vector&lt;u8&gt;, start_index: u64, x: u64) {
     <b>let</b> <b>mut</b> i = 0;
@@ -939,24 +761,17 @@
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_ripemd160_writeLE32"></a>
 
 ## Function `writeLE32`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_writeLE32">writeLE32</a>(v: &<b>mut</b> vector&lt;u8&gt;, start_index: u64, x: u32)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_writeLE32">writeLE32</a>(v: &<b>mut</b> vector&lt;u8&gt;, start_index: u64, x: u32) {
     <b>let</b> <b>mut</b> i = 0;
@@ -973,24 +788,17 @@
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_ripemd160_readLE32"></a>
 
 ## Function `readLE32`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_readLE32">readLE32</a>(v: &vector&lt;u8&gt;, start_index: u64): u32
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/ripemd160.md#bitcoin_lib_ripemd160_readLE32">readLE32</a>(v: &vector&lt;u8&gt;, start_index: u64): u32 {
     <b>let</b> <b>mut</b> ans = 0;
@@ -1009,7 +817,5 @@
     ans
 }
 </code></pre>
-
-
 
 </details>

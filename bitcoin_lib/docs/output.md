@@ -1,30 +1,26 @@
-
 <a name="bitcoin_lib_output"></a>
 
 # Module `bitcoin_lib::output`
 
-
-
--  [Struct `Output`](#bitcoin_lib_output_Output)
--  [Constants](#@Constants_0)
--  [Function `new`](#bitcoin_lib_output_new)
--  [Function `amount_bytes`](#bitcoin_lib_output_amount_bytes)
--  [Function `amount`](#bitcoin_lib_output_amount)
--  [Function `script_pubkey`](#bitcoin_lib_output_script_pubkey)
--  [Function `is_P2SH`](#bitcoin_lib_output_is_P2SH)
--  [Function `is_P2WSH`](#bitcoin_lib_output_is_P2WSH)
--  [Function `is_P2PHK`](#bitcoin_lib_output_is_P2PHK)
--  [Function `is_op_return`](#bitcoin_lib_output_is_op_return)
--  [Function `is_P2WPHK`](#bitcoin_lib_output_is_P2WPHK)
--  [Function `is_taproot`](#bitcoin_lib_output_is_taproot)
--  [Function `extract_public_key_hash`](#bitcoin_lib_output_extract_public_key_hash)
--  [Function `extract_script_hash`](#bitcoin_lib_output_extract_script_hash)
--  [Function `extract_witness_script_hash`](#bitcoin_lib_output_extract_witness_script_hash)
--  [Function `extract_taproot`](#bitcoin_lib_output_extract_taproot)
--  [Function `op_return`](#bitcoin_lib_output_op_return)
--  [Function `decode`](#bitcoin_lib_output_decode)
--  [Function `encode`](#bitcoin_lib_output_encode)
-
+- [Struct `Output`](#bitcoin_lib_output_Output)
+- [Constants](#@Constants_0)
+- [Function `new`](#bitcoin_lib_output_new)
+- [Function `amount_bytes`](#bitcoin_lib_output_amount_bytes)
+- [Function `amount`](#bitcoin_lib_output_amount)
+- [Function `script_pubkey`](#bitcoin_lib_output_script_pubkey)
+- [Function `is_P2SH`](#bitcoin_lib_output_is_P2SH)
+- [Function `is_P2WSH`](#bitcoin_lib_output_is_P2WSH)
+- [Function `is_P2PHK`](#bitcoin_lib_output_is_P2PHK)
+- [Function `is_op_return`](#bitcoin_lib_output_is_op_return)
+- [Function `is_P2WPHK`](#bitcoin_lib_output_is_P2WPHK)
+- [Function `is_taproot`](#bitcoin_lib_output_is_taproot)
+- [Function `extract_public_key_hash`](#bitcoin_lib_output_extract_public_key_hash)
+- [Function `extract_script_hash`](#bitcoin_lib_output_extract_script_hash)
+- [Function `extract_witness_script_hash`](#bitcoin_lib_output_extract_witness_script_hash)
+- [Function `extract_taproot`](#bitcoin_lib_output_extract_taproot)
+- [Function `op_return`](#bitcoin_lib_output_op_return)
+- [Function `decode`](#bitcoin_lib_output_decode)
+- [Function `encode`](#bitcoin_lib_output_encode)
 
 <pre><code><b>use</b> <a href="../bitcoin_lib/encoding.md#bitcoin_lib_encoding">bitcoin_lib::encoding</a>;
 <b>use</b> <a href="../bitcoin_lib/reader.md#bitcoin_lib_reader">bitcoin_lib::reader</a>;
@@ -33,23 +29,17 @@
 <b>use</b> <a href="../dependencies/std/vector.md#std_vector">std::vector</a>;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_output_Output"></a>
 
 ## Struct `Output`
 
 Output in btc transaction
 
-
 <pre><code><b>public</b> <b>struct</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">Output</a> <b>has</b> <b>copy</b>, drop, store
 </code></pre>
 
-
-
 <details>
 <summary>Fields</summary>
-
 
 <dl>
 <dt>
@@ -69,165 +59,113 @@ Output in btc transaction
 </dd>
 </dl>
 
-
 </details>
 
 <a name="@Constants_0"></a>
 
 ## Constants
 
-
 <a name="bitcoin_lib_output_OP_0"></a>
 
 An empty array of bytes is pushed onto the stack. (This is not a no-op: an item is added to the stack.)
 
-
 <pre><code><b>const</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_OP_0">OP_0</a>: u8 = 0;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_output_OP_1"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_OP_1">OP_1</a>: u8 = 81;
 </code></pre>
-
-
 
 <a name="bitcoin_lib_output_OP_DUP"></a>
 
 Duplicates the top stack item
 
-
 <pre><code><b>const</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_OP_DUP">OP_DUP</a>: u8 = 118;
 </code></pre>
-
-
 
 <a name="bitcoin_lib_output_OP_HASH160"></a>
 
 Pop the top stack item and push its RIPEMD(SHA256(top item)) hash
 
-
 <pre><code><b>const</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_OP_HASH160">OP_HASH160</a>: u8 = 169;
 </code></pre>
-
-
 
 <a name="bitcoin_lib_output_OP_DATA_20"></a>
 
 Push the next 20 bytes as an array onto the stack
 
-
 <pre><code><b>const</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_OP_DATA_20">OP_DATA_20</a>: u8 = 20;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_output_OP_DATA_32"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_OP_DATA_32">OP_DATA_32</a>: u8 = 32;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_output_OP_EQUAL"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_OP_EQUAL">OP_EQUAL</a>: u8 = 135;
 </code></pre>
-
-
 
 <a name="bitcoin_lib_output_OP_EQUALVERIFY"></a>
 
 Returns success if the inputs are exactly equal, failure otherwise
 
-
 <pre><code><b>const</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_OP_EQUALVERIFY">OP_EQUALVERIFY</a>: u8 = 136;
 </code></pre>
-
-
 
 <a name="bitcoin_lib_output_OP_CHECKSIG"></a>
 
 https://en.bitcoin.it/wiki/OP_CHECKSIG pushing 1/0 for success/failure
 
-
 <pre><code><b>const</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_OP_CHECKSIG">OP_CHECKSIG</a>: u8 = 172;
 </code></pre>
-
-
 
 <a name="bitcoin_lib_output_OP_RETURN"></a>
 
 nulldata script
 
-
 <pre><code><b>const</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_OP_RETURN">OP_RETURN</a>: u8 = 106;
 </code></pre>
-
-
 
 <a name="bitcoin_lib_output_OP_PUSHDATA4"></a>
 
 Read the next 4 bytes as N. Push the next N bytes as an array onto the stack.
 
-
 <pre><code><b>const</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_OP_PUSHDATA4">OP_PUSHDATA4</a>: u8 = 78;
 </code></pre>
-
-
 
 <a name="bitcoin_lib_output_OP_PUSHDATA2"></a>
 
 Read the next 2 bytes as N. Push the next N bytes as an array onto the stack.
 
-
 <pre><code><b>const</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_OP_PUSHDATA2">OP_PUSHDATA2</a>: u8 = 77;
 </code></pre>
-
-
 
 <a name="bitcoin_lib_output_OP_PUSHDATA1"></a>
 
 Read the next byte as N. Push the next N bytes as an array onto the stack.
 
-
 <pre><code><b>const</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_OP_PUSHDATA1">OP_PUSHDATA1</a>: u8 = 76;
 </code></pre>
-
-
 
 <a name="bitcoin_lib_output_OP_DATA_75"></a>
 
 Push the next 75 bytes onto the stack.
 
-
 <pre><code><b>const</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_OP_DATA_75">OP_DATA_75</a>: u8 = 75;
 </code></pre>
-
-
 
 <a name="bitcoin_lib_output_new"></a>
 
 ## Function `new`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_new">new</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output_amount">amount</a>: u64, <a href="../bitcoin_lib/output.md#bitcoin_lib_output_script_pubkey">script_pubkey</a>: vector&lt;u8&gt;): <a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">bitcoin_lib::output::Output</a>
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_new">new</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output_amount">amount</a>: u64, <a href="../bitcoin_lib/output.md#bitcoin_lib_output_script_pubkey">script_pubkey</a>: vector&lt;u8&gt;): <a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">Output</a> {
     <a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">Output</a> {
@@ -238,31 +176,22 @@ Push the next 75 bytes onto the stack.
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_output_amount_bytes"></a>
 
 ## Function `amount_bytes`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_amount_bytes">amount_bytes</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">bitcoin_lib::output::Output</a>): vector&lt;u8&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_amount_bytes">amount_bytes</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">Output</a>): vector&lt;u8&gt; {
     <a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>.<a href="../bitcoin_lib/output.md#bitcoin_lib_output_amount_bytes">amount_bytes</a>
 }
 </code></pre>
-
-
 
 </details>
 
@@ -270,23 +199,16 @@ Push the next 75 bytes onto the stack.
 
 ## Function `amount`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_amount">amount</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">bitcoin_lib::output::Output</a>): u64
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_amount">amount</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">Output</a>): u64 {
     <a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>.<a href="../bitcoin_lib/output.md#bitcoin_lib_output_amount">amount</a>
 }
 </code></pre>
-
-
 
 </details>
 
@@ -294,23 +216,16 @@ Push the next 75 bytes onto the stack.
 
 ## Function `script_pubkey`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_script_pubkey">script_pubkey</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">bitcoin_lib::output::Output</a>): vector&lt;u8&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_script_pubkey">script_pubkey</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">Output</a>): vector&lt;u8&gt; {
     <a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>.<a href="../bitcoin_lib/output.md#bitcoin_lib_output_script_pubkey">script_pubkey</a>
 }
 </code></pre>
-
-
 
 </details>
 
@@ -318,16 +233,11 @@ Push the next 75 bytes onto the stack.
 
 ## Function `is_P2SH`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_is_P2SH">is_P2SH</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">bitcoin_lib::output::Output</a>): bool
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_is_P2SH">is_P2SH</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">Output</a>): bool {
     <b>let</b> script = <a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>.<a href="../bitcoin_lib/output.md#bitcoin_lib_output_script_pubkey">script_pubkey</a>();
@@ -338,24 +248,17 @@ Push the next 75 bytes onto the stack.
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_output_is_P2WSH"></a>
 
 ## Function `is_P2WSH`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_is_P2WSH">is_P2WSH</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">bitcoin_lib::output::Output</a>): bool
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_is_P2WSH">is_P2WSH</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">Output</a>): bool {
     <b>let</b> script = <a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>.<a href="../bitcoin_lib/output.md#bitcoin_lib_output_script_pubkey">script_pubkey</a>();
@@ -365,24 +268,17 @@ Push the next 75 bytes onto the stack.
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_output_is_P2PHK"></a>
 
 ## Function `is_P2PHK`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_is_P2PHK">is_P2PHK</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">bitcoin_lib::output::Output</a>): bool
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_is_P2PHK">is_P2PHK</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">Output</a>): bool {
     <b>let</b> script = <a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>.<a href="../bitcoin_lib/output.md#bitcoin_lib_output_script_pubkey">script_pubkey</a>();
@@ -395,24 +291,17 @@ Push the next 75 bytes onto the stack.
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_output_is_op_return"></a>
 
 ## Function `is_op_return`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_is_op_return">is_op_return</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">bitcoin_lib::output::Output</a>): bool
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_is_op_return">is_op_return</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">Output</a>): bool {
     <b>let</b> script = <a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>.<a href="../bitcoin_lib/output.md#bitcoin_lib_output_script_pubkey">script_pubkey</a>;
@@ -420,24 +309,17 @@ Push the next 75 bytes onto the stack.
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_output_is_P2WPHK"></a>
 
 ## Function `is_P2WPHK`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_is_P2WPHK">is_P2WPHK</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">bitcoin_lib::output::Output</a>): bool
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_is_P2WPHK">is_P2WPHK</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">Output</a>): bool {
     <b>let</b> script = <a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>.<a href="../bitcoin_lib/output.md#bitcoin_lib_output_script_pubkey">script_pubkey</a>;
@@ -447,24 +329,17 @@ Push the next 75 bytes onto the stack.
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_output_is_taproot"></a>
 
 ## Function `is_taproot`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_is_taproot">is_taproot</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">bitcoin_lib::output::Output</a>): bool
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_is_taproot">is_taproot</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">Output</a>): bool {
     <b>let</b> script = <a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>.<a href="../bitcoin_lib/output.md#bitcoin_lib_output_script_pubkey">script_pubkey</a>;
@@ -473,8 +348,6 @@ Push the next 75 bytes onto the stack.
 	script[1] == <a href="../bitcoin_lib/output.md#bitcoin_lib_output_OP_DATA_32">OP_DATA_32</a>
 }
 </code></pre>
-
-
 
 </details>
 
@@ -485,15 +358,11 @@ Push the next 75 bytes onto the stack.
 extracts public key hash (PKH) from the output in P2PHK or P2WPKH
 returns an empty vector in case it was not able to extract it
 
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_extract_public_key_hash">extract_public_key_hash</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">bitcoin_lib::output::Output</a>): <a href="../dependencies/std/option.md#std_option_Option">std::option::Option</a>&lt;vector&lt;u8&gt;&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_extract_public_key_hash">extract_public_key_hash</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">Output</a>): Option&lt;vector&lt;u8&gt;&gt; {
     <b>let</b> script = <a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>.<a href="../bitcoin_lib/output.md#bitcoin_lib_output_script_pubkey">script_pubkey</a>;
@@ -506,24 +375,17 @@ returns an empty vector in case it was not able to extract it
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_output_extract_script_hash"></a>
 
 ## Function `extract_script_hash`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_extract_script_hash">extract_script_hash</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">bitcoin_lib::output::Output</a>): <a href="../dependencies/std/option.md#std_option_Option">std::option::Option</a>&lt;vector&lt;u8&gt;&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_extract_script_hash">extract_script_hash</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">Output</a>): Option&lt;vector&lt;u8&gt;&gt; {
     <b>let</b> script = <a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>.<a href="../bitcoin_lib/output.md#bitcoin_lib_output_script_pubkey">script_pubkey</a>;
@@ -535,24 +397,17 @@ returns an empty vector in case it was not able to extract it
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_output_extract_witness_script_hash"></a>
 
 ## Function `extract_witness_script_hash`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_extract_witness_script_hash">extract_witness_script_hash</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">bitcoin_lib::output::Output</a>): <a href="../dependencies/std/option.md#std_option_Option">std::option::Option</a>&lt;vector&lt;u8&gt;&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_extract_witness_script_hash">extract_witness_script_hash</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">Output</a>): Option&lt;vector&lt;u8&gt;&gt; {
     <b>let</b> script = <a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>.<a href="../bitcoin_lib/output.md#bitcoin_lib_output_script_pubkey">script_pubkey</a>;
@@ -564,24 +419,17 @@ returns an empty vector in case it was not able to extract it
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_output_extract_taproot"></a>
 
 ## Function `extract_taproot`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_extract_taproot">extract_taproot</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">bitcoin_lib::output::Output</a>): <a href="../dependencies/std/option.md#std_option_Option">std::option::Option</a>&lt;vector&lt;u8&gt;&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_extract_taproot">extract_taproot</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">Output</a>): Option&lt;vector&lt;u8&gt;&gt; {
     <b>let</b> script = <a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>.<a href="../bitcoin_lib/output.md#bitcoin_lib_output_script_pubkey">script_pubkey</a>;
@@ -592,8 +440,6 @@ returns an empty vector in case it was not able to extract it
     }
 }
 </code></pre>
-
-
 
 </details>
 
@@ -607,15 +453,11 @@ If transaction is mined, then this must pass basic conditions
 including the conditions for OP_RETURN script.
 This is why we only return the message without check size message.
 
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_op_return">op_return</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">bitcoin_lib::output::Output</a>): <a href="../dependencies/std/option.md#std_option_Option">std::option::Option</a>&lt;vector&lt;u8&gt;&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_op_return">op_return</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">Output</a>): Option&lt;vector&lt;u8&gt;&gt; {
     <b>let</b> script = <a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>.<a href="../bitcoin_lib/output.md#bitcoin_lib_output_script_pubkey">script_pubkey</a>;
@@ -644,24 +486,17 @@ This is why we only return the message without check size message.
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_output_decode"></a>
 
 ## Function `decode`
 
-
-
 <pre><code><b>public</b>(package) <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_decode">decode</a>(r: &<b>mut</b> <a href="../bitcoin_lib/reader.md#bitcoin_lib_reader_Reader">bitcoin_lib::reader::Reader</a>): <a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">bitcoin_lib::output::Output</a>
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b>(package) <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_decode">decode</a>(r: &<b>mut</b> Reader): <a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">Output</a> {
     <b>let</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_amount_bytes">amount_bytes</a> = r.read(8);
@@ -675,24 +510,17 @@ This is why we only return the message without check size message.
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_output_encode"></a>
 
 ## Function `encode`
 
-
-
 <pre><code><b>public</b>(package) <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_encode">encode</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">bitcoin_lib::output::Output</a>): vector&lt;u8&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b>(package) <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output_encode">encode</a>(<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">Output</a>): vector&lt;u8&gt; {
     <b>let</b> <b>mut</b> raw_output = vector[];
@@ -702,7 +530,5 @@ This is why we only return the message without check size message.
     raw_output
 }
 </code></pre>
-
-
 
 </details>

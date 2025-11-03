@@ -1,24 +1,20 @@
-
 <a name="bitcoin_lib_utxo"></a>
 
 # Module `bitcoin_lib::utxo`
 
-
-
--  [Struct `OutPoint`](#bitcoin_lib_utxo_OutPoint)
--  [Struct `Data`](#bitcoin_lib_utxo_Data)
--  [Constants](#@Constants_0)
--  [Function `new_outpoint`](#bitcoin_lib_utxo_new_outpoint)
--  [Function `from_input`](#bitcoin_lib_utxo_from_input)
--  [Function `new_data`](#bitcoin_lib_utxo_new_data)
--  [Function `new`](#bitcoin_lib_utxo_new)
--  [Function `tx_id`](#bitcoin_lib_utxo_tx_id)
--  [Function `vout`](#bitcoin_lib_utxo_vout)
--  [Function `output`](#bitcoin_lib_utxo_output)
--  [Function `height`](#bitcoin_lib_utxo_height)
--  [Function `is_coinbase`](#bitcoin_lib_utxo_is_coinbase)
--  [Function `pkh`](#bitcoin_lib_utxo_pkh)
-
+- [Struct `OutPoint`](#bitcoin_lib_utxo_OutPoint)
+- [Struct `Data`](#bitcoin_lib_utxo_Data)
+- [Constants](#@Constants_0)
+- [Function `new_outpoint`](#bitcoin_lib_utxo_new_outpoint)
+- [Function `from_input`](#bitcoin_lib_utxo_from_input)
+- [Function `new_data`](#bitcoin_lib_utxo_new_data)
+- [Function `new`](#bitcoin_lib_utxo_new)
+- [Function `tx_id`](#bitcoin_lib_utxo_tx_id)
+- [Function `vout`](#bitcoin_lib_utxo_vout)
+- [Function `output`](#bitcoin_lib_utxo_output)
+- [Function `height`](#bitcoin_lib_utxo_height)
+- [Function `is_coinbase`](#bitcoin_lib_utxo_is_coinbase)
+- [Function `pkh`](#bitcoin_lib_utxo_pkh)
 
 <pre><code><b>use</b> <a href="../bitcoin_lib/encoding.md#bitcoin_lib_encoding">bitcoin_lib::encoding</a>;
 <b>use</b> <a href="../bitcoin_lib/input.md#bitcoin_lib_input">bitcoin_lib::input</a>;
@@ -29,8 +25,6 @@
 <b>use</b> <a href="../dependencies/std/vector.md#std_vector">std::vector</a>;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_utxo_OutPoint"></a>
 
 ## Struct `OutPoint`
@@ -39,15 +33,11 @@ We represent UTXOs as a map of {key: OutPoint, value: Data}
 OutPoint is a name used to identify UTXO in bitcoind
 OutPoint is a UTXO ID
 
-
 <pre><code><b>public</b> <b>struct</b> <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_OutPoint">OutPoint</a> <b>has</b> <b>copy</b>, drop, store
 </code></pre>
 
-
-
 <details>
 <summary>Fields</summary>
-
 
 <dl>
 <dt>
@@ -62,7 +52,6 @@ OutPoint is a UTXO ID
 </dd>
 </dl>
 
-
 </details>
 
 <a name="bitcoin_lib_utxo_Data"></a>
@@ -71,15 +60,11 @@ OutPoint is a UTXO ID
 
 Data is a UTXO value
 
-
 <pre><code><b>public</b> <b>struct</b> <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_Data">Data</a> <b>has</b> <b>copy</b>, drop, store
 </code></pre>
 
-
-
 <details>
 <summary>Fields</summary>
-
 
 <dl>
 <dt>
@@ -99,53 +84,36 @@ Data is a UTXO value
 </dd>
 </dl>
 
-
 </details>
 
 <a name="@Constants_0"></a>
 
 ## Constants
 
-
 <a name="bitcoin_lib_utxo_OP_0"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_OP_0">OP_0</a>: u8 = 0;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_utxo_OP_DATA_20"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_OP_DATA_20">OP_DATA_20</a>: u8 = 20;
 </code></pre>
-
-
 
 <a name="bitcoin_lib_utxo_new_outpoint"></a>
 
 ## Function `new_outpoint`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_new_outpoint">new_outpoint</a>(<a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_tx_id">tx_id</a>: vector&lt;u8&gt;, <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_vout">vout</a>: u32): <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_OutPoint">bitcoin_lib::utxo::OutPoint</a>
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_new_outpoint">new_outpoint</a>(<a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_tx_id">tx_id</a>: vector&lt;u8&gt;, <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_vout">vout</a>: u32): <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_OutPoint">OutPoint</a> {
     <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_OutPoint">OutPoint</a> { <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_tx_id">tx_id</a>, <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_vout">vout</a> }
 }
 </code></pre>
-
-
 
 </details>
 
@@ -153,16 +121,11 @@ Data is a UTXO value
 
 ## Function `from_input`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_from_input">from_input</a>(<a href="../bitcoin_lib/input.md#bitcoin_lib_input">input</a>: &<a href="../bitcoin_lib/input.md#bitcoin_lib_input_Input">bitcoin_lib::input::Input</a>): <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_OutPoint">bitcoin_lib::utxo::OutPoint</a>
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_from_input">from_input</a>(<a href="../bitcoin_lib/input.md#bitcoin_lib_input">input</a>: &Input): <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_OutPoint">OutPoint</a> {
     <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_OutPoint">OutPoint</a> {
@@ -172,31 +135,22 @@ Data is a UTXO value
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_utxo_new_data"></a>
 
 ## Function `new_data`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_new_data">new_data</a>(<a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_height">height</a>: u64, <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_is_coinbase">is_coinbase</a>: bool, <a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: <a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">bitcoin_lib::output::Output</a>): <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_Data">bitcoin_lib::utxo::Data</a>
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_new_data">new_data</a>(<a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_height">height</a>: u64, <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_is_coinbase">is_coinbase</a>: bool, <a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: Output): <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_Data">Data</a> {
     <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_Data">Data</a> { <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_height">height</a>, <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_is_coinbase">is_coinbase</a>, <a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a> }
 }
 </code></pre>
-
-
 
 </details>
 
@@ -204,16 +158,11 @@ Data is a UTXO value
 
 ## Function `new`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_new">new</a>(<a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_tx_id">tx_id</a>: vector&lt;u8&gt;, <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_vout">vout</a>: u32, <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_height">height</a>: u64, <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_is_coinbase">is_coinbase</a>: bool, <a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>: <a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">bitcoin_lib::output::Output</a>): (<a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_OutPoint">bitcoin_lib::utxo::OutPoint</a>, <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_Data">bitcoin_lib::utxo::Data</a>)
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_new">new</a>(
     <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_tx_id">tx_id</a>: vector&lt;u8&gt;,
@@ -226,29 +175,20 @@ Data is a UTXO value
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_utxo_tx_id"></a>
 
 ## Function `tx_id`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_tx_id">tx_id</a>(outpoint: &<a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_OutPoint">bitcoin_lib::utxo::OutPoint</a>): vector&lt;u8&gt;
 </code></pre>
-
-
 
 <details>
 <summary>Implementation</summary>
 
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_tx_id">tx_id</a>(outpoint: &<a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_OutPoint">OutPoint</a>): vector&lt;u8&gt; { outpoint.<a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_tx_id">tx_id</a> }
 </code></pre>
-
-
 
 </details>
 
@@ -256,21 +196,14 @@ Data is a UTXO value
 
 ## Function `vout`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_vout">vout</a>(outpoint: &<a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_OutPoint">bitcoin_lib::utxo::OutPoint</a>): u32
 </code></pre>
-
-
 
 <details>
 <summary>Implementation</summary>
 
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_vout">vout</a>(outpoint: &<a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_OutPoint">OutPoint</a>): u32 { outpoint.<a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_vout">vout</a> }
 </code></pre>
-
-
 
 </details>
 
@@ -278,23 +211,16 @@ Data is a UTXO value
 
 ## Function `output`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>(data: &<a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_Data">bitcoin_lib::utxo::Data</a>): &<a href="../bitcoin_lib/output.md#bitcoin_lib_output_Output">bitcoin_lib::output::Output</a>
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>(data: &<a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_Data">Data</a>): &Output {
     &data.<a href="../bitcoin_lib/output.md#bitcoin_lib_output">output</a>
 }
 </code></pre>
-
-
 
 </details>
 
@@ -302,21 +228,14 @@ Data is a UTXO value
 
 ## Function `height`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_height">height</a>(data: &<a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_Data">bitcoin_lib::utxo::Data</a>): u64
 </code></pre>
-
-
 
 <details>
 <summary>Implementation</summary>
 
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_height">height</a>(data: &<a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_Data">Data</a>): u64 { data.<a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_height">height</a> }
 </code></pre>
-
-
 
 </details>
 
@@ -324,21 +243,14 @@ Data is a UTXO value
 
 ## Function `is_coinbase`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_is_coinbase">is_coinbase</a>(data: &<a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_Data">bitcoin_lib::utxo::Data</a>): bool
 </code></pre>
-
-
 
 <details>
 <summary>Implementation</summary>
 
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_is_coinbase">is_coinbase</a>(data: &<a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_Data">Data</a>): bool { data.<a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_is_coinbase">is_coinbase</a> }
 </code></pre>
-
-
 
 </details>
 
@@ -348,15 +260,11 @@ Data is a UTXO value
 
 Extract pkh from witness program.
 
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_pkh">pkh</a>(data: &<a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_Data">bitcoin_lib::utxo::Data</a>): vector&lt;u8&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_pkh">pkh</a>(data: &<a href="../bitcoin_lib/utxo.md#bitcoin_lib_utxo_Data">Data</a>): vector&lt;u8&gt; {
     // TODO: we should refactor data to Output friendly format.
@@ -372,7 +280,5 @@ Extract pkh from witness program.
     }
 }
 </code></pre>
-
-
 
 </details>

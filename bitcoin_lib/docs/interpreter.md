@@ -1,40 +1,36 @@
-
 <a name="bitcoin_lib_interpreter"></a>
 
 # Module `bitcoin_lib::interpreter`
 
-
-
--  [Struct `EvalResult`](#bitcoin_lib_interpreter_EvalResult)
--  [Struct `TransactionContext`](#bitcoin_lib_interpreter_TransactionContext)
--  [Struct `Interpreter`](#bitcoin_lib_interpreter_Interpreter)
--  [Constants](#@Constants_0)
--  [Function `is_success`](#bitcoin_lib_interpreter_is_success)
--  [Function `error`](#bitcoin_lib_interpreter_error)
--  [Function `new_tx_context`](#bitcoin_lib_interpreter_new_tx_context)
--  [Function `new_ip_with_context`](#bitcoin_lib_interpreter_new_ip_with_context)
--  [Function `run`](#bitcoin_lib_interpreter_run)
--  [Function `eval`](#bitcoin_lib_interpreter_eval)
--  [Function `isInvalidOptCode`](#bitcoin_lib_interpreter_isInvalidOptCode)
--  [Function `isBitcoinCoreInternalOpCode`](#bitcoin_lib_interpreter_isBitcoinCoreInternalOpCode)
--  [Function `isSuccess`](#bitcoin_lib_interpreter_isSuccess)
--  [Function `cast_to_bool`](#bitcoin_lib_interpreter_cast_to_bool)
--  [Function `op_push_empty_vector`](#bitcoin_lib_interpreter_op_push_empty_vector)
--  [Function `op_push_n_bytes`](#bitcoin_lib_interpreter_op_push_n_bytes)
--  [Function `op_push_small_int`](#bitcoin_lib_interpreter_op_push_small_int)
--  [Function `op_equal`](#bitcoin_lib_interpreter_op_equal)
--  [Function `op_equal_verify`](#bitcoin_lib_interpreter_op_equal_verify)
--  [Function `op_dup`](#bitcoin_lib_interpreter_op_dup)
--  [Function `op_drop`](#bitcoin_lib_interpreter_op_drop)
--  [Function `op_size`](#bitcoin_lib_interpreter_op_size)
--  [Function `op_swap`](#bitcoin_lib_interpreter_op_swap)
--  [Function `op_sha256`](#bitcoin_lib_interpreter_op_sha256)
--  [Function `op_hash256`](#bitcoin_lib_interpreter_op_hash256)
--  [Function `op_checksig`](#bitcoin_lib_interpreter_op_checksig)
--  [Function `create_p2wpkh_scriptcode`](#bitcoin_lib_interpreter_create_p2wpkh_scriptcode)
--  [Function `create_sighash`](#bitcoin_lib_interpreter_create_sighash)
--  [Function `op_hash160`](#bitcoin_lib_interpreter_op_hash160)
-
+- [Struct `EvalResult`](#bitcoin_lib_interpreter_EvalResult)
+- [Struct `TransactionContext`](#bitcoin_lib_interpreter_TransactionContext)
+- [Struct `Interpreter`](#bitcoin_lib_interpreter_Interpreter)
+- [Constants](#@Constants_0)
+- [Function `is_success`](#bitcoin_lib_interpreter_is_success)
+- [Function `error`](#bitcoin_lib_interpreter_error)
+- [Function `new_tx_context`](#bitcoin_lib_interpreter_new_tx_context)
+- [Function `new_ip_with_context`](#bitcoin_lib_interpreter_new_ip_with_context)
+- [Function `run`](#bitcoin_lib_interpreter_run)
+- [Function `eval`](#bitcoin_lib_interpreter_eval)
+- [Function `isInvalidOptCode`](#bitcoin_lib_interpreter_isInvalidOptCode)
+- [Function `isBitcoinCoreInternalOpCode`](#bitcoin_lib_interpreter_isBitcoinCoreInternalOpCode)
+- [Function `isSuccess`](#bitcoin_lib_interpreter_isSuccess)
+- [Function `cast_to_bool`](#bitcoin_lib_interpreter_cast_to_bool)
+- [Function `op_push_empty_vector`](#bitcoin_lib_interpreter_op_push_empty_vector)
+- [Function `op_push_n_bytes`](#bitcoin_lib_interpreter_op_push_n_bytes)
+- [Function `op_push_small_int`](#bitcoin_lib_interpreter_op_push_small_int)
+- [Function `op_equal`](#bitcoin_lib_interpreter_op_equal)
+- [Function `op_equal_verify`](#bitcoin_lib_interpreter_op_equal_verify)
+- [Function `op_dup`](#bitcoin_lib_interpreter_op_dup)
+- [Function `op_drop`](#bitcoin_lib_interpreter_op_drop)
+- [Function `op_size`](#bitcoin_lib_interpreter_op_size)
+- [Function `op_swap`](#bitcoin_lib_interpreter_op_swap)
+- [Function `op_sha256`](#bitcoin_lib_interpreter_op_sha256)
+- [Function `op_hash256`](#bitcoin_lib_interpreter_op_hash256)
+- [Function `op_checksig`](#bitcoin_lib_interpreter_op_checksig)
+- [Function `create_p2wpkh_scriptcode`](#bitcoin_lib_interpreter_create_p2wpkh_scriptcode)
+- [Function `create_sighash`](#bitcoin_lib_interpreter_create_sighash)
+- [Function `op_hash160`](#bitcoin_lib_interpreter_op_hash160)
 
 <pre><code><b>use</b> <a href="../bitcoin_lib/encoding.md#bitcoin_lib_btc_encoding">bitcoin_lib::btc_encoding</a>;
 <b>use</b> <a href="../bitcoin_lib/crypto.md#bitcoin_lib_crypto">bitcoin_lib::crypto</a>;
@@ -54,22 +50,15 @@
 <b>use</b> <a href="../dependencies/sui/ecdsa_k1.md#sui_ecdsa_k1">sui::ecdsa_k1</a>;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_EvalResult"></a>
 
 ## Struct `EvalResult`
 
-
-
 <pre><code><b>public</b> <b>struct</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_EvalResult">EvalResult</a> <b>has</b> <b>copy</b>, drop
 </code></pre>
 
-
-
 <details>
 <summary>Fields</summary>
-
 
 <dl>
 <dt>
@@ -84,23 +73,17 @@
 </dd>
 </dl>
 
-
 </details>
 
 <a name="bitcoin_lib_interpreter_TransactionContext"></a>
 
 ## Struct `TransactionContext`
 
-
-
 <pre><code><b>public</b> <b>struct</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_TransactionContext">TransactionContext</a> <b>has</b> <b>copy</b>, drop
 </code></pre>
 
-
-
 <details>
 <summary>Fields</summary>
-
 
 <dl>
 <dt>
@@ -125,23 +108,17 @@
 </dd>
 </dl>
 
-
 </details>
 
 <a name="bitcoin_lib_interpreter_Interpreter"></a>
 
 ## Struct `Interpreter`
 
-
-
 <pre><code><b>public</b> <b>struct</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">Interpreter</a> <b>has</b> <b>copy</b>, drop
 </code></pre>
 
-
-
 <details>
 <summary>Fields</summary>
-
 
 <dl>
 <dt>
@@ -161,13 +138,11 @@
 </dd>
 </dl>
 
-
 </details>
 
 <a name="@Constants_0"></a>
 
 ## Constants
-
 
 <a name="bitcoin_lib_interpreter_OP_0"></a>
 
@@ -176,356 +151,211 @@ in bitcoin core and in most if not all other references and software related
 to handling BTC scripts.
 https://github.com/btcsuite/btcd/blob/master/txscript/opcode.go
 
-
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_0">OP_0</a>: u8 = 0;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_OP_PUSHBYTES_1"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_PUSHBYTES_1">OP_PUSHBYTES_1</a>: u8 = 1;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_OP_PUSHBYTES_20"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_PUSHBYTES_20">OP_PUSHBYTES_20</a>: u8 = 20;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_OP_PUSHBYTES_75"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_PUSHBYTES_75">OP_PUSHBYTES_75</a>: u8 = 75;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_OP_1"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_1">OP_1</a>: u8 = 81;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_OP_16"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_16">OP_16</a>: u8 = 96;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_OP_DROP"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_DROP">OP_DROP</a>: u8 = 117;
 </code></pre>
-
-
 
 <a name="bitcoin_lib_interpreter_OP_DUP"></a>
 
 Duplicate the top item on the stack.
 
-
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_DUP">OP_DUP</a>: u8 = 118;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_OP_SWAP"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_SWAP">OP_SWAP</a>: u8 = 124;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_OP_SIZE"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_SIZE">OP_SIZE</a>: u8 = 130;
 </code></pre>
-
-
 
 <a name="bitcoin_lib_interpreter_OP_EQUAL"></a>
 
 Compare the top two items on the stack and push 1 if they are equal, 0 otherwise.
 
-
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_EQUAL">OP_EQUAL</a>: u8 = 135;
 </code></pre>
-
-
 
 <a name="bitcoin_lib_interpreter_OP_EQUALVERIFY"></a>
 
 Compare the top two items on the stack and halts the script if they are not equal.
 
-
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_EQUALVERIFY">OP_EQUALVERIFY</a>: u8 = 136;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_OP_SHA256"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_SHA256">OP_SHA256</a>: u8 = 168;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_OP_HASH160"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_HASH160">OP_HASH160</a>: u8 = 169;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_OP_HASH256"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_HASH256">OP_HASH256</a>: u8 = 170;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_OP_CHECKSIG"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_CHECKSIG">OP_CHECKSIG</a>: u8 = 172;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_OP_UNKNOWN187"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_UNKNOWN187">OP_UNKNOWN187</a>: u8 = 187;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_OP_UNKNOWN249"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_UNKNOWN249">OP_UNKNOWN249</a>: u8 = 249;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_OP_SMALLINTEGER"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_SMALLINTEGER">OP_SMALLINTEGER</a>: u8 = 250;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_OP_PUBKEYS"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_PUBKEYS">OP_PUBKEYS</a>: u8 = 251;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_OP_UNKNOWN252"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_UNKNOWN252">OP_UNKNOWN252</a>: u8 = 252;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_OP_PUBKEYHASH"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_PUBKEYHASH">OP_PUBKEYHASH</a>: u8 = 253;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_OP_PUBKEY"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_PUBKEY">OP_PUBKEY</a>: u8 = 254;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_OP_INVALIDOPCODE"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_INVALIDOPCODE">OP_INVALIDOPCODE</a>: u8 = 255;
 </code></pre>
-
-
 
 <a name="bitcoin_lib_interpreter_SIG_VERSION_BASE"></a>
 
 Signature types
 
-
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_SIG_VERSION_BASE">SIG_VERSION_BASE</a>: u8 = 0;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_SIG_VERSION_WITNESS_V0"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_SIG_VERSION_WITNESS_V0">SIG_VERSION_WITNESS_V0</a>: u8 = 1;
 </code></pre>
-
-
 
 <a name="bitcoin_lib_interpreter_SHA256"></a>
 
 Hash types
 
-
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_SHA256">SHA256</a>: u8 = 1;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_SUCCESS"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_SUCCESS">SUCCESS</a>: u64 = 0;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_EEqualVerify"></a>
-
-
 
 <pre><code>#[<a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_error">error</a>]
 <b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_EEqualVerify">EEqualVerify</a>: vector&lt;u8&gt; = b"SCRIPT_ERR_EQUALVERIFY";
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_EUnsupportedSigVersionForChecksig"></a>
-
-
 
 <pre><code>#[<a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_error">error</a>]
 <b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_EUnsupportedSigVersionForChecksig">EUnsupportedSigVersionForChecksig</a>: vector&lt;u8&gt; = b"Unsupported signature version <b>for</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_op_checksig">op_checksig</a>";
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_EInvalidPKHLength"></a>
-
-
 
 <pre><code>#[<a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_error">error</a>]
 <b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_EInvalidPKHLength">EInvalidPKHLength</a>: vector&lt;u8&gt; = b"PHK length must be 20";
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_EPopStackEmpty"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_EPopStackEmpty">EPopStackEmpty</a>: u64 = 1;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_ETopStackEmpty"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_ETopStackEmpty">ETopStackEmpty</a>: u64 = 2;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_EMissingTxCtx"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_EMissingTxCtx">EMissingTxCtx</a>: u64 = 3;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_EInvalidOpcode"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_EInvalidOpcode">EInvalidOpcode</a>: u64 = 4;
 </code></pre>
 
-
-
 <a name="bitcoin_lib_interpreter_EInternalBitcoinCoreOpcode"></a>
-
-
 
 <pre><code><b>const</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_EInternalBitcoinCoreOpcode">EInternalBitcoinCoreOpcode</a>: u64 = 5;
 </code></pre>
-
-
 
 <a name="bitcoin_lib_interpreter_is_success"></a>
 
 ## Function `is_success`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_is_success">is_success</a>(res: &<a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_EvalResult">bitcoin_lib::interpreter::EvalResult</a>): bool
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_is_success">is_success</a>(res: &<a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_EvalResult">EvalResult</a>): bool {
     <b>return</b> res.err == 0 && res.res
 }
 </code></pre>
-
-
 
 </details>
 
@@ -533,23 +363,16 @@ Hash types
 
 ## Function `error`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_error">error</a>(res: &<a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_EvalResult">bitcoin_lib::interpreter::EvalResult</a>): u64
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_error">error</a>(res: &<a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_EvalResult">EvalResult</a>): u64 {
     res.err
 }
 </code></pre>
-
-
 
 </details>
 
@@ -557,16 +380,11 @@ Hash types
 
 ## Function `new_tx_context`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_new_tx_context">new_tx_context</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">bitcoin_lib::tx::Transaction</a>, input_index: u64, amount: u64, sig_version: u8): <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_TransactionContext">bitcoin_lib::interpreter::TransactionContext</a>
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_new_tx_context">new_tx_context</a>(
     <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: Transaction,
@@ -583,24 +401,17 @@ Hash types
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_interpreter_new_ip_with_context"></a>
 
 ## Function `new_ip_with_context`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_new_ip_with_context">new_ip_with_context</a>(<a href="../bitcoin_lib/stack.md#bitcoin_lib_stack">stack</a>: <a href="../bitcoin_lib/stack.md#bitcoin_lib_stack_Stack">bitcoin_lib::stack::Stack</a>, tx_ctx: <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_TransactionContext">bitcoin_lib::interpreter::TransactionContext</a>): <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">bitcoin_lib::interpreter::Interpreter</a>
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_new_ip_with_context">new_ip_with_context</a>(<a href="../bitcoin_lib/stack.md#bitcoin_lib_stack">stack</a>: Stack, tx_ctx: <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_TransactionContext">TransactionContext</a>): <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">Interpreter</a> {
     <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">Interpreter</a> {
@@ -611,8 +422,6 @@ Hash types
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_interpreter_run"></a>
@@ -621,15 +430,11 @@ Hash types
 
 Execute btc script
 
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_run">run</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">bitcoin_lib::tx::Transaction</a>, <a href="../bitcoin_lib/stack.md#bitcoin_lib_stack">stack</a>: <a href="../bitcoin_lib/stack.md#bitcoin_lib_stack_Stack">bitcoin_lib::stack::Stack</a>, script: vector&lt;u8&gt;, input_idx: u64, amount: u64): <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_EvalResult">bitcoin_lib::interpreter::EvalResult</a>
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_run">run</a>(
     <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: Transaction,
@@ -655,24 +460,17 @@ Execute btc script
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_interpreter_eval"></a>
 
 ## Function `eval`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_eval">eval</a>(ip: &<b>mut</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">bitcoin_lib::interpreter::Interpreter</a>, r: <a href="../bitcoin_lib/reader.md#bitcoin_lib_reader_Reader">bitcoin_lib::reader::Reader</a>): <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_EvalResult">bitcoin_lib::interpreter::EvalResult</a>
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_eval">eval</a>(ip: &<b>mut</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">Interpreter</a>, r: Reader): <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_EvalResult">EvalResult</a> {
     ip.<a href="../bitcoin_lib/reader.md#bitcoin_lib_reader">reader</a> = r; // init new  <a href="../bitcoin_lib/reader.md#bitcoin_lib_reader">reader</a>
@@ -726,24 +524,17 @@ Execute btc script
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_interpreter_isInvalidOptCode"></a>
 
 ## Function `isInvalidOptCode`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_isInvalidOptCode">isInvalidOptCode</a>(op: u8): bool
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_isInvalidOptCode">isInvalidOptCode</a>(op: u8): bool {
     op == <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_INVALIDOPCODE">OP_INVALIDOPCODE</a> ||
@@ -751,32 +542,23 @@ Execute btc script
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_interpreter_isBitcoinCoreInternalOpCode"></a>
 
 ## Function `isBitcoinCoreInternalOpCode`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_isBitcoinCoreInternalOpCode">isBitcoinCoreInternalOpCode</a>(op: u8): bool
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_isBitcoinCoreInternalOpCode">isBitcoinCoreInternalOpCode</a>(op: u8): bool {
     op == <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_UNKNOWN252">OP_UNKNOWN252</a> || op == <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_SMALLINTEGER">OP_SMALLINTEGER</a> ||
         op == <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_PUBKEY">OP_PUBKEY</a> || op == <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_PUBKEYS">OP_PUBKEYS</a> || op == <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_PUBKEYHASH">OP_PUBKEYHASH</a>
 }
 </code></pre>
-
-
 
 </details>
 
@@ -788,15 +570,11 @@ check evaluate is valid
 evaluation valid if the stack not empty
 and top element is non zero value
 
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_isSuccess">isSuccess</a>(ip: &<a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">bitcoin_lib::interpreter::Interpreter</a>): bool
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_isSuccess">isSuccess</a>(ip: &<a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">Interpreter</a>): bool {
     <b>if</b> (ip.<a href="../bitcoin_lib/stack.md#bitcoin_lib_stack">stack</a>.is_empty()) {
@@ -807,24 +585,17 @@ and top element is non zero value
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_interpreter_cast_to_bool"></a>
 
 ## Function `cast_to_bool`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_cast_to_bool">cast_to_bool</a>(v: &vector&lt;u8&gt;): bool
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_cast_to_bool">cast_to_bool</a>(v: &vector&lt;u8&gt;): bool {
     <b>let</b> <b>mut</b> i = 0;
@@ -840,24 +611,17 @@ and top element is non zero value
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_interpreter_op_push_empty_vector"></a>
 
 ## Function `op_push_empty_vector`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_op_push_empty_vector">op_push_empty_vector</a>(ip: &<b>mut</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">bitcoin_lib::interpreter::Interpreter</a>): u64
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_op_push_empty_vector">op_push_empty_vector</a>(ip: &<b>mut</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">Interpreter</a>): u64 {
     ip.<a href="../bitcoin_lib/stack.md#bitcoin_lib_stack">stack</a>.push(vector[]);
@@ -865,24 +629,17 @@ and top element is non zero value
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_interpreter_op_push_n_bytes"></a>
 
 ## Function `op_push_n_bytes`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_op_push_n_bytes">op_push_n_bytes</a>(ip: &<b>mut</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">bitcoin_lib::interpreter::Interpreter</a>, num_bytes_to_push: u8): u64
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_op_push_n_bytes">op_push_n_bytes</a>(ip: &<b>mut</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">Interpreter</a>, num_bytes_to_push: u8): u64 {
     <b>let</b> data_to_push = ip.<a href="../bitcoin_lib/reader.md#bitcoin_lib_reader">reader</a>.read(num_bytes_to_push <b>as</b> u64);
@@ -891,24 +648,17 @@ and top element is non zero value
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_interpreter_op_push_small_int"></a>
 
 ## Function `op_push_small_int`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_op_push_small_int">op_push_small_int</a>(ip: &<b>mut</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">bitcoin_lib::interpreter::Interpreter</a>, opcode: u8): u64
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_op_push_small_int">op_push_small_int</a>(ip: &<b>mut</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">Interpreter</a>, opcode: u8): u64 {
     // <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_OP_1">OP_1</a> (81) corresponds to 1  (81 - 81 + 1 = 1)
@@ -919,24 +669,17 @@ and top element is non zero value
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_interpreter_op_equal"></a>
 
 ## Function `op_equal`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_op_equal">op_equal</a>(ip: &<b>mut</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">bitcoin_lib::interpreter::Interpreter</a>): u64
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_op_equal">op_equal</a>(ip: &<b>mut</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">Interpreter</a>): u64 {
     <b>let</b> first_value = ip.<a href="../bitcoin_lib/stack.md#bitcoin_lib_stack">stack</a>.pop();
@@ -954,24 +697,17 @@ and top element is non zero value
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_interpreter_op_equal_verify"></a>
 
 ## Function `op_equal_verify`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_op_equal_verify">op_equal_verify</a>(ip: &<b>mut</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">bitcoin_lib::interpreter::Interpreter</a>): u64
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_op_equal_verify">op_equal_verify</a>(ip: &<b>mut</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">Interpreter</a>): u64 {
     <b>let</b> previous_opcode_result = ip.<a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_op_equal">op_equal</a>();
@@ -984,24 +720,17 @@ and top element is non zero value
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_interpreter_op_dup"></a>
 
 ## Function `op_dup`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_op_dup">op_dup</a>(ip: &<b>mut</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">bitcoin_lib::interpreter::Interpreter</a>): u64
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_op_dup">op_dup</a>(ip: &<b>mut</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">Interpreter</a>): u64 {
     <b>let</b> <b>mut</b> value = ip.<a href="../bitcoin_lib/stack.md#bitcoin_lib_stack">stack</a>.top();
@@ -1014,24 +743,17 @@ and top element is non zero value
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_interpreter_op_drop"></a>
 
 ## Function `op_drop`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_op_drop">op_drop</a>(ip: &<b>mut</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">bitcoin_lib::interpreter::Interpreter</a>): u64
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_op_drop">op_drop</a>(ip: &<b>mut</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">Interpreter</a>): u64 {
     <b>if</b> (ip.<a href="../bitcoin_lib/stack.md#bitcoin_lib_stack">stack</a>.is_empty()) {
@@ -1042,24 +764,17 @@ and top element is non zero value
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_interpreter_op_size"></a>
 
 ## Function `op_size`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_op_size">op_size</a>(ip: &<b>mut</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">bitcoin_lib::interpreter::Interpreter</a>): u64
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_op_size">op_size</a>(ip: &<b>mut</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">Interpreter</a>): u64 {
     <b>let</b> <b>mut</b> top_element = ip.<a href="../bitcoin_lib/stack.md#bitcoin_lib_stack">stack</a>.top();
@@ -1072,24 +787,17 @@ and top element is non zero value
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_interpreter_op_swap"></a>
 
 ## Function `op_swap`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_op_swap">op_swap</a>(ip: &<b>mut</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">bitcoin_lib::interpreter::Interpreter</a>): u64
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_op_swap">op_swap</a>(ip: &<b>mut</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">Interpreter</a>): u64 {
     <b>let</b> <b>mut</b> first_element = ip.<a href="../bitcoin_lib/stack.md#bitcoin_lib_stack">stack</a>.pop();
@@ -1103,24 +811,17 @@ and top element is non zero value
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_interpreter_op_sha256"></a>
 
 ## Function `op_sha256`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_op_sha256">op_sha256</a>(ip: &<b>mut</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">bitcoin_lib::interpreter::Interpreter</a>): u64
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_op_sha256">op_sha256</a>(ip: &<b>mut</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">Interpreter</a>): u64 {
     <b>let</b> <b>mut</b> value = ip.<a href="../bitcoin_lib/stack.md#bitcoin_lib_stack">stack</a>.pop();
@@ -1132,24 +833,17 @@ and top element is non zero value
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_interpreter_op_hash256"></a>
 
 ## Function `op_hash256`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_op_hash256">op_hash256</a>(ip: &<b>mut</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">bitcoin_lib::interpreter::Interpreter</a>): u64
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_op_hash256">op_hash256</a>(ip: &<b>mut</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">Interpreter</a>): u64 {
     <b>let</b> <b>mut</b> value = ip.<a href="../bitcoin_lib/stack.md#bitcoin_lib_stack">stack</a>.pop();
@@ -1161,24 +855,17 @@ and top element is non zero value
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_interpreter_op_checksig"></a>
 
 ## Function `op_checksig`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_op_checksig">op_checksig</a>(ip: &<b>mut</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">bitcoin_lib::interpreter::Interpreter</a>): u64
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_op_checksig">op_checksig</a>(ip: &<b>mut</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">Interpreter</a>): u64 {
     <b>let</b> <b>mut</b> pubkey_bytes = ip.<a href="../bitcoin_lib/stack.md#bitcoin_lib_stack">stack</a>.pop();
@@ -1214,24 +901,17 @@ and top element is non zero value
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_interpreter_create_p2wpkh_scriptcode"></a>
 
 ## Function `create_p2wpkh_scriptcode`
 
-
-
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_create_p2wpkh_scriptcode">create_p2wpkh_scriptcode</a>(pkh: vector&lt;u8&gt;): vector&lt;u8&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_create_p2wpkh_scriptcode">create_p2wpkh_scriptcode</a>(pkh: vector&lt;u8&gt;): vector&lt;u8&gt; {
     <b>assert</b>!(pkh.length() == 20, <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_EInvalidPKHLength">EInvalidPKHLength</a>);
@@ -1246,24 +926,17 @@ and top element is non zero value
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_interpreter_create_sighash"></a>
 
 ## Function `create_sighash`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_create_sighash">create_sighash</a>(ip: &<a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">bitcoin_lib::interpreter::Interpreter</a>, pub_key: vector&lt;u8&gt;, sighash_flag: u8): vector&lt;u8&gt;
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_create_sighash">create_sighash</a>(ip: &<a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">Interpreter</a>, pub_key: vector&lt;u8&gt;, sighash_flag: u8): vector&lt;u8&gt; {
     <b>let</b> ctx = ip.tx_context.borrow();
@@ -1288,24 +961,17 @@ and top element is non zero value
 }
 </code></pre>
 
-
-
 </details>
 
 <a name="bitcoin_lib_interpreter_op_hash160"></a>
 
 ## Function `op_hash160`
 
-
-
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_op_hash160">op_hash160</a>(ip: &<b>mut</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">bitcoin_lib::interpreter::Interpreter</a>): u64
 </code></pre>
 
-
-
 <details>
 <summary>Implementation</summary>
-
 
 <pre><code><b>fun</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_op_hash160">op_hash160</a>(ip: &<b>mut</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_Interpreter">Interpreter</a>): u64 {
     <b>let</b> value = ip.<a href="../bitcoin_lib/stack.md#bitcoin_lib_stack">stack</a>.pop().destroy_or!(<b>abort</b> <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_EPopStackEmpty">EPopStackEmpty</a>);
@@ -1316,7 +982,5 @@ and top element is non zero value
     <a href="../bitcoin_lib/interpreter.md#bitcoin_lib_interpreter_SUCCESS">SUCCESS</a>
 }
 </code></pre>
-
-
 
 </details>
