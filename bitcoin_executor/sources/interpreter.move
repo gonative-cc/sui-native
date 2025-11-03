@@ -2,7 +2,6 @@
 
 module bitcoin_executor::interpreter;
 
-use bitcoin_executor::ripemd160;
 use bitcoin_executor::stack::{Self, Stack};
 use bitcoin_lib::crypto::hash256;
 use bitcoin_lib::encoding::{
@@ -17,6 +16,7 @@ use bitcoin_lib::encoding::{
 use bitcoin_lib::input;
 use bitcoin_lib::output;
 use bitcoin_lib::reader::{Self, Reader};
+use bitcoin_lib::ripemd160;
 use bitcoin_lib::sighash;
 use bitcoin_lib::tx::{Self, Transaction};
 use std::hash::sha2_256;
