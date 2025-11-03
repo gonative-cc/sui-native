@@ -2,7 +2,6 @@
 
 module bitcoin_executor::interpreter;
 
-use bitcoin_executor::btc_encoding;
 use bitcoin_executor::ripemd160;
 use bitcoin_executor::stack::{Self, Stack};
 use bitcoin_lib::crypto::hash256;
@@ -12,7 +11,8 @@ use bitcoin_lib::encoding::{
     vector_true,
     u64_to_cscriptnum,
     zerohash_32bytes,
-    script_to_var_bytes
+    script_to_var_bytes,
+    parse_btc_sig
 };
 use bitcoin_lib::input;
 use bitcoin_lib::output;
@@ -616,7 +616,7 @@ fun op_checksig(ip: &mut Interpreter): u64 {
     };
 
     // https://learnmeabitcoin.com/technical/keys/signature/
-    let (sig_to_verify, sighash_flag) = btc_encoding::parse_btc_sig(&mut sig_bytes);
+    let (sig_to_verify, sighash_flag) = parse_btc_sig(&mut sig_bytes);
 
     if (option::is_none(&ip.tx_context)) { return EMissingTxCtx };
 
