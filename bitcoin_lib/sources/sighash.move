@@ -180,4 +180,14 @@ fun test_create_segwit_preimage_lmb_example() {
 
     assert_eq!(result_preimage, expected_preimage);
 }
+
+#[test]
+fun test_create_p2wpkh_scriptcode() {
+    // data taken from https://learnmeabitcoin.com/technical/keys/signature/
+    let pkh = x"aa966f56de599b4094b61aa68a2b3df9e97e9c48";
+    let expected_script_code = x"76a914aa966f56de599b4094b61aa68a2b3df9e97e9c4888ac";
+    assert_eq!(create_p2wpkh_scriptcode(pkh), expected_script_code);
+}
+
 // TODO: add a test case where user spends two UTXOs
+//

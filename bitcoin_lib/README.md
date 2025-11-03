@@ -3,7 +3,7 @@
 
 <!-- ![Logo!](assets/logo.png) -->
 
-# BTC Parser
+# Bitcoin lib
 
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#wip)
 [![Version](https://img.shields.io/github/tag/gonative-cc/move-bitcoin-spv.svg?style=flat-square)](https://github.com/gonative-cc/move-bitcoin-spv)
