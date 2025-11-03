@@ -9,7 +9,7 @@
 	"scripts": {
 		"lint": "echo \"Error: no linter specified\"",
 		"typecheck": "tsc --noEmit",
-		"format:all": "prettier --no-config -w .",
+		"format:all": "prettier -w .",
 		"format:move": "prettier-move --config .prettier-move.json -w",
 		"format:move-all": "prettier-move --config .prettier-move.json -w **/*.move",
 		"test": "bun test"
