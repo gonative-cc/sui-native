@@ -3,9 +3,9 @@
 #[test_only]
 module nbtc::verify_payment_tests;
 
-use bitcoin_parser::header;
-use bitcoin_parser::reader;
-use bitcoin_parser::tx;
+use bitcoin_lib::header;
+use bitcoin_lib::reader;
+use bitcoin_lib::tx;
 use bitcoin_spv::light_client::new_light_client;
 use nbtc::verify_payment::{verify_payment, ETxNotInBlock};
 use std::unit_test::assert_eq;
