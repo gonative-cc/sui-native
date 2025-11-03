@@ -184,7 +184,7 @@ public fun sign_hash(r: &RedeemRequest, contract: &NbtcContract, input_idx: u32)
             r.inputs,
             r.recipient,
             r.amount,
-            150, // TODO:: Set fee at parameter, or query from oracle
+            0, // TODO:: Set fee at parameter, or query from oracle
         );
         let script_code = create_p2wpkh_scriptcode(
             contract.bitcoin_spend_key.slice(2, 22) // nbtc public key hash
@@ -355,10 +355,10 @@ public fun raw_signed_tx(contract: &NbtcContract, request_id: u64): vector<u8> {
         r.inputs,
         r.recipient,
         r.amount,
-        150, // TODO:: Set fee at parameter, or query from oracle
+        0, // TODO:: Set fee at parameter, or query from oracle
     );
     let dwallet_id = dwallet_cap.dwallet_id();
-    let public_key = contract.dwallet_pks[dwallet_id];
+    let public_key = contract.dwallet_pks[object::id(dwallet_cap)];
 
     let mut witnesses = vector[];
     r.inputs.length().do!(|i| {
@@ -695,10 +695,12 @@ public fun change_fees(_: &AdminCap, contract: &mut NbtcContract, mint_fee: u64)
 public fun add_dwallet_cap(
     _: &AdminCap,
     contract: &mut NbtcContract,
-    spend_key: vector<u8>,
     dwallet_cap: DWalletCap,
+    spend_key: vector<u8>,
+    public_key: vector<u8>,
 ) {
     // TODO: Verify spend_key derive from dwallet public key
+    contract.dwallet_pks.add(object::id(&dwallet_cap), public_key);
     contract.dwallet_caps.add(spend_key, dwallet_cap);
 }
 
@@ -871,4 +873,11 @@ public fun create_redeem_request_for_testing(
                 ),
             },
         )
+}
+
+#[test_only]
+public fun admin_cap_for_testing(ctx: &mut TxContext): AdminCap {
+    AdminCap {
+        id: object::new(ctx),
+    }
 }
