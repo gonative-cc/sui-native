@@ -7,7 +7,7 @@
 
 This repository contains a set of primitive components for on-chain Bitcoin operations:
 
-- [Bitcoin Executor](./sources/executor/) - A Bitcoin simulator written in Sui Move. This inspired from Kostas May Hackathon. More details [here](./docs/bitcoin_executor.md).
+- [Bitcoin Executor](./sources/executor/) - A Bitcoin simulator written in Sui Move. This inspired from Kostas May Hackathon. More details [bitcoin_executor.md](./docs/bitcoin_executor.md).
 
 - [Bitcoin Parser](./sources/bitcoin_parser) - A low-level, foundational utility for parsing and deserializing raw Bitcoin data structures. It handles block headers, transactions, inputs, outputs, and witness data, providing the essential building blocks for the applications.
 
