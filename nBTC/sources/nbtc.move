@@ -170,6 +170,7 @@ public struct RedeemRequest has store {
     recipient: vector<u8>,
     status: RedeemStatus,
     amount: u64,
+    fee: u64,
     inputs: vector<Utxo>,
     sign_hashes: VecMap<u32, vector<u8>>,
     sign_ids: Table<ID, bool>,
@@ -184,7 +185,7 @@ public fun sign_hash(r: &RedeemRequest, contract: &NbtcContract, input_idx: u32)
             r.inputs,
             r.recipient,
             r.amount,
-            0, // TODO:: Set fee at parameter, or query from oracle
+            r.fee, // TODO:: Set fee at parameter, or query from oracle
         );
         let script_code = create_p2wpkh_scriptcode(
             contract.bitcoin_spend_key.slice(2, 22) // nbtc public key hash
@@ -355,9 +356,8 @@ public fun raw_signed_tx(contract: &NbtcContract, request_id: u64): vector<u8> {
         r.inputs,
         r.recipient,
         r.amount,
-        0, // TODO:: Set fee at parameter, or query from oracle
+        r.fee, // TODO:: Set fee at parameter, or query from oracle
     );
-    let dwallet_id = dwallet_cap.dwallet_id();
     let public_key = contract.dwallet_pks[object::id(dwallet_cap)];
 
     let mut witnesses = vector[];
@@ -563,7 +563,7 @@ public fun request_signature_for_input(
 ) {
     // TODO: refactor this code, current struct is fix object ownership error model
     let (sign_id, sign_hash) = {
-        let mut request = contract.redeem_requests.borrow_mut(request_id);
+        let request = contract.redeem_requests.borrow_mut(request_id);
         assert!(request.status().is_signing(), ENotReadlyForSign);
         assert!(request.requested_sign(input_idx), EInputAlredyUsed);
 
@@ -707,6 +707,8 @@ public fun add_dwallet_cap(
 /// Set btc endpoint for deposit on nBTC, and set reserve of this endpoint is zero.
 /// In the case, we use this key before we will enable deposit endpoint again.
 public fun add_spend_key(_: &AdminCap, contract: &mut NbtcContract, key: vector<u8>) {
+    // TODO: add_spend_key and add_dwallet_cap is the same function.
+    // Refactor to one
     let key_idx = contract.inactive_key_idx(key);
     assert!(contract.bitcoin_spend_key != key && key_idx.is_none(), EDuplicatedKey);
 
@@ -851,7 +853,8 @@ public fun create_redeem_request_for_testing(
     redeemer: address,
     recipient: vector<u8>,
     amount: u64,
-    inputs: vector<Utxo>,
+    fee: u64,
+    utxos: vector<Utxo>,
     signatures: vector<vector<u8>>,
     ctx: &mut TxContext,
 ) {
@@ -864,7 +867,8 @@ public fun create_redeem_request_for_testing(
                 recipient,
                 status: RedeemStatus::Signed,
                 amount,
-                inputs,
+                fee,
+                inputs: utxos,
                 sign_hashes: vec_map::empty(),
                 sign_ids: table::new(ctx),
                 signatures_map: vec_map::from_keys_values(
