@@ -14,7 +14,7 @@ use ika_dwallet_2pc_mpc::coordinator::{request_sign, DWalletCoordinator};
 use ika_dwallet_2pc_mpc::coordinator_inner::{VerifiedPresignCap, DWalletCap};
 use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
 use nbtc::helper::compose_withdraw_tx;
-use nbtc::nbtc_utxo::Utxo;
+use nbtc::nbtc_utxo::{Self, Utxo};
 use nbtc::verify_payment::verify_payment;
 use sui::address;
 use sui::balance::{Self, Balance};
@@ -136,6 +136,7 @@ public struct MintEvent has copy, drop {
     // TODO: maybe we should change to bitcoin address format?
     bitcoin_spend_key: vector<u8>,
     btc_tx_id: vector<u8>,
+    utxo_idx: u64,
 }
 
 public struct InactiveDepositEvent has copy, drop {
@@ -274,7 +275,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
 // Helper methods
 //
 
-/// make all checks. Returns (Sui recipient, amount) tuple.
+/// make all checks. Returns (amount, recipient, utxo_idx) tuple.
 /// See mint function for documentation about parameters.
 fun verify_deposit(
     contract: &mut NbtcContract,
@@ -287,7 +288,7 @@ fun verify_deposit(
     // see mint function for information about payload argument.
     _payload: vector<u8>,
     ops_arg: u32,
-): (u64, address) {
+): (u64, address, u64) {
     assert!(contract.version == VERSION, EVersionMismatch);
     assert!(ops_arg == 0 || ops_arg == MINT_OP_APPLY_FEE, EInvalidOpsArg);
     let provided_lc_id = object::id(light_client);
@@ -331,11 +332,13 @@ fun verify_deposit(
         }
     };
 
-    // TODO: extract and record UTXOs
+    // Store UTXO
     let utxo_idx = contract.next_utxo;
+    let utxo = nbtc_utxo::new_utxo(tx_id, 0, amount);
+    contract.utxos.add(utxo_idx, utxo);
     contract.next_utxo = contract.next_utxo + 1;
 
-    (amount, recipient)
+    (amount, recipient, utxo_idx)
 }
 
 /// returns idx of key in in `inactive_spend_keys` or None if the key is not there.
@@ -381,7 +384,7 @@ public fun mint(
     ctx: &mut TxContext,
 ) {
     let spend_key = contract.bitcoin_spend_key;
-    let (mut amount, recipient) = contract.verify_deposit(
+    let (mut amount, recipient, utxo_idx) = contract.verify_deposit(
         light_client,
         spend_key,
         tx_bytes,
@@ -413,8 +416,8 @@ public fun mint(
         amount,
         fee: fee_amount,
         bitcoin_spend_key: spend_key,
-        // TODO: utxo_idx,
-        btc_tx_id: vector[], // TODO: construct tx_id
+        btc_tx_id: vector[], // tx_id is stored in the UTXO itself
+        utxo_idx,
     });
 }
 
@@ -444,7 +447,7 @@ public fun record_inactive_deposit(
     let mut inactive_key_idx = contract.inactive_key_idx(deposit_spend_key);
     assert!(inactive_key_idx.is_some(), EInvalidDepositKey);
 
-    let (amount, recipient) = contract.verify_deposit(
+    let (amount, recipient, _utxo_idx) = contract.verify_deposit(
         light_client,
         deposit_spend_key,
         tx_bytes,
@@ -686,6 +689,25 @@ public fun remove_inactive_spend_key(_: &AdminCap, contract: &mut NbtcContract, 
     assert!(contract.inactive_balances[key_idx] == 0, EBalanceNotEmpty);
     contract.inactive_balances.swap_remove(key_idx);
     contract.inactive_spend_keys.swap_remove(key_idx);
+}
+
+/// Manually add a UTXO to the contract
+public fun add_utxo(
+    _: &AdminCap,
+    contract: &mut NbtcContract,
+    tx_id: vector<u8>,
+    vout: u32,
+    value: u64,
+) {
+    let utxo_idx = contract.next_utxo;
+    let utxo = nbtc_utxo::new_utxo(tx_id, vout, value);
+    contract.utxos.add(utxo_idx, utxo);
+    contract.next_utxo = contract.next_utxo + 1;
+}
+
+/// Remove a UTXO from the contract 
+public fun remove_utxo(_: &AdminCap, contract: &mut NbtcContract, utxo_idx: u64) {
+    contract.utxos.remove(utxo_idx);
 }
 
 //
