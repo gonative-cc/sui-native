@@ -11,7 +11,11 @@ use bitcoin_parser::utils::slice;
 use bitcoin_spv::light_client::LightClient;
 use ika::ika::IKA;
 use ika_dwallet_2pc_mpc::coordinator::{request_sign, DWalletCoordinator};
-use ika_dwallet_2pc_mpc::coordinator_inner::{VerifiedPresignCap, DWalletCap};
+use ika_dwallet_2pc_mpc::coordinator_inner::{
+    VerifiedPresignCap,
+    DWalletCap,
+    VerifiedPartialUserSignatureCap
+};
 use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
 use nbtc::helper::compose_withdraw_tx;
 use nbtc::nbtc_utxo::Utxo;
@@ -473,40 +477,44 @@ public fun record_inactive_deposit(
     });
 }
 
-/// message: payload should sign by Ika
-/// public_nbtc_signature the signature sign by public nbtc dwallet
-/// session_identifier: signing session for this sign request.
-/// payment_ika and payment_sui require for create for signature on Ika.
-/// Ika reponse this request asynchronous in other tx
-public(package) fun request_signature(
-    contract: &NbtcContract,
-    dwallet_coordinator: &mut DWalletCoordinator,
-    presign_cap: VerifiedPresignCap,
-    message: vector<u8>,
-    public_nbtc_signature: vector<u8>,
-    session_identifier: SessionIdentifier,
-    payment_ika: &mut Coin<IKA>,
-    payment_sui: &mut Coin<SUI>,
-    ctx: &mut TxContext,
-): ID {
-    // TODO: Handle case Ika send token back to user if we paid more than require fee.
-    // TODO: Verify dwallet_coordinator corrent coordinator of Ika
-    let spend_key = contract.bitcoin_spend_key;
-    let dwallet_cap = &contract.dwallet_caps[spend_key];
-    let message_approval = dwallet_coordinator.approve_message(dwallet_cap, ECDSA, SHA256, message);
-    let sign_id = dwallet_coordinator.request_sign_and_return_id(
-        presign_cap,
-        message_approval,
-        public_nbtc_signature,
-        session_identifier,
-        payment_ika,
-        payment_sui,
-        ctx,
-    );
-    sign_id
-}
+// /// message: payload should sign by Ika
+// /// public_nbtc_signature the signature sign by public nbtc dwallet
+// /// session_identifier: signing session for this sign request.
+// /// payment_ika and payment_sui require for create for signature on Ika.
+// /// Ika reponse this request asynchronous in other tx
+// public(package) fun request_signature(
+//     contract: &NbtcContract,
+//     dwallet_coordinator: &mut DWalletCoordinator,
+//     presign_cap: VerifiedPresignCap,
+//     message: vector<u8>,
+//     public_nbtc_signature: vector<u8>,
+//     session_identifier: SessionIdentifier,
+//     payment_ika: &mut Coin<IKA>,
+//     payment_sui: &mut Coin<SUI>,
+//     ctx: &mut TxContext,
+// ): ID {
+//     // TODO: Handle case Ika send token back to user if we paid more than require fee.
+//     // TODO: Verify dwallet_coordinator corrent coordinator of Ika
+//     let spend_key = contract.bitcoin_spend_key;
+//     let dwallet_cap = &contract.dwallet_caps[spend_key];
+//     let message_approval = dwallet_coordinator.approve_message(dwallet_cap, ECDSA, SHA256, message);
+//     let sign_id = dwallet_coordinator.request_(
+//         presign_cap,
+//         message_approval,
+//         public_nbtc_signature,
+//         session_identifier,
+//         payment_ika,
+//         payment_sui,
+//         ctx,
+//     );
+//     sign_id
+// }
 
 /// Request signing for specific input in redeem transaction,
+/// partial_user_signature_cap: Create by future request sign
+/// Because we use shared dwallet this is ready public and we don't need to send "user share's"
+/// signarure. The Ika also auto check the message we want to sign is identical between messages
+/// signed by nbtc user share and message we request here.
 /// We will:
 ///  - compute the sign hash for specific input
 ///  - Request signature from Ika
@@ -516,7 +524,7 @@ public fun request_signature_for_input(
     dwallet_coordinator: &mut DWalletCoordinator,
     request_id: u64,
     input_idx: u32,
-    presign_cap: VerifiedPresignCap,
+    partial_user_signature_cap: VerifiedPartialUserSignatureCap,
     session_identifier: SessionIdentifier,
     public_nbtc_signature: vector<u8>,
     payment_ika: &mut Coin<IKA>,
@@ -525,17 +533,25 @@ public fun request_signature_for_input(
 ) {
     // TODO: refactor this code, current struct is fix object ownership error model
     let (sign_id, sign_hash) = {
-        let mut request = contract.redeem_requests.borrow_mut(request_id);
+        let request = contract.redeem_requests.borrow_mut(request_id);
         assert!(request.status().is_signing(), ENotReadlyForSign);
         assert!(request.requested_sign(input_idx), EInputAlredyUsed);
 
         // This should include other information for create sign hash
         let sign_hash = request.sign_hash(contract, input_idx);
-        let sign_id = contract.request_signature(
-            dwallet_coordinator,
-            presign_cap,
+
+        let spend_key = contract.bitcoin_spend_key;
+        let dwallet_cap = &contract.dwallet_caps[spend_key];
+        let message_approval = dwallet_coordinator.approve_message(
+            dwallet_cap,
+            ECDSA,
+            SHA256,
             sign_hash,
-            public_nbtc_signature,
+        );
+
+        let sign_id = dwallet_coordinator.request_sign_with_partial_user_signature_and_return_id(
+            partial_user_signature_cap,
+            message_approval,
             session_identifier,
             payment_ika,
             payment_sui,
