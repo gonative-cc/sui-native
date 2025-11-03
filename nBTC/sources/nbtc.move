@@ -792,3 +792,6 @@ public(package) fun init_for_testing(
 public fun get_fees_collected(contract: &NbtcContract): u64 {
     contract.fees_collected.value()
 }
+
+#[test_only]
+public fun add_utxo_for_test() {}
