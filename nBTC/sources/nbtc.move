@@ -136,7 +136,7 @@ public struct MintEvent has copy, drop {
     // TODO: maybe we should change to bitcoin address format?
     bitcoin_spend_key: vector<u8>,
     btc_tx_id: vector<u8>,
-    utxo_idx: u64,
+    utxo_idx: vector<u64>,
 }
 
 public struct InactiveDepositEvent has copy, drop {
@@ -277,6 +277,8 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
 
 /// make all checks. Returns (amount, recipient, utxo_idx) tuple.
 /// See mint function for documentation about parameters.
+/// TODO: Support multiple UTXOs with the same spending_key in a single transaction.
+/// Currently only handles one UTXO per transaction. Ideally there should be only one
 fun verify_deposit(
     contract: &mut NbtcContract,
     light_client: &LightClient,
@@ -288,7 +290,7 @@ fun verify_deposit(
     // see mint function for information about payload argument.
     _payload: vector<u8>,
     ops_arg: u32,
-): (u64, address, u64) {
+): (u64, address, vector<u64>) {
     assert!(contract.version == VERSION, EVersionMismatch);
     assert!(ops_arg == 0 || ops_arg == MINT_OP_APPLY_FEE, EInvalidOpsArg);
     let provided_lc_id = object::id(light_client);
@@ -338,7 +340,8 @@ fun verify_deposit(
     contract.utxos.add(utxo_idx, utxo);
     contract.next_utxo = contract.next_utxo + 1;
 
-    (amount, recipient, utxo_idx)
+    // Return vector of UTXO indices, currently only one UTXO per transaction
+    (amount, recipient, vector[utxo_idx])
 }
 
 /// returns idx of key in in `inactive_spend_keys` or None if the key is not there.
