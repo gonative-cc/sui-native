@@ -11,7 +11,7 @@ use sui::table::Table;
 const EEmptyUtxoSet: vector<u8> = b"UTXO set cannot be empty";
 
 #[error]
-const EInvalidTxIdLength: vector<u8> = b"Transaction ID must be 32 bytes";
+const EInvalidUtxo: vector<u8> = b"Invalid UTXO";   
 
 #[error]
 const EZeroValue: vector<u8> = b"UTXO value must be greater than zero";
@@ -49,39 +49,34 @@ public fun value(utxo: &Utxo): u64 {
 /// Validates a set of proposed UTXOs for withdrawal request.
 ///
 /// Checks performed:
-/// 1. Ensures UTXO set is not empty
+/// 1. Ensures UTXO on chain set is not empty
 /// 2. Validates each UTXO's structure
 /// 3. Validates that total value is sufficient for withdrawal amount
 /// 4. Validates that all UTXOs exist in the onchain UTXO set
 ///
 public fun validate_utxos(
-    proposed_utxos: &vector<Utxo>,
     onchain_utxos: &Table<u64, Utxo>,
     proposed_indices: &vector<u64>,
     withdrawal_amount: u64,
 ): u64 {
-    assert!(!proposed_utxos.is_empty(), EEmptyUtxoSet);
-    assert!(proposed_utxos.length() == proposed_indices.length(), EEmptyUtxoSet); 
 
-    let len = proposed_utxos.length();
+    assert!(!proposed_indices.is_empty(), EEmptyUtxoSet); 
+
+    let len = proposed_indices.length();
     let mut total_value: u64 = 0;
     let mut i = 0;
 
     while (i < len) {
-        let utxo = &proposed_utxos[i];
         let idx = proposed_indices[i];
 
         // Check UTXO exists in onchain set
-        assert!(onchain_utxos.contains(idx), EEmptyUtxoSet); // TODO: add specific error for this case
+        assert!(onchain_utxos.contains(idx), EInvalidUtxo);
         let onchain_utxo = &onchain_utxos[idx];
 
-        assert!(utxo.tx_id() == onchain_utxo.tx_id(), EInvalidTxIdLength);
-        assert!(utxo.vout() == onchain_utxo.vout(), EInvalidTxIdLength);
-        assert!(utxo.value() == onchain_utxo.value(), EZeroValue);
-
-        assert!(utxo.tx_id().length() == 32, EInvalidTxIdLength);
-        let value = utxo.value();
+        // Validate UTXO structure
+        let value = onchain_utxo.value();
         assert!(value > 0, EZeroValue);
+
         total_value = total_value + value;
         i = i + 1;
     };
@@ -90,3 +85,4 @@ public fun validate_utxos(
 
     total_value
 }
+

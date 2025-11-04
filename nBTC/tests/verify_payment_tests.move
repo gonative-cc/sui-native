@@ -59,7 +59,7 @@ fun verify_payment_happy_cases() {
     let tx_id = transaction.tx_id();
     // Tx: 6dfb16dd580698242bcfd8e433d557ed8c642272a368894de27292a8844a4e75 (Height 303,699)
     // from mainnet
-    let (amount, mut message) = verify_payment(
+    let (amount, mut message, vout) = verify_payment(
         &lc,
         start_block_height,
         proof,
@@ -109,7 +109,7 @@ fun verify_payment_with_P2WPHK_output_happy_cases() {
     );
     let transaction = tx::deserialize(&mut r);
     let tx_id = transaction.tx_id();
-    let (amount, mut message) = verify_payment(
+    let (amount, mut message, vout) = verify_payment(
         &lc,
         start_block_height,
         proof,
@@ -160,7 +160,7 @@ fun verify_payment_with_mutiple_op_return_happy_cases() {
     );
     let transaction = tx::deserialize(&mut r);
     let tx_id = transaction.tx_id();
-    let (amount, mut message) = verify_payment(
+    let (amount, mut message, vout) = verify_payment(
         &lc,
         start_block_height,
         proof,
