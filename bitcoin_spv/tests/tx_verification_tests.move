@@ -3,7 +3,7 @@
 #[test_only]
 module bitcoin_spv::tx_verification_tests;
 
-use bitcoin_parser::header;
+use bitcoin_lib::header;
 use bitcoin_spv::light_client::{new_light_client, LightClient};
 use bitcoin_spv::params;
 use std::unit_test::assert_eq;

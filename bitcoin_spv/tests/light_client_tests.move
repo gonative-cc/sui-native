@@ -3,7 +3,7 @@
 #[test_only]
 module bitcoin_spv::light_client_tests;
 
-use bitcoin_parser::header;
+use bitcoin_lib::header;
 use bitcoin_spv::light_block::new_light_block;
 use bitcoin_spv::light_client::{
     insert_header,

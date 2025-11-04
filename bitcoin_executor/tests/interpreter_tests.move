@@ -3,10 +3,11 @@
 #[test_only]
 module bitcoin_executor::interpreter_tests;
 
-use bitcoin_executor::interpreter::{create_p2wpkh_scriptcode, run};
+use bitcoin_executor::interpreter::run;
 use bitcoin_executor::stack::new_with_data;
-use bitcoin_parser::reader;
-use bitcoin_parser::tx::deserialize;
+use bitcoin_lib::reader;
+use bitcoin_lib::sighash::create_p2wpkh_scriptcode;
+use bitcoin_lib::tx::deserialize;
 use std::unit_test::assert_eq;
 
 #[test]
