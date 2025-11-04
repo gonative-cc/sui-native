@@ -1,9 +1,8 @@
 #[test_only]
 module nbtc::helper_tests;
 
-use bitcoin_executor::interpreter::create_p2wpkh_scriptcode;
-use bitcoin_executor::sighash::create_segwit_preimage;
-use bitcoin_parser::encoding::u64_to_le_bytes;
+use bitcoin_lib::encoding::u64_to_le_bytes;
+use bitcoin_lib::sighash::{create_segwit_preimage, create_p2wpkh_scriptcode};
 use nbtc::helper::compose_withdraw_tx;
 use nbtc::nbtc_tests::setup;
 use nbtc::nbtc_utxo::new_utxo;
