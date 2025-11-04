@@ -79,7 +79,8 @@ const ENotReadlyForSign: vector<u8> = b"redeem tx is not ready for signing";
 #[error]
 const EInputAlredyUsed: vector<u8> = b"this input has been already used in other signature request";
 #[error]
-const ERedeemTxSigningNotCompleted: vector<u8> = b"The signature for the redeem has not been completed";
+const ERedeemTxSigningNotCompleted: vector<u8> =
+    b"The signature for the redeem has not been completed";
 
 //
 // Structs
@@ -347,7 +348,7 @@ fun verify_deposit(
 
 public fun raw_signed_tx(contract: &NbtcContract, request_id: u64): vector<u8> {
     let r = &contract.redeem_requests[request_id];
-    assert!(r.status == RedeemStatus::Signed, ERedemTxNotCompleteSigning);
+    assert!(r.status == RedeemStatus::Signed, ERedeemTxSigningNotCompleted);
 
     let spend_key = contract.bitcoin_spend_key;
     let dwallet_cap = &contract.dwallet_caps[spend_key];
