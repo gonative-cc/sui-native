@@ -1,6 +1,7 @@
 #[test_only]
 module nbtc::e2e_tests;
 
+use ika_common::advance_epoch_approver::create;
 use ika_dwallet_2pc_mpc::ika_dwallet_2pc_mpc_init::{init_for_testing, initialize_for_testing};
 use nbtc::nbtc::NBTC;
 use nbtc::nbtc_tests::setup;
@@ -15,19 +16,20 @@ const ADMIN: address = @0xad;
 
 fun create_dwallet_system(mut scenario: Scenario): Scenario {
     init_for_testing(scenario.ctx());
-    scenario.next_tx(ADMIN);
-    let init_cap = scenario.take_from_sender();
-    let mut advance_epoch_approver = 0;
-    let system_current_status_info = 0;
-    let pricing = 0;
-    initialize_for_testing(
-        init_cap,
-        &mut advance_epoch_approver,
-        &system_current_status_info,
-        pricing,
-        supported_curves_to_signature_algorithms_to_hash_schemes,
-        scenario.ctx(),
-    );
+    // scenario.next_tx(ADMIN);
+    // let init_cap = scenario.take_from_sender();
+    // let mut advance_epoch_approver = create(0, );
+    //
+    // let system_current_status_info = 0;
+    // let pricing = 0;
+    // initialize_for_testing(
+    //     init_cap,
+    //     &mut advance_epoch_approver,
+    //     &system_current_status_info,
+    //     pricing,
+    //     supported_curves_to_signature_algorithms_to_hash_schemes,
+    //     scenario.ctx(),
+    // );
     scenario
 }
 #[test]
