@@ -79,7 +79,7 @@ const ENotReadlyForSign: vector<u8> = b"redeem tx is not ready for signing";
 #[error]
 const EInputAlredyUsed: vector<u8> = b"this input has been already used in other signature request";
 #[error]
-const ERedemTxNotCompleteSigning: vector<u8> = b"Redeem tx not complete signing";
+const ERedeemTxSigningNotCompleted: vector<u8> = b"The signature for the redeem has not been completed";
 
 //
 // Structs
