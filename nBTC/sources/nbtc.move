@@ -26,7 +26,7 @@ use sui::event;
 use sui::sui::SUI;
 use sui::table::{Self, Table};
 use sui::url;
-use sui::vec_map::VecMap;
+use sui::vec_map::{Self, VecMap};
 
 //
 // Constant
@@ -127,6 +127,7 @@ public struct NbtcContract has key, store {
     utxos: Table<u64, Utxo>,
     next_utxo: u64,
     redeem_requests: Table<u64, RedeemRequest>,
+    locked: Table<u64, Coin<NBTC>>,
     next_redeem_req: u64,
 }
 
@@ -259,6 +260,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         fees_collected: balance::zero(),
         next_utxo: 0,
         redeem_requests: table::new<u64, RedeemRequest>(ctx),
+        locked: table::new(ctx),
         next_redeem_req: 0,
     };
     transfer::public_share_object(contract);
@@ -534,14 +536,32 @@ public fun request_signature_for_input(
 /// Returns total amount of redeemed balance.
 public fun redeem(
     contract: &mut NbtcContract,
-    coins: vector<Coin<NBTC>>,
-    _bitcoin_recipient: vector<u8>,
-    _ctx: &mut TxContext,
-): u64 {
+    coin: Coin<NBTC>,
+    bitcoin_recipient: vector<u8>,
+    ctx: &mut TxContext,
+) {
     assert!(contract.version == VERSION, EVersionMismatch);
     // TODO: implement logic to guard burning and manage UTXOs
     // TODO: we can call remove_inactive_spend_key if reserves of this key is zero
-    coins.fold!(0, |total, c| total + coin::burn(&mut contract.cap, c))
+
+    let r = RedeemRequest {
+        redeemer: ctx.sender(),
+        recipient: bitcoin_recipient,
+        amount: coin.value(),
+        inputs: vector::empty(),
+        sign_hashes: vec_map::empty(),
+        sign_ids: table::new(ctx),
+        signatures_map: vec_map::empty(),
+        status: RedeemStatus::Resolving,
+    };
+
+    // TODO: we repeat this logic a lot of time. Consider to create a generic function for this
+    // type.
+    contract.redeem_requests.add(contract.next_redeem_req, r);
+    contract.locked.add(contract.next_redeem_req, coin);
+    contract.next_redeem_req = contract.next_redeem_req + 1;
+
+    // TODO:
 }
 
 // TODO: Implement logic for generate the redeem transaction data
@@ -748,6 +768,7 @@ public(package) fun init_for_testing(
         mint_fee: 10,
         dwallet_caps: table::new(ctx),
         redeem_requests: table::new(ctx),
+        locked: table::new(ctx),
         next_redeem_req: 0,
         next_utxo: 0,
     };
