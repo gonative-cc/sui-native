@@ -10,6 +10,9 @@ bitcoin_parser = {local = "../bitcoin_parser"}
 bitcoin_executor = {local = "../bitcoin_executor"}
 ika_dwallet_2pc_mpc = {git = "https://github.com/gonative-cc/dwallet-network.git", subdir = "contracts/ika_dwallet_2pc_mpc", rev = "feat/unit-test-support"}
 ika = {git = "https://github.com/gonative-cc/dwallet-network.git", subdir = "contracts/ika", rev = "feat/unit-test-support"}
+bitcoin_lib = {local = "../bitcoin_lib"}
+ika_dwallet_2pc_mpc = {git = "https://github.com/dwallet-labs/ika.git", subdir = "contracts/ika_dwallet_2pc_mpc", rev = "main"}
+ika = {git = "https://github.com/dwallet-labs/ika.git", subdir = "contracts/ika", rev = "main"}
 # For remote import, use the `{ git = "...", subdir = "...", rev = "..." }`.
 # Revision can be a branch, a tag, and a commit hash.
 # MyRemotePackage = { git = "https://some.remote/host.git", subdir = "remote/path", rev = "main" }

@@ -3,7 +3,7 @@
 #[test_only]
 module nbtc::nbtc_tests;
 
-use bitcoin_parser::header;
+use bitcoin_lib::header;
 use bitcoin_spv::light_client::{new_light_client, LightClient};
 use nbtc::nbtc::{Self, NbtcContract, EMintAmountIsZero, ETxAlreadyUsed, EAlreadyUpdated, NBTC};
 use std::unit_test::assert_eq;

@@ -2,12 +2,11 @@
 
 module nbtc::nbtc;
 
-use bitcoin_executor::interpreter::create_p2wpkh_scriptcode;
-use bitcoin_executor::sighash::create_segwit_preimage;
-use bitcoin_parser::encoding::u64_to_le_bytes;
-use bitcoin_parser::reader;
-use bitcoin_parser::tx;
-use bitcoin_parser::utils::slice;
+use bitcoin_lib::encoding::u64_to_le_bytes;
+use bitcoin_lib::reader;
+use bitcoin_lib::sighash::{create_segwit_preimage, create_p2wpkh_scriptcode};
+use bitcoin_lib::tx;
+use bitcoin_lib::utils::slice;
 use bitcoin_spv::light_client::LightClient;
 use ika::ika::IKA;
 use ika_dwallet_2pc_mpc::coordinator::{request_sign, DWalletCoordinator};

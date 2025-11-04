@@ -3,7 +3,7 @@
 #[test_only]
 module bitcoin_spv::difficulty_test;
 
-use bitcoin_parser::header;
+use bitcoin_lib::header;
 use bitcoin_spv::btc_math::{bits_to_target, target_to_bits};
 use bitcoin_spv::light_block::new_light_block;
 use bitcoin_spv::light_client::{

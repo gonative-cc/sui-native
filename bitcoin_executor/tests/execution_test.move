@@ -3,8 +3,8 @@
 #[test_only]
 module bitcoin_executor::execution_tests;
 
-use bitcoin_parser::reader;
-use bitcoin_parser::tx;
+use bitcoin_lib::reader;
+use bitcoin_lib::tx;
 
 #[test]
 fun execute_transaction() {
