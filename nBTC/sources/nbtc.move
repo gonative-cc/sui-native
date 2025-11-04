@@ -539,7 +539,7 @@ public fun redeem(
     coin: Coin<NBTC>,
     bitcoin_recipient: vector<u8>,
     ctx: &mut TxContext,
-) {
+): u64 {
     assert!(contract.version == VERSION, EVersionMismatch);
     // TODO: implement logic to guard burning and manage UTXOs
     // TODO: we can call remove_inactive_spend_key if reserves of this key is zero
@@ -557,11 +557,12 @@ public fun redeem(
 
     // TODO: we repeat this logic a lot of time. Consider to create a generic function for this
     // type.
-    contract.redeem_requests.add(contract.next_redeem_req, r);
-    contract.locked.add(contract.next_redeem_req, coin);
-    contract.next_redeem_req = contract.next_redeem_req + 1;
+    let redeem_id = contract.next_redeem_req;
+    contract.redeem_requests.add(redeem_id, r);
+    contract.locked.add(redeem_id, coin);
+    contract.next_redeem_req = redeem_id + 1;
 
-    // TODO:
+    return redeem_id
 }
 
 // TODO: Implement logic for generate the redeem transaction data
@@ -783,4 +784,11 @@ public fun get_fees_collected(contract: &NbtcContract): u64 {
 #[test_only]
 public fun add_utxo_for_test(ctr: &mut NbtcContract, idx: u64, utxo: Utxo) {
     ctr.utxos.add(idx, utxo);
+}
+
+#[test_only]
+public fun move_to_signing(ctr: &mut NbtcContract, request_id: u64, inputs: vector<Utxo>) {
+    let r = &mut ctr.redeem_requests[request_id];
+    r.inputs = inputs;
+    r.status = RedeemStatus::Signing;
 }
