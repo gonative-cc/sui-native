@@ -206,7 +206,7 @@ public fun new_unsign_segwit_tx(inputs: vector<Input>, outputs: vector<Output>):
     }
 }
 
-/// Return raw bytes btc tx. We only support segwit transaction
+/// Returns raw bytes of the btc tx. We only support segwit transaction
 public fun serialize_segwit(tx: &Transaction): vector<u8> {
     let mut raw_tx = vector::empty<u8>();
     raw_tx.append(tx.version);
