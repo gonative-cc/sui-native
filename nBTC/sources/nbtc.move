@@ -477,39 +477,6 @@ public fun record_inactive_deposit(
     });
 }
 
-// /// message: payload should sign by Ika
-// /// public_nbtc_signature the signature sign by public nbtc dwallet
-// /// session_identifier: signing session for this sign request.
-// /// payment_ika and payment_sui require for create for signature on Ika.
-// /// Ika reponse this request asynchronous in other tx
-// public(package) fun request_signature(
-//     contract: &NbtcContract,
-//     dwallet_coordinator: &mut DWalletCoordinator,
-//     presign_cap: VerifiedPresignCap,
-//     message: vector<u8>,
-//     public_nbtc_signature: vector<u8>,
-//     session_identifier: SessionIdentifier,
-//     payment_ika: &mut Coin<IKA>,
-//     payment_sui: &mut Coin<SUI>,
-//     ctx: &mut TxContext,
-// ): ID {
-//     // TODO: Handle case Ika send token back to user if we paid more than require fee.
-//     // TODO: Verify dwallet_coordinator corrent coordinator of Ika
-//     let spend_key = contract.bitcoin_spend_key;
-//     let dwallet_cap = &contract.dwallet_caps[spend_key];
-//     let message_approval = dwallet_coordinator.approve_message(dwallet_cap, ECDSA, SHA256, message);
-//     let sign_id = dwallet_coordinator.request_(
-//         presign_cap,
-//         message_approval,
-//         public_nbtc_signature,
-//         session_identifier,
-//         payment_ika,
-//         payment_sui,
-//         ctx,
-//     );
-//     sign_id
-// }
-
 /// Request signing for specific input in redeem transaction,
 /// partial_user_signature_cap: Create by future request sign
 /// Because we use shared dwallet this is ready public and we don't need to send "user share's"
