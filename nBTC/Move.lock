@@ -9,8 +9,7 @@ dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
   { id = "SuiSystem", name = "SuiSystem" },
-  { id = "bitcoin_executor", name = "bitcoin_executor" },
-  { id = "bitcoin_parser", name = "bitcoin_parser" },
+  { id = "bitcoin_lib", name = "bitcoin_lib" },
   { id = "bitcoin_spv", name = "bitcoin_spv" },
   { id = "ika", name = "ika" },
   { id = "ika_dwallet_2pc_mpc", name = "ika_dwallet_2pc_mpc" },
@@ -48,20 +47,8 @@ dependencies = [
 ]
 
 [[move.package]]
-id = "bitcoin_executor"
-source = { local = "../bitcoin_executor" }
-
-dependencies = [
-  { id = "Bridge", name = "Bridge" },
-  { id = "MoveStdlib", name = "MoveStdlib" },
-  { id = "Sui", name = "Sui" },
-  { id = "SuiSystem", name = "SuiSystem" },
-  { id = "bitcoin_parser", name = "bitcoin_parser" },
-]
-
-[[move.package]]
-id = "bitcoin_parser"
-source = { local = "../bitcoin_parser" }
+id = "bitcoin_lib"
+source = { local = "../bitcoin_lib" }
 
 dependencies = [
   { id = "Bridge", name = "Bridge" },
@@ -79,7 +66,7 @@ dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
   { id = "SuiSystem", name = "SuiSystem" },
-  { id = "bitcoin_parser", name = "bitcoin_parser" },
+  { id = "bitcoin_lib", name = "bitcoin_lib" },
 ]
 
 [[move.package]]

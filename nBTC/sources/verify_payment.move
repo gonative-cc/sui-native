@@ -2,7 +2,7 @@
 
 module nbtc::verify_payment;
 
-use bitcoin_parser::tx::Transaction;
+use bitcoin_lib::tx::Transaction;
 use bitcoin_spv::light_client::LightClient;
 
 #[error]
