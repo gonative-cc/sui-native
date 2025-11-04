@@ -1,6 +1,8 @@
 // TODO: Refactor to bitcoinlib
 module nbtc::nbtc_utxo;
 
+use sui::table::Table;
+
 //
 // Errors
 //
@@ -54,13 +56,12 @@ public fun value(utxo: &Utxo): u64 {
 ///
 public fun validate_utxos(
     proposed_utxos: &vector<Utxo>,
-    onchain_utxos: &sui::table::Table<u64, Utxo>,
+    onchain_utxos: &Table<u64, Utxo>,
     proposed_indices: &vector<u64>,
     withdrawal_amount: u64,
 ): u64 {
-
     assert!(!proposed_utxos.is_empty(), EEmptyUtxoSet);
-    assert!(proposed_utxos.length() == proposed_indices.length(), EEmptyUtxoSet); // Reusing error for simplicity
+    assert!(proposed_utxos.length() == proposed_indices.length(), EEmptyUtxoSet); 
 
     let len = proposed_utxos.length();
     let mut total_value: u64 = 0;
@@ -71,13 +72,12 @@ public fun validate_utxos(
         let idx = proposed_indices[i];
 
         // Check UTXO exists in onchain set
-        assert!(onchain_utxos.contains(idx), EEmptyUtxoSet); // TODO: Add specific error
+        assert!(onchain_utxos.contains(idx), EEmptyUtxoSet); // TODO: add specific error for this case
         let onchain_utxo = &onchain_utxos[idx];
 
-        // Verify UTXO matches what's stored onchain
-        assert!(utxo.tx_id() == onchain_utxo.tx_id(), EInvalidTxIdLength); // TODO: Add specific error
-        assert!(utxo.vout() == onchain_utxo.vout(), EInvalidTxIdLength); // TODO: Add specific error
-        assert!(utxo.value() == onchain_utxo.value(), EZeroValue); // TODO: Add specific error
+        assert!(utxo.tx_id() == onchain_utxo.tx_id(), EInvalidTxIdLength);
+        assert!(utxo.vout() == onchain_utxo.vout(), EInvalidTxIdLength);
+        assert!(utxo.value() == onchain_utxo.value(), EZeroValue);
 
         assert!(utxo.tx_id().length() == 32, EInvalidTxIdLength);
         let value = utxo.value();
