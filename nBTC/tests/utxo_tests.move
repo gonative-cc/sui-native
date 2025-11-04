@@ -99,7 +99,7 @@ fun test_validate_utxos_zero_value() {
     let mut onchain_utxos = table::new<u64, Utxo>(ctx);
 
     let tx_id = x"1111111111111111111111111111111111111111111111111111111111111111";
-    let utxo = nbtc_utxo::new_utxo(tx_id, 0, 0); // Zero value!
+    let utxo = nbtc_utxo::new_utxo(tx_id, 0, 0); 
     onchain_utxos.add(0, utxo);
 
     let mut proposed_utxos = vector::empty<Utxo>();
