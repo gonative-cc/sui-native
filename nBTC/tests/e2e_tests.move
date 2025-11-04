@@ -53,6 +53,12 @@ fun redeem_happy_case() {
     ];
     ctr.move_to_signing(redeem_id, inputs);
 
+    // TODO::
+    // - Create Dwallet Codinator
+    // - Handle sign request
+    // - Update signature
+    // - valiadate the raw tx after signed tx
+    // - bun NBTC token
     destroy(lc);
     destroy(ctr);
     scenario.end();
