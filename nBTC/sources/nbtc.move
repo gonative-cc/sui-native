@@ -12,8 +12,8 @@ use ika::ika::IKA;
 use ika_dwallet_2pc_mpc::coordinator::{request_sign, DWalletCoordinator};
 use ika_dwallet_2pc_mpc::coordinator_inner::{VerifiedPresignCap, DWalletCap};
 use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
-use nbtc::helper::compose_withdraw_tx;
 use nbtc::nbtc_utxo::{Self, Utxo};
+use nbtc::tx_composer::compose_withdraw_tx;
 use nbtc::verify_payment::verify_payment;
 use sui::address;
 use sui::balance::{Self, Balance};
@@ -168,7 +168,7 @@ public struct RedeemRequest has store {
     // TODO: maybe we don't need the ID?
     redeemer: address, // TODO: maybe it's not needed
     /// Bitcoin spent key (address)
-    recipient: vector<u8>,
+    recipient_script: vector<u8>,
     status: RedeemStatus,
     amount: u64,
     fee: u64,
@@ -184,7 +184,7 @@ public fun sign_hash(r: &RedeemRequest, contract: &NbtcContract, input_idx: u32)
         let tx = compose_withdraw_tx(
             contract.bitcoin_spend_key,
             r.inputs,
-            r.recipient,
+            r.recipient_script,
             r.amount,
             r.fee, // TODO:: Set fee at parameter, or query from oracle
         );
@@ -366,7 +366,7 @@ public fun raw_signed_tx(contract: &NbtcContract, request_id: u64): vector<u8> {
     let mut tx = compose_withdraw_tx(
         contract.bitcoin_spend_key,
         r.inputs,
-        r.recipient,
+        r.recipient_script,
         r.amount,
         r.fee, // TODO:: Set fee at parameter, or query from oracle
     );
@@ -880,7 +880,7 @@ public fun create_redeem_request_for_testing(
     contract: &mut NbtcContract,
     request_id: u64,
     redeemer: address,
-    recipient: vector<u8>,
+    recipient_script: vector<u8>,
     amount: u64,
     fee: u64,
     utxos: vector<Utxo>,
@@ -893,7 +893,7 @@ public fun create_redeem_request_for_testing(
             request_id,
             RedeemRequest {
                 redeemer,
-                recipient,
+                recipient_script,
                 status: RedeemStatus::Signed,
                 amount,
                 fee,
