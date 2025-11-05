@@ -132,7 +132,9 @@ public struct NbtcContract has key, store {
     // TODO: probably we should have UTXOs / nbtc pubkey
     utxos: Table<u64, Utxo>,
     next_utxo: u64,
+    // redeem request token for nbtc
     redeem_requests: Table<u64, RedeemRequest>,
+    // lock nbtc for redeem, this is a mapping from request id to nBTC redeem coin
     locked: Table<u64, Coin<NBTC>>,
     next_redeem_req: u64,
 }
@@ -183,17 +185,17 @@ public struct RedeemRequest has store {
 }
 
 /// Returns signature hash for input_idx-th in redeem transaction
-public fun sign_hash(r: &RedeemRequest, contract: &NbtcContract, input_idx: u32): vector<u8> {
+public fun sign_hash(r: &RedeemRequest, bitcoin_spend_key: vector<u8>, input_idx: u32): vector<u8> {
     r.sign_hashes.try_get(&input_idx).extract_or!({
         let tx = compose_withdraw_tx(
-            contract.bitcoin_spend_key,
+            bitcoin_spend_key,
             r.inputs,
             r.recipient,
             r.amount,
             r.fee, // TODO:: Set fee at parameter, or query from oracle
         );
         let script_code = create_p2wpkh_scriptcode(
-            contract.bitcoin_spend_key.slice(2, 22) // nbtc public key hash
+            bitcoin_spend_key.slice(2, 22) // nbtc public key hash
         );
         create_segwit_preimage(
             &tx,
@@ -538,36 +540,31 @@ public fun request_signature_for_input(
     payment_sui: &mut Coin<SUI>,
     ctx: &mut TxContext,
 ) {
-    // TODO: refactor this code, current struct is fix object ownership error model
-    let (sign_id, sign_hash) = {
-        let request = contract.redeem_requests.borrow_mut(request_id);
-        assert!(request.status().is_signing(), ENotReadlyForSign);
-        assert!(request.requested_sign(input_idx), EInputAlredyUsed);
+    let request = &mut contract.redeem_requests[request_id];
+    assert!(request.status().is_signing(), ENotReadlyForSign);
+    assert!(request.requested_sign(input_idx), EInputAlredyUsed);
 
-        // This should include other information for create sign hash
-        let sign_hash = request.sign_hash(contract, input_idx);
+    // This should include other information for create sign hash
+    let sign_hash = request.sign_hash(contract.bitcoin_spend_key, input_idx);
 
-        let spend_key = contract.bitcoin_spend_key;
-        let dwallet_cap = &contract.dwallet_caps[spend_key];
-        let message_approval = dwallet_coordinator.approve_message(
-            dwallet_cap,
-            ECDSA,
-            SHA256,
-            sign_hash,
-        );
+    let spend_key = contract.bitcoin_spend_key;
+    let dwallet_cap = &contract.dwallet_caps[spend_key];
+    let message_approval = dwallet_coordinator.approve_message(
+        dwallet_cap,
+        ECDSA,
+        SHA256,
+        sign_hash,
+    );
 
-        let sign_id = dwallet_coordinator.request_sign_with_partial_user_signature_and_return_id(
-            partial_user_signature_cap,
-            message_approval,
-            session_identifier,
-            payment_ika,
-            payment_sui,
-            ctx,
-        );
-        (sign_id, sign_hash)
-    };
+    let sign_id = dwallet_coordinator.request_sign_with_partial_user_signature_and_return_id(
+        partial_user_signature_cap,
+        message_approval,
+        session_identifier,
+        payment_ika,
+        payment_sui,
+        ctx,
+    );
 
-    let request = contract.redeem_requests.borrow_mut(request_id);
     request.set_sign_data(input_idx, sign_hash, sign_id);
 }
 
