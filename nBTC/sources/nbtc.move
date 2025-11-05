@@ -535,7 +535,6 @@ public fun request_signature_for_input(
     input_idx: u32,
     user_sig_cap: VerifiedPartialUserSignatureCap,
     session_identifier: SessionIdentifier,
-    public_nbtc_signature: vector<u8>,
     payment_ika: &mut Coin<IKA>,
     payment_sui: &mut Coin<SUI>,
     ctx: &mut TxContext,
@@ -557,7 +556,7 @@ public fun request_signature_for_input(
     );
 
     let sign_id = dwallet_coordinator.request_sign_with_partial_user_signature_and_return_id(
-        partial_user_signature_cap,
+        user_sig_cap,
         message_approval,
         session_identifier,
         payment_ika,
