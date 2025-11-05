@@ -305,7 +305,7 @@ fun verify_deposit(
     contract.tx_ids.add(tx_id, true);
     // NOTE: We assume only one active key. We should handle mutiple nbtc active key in the
     // future.
-    let (amount, mut op_return, vout) = verify_payment(
+    let (amount, mut op_return, vouts) = verify_payment(
         light_client,
         height,
         proof,
@@ -333,12 +333,20 @@ fun verify_deposit(
         }
     };
 
-    // TODO: Handle multiple outputs to same receiver address
-    let utxo_idx = contract.next_utxo;
-    add_utxo_to_contract(contract, tx_id, vout , amount);
+    // UTXO for each matched output since vouts is a vector now
+    let o = tx.outputs();
+    let mut utxo_idx = vector[];
+    let mut i = 0;
+    while (i < vouts.length()) {
+        let vout_idx = vouts[i];
+        let o_amount = o[vout_idx as u64].amount();
+        let utxo_idx_next = contract.next_utxo;
+        add_utxo_to_contract(contract, tx_id, vout_idx, o_amount);
+        utxo_idx.push_back(utxo_idx_next);
+        i = i + 1;
+    };
 
-    // Return vector of UTXO indices, currently only one UTXO per transaction
-    (amount, recipient, vector[utxo_idx])
+    (amount, recipient, utxo_idx)
 }
 
 /// returns idx of key in in `inactive_spend_keys` or None if the key is not there.

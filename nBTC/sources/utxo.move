@@ -73,11 +73,7 @@ public fun validate_utxos(
         assert!(onchain_utxos.contains(idx), EInvalidUtxo);
         let onchain_utxo = &onchain_utxos[idx];
 
-        // Validate UTXO structure
-        let value = onchain_utxo.value();
-        assert!(value > 0, EZeroValue);
-
-        total_value = total_value + value;
+        total_value = total_value + onchain_utxo.value();
         i = i + 1;
     };
 
