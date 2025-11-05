@@ -589,6 +589,7 @@ public fun redeem(
         amount: coin.value(),
         inputs: vector::empty(),
         sign_hashes: vec_map::empty(),
+        fee: 150, // TODO: query fee from oracle or give api for user to set this
         sign_ids: table::new(ctx),
         signatures_map: vec_map::empty(),
         status: RedeemStatus::Resolving,
@@ -851,6 +852,9 @@ public fun move_to_signing(ctr: &mut NbtcContract, request_id: u64, inputs: vect
     let r = &mut ctr.redeem_requests[request_id];
     r.inputs = inputs;
     r.status = RedeemStatus::Signing;
+}
+
+#[test_only]
 public fun dwallet_caps(contract: &NbtcContract, spend_key: vector<u8>): &DWalletCap {
     &contract.dwallet_caps[spend_key]
 }
