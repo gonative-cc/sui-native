@@ -103,6 +103,10 @@ public fun tx_id(tx: &Transaction): vector<u8> {
     tx.tx_id
 }
 
+public fun set_witness(tx: &mut Transaction, witness: vector<InputWitness>) {
+    tx.witness = witness;
+}
+
 public fun deserialize(r: &mut Reader): Transaction {
     let tx = parse_tx(r);
     assert!(r.end_stream(), ETxReaderHasRemainingData);
@@ -200,4 +204,32 @@ public fun new_unsign_segwit_tx(inputs: vector<Input>, outputs: vector<Output>):
         // in the current version, the transaction id only compute when we parse tx from bytes.
         tx_id: vector::empty(),
     }
+}
+
+/// Returns raw bytes of the btc tx. We only support segwit transaction
+public fun serialize_segwit(tx: &Transaction): vector<u8> {
+    let mut raw_tx = vector::empty<u8>();
+    raw_tx.append(tx.version);
+    raw_tx.push_back(*tx.marker.borrow());
+    raw_tx.push_back(*tx.flag.borrow());
+    let inputs = tx.inputs;
+    raw_tx.append(u64_to_varint_bytes(inputs.length()));
+    inputs.do!(|inp| {
+        raw_tx.append(inp.encode());
+    });
+    let outputs = tx.outputs;
+    raw_tx.append(u64_to_varint_bytes(outputs.length()));
+    outputs.do!(|out| {
+        raw_tx.append(out.encode());
+    });
+    let witnesses = tx.witness;
+    witnesses.do!(|witness| {
+        raw_tx.append(u64_to_varint_bytes(witness.items.length()));
+        witness.items.do!(|element| {
+            raw_tx.append(u64_to_varint_bytes(element.length()));
+            raw_tx.append(element);
+        });
+    });
+    raw_tx.append(tx.locktime);
+    raw_tx
 }
