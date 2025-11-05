@@ -7,12 +7,12 @@
         "bip32": "5.0.0-rc.0",
         "bip39": "^3.1.0",
         "bitcoinjs-lib": "^6.1.7",
-        "tiny-secp256k1": "^2.2.3",
+        "tiny-secp256k1": "^2.2.4",
       },
       "devDependencies": {
         "@types/bun": "latest",
-        "@types/node": "^24.2.1",
-        "typescript": "^5.9.2",
+        "@types/node": "^24.9.1",
+        "typescript": "^5.9.3",
       },
       "peerDependencies": {
         "typescript": "^5",
