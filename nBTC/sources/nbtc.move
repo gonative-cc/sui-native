@@ -699,14 +699,19 @@ public fun remove_inactive_spend_key(_: &AdminCap, contract: &mut NbtcContract, 
     contract.inactive_spend_keys.swap_remove(key_idx);
 }
 
-public (package) fun add_utxo_to_contract(contract: &mut NbtcContract, tx_id: vector<u8>, vout: u32, value: u64) {
+public(package) fun add_utxo_to_contract(
+    contract: &mut NbtcContract,
+    tx_id: vector<u8>,
+    vout: u32,
+    value: u64,
+) {
     let utxo_idx = contract.next_utxo;
     let utxo = nbtc_utxo::new_utxo(tx_id, vout, value);
     contract.utxos.add(utxo_idx, utxo);
     contract.next_utxo = contract.next_utxo + 1;
 }
 
-/// Remove a UTXO from the contract 
+/// Remove a UTXO from the contract
 public fun remove_utxo(_: &AdminCap, contract: &mut NbtcContract, utxo_idx: u64) {
     contract.utxos.remove(utxo_idx);
 }

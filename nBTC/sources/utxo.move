@@ -11,7 +11,7 @@ use sui::table::Table;
 const EEmptyUtxoSet: vector<u8> = b"UTXO set cannot be empty";
 
 #[error]
-const EInvalidUtxo: vector<u8> = b"Invalid UTXO";   
+const EInvalidUtxo: vector<u8> = b"Invalid UTXO";
 
 #[error]
 const EZeroValue: vector<u8> = b"UTXO value must be greater than zero";
@@ -59,8 +59,7 @@ public fun validate_utxos(
     proposed_indices: &vector<u64>,
     withdrawal_amount: u64,
 ): u64 {
-
-    assert!(!proposed_indices.is_empty(), EEmptyUtxoSet); 
+    assert!(!proposed_indices.is_empty(), EEmptyUtxoSet);
 
     let len = proposed_indices.length();
     let mut total_value: u64 = 0;
@@ -81,4 +80,3 @@ public fun validate_utxos(
 
     total_value
 }
-

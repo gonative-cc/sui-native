@@ -4,7 +4,7 @@ module nbtc::utxo_tests;
 use nbtc::nbtc_utxo;
 use std::unit_test::assert_eq;
 use sui::table;
-use sui::test_scenario::{Self as ts};
+use sui::test_scenario as ts;
 
 #[test]
 fun validate_utxos_working_case() {
@@ -42,7 +42,7 @@ fun validate_utxos_empty_indices() {
     let ctx = scenario.ctx();
 
     let mut onchain_utxos = table::new(ctx);
-    
+
     let tx_id = x"1111111111111111111111111111111111111111111111111111111111111111";
     let utxo = nbtc_utxo::new_utxo(tx_id, 0, 50000);
     onchain_utxos.add(0, utxo);
