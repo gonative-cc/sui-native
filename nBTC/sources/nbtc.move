@@ -6,7 +6,7 @@ use bitcoin_lib::encoding::u64_to_le_bytes;
 use bitcoin_lib::reader;
 use bitcoin_lib::sighash::{create_segwit_preimage, create_p2wpkh_scriptcode};
 use bitcoin_lib::tx;
-use bitcoin_lib::utils::slice;
+use bitcoin_lib::vector_utils::vector_slice;
 use bitcoin_spv::light_client::LightClient;
 use ika::ika::IKA;
 use ika_dwallet_2pc_mpc::coordinator::{request_sign, DWalletCoordinator};
@@ -45,7 +45,7 @@ const MINT_OP_APPLY_FEE: u32 = 1;
 const ECDSA: u32 = 0;
 const SHA256: u32 = 1;
 
-use fun slice as vector.slice;
+use fun vector_slice as vector.slice;
 
 /// One Time Witness
 public struct NBTC has drop {}
