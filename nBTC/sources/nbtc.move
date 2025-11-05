@@ -520,9 +520,9 @@ public fun record_inactive_deposit(
 }
 
 /// Request signing for specific input in redeem transaction,
-/// partial_user_signature_cap: Create by future request sign
-/// Because we use shared dwallet this is ready public and we don't need to send "user share's"
-/// signarure. The Ika also auto check the message we want to sign is identical between messages
+/// partial_user_signature_cap: Created by future sign request
+/// Because we use shared dwallet this is already public and we don't need to send "user share's"
+/// signarure. The Ika also auto checks if the message we want to sign is identical between messages
 /// signed by nbtc user share and message we request here.
 /// We will:
 ///  - compute the sign hash for specific input
