@@ -533,7 +533,7 @@ public fun request_signature_for_input(
     dwallet_coordinator: &mut DWalletCoordinator,
     request_id: u64,
     input_idx: u32,
-    partial_user_signature_cap: VerifiedPartialUserSignatureCap,
+    user_sig_cap: VerifiedPartialUserSignatureCap,
     session_identifier: SessionIdentifier,
     public_nbtc_signature: vector<u8>,
     payment_ika: &mut Coin<IKA>,
