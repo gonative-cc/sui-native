@@ -7,7 +7,6 @@ use nbtc::nbtc_tests::setup;
 use nbtc::nbtc_utxo::new_utxo;
 use nbtc::tx_composer::compose_withdraw_tx;
 use std::unit_test::assert_eq;
-use sui::test_utils::destroy;
 
 #[test]
 fun create_unsign_reedem_tx_happy_case() {

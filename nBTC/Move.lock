@@ -2,8 +2,8 @@
 
 [move]
 version = 3
-manifest_digest = "ACBC69C7418A210CF9355D8AFDA45D1B1899E68F284190B435E0B2058C9E07DE"
-deps_digest = "04732BFEF428F74DE262001DC455D76B909EBC394B034A9A15CC095E4BDD9CEF"
+manifest_digest = "E9BC3A92AF97603998CE03CE6C0E9F4C68EA4CDE6C7ACFBF8B8A48DC0F199D5A"
+deps_digest = "8227D341C0550A37580C10FA45FE148A465225149C69D179737E0FE454AD6AEC"
 dependencies = [
   { id = "Bridge", name = "Bridge" },
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -12,6 +12,7 @@ dependencies = [
   { id = "bitcoin_lib", name = "bitcoin_lib" },
   { id = "bitcoin_spv", name = "bitcoin_spv" },
   { id = "ika", name = "ika" },
+  { id = "ika_common", name = "ika_common" },
   { id = "ika_dwallet_2pc_mpc", name = "ika_dwallet_2pc_mpc" },
 ]
 
@@ -106,6 +107,6 @@ dependencies = [
 ]
 
 [move.toolchain-version]
-compiler-version = "1.59.1"
+compiler-version = "1.60.0"
 edition = "2024.beta"
 flavor = "sui"
