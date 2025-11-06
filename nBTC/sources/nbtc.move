@@ -84,6 +84,8 @@ const EInputAlredyUsed: vector<u8> = b"this input has been already used in other
 #[error]
 const ERedeemTxSigningNotCompleted: vector<u8> =
     b"The signature for the redeem has not been completed";
+#[error]
+const EInvalidSignId: vector<u8> = b"invalid sign id for redeem request";
 
 //
 // Structs
@@ -628,7 +630,7 @@ public fun verify_signature(
     sign_id: ID,
 ) {
     let r = contract.redeem_requests.borrow_mut(redeem_id);
-    assert!(r.sign_ids.contains(sign_id), 0); // invalid Sign ID
+    assert!(r.sign_ids.contains(sign_id), EInvalidSignId);
     // TODO: ensure we get right spend key, because this spend key can also inactive_spend_key
     let spend_key = contract.bitcoin_spend_key;
     let dwallet_cap = &contract.dwallet_caps[spend_key];
