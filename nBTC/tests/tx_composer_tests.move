@@ -1,16 +1,16 @@
 #[test_only]
-module nbtc::helper_tests;
+module nbtc::tx_composer_tests;
 
 use bitcoin_lib::encoding::u64_to_le_bytes;
 use bitcoin_lib::sighash::{create_segwit_preimage, create_p2wpkh_scriptcode};
-use nbtc::helper::compose_withdraw_tx;
 use nbtc::nbtc_tests::setup;
 use nbtc::nbtc_utxo::new_utxo;
+use nbtc::tx_composer::compose_withdraw_tx;
 use std::unit_test::assert_eq;
 
 #[test]
 fun create_unsign_reedem_tx_happy_case() {
-    let nbtc_spend_key = x"0014e8340a12dd2c95e5fedc8b088a81dcac42c106fb";
+    let nbtc_spend_script = x"0014e8340a12dd2c95e5fedc8b088a81dcac42c106fb";
 
     let utxos = vector[
         new_utxo(x"c22646a7af0b3862c27dadab84cfb4a58dd9e1e4a417e7517bff7f05ae4c575e", 1, 9979700),
@@ -20,7 +20,7 @@ fun create_unsign_reedem_tx_happy_case() {
     let amount = 12000150;
     let fee = 150;
     let tx = compose_withdraw_tx(
-        nbtc_spend_key,
+        nbtc_spend_script,
         utxos,
         x"00149b622481f0407714dd3ef4850a02ffbdc19dfa96",
         amount,

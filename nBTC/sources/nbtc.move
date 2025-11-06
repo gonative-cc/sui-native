@@ -6,7 +6,7 @@ use bitcoin_lib::encoding::u64_to_le_bytes;
 use bitcoin_lib::reader;
 use bitcoin_lib::sighash::{create_segwit_preimage, create_p2wpkh_scriptcode};
 use bitcoin_lib::tx;
-use bitcoin_lib::utils::slice;
+use bitcoin_lib::vector_utils::vector_slice;
 use bitcoin_spv::light_client::LightClient;
 use ika::ika::IKA;
 use ika_dwallet_2pc_mpc::coordinator::{request_sign, DWalletCoordinator};
@@ -16,8 +16,8 @@ use ika_dwallet_2pc_mpc::coordinator_inner::{
     VerifiedPartialUserSignatureCap
 };
 use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
-use nbtc::helper::compose_withdraw_tx;
-use nbtc::nbtc_utxo::Utxo;
+use nbtc::nbtc_utxo::{Self, Utxo};
+use nbtc::tx_composer::compose_withdraw_tx;
 use nbtc::verify_payment::verify_payment;
 use sui::address;
 use sui::balance::{Self, Balance};
@@ -49,7 +49,7 @@ const MINT_OP_APPLY_FEE: u32 = 1;
 const ECDSA: u32 = 0;
 const SHA256: u32 = 1;
 
-use fun slice as vector.slice;
+use fun vector_slice as vector.slice;
 
 /// One Time Witness
 public struct NBTC has drop {}
@@ -148,6 +148,7 @@ public struct MintEvent has copy, drop {
     // TODO: maybe we should change to bitcoin address format?
     bitcoin_spend_key: vector<u8>,
     btc_tx_id: vector<u8>,
+    utxo_idx: vector<u64>,
 }
 
 public struct InactiveDepositEvent has copy, drop {
@@ -174,7 +175,7 @@ public struct RedeemRequest has store {
     // TODO: maybe we don't need the ID?
     redeemer: address, // TODO: maybe it's not needed
     /// Bitcoin spent key (address)
-    recipient: vector<u8>,
+    recipient_script: vector<u8>,
     status: RedeemStatus,
     amount: u64,
     fee: u64,
@@ -190,7 +191,7 @@ public fun sign_hash(r: &RedeemRequest, bitcoin_spend_key: vector<u8>, input_idx
         let tx = compose_withdraw_tx(
             bitcoin_spend_key,
             r.inputs,
-            r.recipient,
+            r.recipient_script,
             r.amount,
             r.fee, // TODO:: Set fee at parameter, or query from oracle
         );
@@ -289,8 +290,10 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
 // Helper methods
 //
 
-/// make all checks. Returns (Sui recipient, amount) tuple.
+/// make all checks. Returns (amount, recipient, utxo_idx) tuple.
 /// See mint function for documentation about parameters.
+/// TODO: Support multiple UTXOs with the same spending_key in a single transaction.
+/// Currently only handles one UTXO per transaction. Ideally there should be only one
 fun verify_deposit(
     contract: &mut NbtcContract,
     light_client: &LightClient,
@@ -302,7 +305,7 @@ fun verify_deposit(
     // see mint function for information about payload argument.
     _payload: vector<u8>,
     ops_arg: u32,
-): (u64, address) {
+): (u64, address, vector<u64>) {
     assert!(contract.version == VERSION, EVersionMismatch);
     assert!(ops_arg == 0 || ops_arg == MINT_OP_APPLY_FEE, EInvalidOpsArg);
     let provided_lc_id = object::id(light_client);
@@ -318,7 +321,7 @@ fun verify_deposit(
     contract.tx_ids.add(tx_id, true);
     // NOTE: We assume only one active key. We should handle mutiple nbtc active key in the
     // future.
-    let (amount, mut op_return) = verify_payment(
+    let (amount, mut op_return, vouts) = verify_payment(
         light_client,
         height,
         proof,
@@ -346,11 +349,20 @@ fun verify_deposit(
         }
     };
 
-    // TODO: extract and record UTXOs
-    let utxo_idx = contract.next_utxo;
-    contract.next_utxo = contract.next_utxo + 1;
+    // UTXO for each matched output since vouts is a vector now
+    let o = tx.outputs();
+    let mut utxo_idx = vector[];
+    let mut i = 0;
+    while (i < vouts.length()) {
+        let vout_idx = vouts[i];
+        let o_amount = o[vout_idx as u64].amount();
+        let utxo_idx_next = contract.next_utxo;
+        add_utxo_to_contract(contract, tx_id, vout_idx, o_amount);
+        utxo_idx.push_back(utxo_idx_next);
+        i = i + 1;
+    };
 
-    (amount, recipient)
+    (amount, recipient, utxo_idx)
 }
 
 public fun raw_signed_tx(contract: &NbtcContract, request_id: u64): vector<u8> {
@@ -362,7 +374,7 @@ public fun raw_signed_tx(contract: &NbtcContract, request_id: u64): vector<u8> {
     let mut tx = compose_withdraw_tx(
         contract.bitcoin_spend_key,
         r.inputs,
-        r.recipient,
+        r.recipient_script,
         r.amount,
         r.fee, // TODO:: Set fee at parameter, or query from oracle
     );
@@ -427,7 +439,7 @@ public fun mint(
     ctx: &mut TxContext,
 ) {
     let spend_key = contract.bitcoin_spend_key;
-    let (mut amount, recipient) = contract.verify_deposit(
+    let (mut amount, recipient, utxo_idx) = contract.verify_deposit(
         light_client,
         spend_key,
         tx_bytes,
@@ -459,8 +471,8 @@ public fun mint(
         amount,
         fee: fee_amount,
         bitcoin_spend_key: spend_key,
-        // TODO: utxo_idx,
-        btc_tx_id: vector[], // TODO: construct tx_id
+        btc_tx_id: vector[], // tx_id is stored in the UTXO itself
+        utxo_idx,
     });
 }
 
@@ -490,7 +502,7 @@ public fun record_inactive_deposit(
     let mut inactive_key_idx = contract.inactive_key_idx(deposit_spend_key);
     assert!(inactive_key_idx.is_some(), EInvalidDepositKey);
 
-    let (amount, recipient) = contract.verify_deposit(
+    let (amount, recipient, _utxo_idx) = contract.verify_deposit(
         light_client,
         deposit_spend_key,
         tx_bytes,
@@ -731,6 +743,23 @@ public fun remove_inactive_spend_key(_: &AdminCap, contract: &mut NbtcContract, 
     contract.inactive_spend_keys.swap_remove(key_idx);
 }
 
+public(package) fun add_utxo_to_contract(
+    contract: &mut NbtcContract,
+    tx_id: vector<u8>,
+    vout: u32,
+    value: u64,
+) {
+    let utxo_idx = contract.next_utxo;
+    let utxo = nbtc_utxo::new_utxo(tx_id, vout, value);
+    contract.utxos.add(utxo_idx, utxo);
+    contract.next_utxo = contract.next_utxo + 1;
+}
+
+/// Remove a UTXO from the contract
+public fun remove_utxo(_: &AdminCap, contract: &mut NbtcContract, utxo_idx: u64) {
+    contract.utxos.remove(utxo_idx);
+}
+
 //
 // View functions
 //
@@ -865,7 +894,7 @@ public fun create_redeem_request_for_testing(
     contract: &mut NbtcContract,
     request_id: u64,
     redeemer: address,
-    recipient: vector<u8>,
+    recipient_script: vector<u8>,
     amount: u64,
     fee: u64,
     utxos: vector<Utxo>,
@@ -878,7 +907,7 @@ public fun create_redeem_request_for_testing(
             request_id,
             RedeemRequest {
                 redeemer,
-                recipient,
+                recipient_script,
                 status: RedeemStatus::Signed,
                 amount,
                 fee,
