@@ -584,7 +584,7 @@ public fun request_signature_for_input(
 public fun redeem(
     contract: &mut NbtcContract,
     coin: Coin<NBTC>,
-    bitcoin_recipient: vector<u8>,
+    recipient_script: vector<u8>,
     ctx: &mut TxContext,
 ): u64 {
     assert!(contract.version == VERSION, EVersionMismatch);
@@ -593,7 +593,7 @@ public fun redeem(
 
     let r = RedeemRequest {
         redeemer: ctx.sender(),
-        recipient: bitcoin_recipient,
+        recipient_script,
         amount: coin.value(),
         inputs: vector::empty(),
         sign_hashes: vec_map::empty(),
