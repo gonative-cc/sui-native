@@ -17,10 +17,12 @@
 - [Function `output_at`](#bitcoin_lib_tx_output_at)
 - [Function `is_witness`](#bitcoin_lib_tx_is_witness)
 - [Function `tx_id`](#bitcoin_lib_tx_tx_id)
+- [Function `set_witness`](#bitcoin_lib_tx_set_witness)
 - [Function `deserialize`](#bitcoin_lib_tx_deserialize)
 - [Function `parse_tx`](#bitcoin_lib_tx_parse_tx)
 - [Function `is_coinbase`](#bitcoin_lib_tx_is_coinbase)
 - [Function `new_unsign_segwit_tx`](#bitcoin_lib_tx_new_unsign_segwit_tx)
+- [Function `serialize_segwit`](#bitcoin_lib_tx_serialize_segwit)
 
 <pre><code><b>use</b> <a href="../bitcoin_lib/crypto.md#bitcoin_lib_crypto">bitcoin_lib::crypto</a>;
 <b>use</b> <a href="../bitcoin_lib/encoding.md#bitcoin_lib_encoding">bitcoin_lib::encoding</a>;
@@ -351,6 +353,23 @@ Create a btc data
 
 </details>
 
+<a name="bitcoin_lib_tx_set_witness"></a>
+
+## Function `set_witness`
+
+<pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_set_witness">set_witness</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: &<b>mut</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">bitcoin_lib::tx::Transaction</a>, <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_witness">witness</a>: vector&lt;<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_InputWitness">bitcoin_lib::tx::InputWitness</a>&gt;)
+</code></pre>
+
+<details>
+<summary>Implementation</summary>
+
+<pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_set_witness">set_witness</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: &<b>mut</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">Transaction</a>, <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_witness">witness</a>: vector&lt;<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_InputWitness">InputWitness</a>&gt;) {
+    <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>.<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_witness">witness</a> = <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_witness">witness</a>;
+}
+</code></pre>
+
+</details>
+
 <a name="bitcoin_lib_tx_deserialize"></a>
 
 ## Function `deserialize`
@@ -491,6 +510,48 @@ deserialise transaction from bytes
         // in the current <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_version">version</a>, the transaction id only compute when we parse <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a> from bytes.
         <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_tx_id">tx_id</a>: vector::empty(),
     }
+}
+</code></pre>
+
+</details>
+
+<a name="bitcoin_lib_tx_serialize_segwit"></a>
+
+## Function `serialize_segwit`
+
+Returns raw bytes of the btc tx. We only support segwit transaction
+
+<pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_serialize_segwit">serialize_segwit</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">bitcoin_lib::tx::Transaction</a>): vector&lt;u8&gt;
+</code></pre>
+
+<details>
+<summary>Implementation</summary>
+
+<pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_serialize_segwit">serialize_segwit</a>(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>: &<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_Transaction">Transaction</a>): vector&lt;u8&gt; {
+    <b>let</b> <b>mut</b> raw_tx = vector::empty&lt;u8&gt;();
+    raw_tx.append(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>.<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_version">version</a>);
+    raw_tx.push_back(*<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>.marker.borrow());
+    raw_tx.push_back(*<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>.flag.borrow());
+    <b>let</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_inputs">inputs</a> = <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>.<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_inputs">inputs</a>;
+    raw_tx.append(u64_to_varint_bytes(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_inputs">inputs</a>.length()));
+    <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_inputs">inputs</a>.do!(|inp| {
+        raw_tx.append(inp.encode());
+    });
+    <b>let</b> <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_outputs">outputs</a> = <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>.<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_outputs">outputs</a>;
+    raw_tx.append(u64_to_varint_bytes(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_outputs">outputs</a>.length()));
+    <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_outputs">outputs</a>.do!(|out| {
+        raw_tx.append(out.encode());
+    });
+    <b>let</b> witnesses = <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>.<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_witness">witness</a>;
+    witnesses.do!(|<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_witness">witness</a>| {
+        raw_tx.append(u64_to_varint_bytes(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_witness">witness</a>.<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_items">items</a>.length()));
+        <a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_witness">witness</a>.<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_items">items</a>.do!(|element| {
+            raw_tx.append(u64_to_varint_bytes(element.length()));
+            raw_tx.append(element);
+        });
+    });
+    raw_tx.append(<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx">tx</a>.<a href="../bitcoin_lib/tx.md#bitcoin_lib_tx_locktime">locktime</a>);
+    raw_tx
 }
 </code></pre>
 

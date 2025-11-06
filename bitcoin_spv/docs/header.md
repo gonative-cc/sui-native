@@ -7,10 +7,11 @@
 - [Function `calc_work`](<#(bitcoin_spv=0x0)_block_header_calc_work>)
 - [Function `pow_check`](<#(bitcoin_spv=0x0)_block_header_pow_check>)
 
-<pre><code><b>use</b> (bitcoin_parser=0x0)::crypto;
-<b>use</b> (bitcoin_parser=0x0)::encoding;
-<b>use</b> (bitcoin_parser=0x0)::header;
-<b>use</b> (bitcoin_parser=0x0)::reader;
+<pre><code><b>use</b> (bitcoin_lib=0x0)::crypto;
+<b>use</b> (bitcoin_lib=0x0)::encoding;
+<b>use</b> (bitcoin_lib=0x0)::header;
+<b>use</b> (bitcoin_lib=0x0)::reader;
+<b>use</b> (bitcoin_lib=0x0)::vector_utils;
 <b>use</b> (bitcoin_spv=0x0)::<a href="../bitcoin_spv/btc_math.md#(bitcoin_spv=0x0)_btc_math">btc_math</a>;
 <b>use</b> <a href="../dependencies/std/ascii.md#std_ascii">std::ascii</a>;
 <b>use</b> <a href="../dependencies/std/hash.md#std_hash">std::hash</a>;
@@ -34,7 +35,7 @@
 
 ## Function `target`
 
-<pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/header.md#(bitcoin_spv=0x0)_block_header_target">target</a>(header: &(bitcoin_parser=0x0)::header::BlockHeader): u256
+<pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/header.md#(bitcoin_spv=0x0)_block_header_target">target</a>(header: &(bitcoin_lib=0x0)::header::BlockHeader): u256
 </code></pre>
 
 <details>
@@ -51,7 +52,7 @@
 
 ## Function `calc_work`
 
-<pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/header.md#(bitcoin_spv=0x0)_block_header_calc_work">calc_work</a>(header: &(bitcoin_parser=0x0)::header::BlockHeader): u256
+<pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/header.md#(bitcoin_spv=0x0)_block_header_calc_work">calc_work</a>(header: &(bitcoin_lib=0x0)::header::BlockHeader): u256
 </code></pre>
 
 <details>
@@ -80,7 +81,7 @@
 
 checks if the block headers meet PoW target requirements. Panics otherewise.
 
-<pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/header.md#(bitcoin_spv=0x0)_block_header_pow_check">pow_check</a>(header: &(bitcoin_parser=0x0)::header::BlockHeader)
+<pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/header.md#(bitcoin_spv=0x0)_block_header_pow_check">pow_check</a>(header: &(bitcoin_lib=0x0)::header::BlockHeader)
 </code></pre>
 
 <details>
