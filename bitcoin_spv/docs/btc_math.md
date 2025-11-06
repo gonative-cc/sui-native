@@ -103,7 +103,7 @@ format of bits = <1 byte for exponent><3 bytes for coefficient>
 target = coefficient \* 2^ (coefficient - 3) (note: 3 = bytes length of the coefficient).
 Caution:
 The first significant byte for the coefficient must be below 80. If it's not, you have to take the preceding 00 as the first byte.
-More & examples: <https://learnmeabitcoin.com/technical/block/bits>.
+More & examples: https://learnmeabitcoin.com/technical/block/bits.
 
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/btc_math.md#(bitcoin_spv=0x0)_btc_math_target_to_bits">target_to_bits</a>(target: u256): u32
 </code></pre>

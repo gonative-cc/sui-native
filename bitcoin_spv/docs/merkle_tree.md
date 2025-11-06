@@ -6,7 +6,7 @@
 - [Function `merkle_hash`](<#(bitcoin_spv=0x0)_merkle_tree_merkle_hash>)
 - [Function `verify_merkle_proof`](<#(bitcoin_spv=0x0)_merkle_tree_verify_merkle_proof>)
 
-<pre><code><b>use</b> (bitcoin_parser=0x0)::crypto;
+<pre><code><b>use</b> (bitcoin_lib=0x0)::crypto;
 <b>use</b> <a href="../dependencies/std/hash.md#std_hash">std::hash</a>;
 <b>use</b> <a href="../dependencies/std/vector.md#std_vector">std::vector</a>;
 </code></pre>
@@ -55,7 +55,7 @@ Verifies if tx_id belongs to the merkle tree
 BTC doesn't recognize different between 64 bytes Tx and internal merkle tree node, that reduces the security of SPV proofs.
 We modified the merkle tree verify algorithm inspire by this solution:
 
-- <https://bitslog.com/2018/08/21/simple-change-to-the-bitcoin-merkleblock-command-to-protect-from-leaf-node-weakness-in-transaction-merkle-tree/>
+- https://bitslog.com/2018/08/21/simple-change-to-the-bitcoin-merkleblock-command-to-protect-from-leaf-node-weakness-in-transaction-merkle-tree/
   Gist: instead of computing new merkle node = HASH256(X||Y) where X, Y is children nodes;
   we compute new merkle node = HASH256(SHA256(X), Y) or node=HASH256(X, SHA256(Y)),
   depending if we are coming from left or right.
