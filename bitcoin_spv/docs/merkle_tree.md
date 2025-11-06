@@ -53,7 +53,7 @@ Internal merkle hash computation for BTC merkle tree
 
 Verifies if tx_id belongs to the merkle tree
 BTC doesn't recognize different between 64 bytes Tx and internal merkle tree node, that reduces the security of SPV proofs.
-We modified the merkle tree verify algorithm inspire by this solution:
+We modified the merkle tree verify algorithm inspired by this solution:
 
 - https://bitslog.com/2018/08/21/simple-change-to-the-bitcoin-merkleblock-command-to-protect-from-leaf-node-weakness-in-transaction-merkle-tree/
   Gist: instead of computing new merkle node = HASH256(X||Y) where X, Y is children nodes;
