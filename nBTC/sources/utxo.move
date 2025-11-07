@@ -14,9 +14,6 @@ const EEmptyUtxoSet: vector<u8> = b"UTXO set cannot be empty";
 const EInvalidUtxo: vector<u8> = b"Invalid UTXO";
 
 #[error]
-const EZeroValue: vector<u8> = b"UTXO value must be greater than zero";
-
-#[error]
 const EInsufficientAmount: vector<u8> = b"Total UTXO value is insufficient for withdrawal amount";
 
 // TODO: we need to store them by owner (the nBTC key)?

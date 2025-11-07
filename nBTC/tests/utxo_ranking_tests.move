@@ -20,7 +20,7 @@ fun exact_match_wins_over_change() {
         ),
         new_utxo(
             x"b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2",
-            0,
+            1,
             30_000_000,
         ),
         new_utxo(
@@ -30,7 +30,7 @@ fun exact_match_wins_over_change() {
         ),
         new_utxo(
             x"d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4",
-            0,
+            2,
             15_000_000,
         ),
     ];
@@ -45,7 +45,7 @@ fun exact_match_wins_over_change() {
         ),
         new_utxo(
             x"f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6",
-            0,
+            1,
             80_000_000,
         ),
         new_utxo(
@@ -105,12 +105,12 @@ fun inactive_keys_with_exact_match_rank_above() {
         ),
         new_utxo(
             x"b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1",
-            0,
+            2,
             90_000_000,
         ),
         new_utxo(
             x"c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2",
-            0,
+            1,
             70_000_000,
         ),
         new_utxo(
@@ -149,7 +149,7 @@ fun minimize_inputs_priority() {
         ),
         new_utxo(
             x"3333333333333333333333333333333333333333333333333333333333333333",
-            0,
+            1,
             20_000_000,
         ),
         new_utxo(
@@ -159,12 +159,12 @@ fun minimize_inputs_priority() {
         ),
         new_utxo(
             x"5555555555555555555555555555555555555555555555555555555555555555",
-            0,
+            2,
             20_000_000,
         ),
         new_utxo(
             x"6666666666666666666666666666666666666666666666666666666666666666",
-            0,
+            1,
             20_000_000,
         ),
     ];
