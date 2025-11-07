@@ -136,5 +136,4 @@ public fun validate_utxos(
     assert!(total_value >= withdrawal_amount, EInsufficientAmount);
 
     total_value
-
 }
