@@ -235,6 +235,7 @@ public(package) fun set_sign_data(
     r.sign_hashes.insert(input_idx, sign_hash);
     r.sign_ids.add(sign_id, true);
 }
+
 //
 // Functions
 //
@@ -622,44 +623,46 @@ public fun btc_redeem_tx(): vector<u8> {
     b"Go Go Native"
 }
 
-// TODO: Better name for this
-public fun verify_signature(
+public(package) fun validate_signature(
     contract: &mut NbtcContract,
+    r: &RedeemRequest,
     dwallet_coordinator: &DWalletCoordinator,
     redeem_id: u64,
     input_idx: u32,
     sign_id: ID,
 ) {
-    let r = contract.redeem_requests.borrow_mut(redeem_id);
+    let spend_key = contract.bitcoin_spend_key;
+    let pk = contract.public_key(contract.bitcoin_spend_key);
+    let r = &contract.redeem_requests[redeem_id];
     assert!(r.sign_ids.contains(sign_id), EInvalidSignId);
-    // TODO: ensure we get right spend key, because this spend key can also inactive_spend_key
-    let spend_key = contract.bitcoin_spend_key;
-    let dwallet_cap = &contract.dwallet_caps[spend_key];
-    let dwallet_id = dwallet_cap.dwallet_id();
-    let signature = dwallet_coordinator
-        .get_dwallet(dwallet_id)
-        .get_sign_session(sign_id)
-        .get_sign_signature()
-        .extract();
 
-    let spend_key = contract.bitcoin_spend_key;
-    let dwallet_cap = &contract.dwallet_caps[spend_key];
-    let pk = &contract.dwallet_pks[object::id(dwallet_cap)];
+    // TODO: ensure we get right spend key, because this spend key can also inactive_spend_key
     let sign_hash = r.sign_hashes[&input_idx];
+    let signature = contract.get_sign_signature(dwallet_coordinator, spend_key, sign_id);
     let is_valid = sui::ecdsa_k1::secp256k1_verify(
         &signature,
-        pk,
+        &pk,
         &sign_hash,
         SHA256 as u8,
     );
 
     assert!(is_valid, ESignatureInValid);
-    r.signatures_map.insert(input_idx, signature);
+    contract.add_signature(redeem_id, input_idx, signature);
+}
 
+public(package) fun add_signature(
+    contract: &mut NbtcContract,
+    redeem_id: u64,
+    input_idx: u32,
+    signature: vector<u8>,
+) {
+    let r = &mut contract.redeem_requests[redeem_id];
+    r.signatures_map.insert(input_idx, signature);
     if (r.signatures_map.length() == r.inputs.length()) {
         r.status = RedeemStatus::Signed;
     }
 }
+
 //
 
 /// Allows user to withdraw back deposited BTC that used an inactive deposit spend key.
@@ -828,6 +831,12 @@ public(package) fun get_sign_signature(
         .get_sign_signature();
 
     signature.extract()
+}
+
+/// Return public key of spend_key
+public(package) fun public_key(contract: &NbtcContract, spend_key: vector<u8>): vector<u8> {
+    let dwallet_cap = &contract.dwallet_caps[spend_key];
+    contract.dwallet_pks[object::id(dwallet_cap)]
 }
 //
 // Testing
