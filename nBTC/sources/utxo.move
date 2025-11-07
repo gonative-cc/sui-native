@@ -16,6 +16,14 @@ const EInvalidUtxo: vector<u8> = b"Invalid UTXO";
 #[error]
 const EInsufficientAmount: vector<u8> = b"Total UTXO value is insufficient for withdrawal amount";
 
+// UTXO ranking constants
+const DUST_THRESHOLD: u64 = 10_000; // satoshis
+const BASE_SCORE: u64 = 4_000_000_000_000_000; // 4e15
+const INPUTS_PENALTY: u64 = 100;
+const INACTIVE_BONUS: u64 = 200;
+const NO_CHANGE_BONUS: u64 = 1_000;
+const DUST_PENALTY: u64 = 200;
+
 // TODO: we need to store them by owner (the nBTC key)?
 public struct Utxo has copy, drop, store {
     tx_id: vector<u8>, // TODO: this is 32-byte hash. we can also use vector<u8>
@@ -54,18 +62,10 @@ public fun utxo_ranking(
     withdraw_amount: u64,
     active_spend_key: &vector<u8>,
 ): u64 {
-    let dust_threshold: u64 = 10_000; // satoshis
-    let base_score: u64 = 4_000_000_000_000_000; // 4e15
-    let inputs_penalty: u64 = 100;
-    let inactive_bonus: u64 = 200;
-    let no_change_bonus: u64 = 1_000;
-    let dust_penalty: u64 = 200;
-
     let mut sum: u64 = 0;
     let mut i = 0;
-    let len = vector::length(utxos);
-    while (i < len) {
-        sum = sum + vector::borrow(utxos, i).value;
+    while (i < utxos.length()) {
+        sum = sum + utxos[i].value;
         i = i + 1;
     };
 
@@ -74,17 +74,17 @@ public fun utxo_ranking(
     };
 
     let change = sum - withdraw_amount;
-    let mut score = base_score;
+    let mut score = BASE_SCORE;
 
     // 1) Fewer inputs
-    let inputs = vector::length(utxos);
-    score = score - (inputs * inputs_penalty);
+    let inputs = utxos.length();
+    score = score - (inputs * INPUTS_PENALTY);
 
     // 2) Prefer inactive keys
     i = 0;
-    while (i < vector::length(utxo_spend_keys)) {
-        if (vector::borrow(utxo_spend_keys, i) != active_spend_key) {
-            score = score + inactive_bonus;
+    while (i < utxo_spend_keys.length()) {
+        if (&utxo_spend_keys[i] != active_spend_key) {
+            score = score + INACTIVE_BONUS;
         };
         i = i + 1;
     };
@@ -92,9 +92,9 @@ public fun utxo_ranking(
     // 3) Change shaping
     if (change == 0) {
         // Perfect match
-        score = score + no_change_bonus;
-    } else if (change < dust_threshold) {
-        score = score - dust_penalty;
+        score = score + NO_CHANGE_BONUS;
+    } else if (change < DUST_THRESHOLD) {
+        score = score - DUST_PENALTY;
     };
 
     score

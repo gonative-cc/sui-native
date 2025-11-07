@@ -2,6 +2,7 @@
 module nbtc::utxo_ranking_tests;
 
 use nbtc::nbtc_utxo::{new_utxo, utxo_ranking};
+use std::unit_test::assert_eq;
 
 const ACTIVE_KEY: vector<u8> = x"0014e8340a12dd2c95e5fedc8b088a81dcac42c106fb";
 const INACTIVE_KEY_1: vector<u8> = x"00149b622481f0407714dd3ef4850a02ffbdc19dfa96";
@@ -57,7 +58,7 @@ fun exact_match_wins_over_change() {
     let keys2 = vector[active, active, active];
     let score2 = utxo_ranking(&utxos2, &keys2, withdraw, &active);
 
-    assert!(score1 > score2);
+    assert_eq!(score1 > score2, true);
 }
 
 // 0.6 + 0.4 BTC (inactive keys) vs 1.1 BTC (active key)
@@ -122,7 +123,7 @@ fun inactive_keys_with_exact_match_rank_above() {
     let keys2 = vector[active, active, active, active];
     let score2 = utxo_ranking(&utxos2, &keys2, withdraw, &active);
 
-    assert!(score1 > score2);
+    assert_eq!(score1 > score2, true);
 }
 
 // 1.1 BTC (with change) vs 5×0.2 BTC (exact match)
@@ -171,7 +172,7 @@ fun minimize_inputs_priority() {
     let keys2 = vector[active, active, active, active, active];
     let score2 = utxo_ranking(&utxos2, &keys2, withdraw, &active);
 
-    assert!(score2 > score1);
+    assert_eq!(score2 > score1, true);
 }
 
 // Dust change vs clean change
@@ -200,5 +201,5 @@ fun dust_penalized() {
     let keys_clean = vector[active];
     let score_clean = utxo_ranking(&utxos_clean, &keys_clean, withdraw, &active);
 
-    assert!(score_clean > score_dust);
+    assert_eq!(score_clean > score_dust, true);
 }
