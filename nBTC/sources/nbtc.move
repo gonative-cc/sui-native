@@ -86,7 +86,8 @@ const ERedeemTxSigningNotCompleted: vector<u8> =
     b"The signature for the redeem has not been completed";
 #[error]
 const EInvalidSignId: vector<u8> = b"invalid sign id for redeem request";
-
+#[error]
+const ESignatureInValid: vector<u8> = b"signature invalid for this input";
 //
 // Structs
 //
@@ -635,14 +636,25 @@ public fun verify_signature(
     let spend_key = contract.bitcoin_spend_key;
     let dwallet_cap = &contract.dwallet_caps[spend_key];
     let dwallet_id = dwallet_cap.dwallet_id();
-    let mut signature = dwallet_coordinator
+    let signature = dwallet_coordinator
         .get_dwallet(dwallet_id)
         .get_sign_session(sign_id)
-        .get_sign_signature();
+        .get_sign_signature()
+        .extract();
 
-    // TODO: validate signature for tx input
+    let spend_key = contract.bitcoin_spend_key;
+    let dwallet_cap = &contract.dwallet_caps[spend_key];
+    let pk = &contract.dwallet_pks[object::id(dwallet_cap)];
+    let sign_hash = r.sign_hashes[&input_idx];
+    let is_valid = sui::ecdsa_k1::secp256k1_verify(
+        &signature,
+        pk,
+        &sign_hash,
+        SHA256 as u8,
+    );
 
-    r.signatures_map.insert(input_idx, signature.extract());
+    assert!(is_valid, ESignatureInValid);
+    r.signatures_map.insert(input_idx, signature);
 
     if (r.signatures_map.length() == r.inputs.length()) {
         r.status = RedeemStatus::Signed;
