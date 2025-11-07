@@ -2,7 +2,7 @@
 
 module bitcoin_spv::merkle_tree;
 
-use bitcoin_parser::crypto::hash256;
+use bitcoin_lib::crypto::hash256;
 use std::hash::sha2_256;
 
 #[error]
