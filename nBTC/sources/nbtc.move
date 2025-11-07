@@ -632,7 +632,7 @@ public(package) fun validate_signature(
     sign_id: ID,
 ) {
     let spend_key = contract.bitcoin_spend_key;
-    let pk = contract.public_key(contract.bitcoin_spend_key);
+    let pk = contract.public_key_of(contract.bitcoin_spend_key);
     let r = &contract.redeem_requests[redeem_id];
     assert!(r.sign_ids.contains(sign_id), EInvalidSignId);
 
@@ -650,6 +650,7 @@ public(package) fun validate_signature(
     contract.add_signature(redeem_id, input_idx, signature);
 }
 
+// add valid signature to redeem request for specify input index
 public(package) fun add_signature(
     contract: &mut NbtcContract,
     redeem_id: u64,
@@ -834,7 +835,7 @@ public(package) fun get_sign_signature(
 }
 
 /// Return public key of spend_key
-public(package) fun public_key(contract: &NbtcContract, spend_key: vector<u8>): vector<u8> {
+public(package) fun public_key_of(contract: &NbtcContract, spend_key: vector<u8>): vector<u8> {
     let dwallet_cap = &contract.dwallet_caps[spend_key];
     contract.dwallet_pks[object::id(dwallet_cap)]
 }
