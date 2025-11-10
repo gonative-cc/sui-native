@@ -24,6 +24,8 @@ public struct Utxo has copy, drop, store {
     tx_id: vector<u8>, // TODO: this is 32-byte hash. we can also use vector<u8>
     vout: u32,
     value: u64,
+    dwallet_id: ID,
+    spend_script: vector<u8>,
 }
 
 public fun new_utxo(tx_id: vector<u8>, vout: u32, value: u64): Utxo {
@@ -31,6 +33,8 @@ public fun new_utxo(tx_id: vector<u8>, vout: u32, value: u64): Utxo {
         tx_id,
         vout,
         value,
+        dwallet_id: object::id_from_address(@0x01),
+        spend_script: vector::empty(),
     }
 }
 
@@ -44,6 +48,14 @@ public fun vout(utxo: &Utxo): u32 {
 
 public fun value(utxo: &Utxo): u64 {
     utxo.value
+}
+
+public fun dwallet_id(utxo: &Utxo): ID {
+    utxo.dwallet_id
+}
+
+public fun spend_script(utxo: &Utxo): vector<u8> {
+    utxo.spend_script
 }
 
 /// Validates a set of proposed UTXOs for withdrawal request.

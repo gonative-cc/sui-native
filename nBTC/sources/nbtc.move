@@ -6,7 +6,6 @@ use bitcoin_lib::encoding::u64_to_le_bytes;
 use bitcoin_lib::reader;
 use bitcoin_lib::sighash::{create_segwit_preimage, create_p2wpkh_scriptcode};
 use bitcoin_lib::tx;
-use bitcoin_lib::vector_utils::vector_slice;
 use bitcoin_spv::light_client::LightClient;
 use ika::ika::IKA;
 use ika_dwallet_2pc_mpc::coordinator::{request_sign, DWalletCoordinator};
@@ -17,7 +16,7 @@ use ika_dwallet_2pc_mpc::coordinator_inner::{
 };
 use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
 use nbtc::nbtc_utxo::{Self, Utxo};
-use nbtc::tx_composer::compose_withdraw_tx;
+use nbtc::sign_request::{Self, RedeemRequest};
 use nbtc::verify_payment::verify_payment;
 use sui::address;
 use sui::balance::{Self, Balance};
@@ -48,8 +47,6 @@ const MINT_OP_APPLY_FEE: u32 = 1;
 
 const ECDSA: u32 = 0;
 const SHA256: u32 = 1;
-
-use fun vector_slice as vector.slice;
 
 /// One Time Witness
 public struct NBTC has drop {}
@@ -82,12 +79,7 @@ const ENotReadlyForSign: vector<u8> = b"redeem tx is not ready for signing";
 #[error]
 const EInputAlredyUsed: vector<u8> = b"this input has been already used in other signature request";
 #[error]
-const ERedeemTxSigningNotCompleted: vector<u8> =
-    b"The signature for the redeem has not been completed";
-#[error]
 const EInvalidSignId: vector<u8> = b"invalid sign id for redeem request";
-#[error]
-const ESignatureInValid: vector<u8> = b"signature invalid for this input";
 //
 // Structs
 //
@@ -165,75 +157,6 @@ public struct RedeemInactiveDepositEvent has copy, drop {
     /// Bitcoin recipient
     recipient: vector<u8>,
     amount: u64, // in satoshi
-}
-
-public enum RedeemStatus has copy, drop, store {
-    Resolving, // finding the best UTXOs
-    Signing,
-    Signed,
-    Confirmed,
-}
-
-public struct RedeemRequest has store {
-    // TODO: maybe we don't need the ID?
-    redeemer: address, // TODO: maybe it's not needed
-    /// Bitcoin spent key (address)
-    recipient_script: vector<u8>,
-    status: RedeemStatus,
-    amount: u64,
-    fee: u64,
-    inputs: vector<Utxo>,
-    sign_hashes: VecMap<u32, vector<u8>>,
-    sign_ids: Table<ID, bool>,
-    signatures_map: VecMap<u32, vector<u8>>,
-}
-
-/// Returns signature hash for input_idx-th in redeem transaction
-public fun sign_hash(r: &RedeemRequest, bitcoin_spend_key: vector<u8>, input_idx: u32): vector<u8> {
-    r.sign_hashes.try_get(&input_idx).extract_or!({
-        let tx = compose_withdraw_tx(
-            bitcoin_spend_key,
-            r.inputs,
-            r.recipient_script,
-            r.amount,
-            r.fee, // TODO:: Set fee at parameter, or query from oracle
-        );
-        let script_code = create_p2wpkh_scriptcode(
-            bitcoin_spend_key.slice(2, 22) // nbtc public key hash
-        );
-        create_segwit_preimage(
-            &tx,
-            input_idx as u64, // input index
-            &script_code, // segwit nbtc spend key
-            u64_to_le_bytes(r.inputs[input_idx as u64].value()), // amount
-            0x01, // SIGNHASH_ALL
-        )
-    })
-}
-
-public fun requested_sign(r: &RedeemRequest, input_idx: u32): bool {
-    r.signatures_map.contains(&input_idx)
-}
-
-public fun is_signing(status: &RedeemStatus): bool {
-    match (status) {
-        RedeemStatus::Signing => true,
-        _ => false,
-    }
-}
-
-public fun status(r: &RedeemRequest): &RedeemStatus {
-    &r.status
-}
-
-public(package) fun set_sign_data(
-    r: &mut RedeemRequest,
-    input_idx: u32,
-    sign_hash: vector<u8>,
-    sign_id: ID,
-) {
-    r.sign_hashes.insert(input_idx, sign_hash);
-    r.sign_ids.add(sign_id, true);
 }
 
 //
@@ -367,37 +290,6 @@ fun verify_deposit(
     };
 
     (amount, recipient, utxo_idx)
-}
-
-public fun raw_signed_tx(contract: &NbtcContract, request_id: u64): vector<u8> {
-    let r = &contract.redeem_requests[request_id];
-    assert!(r.status == RedeemStatus::Signed, ERedeemTxSigningNotCompleted);
-
-    let spend_key = contract.bitcoin_spend_key;
-    let dwallet_cap = &contract.dwallet_caps[spend_key];
-    let mut tx = compose_withdraw_tx(
-        contract.bitcoin_spend_key,
-        r.inputs,
-        r.recipient_script,
-        r.amount,
-        r.fee, // TODO:: Set fee at parameter, or query from oracle
-    );
-    let public_key = contract.dwallet_pks[object::id(dwallet_cap)];
-
-    let mut witnesses = vector[];
-    r.inputs.length().do!(|i| {
-        witnesses.push_back(
-            tx::new_witness(vector[
-                // signature
-                *r.signatures_map.get(&(i as u32)),
-                public_key,
-            ]),
-        );
-    });
-
-    tx.set_witness(witnesses);
-
-    tx.serialize_segwit()
 }
 
 /// returns idx of key in in `inactive_spend_keys` or None if the key is not there.
@@ -557,10 +449,10 @@ public fun request_signature_for_input(
 ) {
     let request = &mut contract.redeem_requests[request_id];
     assert!(request.status().is_signing(), ENotReadlyForSign);
-    assert!(request.requested_sign(input_idx), EInputAlredyUsed);
+    assert!(request.has_signature(input_idx), EInputAlredyUsed);
 
     // This should include other information for create sign hash
-    let sign_hash = request.sign_hash(contract.bitcoin_spend_key, input_idx);
+    let sign_hash = request.sig_hash(input_idx);
 
     let spend_key = contract.bitcoin_spend_key;
     let dwallet_cap = &contract.dwallet_caps[spend_key];
@@ -580,7 +472,7 @@ public fun request_signature_for_input(
         ctx,
     );
 
-    request.set_sign_data(input_idx, sign_hash, sign_id);
+    request.set_sign_request_metadata(input_idx, sign_hash, sign_id);
 }
 
 /// redeem initiates nBTC redemption and BTC withdraw process.
@@ -595,18 +487,14 @@ public fun redeem(
     // TODO: implement logic to guard burning and manage UTXOs
     // TODO: we can call remove_inactive_spend_key if reserves of this key is zero
 
-    let r = RedeemRequest {
-        redeemer: ctx.sender(),
+    let r = sign_request::new(
+        contract.bitcoin_spend_key,
+        ctx.sender(),
         recipient_script,
-        amount: coin.value(),
-        inputs: vector::empty(),
-        sign_hashes: vec_map::empty(),
-        fee: 150, // TODO: query fee from oracle or give api for user to set this
-        sign_ids: table::new(ctx),
-        signatures_map: vec_map::empty(),
-        status: RedeemStatus::Resolving,
-    };
-
+        coin.value(),
+        150, // TODO: query fee from oracle or give api for user to set this
+        ctx,
+    );
     // TODO: we repeat this logic a lot of time. Consider to create a generic function for this
     // type.
     let redeem_id = contract.next_redeem_req;
@@ -625,46 +513,31 @@ public fun btc_redeem_tx(): vector<u8> {
 
 public(package) fun validate_signature(
     contract: &mut NbtcContract,
-    r: &RedeemRequest,
     dwallet_coordinator: &DWalletCoordinator,
     redeem_id: u64,
     input_idx: u32,
     sign_id: ID,
 ) {
-    let spend_key = contract.bitcoin_spend_key;
-    let pk = contract.public_key_of(contract.bitcoin_spend_key);
-    let r = &contract.redeem_requests[redeem_id];
-    assert!(r.sign_ids.contains(sign_id), EInvalidSignId);
+    let r = &mut contract.redeem_requests[redeem_id];
+    assert!(r.has_signature(input_idx), EInvalidSignId);
 
     // TODO: ensure we get right spend key, because this spend key can also inactive_spend_key
-    let sign_hash = r.sign_hashes[&input_idx];
-    let signature = contract.get_sign_signature(dwallet_coordinator, spend_key, sign_id);
-    let is_valid = sui::ecdsa_k1::secp256k1_verify(
-        &signature,
-        &pk,
-        &sign_hash,
-        SHA256 as u8,
-    );
+    // let sign_hash = r.sig_hash(input_idx);
+    // let dwallet_id = r.utxo_at(input_idx).dwallet_id;
+    // let signature = get_signature(dwallet_coordinator, dwallet_id, sign_id);
+    // let pk = r.public_key()
+    // let is_valid = sui::ecdsa_k1::secp256k1_verify(
+    //     &signature,
+    //     &pk,
+    //     &sign_hash,
+    //     SHA256 as u8,
+    // );
 
-    assert!(is_valid, ESignatureInValid);
-    contract.add_signature(redeem_id, input_idx, signature);
+    // let is_valid = r.validate_signature(dwallet_coordinator, redeem_id, input_idx, sign_id)
+    // assert!(is_valid, ESignatureInValid);
+    // r.add_signature(input_idx, signature);
+    r.validate_signature(dwallet_coordinator, redeem_id, input_idx, sign_id);
 }
-
-// add valid signature to redeem request for specify input index
-public(package) fun add_signature(
-    contract: &mut NbtcContract,
-    redeem_id: u64,
-    input_idx: u32,
-    signature: vector<u8>,
-) {
-    let r = &mut contract.redeem_requests[redeem_id];
-    r.signatures_map.insert(input_idx, signature);
-    if (r.signatures_map.length() == r.inputs.length()) {
-        r.status = RedeemStatus::Signed;
-    }
-}
-
-//
 
 /// Allows user to withdraw back deposited BTC that used an inactive deposit spend key.
 /// When user deposits to an inactive Bitcoin key, nBTC is not minted.
@@ -816,22 +689,6 @@ public fun inactive_spend_keys(contract: &NbtcContract, from: u64, to: u64): vec
     if (from >= len) return vector[];
     let to = if (to == 0 || to > len) len else to;
     vector::tabulate!(to-from, |i| contract.inactive_spend_keys[from+i])
-}
-
-public(package) fun get_sign_signature(
-    contract: &NbtcContract,
-    dwallet_coordinator: &DWalletCoordinator,
-    spend_key: vector<u8>,
-    sign_id: ID,
-): vector<u8> {
-    let dwallet_cap = &contract.dwallet_caps[spend_key];
-    let dwallet_id = dwallet_cap.dwallet_id();
-    let mut signature = dwallet_coordinator
-        .get_dwallet(dwallet_id)
-        .get_sign_session(sign_id)
-        .get_sign_signature();
-
-    signature.extract()
 }
 
 /// Return public key of spend_key
