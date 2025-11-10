@@ -27,8 +27,14 @@ fun raw_withdraw_tx_signed_tests() {
     let request_id = 0;
     let amount = 72561;
     let btc_receiver = x"001464f9139a4a853b3d5ad1315ceb707386ed343c2c";
+    let spend_key = x"0014e8340a12dd2c95e5fedc8b088a81dcac42c106fb";
     let utxos = vector[
-        new_utxo(x"9dafd815a150414d02047a22ab806dbd2f43d0e1ea5922dadd5396f6d6776920", 41, amount),
+        new_utxo(
+            x"9dafd815a150414d02047a22ab806dbd2f43d0e1ea5922dadd5396f6d6776920",
+            41,
+            amount,
+            spend_key,
+        ),
     ];
     let signatures = vector[
         x"3044022063db5a24fec209152863fb251cc349a7030220bf4ca6e6296002d46d4c3651a502205a0b4b5a520fc42b91b8a888351c1c42bd2864aba2c398007405e957dea77bb101",
