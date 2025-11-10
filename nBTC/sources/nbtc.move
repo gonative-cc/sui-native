@@ -14,7 +14,7 @@ use ika_dwallet_2pc_mpc::coordinator_inner::{
 };
 use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
 use nbtc::nbtc_utxo::{Self, Utxo};
-use nbtc::sign_request::{Self, RedeemRequest};
+use nbtc::redeem_request::{Self, RedeemRequest};
 use nbtc::verify_payment::verify_payment;
 use sui::address;
 use sui::balance::{Self, Balance};
@@ -484,7 +484,7 @@ public fun redeem(
     // TODO: implement logic to guard burning and manage UTXOs
     // TODO: we can call remove_inactive_spend_key if reserves of this key is zero
 
-    let r = sign_request::new(
+    let r = redeem_request::new(
         contract.bitcoin_spend_key,
         ctx.sender(),
         recipient_script,
@@ -774,7 +774,7 @@ public fun create_redeem_request_for_testing(
     fee: u64,
     ctx: &mut TxContext,
 ) {
-    let r = sign_request::new(
+    let r = redeem_request::new(
         contract.bitcoin_spend_key,
         redeemer,
         recipient_script,

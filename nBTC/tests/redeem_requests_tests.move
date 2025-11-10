@@ -3,7 +3,7 @@ module nbtc::redeem_request_tests;
 
 use nbtc::nbtc_tests::setup;
 use nbtc::nbtc_utxo::new_utxo;
-use nbtc::sign_request;
+use nbtc::redeem_request;
 use std::unit_test::assert_eq;
 use sui::test_utils::destroy;
 
@@ -25,7 +25,7 @@ fun raw_withdraw_tx_signed_tests() {
         x"3044022063db5a24fec209152863fb251cc349a7030220bf4ca6e6296002d46d4c3651a502205a0b4b5a520fc42b91b8a888351c1c42bd2864aba2c398007405e957dea77bb101",
     ];
     let fee = 656;
-    let mut r = sign_request::new(
+    let mut r = redeem_request::new(
         nbtc_spend_key,
         sender,
         btc_receiver,
