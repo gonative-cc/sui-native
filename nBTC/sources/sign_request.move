@@ -213,3 +213,22 @@ public(package) fun get_signature(
 
     signature.extract()
 }
+
+#[test_only]
+public fun move_to_signing(r: &mut RedeemRequest, inputs: vector<Utxo>) {
+    r.inputs = inputs;
+    r.status = RedeemStatus::Signing
+}
+#[test_only]
+public fun move_to_signed(r: &mut RedeemRequest, signatures: vector<vector<u8>>) {
+    r.signatures_map =
+        vec_map::from_keys_values(
+            vector::tabulate!(signatures.length(), |i| i as u32),
+            signatures,
+        );
+    r.status = RedeemStatus::Signed
+}
+#[test_only]
+public fun set_pk_for_testing(r: &mut RedeemRequest, pks: vector<vector<u8>>) {
+    r.public_keys = vec_map::from_keys_values(vector::tabulate!(pks.length(), |i| i as u32), pks);
+}

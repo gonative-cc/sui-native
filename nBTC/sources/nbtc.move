@@ -696,6 +696,10 @@ public(package) fun public_key_of(contract: &NbtcContract, spend_key: vector<u8>
     let dwallet_cap = &contract.dwallet_caps[spend_key];
     contract.dwallet_pks[object::id(dwallet_cap)]
 }
+
+public fun redeem_request(contract: &NbtcContract, request_id: u64): &RedeemRequest {
+    &contract.redeem_requests[request_id]
+}
 //
 // Testing
 //
@@ -754,13 +758,6 @@ public fun add_utxo_for_test(ctr: &mut NbtcContract, idx: u64, utxo: Utxo) {
 }
 
 #[test_only]
-public fun move_to_signing(ctr: &mut NbtcContract, request_id: u64, inputs: vector<Utxo>) {
-    let r = &mut ctr.redeem_requests[request_id];
-    r.inputs = inputs;
-    r.status = RedeemStatus::Signing;
-}
-
-#[test_only]
 public fun dwallet_caps(contract: &NbtcContract, spend_key: vector<u8>): &DWalletCap {
     &contract.dwallet_caps[spend_key]
 }
@@ -782,24 +779,19 @@ public fun create_redeem_request_for_testing(
     signatures: vector<vector<u8>>,
     ctx: &mut TxContext,
 ) {
+    let r = sign_request::new(
+        contract.bitcoin_spend_key,
+        redeemer,
+        recipient_script,
+        amount,
+        fee,
+        ctx,
+    );
     contract
         .redeem_requests
         .add(
             request_id,
-            RedeemRequest {
-                redeemer,
-                recipient_script,
-                status: RedeemStatus::Signed,
-                amount,
-                fee,
-                inputs: utxos,
-                sign_hashes: vec_map::empty(),
-                sign_ids: table::new(ctx),
-                signatures_map: vec_map::from_keys_values(
-                    vector::tabulate!(signatures.length(), |i| i as u32),
-                    signatures,
-                ),
-            },
+            r,
         )
 }
 
@@ -808,4 +800,9 @@ public fun admin_cap_for_testing(ctx: &mut TxContext): AdminCap {
     AdminCap {
         id: object::new(ctx),
     }
+}
+
+#[test_only]
+public fun redeem_request_mut(contract: &mut NbtcContract, request_id: u64): &mut RedeemRequest {
+    &mut contract.redeem_requests[request_id]
 }

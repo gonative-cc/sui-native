@@ -51,7 +51,7 @@ fun redeem_happy_case() {
     let inputs = vector[
         new_utxo(x"06ce677fd511851bb6cdacebed863d12dfd231d810e8e9fcba6e791001adf3a6", 0, 1500),
     ];
-    ctr.move_to_signing(redeem_id, inputs);
+    // ctr.move_to_signing(redeem_id, inputs);
 
     // TODO::
     // - Create Dwallet Codinator

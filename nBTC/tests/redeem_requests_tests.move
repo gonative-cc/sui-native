@@ -45,7 +45,11 @@ fun raw_withdraw_tx_signed_tests() {
         scenario.ctx(),
     );
 
-    let raw_tx = ctr.raw_signed_tx(request_id);
+    let r = ctr.redeem_request_mut(request_id);
+    r.move_to_signing(utxos);
+    r.move_to_signed(signatures);
+    r.set_pk_for_testing(vector[nbtc_pk]);
+    let raw_tx = r.raw_signed_tx();
 
     // one output, no remains token
     assert_eq!(
