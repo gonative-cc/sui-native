@@ -2,9 +2,7 @@
 
 module nbtc::nbtc;
 
-use bitcoin_lib::encoding::u64_to_le_bytes;
 use bitcoin_lib::reader;
-use bitcoin_lib::sighash::{create_segwit_preimage, create_p2wpkh_scriptcode};
 use bitcoin_lib::tx;
 use bitcoin_spv::light_client::LightClient;
 use ika::ika::IKA;
@@ -25,7 +23,6 @@ use sui::event;
 use sui::sui::SUI;
 use sui::table::{Self, Table};
 use sui::url;
-use sui::vec_map::{Self, VecMap};
 
 //
 // Constant
@@ -775,8 +772,6 @@ public fun create_redeem_request_for_testing(
     recipient_script: vector<u8>,
     amount: u64,
     fee: u64,
-    utxos: vector<Utxo>,
-    signatures: vector<vector<u8>>,
     ctx: &mut TxContext,
 ) {
     let r = sign_request::new(

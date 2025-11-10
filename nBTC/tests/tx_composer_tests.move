@@ -3,7 +3,6 @@ module nbtc::tx_composer_tests;
 
 use bitcoin_lib::encoding::u64_to_le_bytes;
 use bitcoin_lib::sighash::{create_segwit_preimage, create_p2wpkh_scriptcode};
-use nbtc::nbtc_tests::setup;
 use nbtc::nbtc_utxo::new_utxo;
 use nbtc::tx_composer::compose_withdraw_tx;
 use std::unit_test::assert_eq;

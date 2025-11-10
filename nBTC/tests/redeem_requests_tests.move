@@ -1,11 +1,9 @@
 #[test_only]
 module nbtc::redeem_request_tests;
 
-use ika_dwallet_2pc_mpc::coordinator_inner::dwallet_cap_for_testing;
-use nbtc::nbtc::{AdminCap, admin_cap_for_testing};
 use nbtc::nbtc_tests::setup;
-use nbtc::nbtc_utxo::{new_utxo, Utxo};
-use nbtc::sign_request::{Self, RedeemRequest};
+use nbtc::nbtc_utxo::new_utxo;
+use nbtc::sign_request;
 use std::unit_test::assert_eq;
 use sui::test_utils::destroy;
 
@@ -17,24 +15,6 @@ fun raw_withdraw_tx_signed_tests() {
     let (lc, mut ctr, mut scenario) = setup(nbtc_spend_key, sender);
 
     scenario.next_tx(sender);
-
-    // let admin_cap = admin_cap_for_testing(scenario.ctx());
-    // // mock dwallet id
-    // let dwallet = object::new(scenario.ctx());
-    // let dwallet_id = dwallet.uid_to_inner();
-    // let dwallet_cap = dwallet_cap_for_testing(dwallet_id, scenario.ctx());
-    //
-    // admin_cap.add_dwallet_cap(&mut ctr, dwallet_cap, ntc_spend_key, nbtc_pk);
-    // ctr.create_redeem_request_for_testing(
-    //     request_id,
-    //     sender,
-    //     btc_receiver,
-    //     amount,
-    //     fee,
-    //     utxos,
-    //     signatures,
-    //     scenario.ctx(),
-    // );
 
     let amount = 72561;
     let btc_receiver = x"001464f9139a4a853b3d5ad1315ceb707386ed343c2c";
