@@ -29,13 +29,15 @@ public struct Utxo has copy, drop, store {
     tx_id: vector<u8>, // TODO: this is 32-byte hash. we can also use vector<u8>
     vout: u32,
     value: u64,
+    spend_key: vector<u8>,
 }
 
-public fun new_utxo(tx_id: vector<u8>, vout: u32, value: u64): Utxo {
+public fun new_utxo(tx_id: vector<u8>, vout: u32, value: u64, spend_key: vector<u8>): Utxo {
     Utxo {
         tx_id,
         vout,
         value,
+        spend_key,
     }
 }
 
@@ -51,6 +53,10 @@ public fun value(utxo: &Utxo): u64 {
     utxo.value
 }
 
+public fun spend_key(utxo: &Utxo): vector<u8> {
+    utxo.spend_key
+}
+
 /// # Criterias:
 /// 1. Prefer fewer inputs
 /// 2. Avoid creating dust change
@@ -58,16 +64,13 @@ public fun value(utxo: &Utxo): u64 {
 /// 4. Prefer exact matches
 public fun utxo_ranking(
     utxos: &vector<Utxo>,
-    utxo_spend_keys: &vector<vector<u8>>,
     withdraw_amount: u64,
     active_spend_key: &vector<u8>,
 ): u64 {
     let mut sum: u64 = 0;
-    let mut i = 0;
-    while (i < utxos.length()) {
+    utxos.length().do!(|i| {
         sum = sum + utxos[i].value;
-        i = i + 1;
-    };
+    });
 
     if (sum < withdraw_amount) {
         return 0
@@ -81,13 +84,11 @@ public fun utxo_ranking(
     score = score - (inputs * INPUTS_PENALTY);
 
     // 2) Prefer inactive keys
-    i = 0;
-    while (i < utxo_spend_keys.length()) {
-        if (&utxo_spend_keys[i] != active_spend_key) {
+    utxos.length().do!(|i| {
+        if (&utxos[i].spend_key != active_spend_key) {
             score = score + INACTIVE_BONUS;
         };
-        i = i + 1;
-    };
+    });
 
     // 3) Change shaping
     if (change == 0) {
