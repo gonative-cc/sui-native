@@ -80,8 +80,8 @@ public fun utxo_ranking(
     let mut score = BASE_SCORE;
 
     // 1) Fewer inputs
-    let inputs = utxos.length();
-    score = score - (inputs * INPUTS_PENALTY);
+    let number_inputs = utxos.length();
+    score = score - (number_inputs * INPUTS_PENALTY);
 
     // 2) Prefer inactive keys
     utxos.length().do!(|i| {
