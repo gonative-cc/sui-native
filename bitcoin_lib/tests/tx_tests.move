@@ -215,6 +215,7 @@ fun parse_tx_happy_cases() {
         let txn = tx::deserialize(&mut r);
         assert_eq!(txn, txs_decoded[i]);
         assert_eq!(txn.is_witness(), is_witness_tx[i]);
+        assert_eq!(txn.compute_tx_id(), txn.tx_id());
         if (txn.is_witness()) {
             assert_eq!(txn.serialize_segwit(), raw_txs[i]);
         }
