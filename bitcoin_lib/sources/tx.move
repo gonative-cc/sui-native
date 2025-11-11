@@ -99,8 +99,6 @@ public fun is_witness(tx: &Transaction): bool {
     m == 0x00 && f == 0x01
 }
 
-/// Return tx id if we have this
-/// Compute and cache if we don't set transaction id
 public fun tx_id(tx: &Transaction): vector<u8> {
     tx.tx_id
 }
