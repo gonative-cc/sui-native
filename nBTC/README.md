@@ -61,7 +61,7 @@ For withdrawal requests, the system selects optimal UTXOs to minimize transactio
 
 #### Scoring Formula
 
-```
+```text
 score = BASE_SCORE
       - (number_of_inputs × 100)
       + (inactive_key_count × 200)
