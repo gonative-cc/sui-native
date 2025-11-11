@@ -72,6 +72,7 @@ score = BASE_SCORE
 The algorithm selects the combination with the highest score. A score of 0 indicates insufficient funds.
 
 **Constants:**
+
 - `DUST_THRESHOLD`: 10,000 satoshis
 - `BASE_SCORE`: 4,000,000,000,000,000
 - `INPUTS_PENALTY`: 100
