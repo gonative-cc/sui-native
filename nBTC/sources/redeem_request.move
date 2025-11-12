@@ -18,6 +18,8 @@ const SHA256: u32 = 1;
 
 #[error]
 const ESignatureInValid: vector<u8> = b"signature invalid for this input";
+#[error]
+const EInvalidSignatureId: vector<u8> = b"invalid signature id for redeem request";
 
 public enum RedeemStatus has copy, drop, store {
     Resolving, // finding the best UTXOs
@@ -186,6 +188,7 @@ public(package) fun validate_signature(
     sign_id: ID,
 ) {
     // TODO: ensure we get right spend key, because this spend key can also inactive_spend_key
+    assert!(r.sign_ids.contains(sign_id), EInvalidSignatureId);
     let sign_hash = r.sig_hash(input_idx);
     let dwallet_id = r.utxo_at(input_idx).dwallet_id();
     let signature = get_signature(dwallet_coordinator, dwallet_id, sign_id);

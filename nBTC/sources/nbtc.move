@@ -74,9 +74,8 @@ const EBalanceNotEmpty: vector<u8> = b"balance not empty";
 #[error]
 const ENotReadlyForSign: vector<u8> = b"redeem tx is not ready for signing";
 #[error]
-const EInputAlredyUsed: vector<u8> = b"this input has been already used in other signature request";
-#[error]
-const EInvalidSignatureId: vector<u8> = b"invalid signature id for redeem request";
+const EInputAlreadyUsed: vector<u8> =
+    b"this input has been already used in other signature request";
 //
 // Structs
 //
@@ -446,7 +445,7 @@ public fun request_signature_for_input(
 ) {
     let request = &mut contract.redeem_requests[request_id];
     assert!(request.status().is_signing(), ENotReadlyForSign);
-    assert!(request.has_signature(input_idx), EInputAlredyUsed);
+    assert!(request.has_signature(input_idx), EInputAlreadyUsed);
 
     // This should include other information for create sign hash
     let sign_hash = request.sig_hash(input_idx);
@@ -508,7 +507,7 @@ public fun btc_redeem_tx(): vector<u8> {
     b"Go Go Native"
 }
 
-public(package) fun validate_signature(
+public fun validate_signature(
     contract: &mut NbtcContract,
     dwallet_coordinator: &DWalletCoordinator,
     redeem_id: u64,
@@ -516,7 +515,7 @@ public(package) fun validate_signature(
     sign_id: ID,
 ) {
     let r = &mut contract.redeem_requests[redeem_id];
-    assert!(r.has_signature(input_idx), EInvalidSignId);
+    assert!(r.has_signature(input_idx), EInputAlreadyUsed);
 
     // TODO: ensure we get right spend key, because this spend key can also inactive_spend_key
     r.validate_signature(dwallet_coordinator, redeem_id, input_idx, sign_id);
