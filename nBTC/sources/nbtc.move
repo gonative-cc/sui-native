@@ -519,20 +519,6 @@ public(package) fun validate_signature(
     assert!(r.has_signature(input_idx), EInvalidSignId);
 
     // TODO: ensure we get right spend key, because this spend key can also inactive_spend_key
-    // let sign_hash = r.sig_hash(input_idx);
-    // let dwallet_id = r.utxo_at(input_idx).dwallet_id;
-    // let signature = get_signature(dwallet_coordinator, dwallet_id, sign_id);
-    // let pk = r.public_key()
-    // let is_valid = sui::ecdsa_k1::secp256k1_verify(
-    //     &signature,
-    //     &pk,
-    //     &sign_hash,
-    //     SHA256 as u8,
-    // );
-
-    // let is_valid = r.validate_signature(dwallet_coordinator, redeem_id, input_idx, sign_id)
-    // assert!(is_valid, ESignatureInValid);
-    // r.add_signature(input_idx, signature);
     r.validate_signature(dwallet_coordinator, redeem_id, input_idx, sign_id);
 }
 
