@@ -280,7 +280,8 @@ fun verify_deposit(
         let vout_idx = vouts[i];
         let o_amount = o[vout_idx as u64].amount();
         let utxo_idx_next = contract.next_utxo;
-        add_utxo_to_contract(contract, tx_id, vout_idx, o_amount);
+        let dwallet_id = contract.dwallet_caps[deposit_spend_key].dwallet_id();
+        add_utxo_to_contract(contract, tx_id, vout_idx, o_amount, deposit_spend_key, dwallet_id);
         utxo_idx.push_back(utxo_idx_next);
         i = i + 1;
     };
@@ -621,9 +622,11 @@ public(package) fun add_utxo_to_contract(
     tx_id: vector<u8>,
     vout: u32,
     value: u64,
+    spend_key: vector<u8>,
+    dwallet_id: ID,
 ) {
     let utxo_idx = contract.next_utxo;
-    let utxo = nbtc_utxo::new_utxo(tx_id, vout, value);
+    let utxo = nbtc_utxo::new_utxo(tx_id, vout, value, spend_key, dwallet_id);
     contract.utxos.add(utxo_idx, utxo);
     contract.next_utxo = contract.next_utxo + 1;
 }

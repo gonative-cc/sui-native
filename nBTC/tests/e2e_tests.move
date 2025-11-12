@@ -36,9 +36,16 @@ fun create_dwallet_system(mut scenario: Scenario): Scenario {
 fun redeem_happy_case() {
     let (lc, mut ctr, mut scenario) = setup(NBTC_SCRIPT_PUBKEY, ADMIN);
 
+    let spend_key = NBTC_SCRIPT_PUBKEY;
     ctr.add_utxo_for_test(
         0,
-        new_utxo(x"06ce677fd511851bb6cdacebed863d12dfd231d810e8e9fcba6e791001adf3a6", 0, 1500),
+        new_utxo(
+            x"06ce677fd511851bb6cdacebed863d12dfd231d810e8e9fcba6e791001adf3a6",
+            0,
+            1500,
+            spend_key,
+            object::id_from_address(ADMIN), // mock dwallet id
+        ),
     );
 
     // create 1000sat NBCT token for test
@@ -49,7 +56,13 @@ fun redeem_happy_case() {
     // TODO: proposal UTXO
 
     let inputs = vector[
-        new_utxo(x"06ce677fd511851bb6cdacebed863d12dfd231d810e8e9fcba6e791001adf3a6", 0, 1500),
+        new_utxo(
+            x"06ce677fd511851bb6cdacebed863d12dfd231d810e8e9fcba6e791001adf3a6",
+            0,
+            1500,
+            spend_key,
+            object::id_from_address(ADMIN), // mock dwallet id
+        ),
     ];
     // ctr.move_to_signing(redeem_id, inputs);
 
