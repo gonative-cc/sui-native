@@ -789,3 +789,12 @@ public fun admin_cap_for_testing(ctx: &mut TxContext): AdminCap {
 public fun redeem_request_mut(contract: &mut NbtcContract, request_id: u64): &mut RedeemRequest {
     &mut contract.redeem_requests[request_id]
 }
+
+#[test_only]
+public fun set_dwallet_cap_for_test(
+    contract: &mut NbtcContract,
+    spend_script: vector<u8>,
+    dwallet_cap: DWalletCap,
+) {
+    contract.dwallet_caps.add(spend_script, dwallet_cap);
+}
