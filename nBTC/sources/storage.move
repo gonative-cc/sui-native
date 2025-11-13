@@ -68,7 +68,7 @@ public fun record_balance_of(dmeta: &DWalletMetadata, addr: address): u64 {
     }
 }
 
-public(package) fun update_record_balance(
+public(package) fun increase_record_balance(
     store: &mut Storage,
     dwallet_id: ID,
     user: address,
@@ -82,6 +82,15 @@ public(package) fun update_record_balance(
         dwallet_metadata_mut.record_balance.add(user, amount);
     };
     dwallet_metadata_mut.total_deposit = dwallet_metadata_mut.total_deposit + amount;
+}
+
+public(package) fun remove_record_balance(store: &mut Storage, dwallet_id: ID, user: address): u64 {
+    let dwallet_metadata_mut = &mut store.dwallet_metadatas[dwallet_id];
+    let user_balance = &mut dwallet_metadata_mut.record_balance[user];
+    let amount = *user_balance;
+    *user_balance = 0;
+    dwallet_metadata_mut.total_deposit = dwallet_metadata_mut.total_deposit - amount;
+    amount
 }
 
 public fun dwallet_metadata(store: &Storage, dwallet_id: ID): &DWalletMetadata {

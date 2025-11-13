@@ -398,8 +398,6 @@ public fun record_inactive_deposit(
         option::some(dwallet_id) != contract.active_dwallet_id && contract.storage.exist(dwallet_id),
         EInvalidDepositKey,
     );
-    // let mut inactive_key_idx = contract.inactive_key_idx(deposit_spend_key);
-    // assert!(inactive_key_idx.is_some(), EInvalidDepositKey);
 
     let deposit_spend_key = contract.storage.dwallet_metadata(dwallet_id).lockscript();
     let (amount, recipient, _utxo_idx) = contract.verify_deposit(
@@ -413,7 +411,7 @@ public fun record_inactive_deposit(
         ops_arg,
     );
 
-    contract.storage.update_record_balance(dwallet_id, recipient, amount);
+    contract.storage.increase_record_balance(dwallet_id, recipient, amount);
     event::emit(InactiveDepositEvent {
         bitcoin_spend_key: deposit_spend_key,
         recipient,
@@ -499,12 +497,6 @@ public fun redeem(
     return redeem_id
 }
 
-// TODO: Implement logic for generate the redeem transaction data
-// This can be offchain or onchain depends on algorithm we design.
-public fun btc_redeem_tx(): vector<u8> {
-    b"Go Go Native"
-}
-
 public fun validate_signature(
     contract: &mut NbtcContract,
     dwallet_coordinator: &DWalletCoordinator,
@@ -525,20 +517,16 @@ public fun validate_signature(
 public fun withdraw_inactive_deposit(
     contract: &mut NbtcContract,
     bitcoin_recipient: vector<u8>,
-    deposit_spend_key: vector<u8>,
+    dwallet_id: ID,
     ctx: &mut TxContext,
 ): u64 {
     assert!(contract.version == VERSION, EVersionMismatch);
-    let mut inactive_key_idx = contract.inactive_key_idx(deposit_spend_key);
-    assert!(inactive_key_idx.is_some(), EInvalidDepositKey);
-    let sender = ctx.sender();
-    let key_idx = inactive_key_idx.extract();
-    let mut bal_key = deposit_spend_key; // makes a copy
-    bal_key.append(sender.to_bytes());
-    let amount = contract.inactive_user_balances.remove(bal_key);
-    let total_bal = &mut contract.inactive_balances[key_idx];
-    *total_bal = *total_bal - amount;
-
+    assert!(
+        option::some(dwallet_id) != contract.active_dwallet_id && contract.storage.exist(dwallet_id),
+        EInvalidDepositKey,
+    );
+    let amount = contract.storage.remove_record_balance(dwallet_id, ctx.sender());
+    let deposit_spend_key = contract.storage.dwallet_metadata(dwallet_id).lockscript();
     event::emit(RedeemInactiveDepositEvent {
         bitcoin_spend_key: deposit_spend_key,
         recipient: bitcoin_recipient,
