@@ -16,9 +16,9 @@ public struct DWalletMetadata has store {
 
 public struct Storage has key, store {
     id: UID,
-    active_dwallet_id: ID, // id of active dwallet
     // map dwallet id to Dwallet Metadata
     dwallet_metadatas: Table<ID, DWalletMetadata>,
+    // lockscript: Table<vector<u8>, ID>,
     dwallet_caps: Table<ID, DWalletCap>,
 }
 
@@ -67,11 +67,44 @@ public fun record_balance_of(dmeta: &DWalletMetadata, addr: address): u64 {
     }
 }
 
+public(package) fun update_record_balance(
+    store: &mut Storage,
+    dwallet_id: ID,
+    user: address,
+    amount: u64,
+) {
+    let dwallet_metadata_mut = &mut store.dwallet_metadatas[dwallet_id];
+    if (dwallet_metadata_mut.record_balance.contains(user)) {
+        let user_balance = &mut dwallet_metadata_mut.record_balance[user];
+        *user_balance = *user_balance + amount;
+    } else {
+        dwallet_metadata_mut.record_balance.add(user, amount);
+    };
+    dwallet_metadata_mut.total_deposit = dwallet_metadata_mut.total_deposit + amount;
+}
+
 public fun dwallet_metadata(store: &Storage, dwallet_id: ID): &DWalletMetadata {
-    &store.store.dwallet_metadatas[dwallet_id]
+    &store.dwallet_metadatas[dwallet_id]
 }
 
 // NOTE: This function never export to public
 public(package) fun dwallet_cap(store: &Storage, dwallet_id: ID): &DWalletCap {
     &store.dwallet_caps[dwallet_id]
 }
+
+public fun create_storage(ctx: &mut TxContext): Storage {
+    Storage {
+        id: object::new(ctx),
+        dwallet_caps: table::new(ctx),
+        dwallet_metadatas: table::new(ctx),
+    }
+}
+
+public fun exist(store: &Storage, dwallet_id: ID): bool {
+    store.dwallet_metadatas.contains(dwallet_id)
+}
+
+// // return wallet id have lock script
+// public(package) fun lookup_spend_key(store: &Storage, lockscript: vector<u8>): ID {
+//
+// }

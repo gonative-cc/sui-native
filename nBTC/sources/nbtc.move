@@ -15,6 +15,7 @@ use ika_dwallet_2pc_mpc::coordinator_inner::{
 use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
 use nbtc::nbtc_utxo::{Self, Utxo};
 use nbtc::redeem_request::{Self, RedeemRequest};
+use nbtc::storage::{Storage, create_storage};
 use nbtc::verify_payment::verify_payment;
 use sui::address;
 use sui::balance::{Self, Balance};
@@ -127,6 +128,9 @@ public struct NbtcContract has key, store {
     redeem_requests: Table<u64, RedeemRequest>,
     // lock nbtc for redeem, this is a mapping from request id to nBTC redeem coin
     locked: Table<u64, Coin<NBTC>>,
+    storage: Storage,
+    // should have one active_dwallet_id
+    active_dwallet_id: Option<ID>,
     next_redeem_req: u64,
 }
 
@@ -195,6 +199,8 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         next_utxo: 0,
         redeem_requests: table::new<u64, RedeemRequest>(ctx),
         locked: table::new(ctx),
+        storage: create_storage(ctx),
+        active_dwallet_id: option::none(),
         next_redeem_req: 0,
     };
     transfer::public_share_object(contract);
@@ -220,7 +226,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
 fun verify_deposit(
     contract: &mut NbtcContract,
     light_client: &LightClient,
-    deposit_spend_key: vector<u8>,
+    dwallet_id: ID,
     tx_bytes: vector<u8>,
     proof: vector<vector<u8>>,
     height: u64,
@@ -229,6 +235,7 @@ fun verify_deposit(
     _payload: vector<u8>,
     ops_arg: u32,
 ): (u64, address, vector<u64>) {
+    let deposit_spend_key = contract.storage.dwallet_metadata(dwallet_id).lockscript();
     assert!(contract.version == VERSION, EVersionMismatch);
     assert!(ops_arg == 0 || ops_arg == MINT_OP_APPLY_FEE, EInvalidOpsArg);
     let provided_lc_id = object::id(light_client);
@@ -332,9 +339,10 @@ public fun mint(
     ctx: &mut TxContext,
 ) {
     let spend_key = contract.bitcoin_spend_key;
+    let active_dwallet_id = contract.active_dwallet_id.extract();
     let (mut amount, recipient, utxo_idx) = contract.verify_deposit(
         light_client,
-        spend_key,
+        active_dwallet_id,
         tx_bytes,
         proof,
         height,
@@ -380,24 +388,29 @@ public fun mint(
 public fun record_inactive_deposit(
     contract: &mut NbtcContract,
     light_client: &LightClient,
+    dwallet_id: ID,
     tx_bytes: vector<u8>,
     proof: vector<vector<u8>>,
     height: u64,
     tx_index: u64,
     payload: vector<u8>,
     ops_arg: u32,
-    deposit_spend_key: vector<u8>,
 ) {
     assert!(contract.version == VERSION, EVersionMismatch);
     assert!(ops_arg == 0 || ops_arg == MINT_OP_APPLY_FEE, EInvalidOpsArg);
     let provided_lc_id = object::id(light_client);
     assert!(provided_lc_id == contract.get_light_client_id(), EUntrustedLightClient);
-    let mut inactive_key_idx = contract.inactive_key_idx(deposit_spend_key);
-    assert!(inactive_key_idx.is_some(), EInvalidDepositKey);
+    assert!(
+        dwallet_id != contract.active_dwallet_id.extract() && contract.storage.exist(dwallet_id),
+        EInvalidDepositKey,
+    );
+    // let mut inactive_key_idx = contract.inactive_key_idx(deposit_spend_key);
+    // assert!(inactive_key_idx.is_some(), EInvalidDepositKey);
 
+    let deposit_spend_key = contract.storage.dwallet_metadata(dwallet_id).lockscript();
     let (amount, recipient, _utxo_idx) = contract.verify_deposit(
         light_client,
-        deposit_spend_key,
+        dwallet_id,
         tx_bytes,
         proof,
         height,
@@ -406,17 +419,19 @@ public fun record_inactive_deposit(
         ops_arg,
     );
 
-    let key_idx = inactive_key_idx.extract();
-    let bal = &mut contract.inactive_balances[key_idx];
-    *bal = *bal + amount;
-
-    let bal_key = inactive_bal_key(&deposit_spend_key, recipient);
-    if (contract.inactive_user_balances.contains(bal_key)) {
-        let user_bal = &mut contract.inactive_user_balances[bal_key];
-        *user_bal = *user_bal + amount;
-    } else {
-        contract.inactive_user_balances.add(bal_key, amount);
-    };
+    // let key_idx = inactive_key_idx.extract();
+    // let bal = &mut contract.inactive_balances[key_idx];
+    // *bal = *bal + amount;
+    //
+    // let bal_key = inactive_bal_key(&deposit_spend_key, recipient);
+    // if (contract.inactive_user_balances.contains(bal_key)) {
+    //     let user_bal = &mut contract.inactive_user_balances[bal_key];
+    //     *user_bal = *user_bal + amount;
+    // } else {
+    //     contract.inactive_user_balances.add(bal_key, amount);
+    // };
+    //
+    contract.storage.update_record_balance(dwallet_id, recipient, amount);
     event::emit(InactiveDepositEvent {
         bitcoin_spend_key: deposit_spend_key,
         recipient,
