@@ -17,15 +17,17 @@ use sui::table::{Self, Table};
 use sui::vec_map::{Self, VecMap};
 
 use fun vector_slice as vector.slice;
+
 #[error]
 const ERedeemTxSigningNotCompleted: vector<u8> =
     b"The signature for the redeem has not been completed";
-const ECDSA: u32 = 0;
-const SHA256: u32 = 1;
 #[error]
 const ESignatureInValid: vector<u8> = b"signature invalid for this input";
 #[error]
 const EInvalidSignatureId: vector<u8> = b"invalid signature id for redeem request";
+
+const ECDSA: u32 = 0;
+const SHA256: u32 = 1;
 
 public enum RedeemStatus has copy, drop, store {
     Resolving, // finding the best UTXOs
@@ -225,7 +227,6 @@ public(package) fun validate_signature(
     r: &mut RedeemRequest,
     dwallet_coordinator: &DWalletCoordinator,
     storage: &Storage,
-    redeem_id: u64,
     input_idx: u32,
     sign_id: ID,
 ) {

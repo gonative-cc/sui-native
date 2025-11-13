@@ -4,6 +4,7 @@ use ika_dwallet_2pc_mpc::coordinator_inner::DWalletCap;
 use sui::table::{Self, Table};
 
 public struct DWalletMetadata has store {
+    // TODO: change to taproot once Ika will support it
     public_key: vector<u8>, // ecdsa public key
     lockscript: vector<u8>, // lock script for this dwallet
     script_type: u8, // script type, not sure we need this
