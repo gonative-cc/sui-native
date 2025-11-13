@@ -215,6 +215,7 @@ fun parse_tx_happy_cases() {
         let txn = tx::deserialize(&mut r);
         assert_eq!(txn, txs_decoded[i]);
         assert_eq!(txn.is_witness(), is_witness_tx[i]);
+        assert_eq!(txn.compute_tx_id(), txn.tx_id());
         if (txn.is_witness()) {
             assert_eq!(txn.serialize_segwit(), raw_txs[i]);
         }
@@ -229,6 +230,7 @@ fun taproot_tx_parse_happy_cases() {
     let mut r = reader::new(data);
     let txn = tx::deserialize(&mut r);
     assert_eq!(txn.tx_id(), x"ec9016580d98a93909faf9d2f431e74f781b438d81372bb6aab4db67725c11a7");
+    assert_eq!(txn.compute_tx_id(), txn.tx_id());
     assert_eq!(txn.inputs().length(), 1);
     assert_eq!(txn.outputs().length(), 2);
     assert_eq!(txn.is_witness(), true);
