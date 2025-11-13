@@ -22,7 +22,8 @@ public struct Storage has key, store {
     dwallet_caps: Table<ID, DWalletCap>,
 }
 
-public fun create_dwallet_metadata(
+// TODO: OTW for create_dwallet_metadata
+public(package) fun create_dwallet_metadata(
     script_type: u8,
     lockscript: vector<u8>,
     public_key: vector<u8>,
@@ -92,6 +93,7 @@ public(package) fun dwallet_cap(store: &Storage, dwallet_id: ID): &DWalletCap {
     &store.dwallet_caps[dwallet_id]
 }
 
+// TODO: OTW for create_storage
 public fun create_storage(ctx: &mut TxContext): Storage {
     Storage {
         id: object::new(ctx),

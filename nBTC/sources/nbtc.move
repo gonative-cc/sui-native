@@ -446,10 +446,9 @@ public fun request_signature_for_input(
     assert!(request.has_signature(input_idx), EInputAlreadyUsed);
 
     // This should include other information for create sign hash
-    let sign_hash = request.sig_hash(input_idx);
+    let sign_hash = request.sig_hash(input_idx, &contract.storage);
 
     let dwallet_id = request.utxo_at(input_idx).dwallet_id();
-    let spend_key = contract.storage.dwallet_metadata(dwallet_id).lockscript();
     let dwallet_cap = contract.storage.dwallet_cap(dwallet_id);
     let message_approval = dwallet_coordinator.approve_message(
         dwallet_cap,
@@ -517,7 +516,7 @@ public fun validate_signature(
     assert!(r.has_signature(input_idx), EInputAlreadyUsed);
 
     // TODO: ensure we get right spend key, because this spend key can also inactive_spend_key
-    r.validate_signature(dwallet_coordinator, redeem_id, input_idx, sign_id);
+    r.validate_signature(dwallet_coordinator, &contract.storage, redeem_id, input_idx, sign_id);
 }
 
 /// Allows user to withdraw back deposited BTC that used an inactive deposit spend key.
@@ -550,6 +549,10 @@ public fun withdraw_inactive_deposit(
     // TODO: we can delete the btc public key when reserves of this key is zero
 
     amount
+}
+
+public fun storage(contract: &NbtcContract): &Storage {
+    &contract.storage
 }
 
 /// update_version updates the contract.version to the latest, making the usage of the older
