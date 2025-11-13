@@ -15,7 +15,7 @@ use ika_dwallet_2pc_mpc::coordinator_inner::{
 use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
 use nbtc::nbtc_utxo::{Self, Utxo};
 use nbtc::redeem_request::{Self, RedeemRequest};
-use nbtc::storage::{Storage, create_storage};
+use nbtc::storage::{Storage, create_storage, create_dwallet_metadata};
 use nbtc::verify_payment::verify_payment;
 use sui::address;
 use sui::balance::{Self, Balance};
@@ -283,11 +283,11 @@ fun verify_deposit(
     let o = tx.outputs();
     let mut utxo_idx = vector[];
     let mut i = 0;
+    let dwallet_id = *contract.active_dwallet_id.borrow();
     while (i < vouts.length()) {
         let vout_idx = vouts[i];
         let o_amount = o[vout_idx as u64].amount();
         let utxo_idx_next = contract.next_utxo;
-        let dwallet_id = contract.dwallet_caps[deposit_spend_key].dwallet_id();
         add_utxo_to_contract(contract, tx_id, vout_idx, o_amount, deposit_spend_key, dwallet_id);
         utxo_idx.push_back(utxo_idx_next);
         i = i + 1;
@@ -339,7 +339,7 @@ public fun mint(
     ctx: &mut TxContext,
 ) {
     let spend_key = contract.bitcoin_spend_key;
-    let active_dwallet_id = contract.active_dwallet_id.extract();
+    let active_dwallet_id = *contract.active_dwallet_id.borrow();
     let (mut amount, recipient, utxo_idx) = contract.verify_deposit(
         light_client,
         active_dwallet_id,
@@ -401,7 +401,7 @@ public fun record_inactive_deposit(
     let provided_lc_id = object::id(light_client);
     assert!(provided_lc_id == contract.get_light_client_id(), EUntrustedLightClient);
     assert!(
-        dwallet_id != contract.active_dwallet_id.extract() && contract.storage.exist(dwallet_id),
+        option::some(dwallet_id) != contract.active_dwallet_id && contract.storage.exist(dwallet_id),
         EInvalidDepositKey,
     );
     // let mut inactive_key_idx = contract.inactive_key_idx(deposit_spend_key);
@@ -606,6 +606,26 @@ public fun add_dwallet_cap(
     contract.dwallet_caps.add(spend_key, dwallet_cap);
 }
 
+public fun add_dwallet(
+    _: &AdminCap,
+    contract: &mut NbtcContract,
+    dwallet_cap: DWalletCap,
+    lockscript: vector<u8>,
+    public_key: vector<u8>,
+    ctx: &mut TxContext,
+) {
+    // TODO: Verify public key and lockscript
+    let p2wphk = 0;
+    let dmeta = create_dwallet_metadata(p2wphk, lockscript, public_key, ctx);
+    let dwallet_id = dwallet_cap.dwallet_id();
+    contract.storage.add_metadata(dwallet_id, dmeta);
+    contract.storage.add_dwallet_cap(dwallet_id, dwallet_cap);
+}
+
+public fun set_active_dwallet(_: &AdminCap, contract: &mut NbtcContract, dwallet_id: ID) {
+    contract.active_dwallet_id = option::some(dwallet_id);
+}
+
 /// Set btc endpoint for deposit on nBTC, and set reserve of this endpoint is zero.
 /// In the case, we use this key before we will enable deposit endpoint again.
 public fun add_spend_key(_: &AdminCap, contract: &mut NbtcContract, key: vector<u8>) {
@@ -743,6 +763,8 @@ public(package) fun init_for_testing(
         locked: table::new(ctx),
         next_redeem_req: 0,
         next_utxo: 0,
+        active_dwallet_id: option::none(),
+        storage: create_storage(ctx),
     };
     contract
 }
@@ -809,7 +831,15 @@ public fun redeem_request_mut(contract: &mut NbtcContract, request_id: u64): &mu
 public fun set_dwallet_cap_for_test(
     contract: &mut NbtcContract,
     spend_script: vector<u8>,
+    public_key: vector<u8>,
     dwallet_cap: DWalletCap,
+    ctx: &mut TxContext,
 ) {
-    contract.dwallet_caps.add(spend_script, dwallet_cap);
+    // contract.dwallet_caps.add(spend_script, dwallet_cap);
+    let p2wphk = 0;
+    let dmeta = create_dwallet_metadata(p2wphk, spend_script, public_key, ctx);
+    let dwallet_id = dwallet_cap.dwallet_id();
+    contract.active_dwallet_id = option::some(dwallet_id);
+    contract.storage.add_metadata(dwallet_id, dmeta);
+    contract.storage.add_dwallet_cap(dwallet_id, dwallet_cap);
 }

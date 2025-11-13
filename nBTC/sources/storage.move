@@ -104,6 +104,13 @@ public fun exist(store: &Storage, dwallet_id: ID): bool {
     store.dwallet_metadatas.contains(dwallet_id)
 }
 
+public fun add_metadata(store: &mut Storage, dwallet_id: ID, dmeta: DWalletMetadata) {
+    store.dwallet_metadatas.add(dwallet_id, dmeta);
+}
+
+public fun add_dwallet_cap(store: &mut Storage, dwallet_id: ID, dwallet_cap: DWalletCap) {
+    store.dwallet_caps.add(dwallet_id, dwallet_cap);
+}
 // // return wallet id have lock script
 // public(package) fun lookup_spend_key(store: &Storage, lockscript: vector<u8>): ID {
 //
