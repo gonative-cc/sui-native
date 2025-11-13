@@ -43,9 +43,6 @@ const ICON_URL: vector<u8> =
 /// ops_arg consts
 const MINT_OP_APPLY_FEE: u32 = 1;
 
-const ECDSA: u32 = 0;
-const SHA256: u32 = 1;
-
 /// One Time Witness
 public struct NBTC has drop {}
 
@@ -416,29 +413,40 @@ public fun request_signature_for_input(
     assert!(request.status().is_signing(), ENotReadlyForSign);
     assert!(request.has_signature(input_idx), EInputAlreadyUsed);
 
-    // This should include other information for create sign hash
-    let sign_hash = request.sig_hash(input_idx, &contract.storage);
-
-    let dwallet_id = request.utxo_at(input_idx).dwallet_id();
-    let dwallet_cap = contract.storage.dwallet_cap(dwallet_id);
-    let message_approval = dwallet_coordinator.approve_message(
-        dwallet_cap,
-        ECDSA,
-        SHA256,
-        sign_hash,
-    );
-
-    let sign_id = dwallet_coordinator.request_sign_with_partial_user_signature_and_return_id(
+    request.request_signature_for_input(
+        dwallet_coordinator,
+        &contract.storage,
+        input_idx,
         user_sig_cap,
-        message_approval,
         session_identifier,
         payment_ika,
         payment_sui,
         ctx,
     );
-
-    request.set_sign_request_metadata(input_idx, sign_hash, sign_id);
 }
+//     // This should include other information for create sign hash
+//     let sig_hash = request.sig_hash(input_idx, &contract.storage);
+//
+//     let dwallet_id = request.utxo_at(input_idx).dwallet_id();
+//     let dwallet_cap = contract.storage.dwallet_cap(dwallet_id);
+//     let message_approval = dwallet_coordinator.approve_message(
+//         dwallet_cap,
+//         ECDSA,
+//         SHA256,
+//         sig_hash,
+//     );
+//
+//     let sign_id = dwallet_coordinator.request_sign_with_partial_user_signature_and_return_id(
+//         user_sig_cap,
+//         message_approval,
+//         session_identifier,
+//         payment_ika,
+//         payment_sui,
+//         ctx,
+//     );
+//
+//     request.set_sign_request_metadata(input_idx, sign_hash, sign_id);
+// }
 
 /// redeem initiates nBTC redemption and BTC withdraw process.
 /// Returns total amount of redeemed balance.

@@ -4,10 +4,15 @@ use bitcoin_lib::encoding::u64_to_le_bytes;
 use bitcoin_lib::sighash::{create_segwit_preimage, create_p2wpkh_scriptcode};
 use bitcoin_lib::tx;
 use bitcoin_lib::vector_utils::vector_slice;
-use ika_dwallet_2pc_mpc::coordinator::{request_sign, DWalletCoordinator};
+use ika::ika::IKA;
+use ika_dwallet_2pc_mpc::coordinator::DWalletCoordinator;
+use ika_dwallet_2pc_mpc::coordinator_inner::VerifiedPartialUserSignatureCap;
+use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
 use nbtc::nbtc_utxo::Utxo;
 use nbtc::storage::Storage;
 use nbtc::tx_composer::compose_withdraw_tx;
+use sui::coin::Coin;
+use sui::sui::SUI;
 use sui::table::{Self, Table};
 use sui::vec_map::{Self, VecMap};
 
@@ -15,8 +20,8 @@ use fun vector_slice as vector.slice;
 #[error]
 const ERedeemTxSigningNotCompleted: vector<u8> =
     b"The signature for the redeem has not been completed";
+const ECDSA: u32 = 0;
 const SHA256: u32 = 1;
-
 #[error]
 const ESignatureInValid: vector<u8> = b"signature invalid for this input";
 #[error]
@@ -81,6 +86,41 @@ public fun has_signature(r: &RedeemRequest, input_idx: u32): bool {
 
 public fun status(r: &RedeemRequest): &RedeemStatus {
     &r.status
+}
+
+public(package) fun request_signature_for_input(
+    r: &mut RedeemRequest,
+    dwallet_coordinator: &mut DWalletCoordinator,
+    storage: &Storage,
+    input_idx: u32,
+    user_sig_cap: VerifiedPartialUserSignatureCap,
+    session_identifier: SessionIdentifier,
+    payment_ika: &mut Coin<IKA>,
+    payment_sui: &mut Coin<SUI>,
+    ctx: &mut TxContext,
+) {
+    // This should include other information for create sign hash
+    let sig_hash = r.sig_hash(input_idx, storage);
+
+    let dwallet_id = r.utxo_at(input_idx).dwallet_id();
+    let dwallet_cap = storage.dwallet_cap(dwallet_id);
+    let message_approval = dwallet_coordinator.approve_message(
+        dwallet_cap,
+        ECDSA,
+        SHA256,
+        sig_hash,
+    );
+
+    let sign_id = dwallet_coordinator.request_sign_with_partial_user_signature_and_return_id(
+        user_sig_cap,
+        message_approval,
+        session_identifier,
+        payment_ika,
+        payment_sui,
+        ctx,
+    );
+
+    r.set_sign_request_metadata(input_idx, sig_hash, sign_id);
 }
 
 public(package) fun set_sign_request_metadata(
@@ -206,7 +246,7 @@ public(package) fun validate_signature(
     r.add_signature(input_idx, signature);
 }
 
-public(package) fun get_signature(
+public fun get_signature(
     dwallet_coordinator: &DWalletCoordinator,
     dwallet_id: ID,
     sign_id: ID,
