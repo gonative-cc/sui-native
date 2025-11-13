@@ -117,10 +117,6 @@ public struct NbtcContract has key, store {
     /// as in Balance<nBTC>
     mint_fee: u64,
     fees_collected: Balance<NBTC>,
-    // mapping a spend_key to related dWallet cap for issue signature
-    dwallet_caps: Table<vector<u8>, DWalletCap>,
-    // mapping dwallet id to public key
-    dwallet_pks: Table<ID, vector<u8>>,
     // TODO: probably we should have UTXOs / nbtc pubkey
     utxos: Table<u64, Utxo>,
     next_utxo: u64,
@@ -193,8 +189,6 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         inactive_balances: vector[],
         mint_fee: 10,
         utxos: table::new(ctx),
-        dwallet_caps: table::new(ctx),
-        dwallet_pks: table::new(ctx),
         fees_collected: balance::zero(),
         next_utxo: 0,
         redeem_requests: table::new<u64, RedeemRequest>(ctx),
@@ -419,18 +413,6 @@ public fun record_inactive_deposit(
         ops_arg,
     );
 
-    // let key_idx = inactive_key_idx.extract();
-    // let bal = &mut contract.inactive_balances[key_idx];
-    // *bal = *bal + amount;
-    //
-    // let bal_key = inactive_bal_key(&deposit_spend_key, recipient);
-    // if (contract.inactive_user_balances.contains(bal_key)) {
-    //     let user_bal = &mut contract.inactive_user_balances[bal_key];
-    //     *user_bal = *user_bal + amount;
-    // } else {
-    //     contract.inactive_user_balances.add(bal_key, amount);
-    // };
-    //
     contract.storage.update_record_balance(dwallet_id, recipient, amount);
     event::emit(InactiveDepositEvent {
         bitcoin_spend_key: deposit_spend_key,
@@ -466,8 +448,9 @@ public fun request_signature_for_input(
     // This should include other information for create sign hash
     let sign_hash = request.sig_hash(input_idx);
 
-    let spend_key = contract.bitcoin_spend_key;
-    let dwallet_cap = &contract.dwallet_caps[spend_key];
+    let dwallet_id = request.utxo_at(input_idx).dwallet_id();
+    let spend_key = contract.storage.dwallet_metadata(dwallet_id).lockscript();
+    let dwallet_cap = contract.storage.dwallet_cap(dwallet_id);
     let message_approval = dwallet_coordinator.approve_message(
         dwallet_cap,
         ECDSA,
@@ -592,20 +575,8 @@ public fun change_fees(_: &AdminCap, contract: &mut NbtcContract, mint_fee: u64)
     contract.mint_fee = mint_fee;
 }
 
-/// Set a dwallet_cap for related BTC spend_key.
-/// BTC spend_key must derive from dwallet public key which is control by dwallet_cap.
-public fun add_dwallet_cap(
-    _: &AdminCap,
-    contract: &mut NbtcContract,
-    dwallet_cap: DWalletCap,
-    spend_key: vector<u8>,
-    public_key: vector<u8>,
-) {
-    // TODO: Verify spend_key derive from dwallet public key
-    contract.dwallet_pks.add(object::id(&dwallet_cap), public_key);
-    contract.dwallet_caps.add(spend_key, dwallet_cap);
-}
-
+/// Set a metadata for dwallet
+/// BTC lockscript must derive from dwallet public key which is control by dwallet_cap.
 public fun add_dwallet(
     _: &AdminCap,
     contract: &mut NbtcContract,
@@ -711,12 +682,6 @@ public fun inactive_spend_keys(contract: &NbtcContract, from: u64, to: u64): vec
     vector::tabulate!(to-from, |i| contract.inactive_spend_keys[from+i])
 }
 
-/// Return public key of spend_key
-public(package) fun public_key_of(contract: &NbtcContract, spend_key: vector<u8>): vector<u8> {
-    let dwallet_cap = &contract.dwallet_caps[spend_key];
-    contract.dwallet_pks[object::id(dwallet_cap)]
-}
-
 public fun redeem_request(contract: &NbtcContract, request_id: u64): &RedeemRequest {
     &contract.redeem_requests[request_id]
 }
@@ -757,8 +722,6 @@ public(package) fun init_for_testing(
         fees_collected: balance::zero(),
         utxos: table::new(ctx),
         mint_fee: 10,
-        dwallet_caps: table::new(ctx),
-        dwallet_pks: table::new(ctx),
         redeem_requests: table::new(ctx),
         locked: table::new(ctx),
         next_redeem_req: 0,
@@ -777,16 +740,6 @@ public fun get_fees_collected(contract: &NbtcContract): u64 {
 #[test_only]
 public fun add_utxo_for_test(ctr: &mut NbtcContract, idx: u64, utxo: Utxo) {
     ctr.utxos.add(idx, utxo);
-}
-
-#[test_only]
-public fun dwallet_caps(contract: &NbtcContract, spend_key: vector<u8>): &DWalletCap {
-    &contract.dwallet_caps[spend_key]
-}
-
-#[test_only]
-public fun dwallet_pks_of(contract: &NbtcContract, id: ID): vector<u8> {
-    contract.dwallet_pks[id]
 }
 
 #[test_only]
