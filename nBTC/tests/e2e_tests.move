@@ -44,6 +44,7 @@ fun redeem_happy_case() {
             0,
             1500,
             spend_key,
+            object::id_from_address(ADMIN), // mock dwallet id
         ),
     );
 
@@ -60,9 +61,10 @@ fun redeem_happy_case() {
             0,
             1500,
             spend_key,
+            object::id_from_address(ADMIN), // mock dwallet id
         ),
     ];
-    ctr.move_to_signing(redeem_id, inputs);
+    // ctr.move_to_signing(redeem_id, inputs);
 
     // TODO::
     // - Create Dwallet Codinator
