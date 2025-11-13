@@ -115,12 +115,30 @@ public fun exist(store: &Storage, dwallet_id: ID): bool {
     store.dwallet_metadatas.contains(dwallet_id)
 }
 
-public fun add_metadata(store: &mut Storage, dwallet_id: ID, dmeta: DWalletMetadata) {
+public(package) fun add_metadata(store: &mut Storage, dwallet_id: ID, dmeta: DWalletMetadata) {
     store.dwallet_metadatas.add(dwallet_id, dmeta);
 }
 
-public fun add_dwallet_cap(store: &mut Storage, dwallet_id: ID, dwallet_cap: DWalletCap) {
+public(package) fun add_dwallet_cap(store: &mut Storage, dwallet_id: ID, dwallet_cap: DWalletCap) {
     store.dwallet_caps.add(dwallet_id, dwallet_cap);
+}
+
+public(package) fun increase_total_deposit(store: &mut Storage, dwallet_id: ID, amount: u64) {
+    let dwallet_metadata_mut = &mut store.dwallet_metadatas[dwallet_id];
+    let total_deposit = &mut dwallet_metadata_mut.total_deposit;
+    *total_deposit = *total_deposit + amount;
+}
+
+public(package) fun remove(store: &mut Storage, dwallet_id: ID) {
+    let DWalletMetadata {
+        record_balance,
+        total_deposit: _,
+        script_type: _,
+        active: _,
+        lockscript: _,
+        public_key: _,
+    } = store.dwallet_metadatas.remove(dwallet_id);
+    record_balance.drop();
 }
 // // return wallet id have lock script
 // public(package) fun lookup_spend_key(store: &Storage, lockscript: vector<u8>): ID {

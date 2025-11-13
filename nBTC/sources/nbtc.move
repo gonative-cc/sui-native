@@ -100,21 +100,6 @@ public struct NbtcContract has key, store {
     bitcoin_lc: ID,
     fallback_addr: address,
     // TODO: change to taproot once Ika will support it
-    /// Active "user shard" of the bitcoin private key.
-    bitcoin_spend_key: vector<u8>,
-    /// BTC balances for the current bitcoin_spend_key.
-    active_balance: u64,
-    // TODO: consider using Table for inactive_spend_keys and inactive_balances
-    /// If user, by mistake, will use inactive spend key, then we should protect from a BTC deadlock
-    /// in that account. In such case we don't mint nBTC, but we allow the user to transfer it back.
-    /// Keys can be removed and the order is not guaranteed to be same as the insertion order.
-    inactive_spend_keys: vector<vector<u8>>,
-    /// Maps (bitcoin deposit key ++ user address) to its BTC deposit (in case he deposited to an
-    /// inactive key from the list above).
-    inactive_user_balances: Table<vector<u8>, u64>,
-    /// total balance per inactive key, indexed accordingly to inactive_spend_keys.
-    inactive_balances: vector<u64>,
-    /// as in Balance<nBTC>
     mint_fee: u64,
     fees_collected: Balance<NBTC>,
     // TODO: probably we should have UTXOs / nbtc pubkey
@@ -182,11 +167,6 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         tx_ids: table::new<vector<u8>, bool>(ctx),
         bitcoin_lc: @bitcoin_lc.to_id(),
         fallback_addr: @fallback_addr,
-        bitcoin_spend_key,
-        active_balance: 0,
-        inactive_spend_keys: vector[],
-        inactive_user_balances: table::new(ctx),
-        inactive_balances: vector[],
         mint_fee: 10,
         utxos: table::new(ctx),
         fees_collected: balance::zero(),
@@ -290,20 +270,15 @@ fun verify_deposit(
     (amount, recipient, utxo_idx)
 }
 
-/// returns idx of key in in `inactive_spend_keys` or None if the key is not there.
-public(package) fun inactive_key_idx(contract: &NbtcContract, key: vector<u8>): Option<u64> {
-    contract.inactive_spend_keys.find_index!(|inactive_spend_key| {
-        inactive_spend_key == key
-    })
+public fun active_lockscript(contract: &NbtcContract): vector<u8> {
+    let dwallet_id = *contract.active_dwallet_id.borrow();
+    contract.storage.dwallet_metadata(dwallet_id).lockscript()
 }
 
-fun inactive_bal_key(deposit_spend_key: &vector<u8>, recipient: address): vector<u8> {
-    let mut bal_key = *deposit_spend_key; // makes a copy
-    // collistion is not possible, because recipient is constant size
-    bal_key.append(recipient.to_bytes());
-    bal_key
+public fun active_balance(contract: &NbtcContract): u64 {
+    let dwallet_id = *contract.active_dwallet_id.borrow();
+    contract.storage.dwallet_metadata(dwallet_id).total_deposit()
 }
-
 //
 // Public methods
 //
@@ -332,7 +307,6 @@ public fun mint(
     ops_arg: u32,
     ctx: &mut TxContext,
 ) {
-    let spend_key = contract.bitcoin_spend_key;
     let active_dwallet_id = *contract.active_dwallet_id.borrow();
     let (mut amount, recipient, utxo_idx) = contract.verify_deposit(
         light_client,
@@ -346,8 +320,7 @@ public fun mint(
     );
     assert!(amount > 0, EMintAmountIsZero);
 
-    contract.active_balance = contract.active_balance + amount;
-
+    contract.storage.increase_total_deposit(active_dwallet_id, amount);
     let mut minted = contract.cap.mint_balance(amount);
     let mut fee_amount = 0;
 
@@ -365,7 +338,7 @@ public fun mint(
         recipient,
         amount,
         fee: fee_amount,
-        bitcoin_spend_key: spend_key,
+        bitcoin_spend_key: contract.active_lockscript(),
         btc_tx_id: vector[], // tx_id is stored in the UTXO itself
         utxo_idx,
     });
@@ -480,7 +453,7 @@ public fun redeem(
     // TODO: we can call remove_inactive_spend_key if reserves of this key is zero
 
     let r = redeem_request::new(
-        contract.bitcoin_spend_key,
+        contract.active_lockscript(),
         ctx.sender(),
         recipient_script,
         coin.value(),
@@ -588,30 +561,18 @@ public fun set_active_dwallet(_: &AdminCap, contract: &mut NbtcContract, dwallet
     contract.active_dwallet_id = option::some(dwallet_id);
 }
 
-/// Set btc endpoint for deposit on nBTC, and set reserve of this endpoint is zero.
-/// In the case, we use this key before we will enable deposit endpoint again.
-public fun add_spend_key(_: &AdminCap, contract: &mut NbtcContract, key: vector<u8>) {
-    // TODO: add_spend_key and add_dwallet_cap is the same function.
-    // Refactor to one
-    let key_idx = contract.inactive_key_idx(key);
-    assert!(contract.bitcoin_spend_key != key && key_idx.is_none(), EDuplicatedKey);
-
-    contract.inactive_spend_keys.push_back(contract.bitcoin_spend_key);
-    contract.bitcoin_spend_key = key;
-    contract.inactive_balances.push_back(contract.active_balance);
-    contract.active_balance = 0;
-}
-
-public fun remove_inactive_spend_key(_: &AdminCap, contract: &mut NbtcContract, key_idx: u64) {
+public fun remove_inactive_dwallet(_: &AdminCap, contract: &mut NbtcContract, dwallet_id: ID) {
     // TODO: need to decide if we want to keep balance check. Technically, it's not needed
     // if we can provide public signature to the merge_coins
     // NOTE: we don't check inactive_user_balance here because this is out of our control and the
     // spend key is recorded as a part of the Table key.
 
-    assert!(contract.inactive_balances.length() > key_idx, EInvalidDepositKey);
-    assert!(contract.inactive_balances[key_idx] == 0, EBalanceNotEmpty);
-    contract.inactive_balances.swap_remove(key_idx);
-    contract.inactive_spend_keys.swap_remove(key_idx);
+    assert!(
+        option::some(dwallet_id) != contract.active_dwallet_id && contract.storage.exist(dwallet_id),
+        EInvalidDepositKey,
+    );
+    assert!(contract.storage.dwallet_metadata(dwallet_id).total_deposit() == 0, EBalanceNotEmpty);
+    contract.storage.remove(dwallet_id);
 }
 
 public(package) fun add_utxo_to_contract(
@@ -653,26 +614,6 @@ public fun get_mint_fee(contract: &NbtcContract): u64 {
     contract.mint_fee
 }
 
-public fun active_balance(contract: &NbtcContract): u64 {
-    contract.active_balance
-}
-
-// TODO: we should also have bitcoin spend key address
-public fun bitcoin_spend_key(contract: &NbtcContract): vector<u8> {
-    contract.bitcoin_spend_key
-}
-
-/// from: the index of the first key to include in the returned list. If it's >= length of the
-///    inactive keys list, then empty list is returned.
-/// to: the index of the first key to exclude from the returned list. If it's 0 then
-///    the length of the inactive keys list is used.
-public fun inactive_spend_keys(contract: &NbtcContract, from: u64, to: u64): vector<vector<u8>> {
-    let len = contract.inactive_spend_keys.length();
-    if (from >= len) return vector[];
-    let to = if (to == 0 || to > len) len else to;
-    vector::tabulate!(to-from, |i| contract.inactive_spend_keys[from+i])
-}
-
 public fun redeem_request(contract: &NbtcContract, request_id: u64): &RedeemRequest {
     &contract.redeem_requests[request_id]
 }
@@ -705,11 +646,6 @@ public(package) fun init_for_testing(
         tx_ids: table::new<vector<u8>, bool>(ctx),
         bitcoin_lc: bitcoin_lc.to_id(),
         fallback_addr,
-        bitcoin_spend_key: nbtc_bitcoin_spend_key,
-        active_balance: 0,
-        inactive_spend_keys: vector[],
-        inactive_user_balances: table::new(ctx),
-        inactive_balances: vector[],
         fees_collected: balance::zero(),
         utxos: table::new(ctx),
         mint_fee: 10,
@@ -743,8 +679,12 @@ public fun create_redeem_request_for_testing(
     fee: u64,
     ctx: &mut TxContext,
 ) {
+    let lockscript = contract
+        .storage
+        .dwallet_metadata(*contract.active_dwallet_id.borrow())
+        .lockscript();
     let r = redeem_request::new(
-        contract.bitcoin_spend_key,
+        lockscript,
         redeemer,
         recipient_script,
         amount,
