@@ -192,7 +192,7 @@ public fun is_coinbase(tx: &Transaction): bool {
 }
 
 public fun new_unsign_segwit_tx(inputs: vector<Input>, outputs: vector<Output>): Transaction {
-    Transaction {
+    let mut tx = Transaction {
         version: x"02000000", // default version for segwit
         marker: option::some(0),
         flag: option::some(1),
@@ -203,7 +203,9 @@ public fun new_unsign_segwit_tx(inputs: vector<Input>, outputs: vector<Output>):
         // TODO: Add method to compute tx_id
         // in the current version, the transaction id only compute when we parse tx from bytes.
         tx_id: vector::empty(),
-    }
+    };
+    tx.tx_id = tx.compute_tx_id();
+    tx
 }
 
 /// Returns raw bytes of the btc tx. We only support segwit transaction
@@ -232,4 +234,19 @@ public fun serialize_segwit(tx: &Transaction): vector<u8> {
     });
     raw_tx.append(tx.locktime);
     raw_tx
+}
+
+public(package) fun compute_tx_id(tx: &Transaction): vector<u8> {
+    let mut raw_tx = vector::empty();
+    raw_tx.append(tx.version);
+    raw_tx.append(u64_to_varint_bytes(tx.inputs.length()));
+    tx.inputs.length().do!(|i| {
+        raw_tx.append(tx.input_at(i).encode());
+    });
+    raw_tx.append(u64_to_varint_bytes(tx.outputs.length()));
+    tx.outputs.length().do!(|i| {
+        raw_tx.append(tx.output_at(i).encode());
+    });
+    raw_tx.append(tx.locktime);
+    hash256(raw_tx)
 }

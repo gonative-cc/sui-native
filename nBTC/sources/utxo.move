@@ -29,15 +29,23 @@ public struct Utxo has copy, drop, store {
     tx_id: vector<u8>, // TODO: this is 32-byte hash. we can also use vector<u8>
     vout: u32,
     value: u64,
-    spend_key: vector<u8>,
+    dwallet_id: ID,
+    spend_script: vector<u8>,
 }
 
-public fun new_utxo(tx_id: vector<u8>, vout: u32, value: u64, spend_key: vector<u8>): Utxo {
+public fun new_utxo(
+    tx_id: vector<u8>,
+    vout: u32,
+    value: u64,
+    spend_script: vector<u8>,
+    dwallet_id: ID,
+): Utxo {
     Utxo {
         tx_id,
         vout,
         value,
-        spend_key,
+        dwallet_id,
+        spend_script: vector::empty(),
     }
 }
 
@@ -53,8 +61,12 @@ public fun value(utxo: &Utxo): u64 {
     utxo.value
 }
 
-public fun spend_key(utxo: &Utxo): vector<u8> {
-    utxo.spend_key
+public fun dwallet_id(utxo: &Utxo): ID {
+    utxo.dwallet_id
+}
+
+public fun spend_script(utxo: &Utxo): vector<u8> {
+    utxo.spend_script
 }
 
 /// # Criterias:
@@ -85,7 +97,7 @@ public fun utxo_ranking(
 
     // 2) Prefer inactive keys
     utxos.length().do!(|i| {
-        if (&utxos[i].spend_key != active_spend_key) {
+        if (&utxos[i].spend_script != active_spend_key) {
             score = score + INACTIVE_BONUS;
         };
     });
