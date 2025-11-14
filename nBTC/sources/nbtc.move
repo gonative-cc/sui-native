@@ -62,7 +62,7 @@ const EAlreadyUpdated: vector<u8> =
 #[error]
 const EInvalidOpsArg: vector<u8> = b"invalid mint ops_arg";
 #[error]
-const EDuplicatedKey: vector<u8> = b"duplicated key";
+const EDuplicatedDWallet: vector<u8> = b"duplicated dwallet";
 #[error]
 const EBalanceNotEmpty: vector<u8> = b"balance not empty";
 #[error]
@@ -529,9 +529,11 @@ public fun add_dwallet(
     ctx: &mut TxContext,
 ) {
     // TODO: Verify public key and lockscript
+    let dwallet_id = dwallet_cap.dwallet_id();
+    assert!(!contract.storage.exist(dwallet_id), EDuplicatedDWallet);
+
     let p2wpkh = 0;
     let dmeta = create_dwallet_metadata(p2wpkh, lockscript, public_key, ctx);
-    let dwallet_id = dwallet_cap.dwallet_id();
     contract.storage.add_metadata(dwallet_id, dmeta);
     contract.storage.add_dwallet_cap(dwallet_id, dwallet_cap);
 }
