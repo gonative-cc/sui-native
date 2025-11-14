@@ -9,10 +9,10 @@ public struct DWalletMetadata has store {
     lockscript: vector<u8>, // lock script for this dwallet
     script_type: u8, // script type, not sure we need this
     active: bool, // active flag
-    total_deposit: u64, // totanle deposit balance
+    total_deposit: u64, // total deposit balance
     // map address to amount they deposit/mint
-    // only record when active invalid
-    record_balance: Table<address, u64>,
+    // only record when wallet is inactive
+    inactive_balances: Table<address, u64>,
 }
 
 public struct Storage has key, store {

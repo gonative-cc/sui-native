@@ -205,7 +205,7 @@ fun verify_deposit(
     _payload: vector<u8>,
     ops_arg: u32,
 ): (u64, address, vector<u64>) {
-    let deposit_spend_key = contract.storage.dwallet_metadata(dwallet_id).lockscript();
+    let lockscript = contract.storage.dwallet_metadata(dwallet_id).lockscript();
     assert!(contract.version == VERSION, EVersionMismatch);
     assert!(ops_arg == 0 || ops_arg == MINT_OP_APPLY_FEE, EInvalidOpsArg);
     let provided_lc_id = object::id(light_client);
@@ -424,7 +424,8 @@ public fun request_signature_for_input(
     );
 }
 
-// Redeem NBTC token
+/// redeem initiates nBTC redemption and BTC withdraw process.
+/// Returns total amount of redeemed balance.
 public fun redeem(
     contract: &mut NbtcContract,
     coin: Coin<NBTC>,
@@ -532,8 +533,8 @@ public fun add_dwallet(
     ctx: &mut TxContext,
 ) {
     // TODO: Verify public key and lockscript
-    let p2wphk = 0;
-    let dmeta = create_dwallet_metadata(p2wphk, lockscript, public_key, ctx);
+    let p2wpkh = 0;
+    let dmeta = create_dwallet_metadata(p2wpkh, lockscript, public_key, ctx);
     let dwallet_id = dwallet_cap.dwallet_id();
     contract.storage.add_metadata(dwallet_id, dmeta);
     contract.storage.add_dwallet_cap(dwallet_id, dwallet_cap);
