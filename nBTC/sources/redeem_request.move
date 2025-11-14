@@ -4,22 +4,30 @@ use bitcoin_lib::encoding::u64_to_le_bytes;
 use bitcoin_lib::sighash::{create_segwit_preimage, create_p2wpkh_scriptcode};
 use bitcoin_lib::tx;
 use bitcoin_lib::vector_utils::vector_slice;
-use ika_dwallet_2pc_mpc::coordinator::{request_sign, DWalletCoordinator};
+use ika::ika::IKA;
+use ika_dwallet_2pc_mpc::coordinator::DWalletCoordinator;
+use ika_dwallet_2pc_mpc::coordinator_inner::VerifiedPartialUserSignatureCap;
+use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
 use nbtc::nbtc_utxo::Utxo;
+use nbtc::storage::Storage;
 use nbtc::tx_composer::compose_withdraw_tx;
+use sui::coin::Coin;
+use sui::sui::SUI;
 use sui::table::{Self, Table};
 use sui::vec_map::{Self, VecMap};
 
 use fun vector_slice as vector.slice;
+
 #[error]
 const ERedeemTxSigningNotCompleted: vector<u8> =
     b"The signature for the redeem has not been completed";
-const SHA256: u32 = 1;
-
 #[error]
 const ESignatureInValid: vector<u8> = b"signature invalid for this input";
 #[error]
 const EInvalidSignatureId: vector<u8> = b"invalid signature id for redeem request";
+
+const ECDSA: u32 = 0;
+const SHA256: u32 = 1;
 
 public enum RedeemStatus has copy, drop, store {
     Resolving, // finding the best UTXOs
@@ -41,9 +49,6 @@ public struct RedeemRequest has store {
     sig_hashes: VecMap<u32, vector<u8>>,
     sign_ids: Table<ID, bool>,
     signatures_map: VecMap<u32, vector<u8>>,
-    // public key for unlock inputs
-    // notes: We can't use nbtc object here, because this create cycle import!
-    public_keys: VecMap<u32, vector<u8>>,
 }
 
 // ========== RedeemStatus methods ================
@@ -85,6 +90,41 @@ public fun status(r: &RedeemRequest): &RedeemStatus {
     &r.status
 }
 
+public(package) fun request_signature_for_input(
+    r: &mut RedeemRequest,
+    dwallet_coordinator: &mut DWalletCoordinator,
+    storage: &Storage,
+    input_idx: u32,
+    user_sig_cap: VerifiedPartialUserSignatureCap,
+    session_identifier: SessionIdentifier,
+    payment_ika: &mut Coin<IKA>,
+    payment_sui: &mut Coin<SUI>,
+    ctx: &mut TxContext,
+) {
+    // This should include other information for create sign hash
+    let sig_hash = r.sig_hash(input_idx, storage);
+
+    let dwallet_id = r.utxo_at(input_idx).dwallet_id();
+    let dwallet_cap = storage.dwallet_cap(dwallet_id);
+    let message_approval = dwallet_coordinator.approve_message(
+        dwallet_cap,
+        ECDSA,
+        SHA256,
+        sig_hash,
+    );
+
+    let sign_id = dwallet_coordinator.request_sign_with_partial_user_signature_and_return_id(
+        user_sig_cap,
+        message_approval,
+        session_identifier,
+        payment_ika,
+        payment_sui,
+        ctx,
+    );
+
+    r.set_sign_request_metadata(input_idx, sig_hash, sign_id);
+}
+
 public(package) fun set_sign_request_metadata(
     r: &mut RedeemRequest,
     input_idx: u32,
@@ -96,7 +136,7 @@ public(package) fun set_sign_request_metadata(
 }
 
 // return segwit transaction
-public fun raw_signed_tx(r: &RedeemRequest): vector<u8> {
+public fun raw_signed_tx(r: &RedeemRequest, storage: &Storage): vector<u8> {
     assert!(r.status == RedeemStatus::Signed, ERedeemTxSigningNotCompleted);
 
     let mut tx = compose_withdraw_tx(
@@ -109,11 +149,13 @@ public fun raw_signed_tx(r: &RedeemRequest): vector<u8> {
 
     let mut witnesses = vector[];
     r.inputs.length().do!(|i| {
+        let dwallet_id = r.inputs[i].dwallet_id();
+        let public_key = storage.dwallet_metadata(dwallet_id).public_key();
         witnesses.push_back(
             tx::new_witness(vector[
                 // signature
                 *r.signatures_map.get(&(i as u32)),
-                *r.public_keys.get(&(i as u32)),
+                public_key,
             ]),
         );
     });
@@ -132,10 +174,12 @@ public(package) fun add_signature(r: &mut RedeemRequest, input_idx: u32, signatu
 }
 
 /// Returns signature hash for input_idx-th in redeem transaction
-public fun sig_hash(r: &RedeemRequest, input_idx: u32): vector<u8> {
+public fun sig_hash(r: &RedeemRequest, input_idx: u32, storage: &Storage): vector<u8> {
     r.sig_hashes.try_get(&input_idx).extract_or!({
+        let dwallet_id = r.inputs[input_idx as u64].dwallet_id();
+        let lockscript = storage.dwallet_metadata(dwallet_id).lockscript();
         let tx = compose_withdraw_tx(
-            r.nbtc_spend_script,
+            lockscript,
             r.inputs,
             r.recipient_script,
             r.amount,
@@ -173,7 +217,6 @@ public fun new(
         inputs: vector::empty(),
         sign_ids: table::new(ctx),
         signatures_map: vec_map::empty(),
-        public_keys: vec_map::empty(),
         status: RedeemStatus::Resolving,
     }
 }
@@ -183,19 +226,19 @@ public fun utxo_at(r: &RedeemRequest, input_idx: u32): &Utxo { &r.inputs[input_i
 public(package) fun validate_signature(
     r: &mut RedeemRequest,
     dwallet_coordinator: &DWalletCoordinator,
-    redeem_id: u64,
+    storage: &Storage,
     input_idx: u32,
     sign_id: ID,
 ) {
     // TODO: ensure we get right spend key, because this spend key can also inactive_spend_key
     assert!(r.sign_ids.contains(sign_id), EInvalidSignatureId);
-    let sign_hash = r.sig_hash(input_idx);
+    let sign_hash = r.sig_hash(input_idx, storage);
     let dwallet_id = r.utxo_at(input_idx).dwallet_id();
     let signature = get_signature(dwallet_coordinator, dwallet_id, sign_id);
-    let pk = r.public_keys.get(&input_idx);
+    let pk = storage.dwallet_metadata(dwallet_id).public_key();
     let is_valid = sui::ecdsa_k1::secp256k1_verify(
         &signature,
-        pk,
+        &pk,
         &sign_hash,
         SHA256 as u8,
     );
@@ -204,7 +247,7 @@ public(package) fun validate_signature(
     r.add_signature(input_idx, signature);
 }
 
-public(package) fun get_signature(
+public fun get_signature(
     dwallet_coordinator: &DWalletCoordinator,
     dwallet_id: ID,
     sign_id: ID,
@@ -230,9 +273,4 @@ public fun move_to_signed(r: &mut RedeemRequest, signatures: vector<vector<u8>>)
             signatures,
         );
     r.status = RedeemStatus::Signed
-}
-
-#[test_only]
-public fun set_pk_for_testing(r: &mut RedeemRequest, pks: vector<vector<u8>>) {
-    r.public_keys = vec_map::from_keys_values(vector::tabulate!(pks.length(), |i| i as u32), pks);
 }
