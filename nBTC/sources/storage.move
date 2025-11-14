@@ -5,8 +5,8 @@ use sui::table::{Self, Table};
 
 public struct DWalletMetadata has store {
     // TODO: change to taproot once Ika will support it
-    public_key: vector<u8>, // ecdsa public key
-    public_key_type: u8,
+    public_key: vector<u8>, // public key
+    public_key_type: u8, // type of public key of dwallet
     lockscript: vector<u8>, // lock script for this dwallet
     script_type: u8, // script type, not sure we need this
     total_deposit: u64, // total deposit balance
@@ -107,7 +107,7 @@ public(package) fun dwallet_cap(store: &Storage, dwallet_id: ID): &DWalletCap {
 }
 
 // TODO: OTW for create_storage
-public fun create_storage(ctx: &mut TxContext): Storage {
+public(package) fun create_storage(ctx: &mut TxContext): Storage {
     Storage {
         id: object::new(ctx),
         dwallet_caps: table::new(ctx),
@@ -140,10 +140,7 @@ public(package) fun remove(store: &mut Storage, dwallet_id: ID) {
         script_type: _,
         lockscript: _,
         public_key: _,
+        public_key_type: _,
     } = store.dwallet_metadatas.remove(dwallet_id);
     inactive_balances.destroy_empty();
 }
-// // return wallet id have lock script
-// public(package) fun lookup_spend_key(store: &Storage, lockscript: vector<u8>): ID {
-//
-// }
