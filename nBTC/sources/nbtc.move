@@ -6,12 +6,8 @@ use bitcoin_lib::reader;
 use bitcoin_lib::tx;
 use bitcoin_spv::light_client::LightClient;
 use ika::ika::IKA;
-use ika_dwallet_2pc_mpc::coordinator::{request_sign, DWalletCoordinator};
-use ika_dwallet_2pc_mpc::coordinator_inner::{
-    VerifiedPresignCap,
-    DWalletCap,
-    VerifiedPartialUserSignatureCap
-};
+use ika_dwallet_2pc_mpc::coordinator::DWalletCoordinator;
+use ika_dwallet_2pc_mpc::coordinator_inner::{DWalletCap, VerifiedPartialUserSignatureCap};
 use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
 use nbtc::nbtc_utxo::{Self, Utxo};
 use nbtc::redeem_request::{Self, RedeemRequest};
@@ -227,7 +223,7 @@ fun verify_deposit(
         proof,
         tx_index,
         &tx,
-        deposit_spend_key,
+        lockscript,
     );
 
     assert!(amount > 0, EMintAmountIsZero);
@@ -258,7 +254,7 @@ fun verify_deposit(
         let vout_idx = vouts[i];
         let o_amount = o[vout_idx as u64].amount();
         let utxo_idx_next = contract.next_utxo;
-        add_utxo_to_contract(contract, tx_id, vout_idx, o_amount, deposit_spend_key, dwallet_id);
+        add_utxo_to_contract(contract, tx_id, vout_idx, o_amount, lockscript, dwallet_id);
         utxo_idx.push_back(utxo_idx_next);
         i = i + 1;
     };
@@ -481,7 +477,7 @@ public fun withdraw_inactive_deposit(
         option::some(dwallet_id) != contract.active_dwallet_id && contract.storage.exist(dwallet_id),
         EInvalidDepositKey,
     );
-    let amount = contract.storage.remove_record_balance(dwallet_id, ctx.sender());
+    let amount = contract.storage.remove_inactive_balance(dwallet_id, ctx.sender());
     let deposit_spend_key = contract.storage.dwallet_metadata(dwallet_id).lockscript();
     event::emit(RedeemInactiveDepositEvent {
         bitcoin_spend_key: deposit_spend_key,
