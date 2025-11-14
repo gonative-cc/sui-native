@@ -6,6 +6,7 @@ use sui::table::{Self, Table};
 public struct DWalletMetadata has store {
     // TODO: change to taproot once Ika will support it
     public_key: vector<u8>, // ecdsa public key
+    public_key_type: u8,
     lockscript: vector<u8>, // lock script for this dwallet
     script_type: u8, // script type, not sure we need this
     total_deposit: u64, // total deposit balance
@@ -22,7 +23,6 @@ public struct Storage has key, store {
     dwallet_caps: Table<ID, DWalletCap>,
 }
 
-// TODO: OTW for create_dwallet_metadata
 public(package) fun create_dwallet_metadata(
     script_type: u8,
     lockscript: vector<u8>,
@@ -33,6 +33,7 @@ public(package) fun create_dwallet_metadata(
         public_key,
         lockscript,
         script_type,
+        public_key_type: 0,
         total_deposit: 0,
         inactive_balances: table::new(ctx),
     }
@@ -52,6 +53,10 @@ public fun script_type(dmeta: &DWalletMetadata): u8 {
 
 public fun total_deposit(dmeta: &DWalletMetadata): u64 {
     dmeta.total_deposit
+}
+
+public fun public_key_type(dmeta: &DWalletMetadata): u8 {
+    dmeta.public_key_type
 }
 
 public fun inactive_balances(dmeta: &DWalletMetadata, addr: address): u64 {
