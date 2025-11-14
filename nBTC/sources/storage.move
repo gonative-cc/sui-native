@@ -8,7 +8,6 @@ public struct DWalletMetadata has store {
     public_key: vector<u8>, // ecdsa public key
     lockscript: vector<u8>, // lock script for this dwallet
     script_type: u8, // script type, not sure we need this
-    active: bool, // active flag
     total_deposit: u64, // total deposit balance
     // map address to amount they deposit/mint
     // only record when wallet is inactive
@@ -34,7 +33,6 @@ public(package) fun create_dwallet_metadata(
         public_key,
         lockscript,
         script_type,
-        active: false,
         total_deposit: 0,
         inactive_balances: table::new(ctx),
     }
@@ -50,10 +48,6 @@ public fun lockscript(dmeta: &DWalletMetadata): vector<u8> {
 
 public fun script_type(dmeta: &DWalletMetadata): u8 {
     dmeta.script_type
-}
-
-public fun active(dmeta: &DWalletMetadata): bool {
-    dmeta.active
 }
 
 public fun total_deposit(dmeta: &DWalletMetadata): u64 {
@@ -139,7 +133,6 @@ public(package) fun remove(store: &mut Storage, dwallet_id: ID) {
         inactive_balances,
         total_deposit: _,
         script_type: _,
-        active: _,
         lockscript: _,
         public_key: _,
     } = store.dwallet_metadatas.remove(dwallet_id);
