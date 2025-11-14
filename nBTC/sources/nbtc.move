@@ -699,8 +699,8 @@ public fun set_dwallet_cap_for_test(
     ctx: &mut TxContext,
 ) {
     // contract.dwallet_caps.add(spend_script, dwallet_cap);
-    let p2wphk = 0;
-    let dmeta = create_dwallet_metadata(p2wphk, spend_script, public_key, ctx);
+    let p2wpkh = 0;
+    let dmeta = create_dwallet_metadata(p2wpkh, spend_script, public_key, ctx);
     let dwallet_id = dwallet_cap.dwallet_id();
     contract.active_dwallet_id = option::some(dwallet_id);
     contract.storage.add_metadata(dwallet_id, dmeta);
