@@ -136,7 +136,7 @@ public(package) fun remove(store: &mut Storage, dwallet_id: ID) {
         lockscript: _,
         public_key: _,
     } = store.dwallet_metadatas.remove(dwallet_id);
-    inactive_balances.drop();
+    inactive_balances.destroy_empty();
 }
 // // return wallet id have lock script
 // public(package) fun lookup_spend_key(store: &Storage, lockscript: vector<u8>): ID {
