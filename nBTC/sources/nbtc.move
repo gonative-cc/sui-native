@@ -70,6 +70,8 @@ const ENotReadlyForSign: vector<u8> = b"redeem tx is not ready for signing";
 #[error]
 const EInputAlreadyUsed: vector<u8> =
     b"this input has been already used in other signature request";
+#[error]
+const EActiveDwalletNotInStorage: vector<u8> = b"try active dwallet not exist in storage";
 //
 // Structs
 //
@@ -539,6 +541,7 @@ public fun add_dwallet(
 }
 
 public fun set_active_dwallet(_: &AdminCap, contract: &mut NbtcContract, dwallet_id: ID) {
+    assert!(contract.storage.exist(dwallet_id), EActiveDwalletNotInStorage);
     contract.active_dwallet_id = option::some(dwallet_id);
 }
 
