@@ -663,10 +663,8 @@ public fun create_redeem_request_for_testing(
     fee: u64,
     ctx: &mut TxContext,
 ) {
-    let lockscript = contract
-        .storage
-        .dwallet_metadata(*contract.active_dwallet_id.borrow())
-        .lockscript();
+    let lockscript = contract.active_lockscript();
+
     let r = redeem_request::new(
         lockscript,
         redeemer,
