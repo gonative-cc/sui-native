@@ -225,7 +225,7 @@ fun verify_deposit(
         proof,
         tx_index,
         &tx,
-        lockscript,
+        lockscript, // We compare with lockscript to filter the vouts for deposit to nbtc address on BTC
     );
 
     assert!(amount > 0, EMintAmountIsZero);
