@@ -21,6 +21,7 @@ public struct DWalletMetadata has store {
 public struct Storage has key, store {
     id: UID,
     // map dwallet id to Dwallet Metadata
+    // TODO: consider vector or Table for store metadata
     dwallet_metadatas: Table<ID, DWalletMetadata>,
     dwallet_caps: Table<ID, DWalletCap>,
 }
