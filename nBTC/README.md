@@ -92,5 +92,3 @@ The UTXO management implementation is in [nBTC/sources/utxo.move](./sources/utxo
 
 - `utxo_ranking()`: Calculates the ranking score for a UTXO set given a withdrawal amount and active key
 - `validate_utxos()`: Validates proposed UTXOs against the on-chain UTXO table
-- `new_utxo()`: Constructor for UTXO struct
-- `tx_id()`, `vout()`, `value()`, `spend_key()`: Accessor functions for UTXO fields
