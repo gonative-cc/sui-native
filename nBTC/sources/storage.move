@@ -5,6 +5,9 @@ use sui::table::{Self, Table};
 
 public struct DWalletMetadata has store {
     // TODO: change to taproot once Ika will support it
+    // we don't derive lockscript to public key
+    // the reason is this require ripend160 hash function
+    // and we don't have efficiency implementation in sui for this hash function
     public_key: vector<u8>, // public key
     public_key_type: u8, // type of public key of dwallet
     lockscript: vector<u8>, // lock script for this dwallet
@@ -19,7 +22,6 @@ public struct Storage has key, store {
     id: UID,
     // map dwallet id to Dwallet Metadata
     dwallet_metadatas: Table<ID, DWalletMetadata>,
-    // lockscript: Table<vector<u8>, ID>,
     dwallet_caps: Table<ID, DWalletCap>,
 }
 
