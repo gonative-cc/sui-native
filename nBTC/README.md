@@ -82,7 +82,7 @@ Before executing a withdrawal, the system validates:
 
 1. **Non-empty set**: The UTXO set must contain at least one element
 2. **Existence verification**: All proposed UTXOs must exist in the on-chain UTXO table
-3. **Sufficient value**: Total UTXO value must meet or exceed the withdrawal amount
+3. **Sufficient value**: Total UTXO value must be at least equal to the withdrawal amount. When the total exceeds the withdrawal amount, the difference becomes a change output sent back to the nBTC contract's Bitcoin address, creating a new UTXO that can be used for future withdrawals.
 
 If validation fails, the transaction is aborted with an appropriate error code.
 
