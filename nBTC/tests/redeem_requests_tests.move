@@ -4,6 +4,7 @@ module nbtc::redeem_request_tests;
 use nbtc::nbtc_tests::setup;
 use nbtc::nbtc_utxo::new_utxo;
 use nbtc::redeem_request;
+use nbtc::storage::{Self, Storage};
 use std::unit_test::assert_eq;
 use sui::test_utils::destroy;
 
@@ -46,9 +47,17 @@ fun raw_withdraw_tx_signed_tests() {
 
     r.move_to_signing(utxos);
     r.move_to_signed(signatures);
-    r.set_pk_for_testing(vector[nbtc_pk]);
-    let raw_tx = r.raw_signed_tx();
-
+    let mut btc_store = storage::create_storage(scenario.ctx());
+    btc_store.add_metadata(
+        MOCK_DWALLET_ID!(),
+        storage::create_dwallet_metadata(
+            0,
+            nbtc_spend_key,
+            nbtc_pk,
+            scenario.ctx(),
+        ),
+    );
+    let raw_tx = r.raw_signed_tx(&btc_store);
     // one output, no remains token
     assert_eq!(
         raw_tx,
@@ -57,5 +66,6 @@ fun raw_withdraw_tx_signed_tests() {
     destroy(lc);
     destroy(ctr);
     destroy(r);
+    destroy(btc_store);
     scenario.end();
 }

@@ -45,7 +45,7 @@ public fun new_utxo(
         vout,
         value,
         dwallet_id,
-        spend_script: vector::empty(),
+        spend_script,
     }
 }
 
