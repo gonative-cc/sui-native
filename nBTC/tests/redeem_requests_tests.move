@@ -54,6 +54,7 @@ fun raw_withdraw_tx_signed_tests() {
             0,
             nbtc_spend_key,
             nbtc_pk,
+            vector::empty(),
             scenario.ctx(),
         ),
     );

@@ -151,6 +151,7 @@ public(package) fun remove(store: &mut Storage, dwallet_id: ID) {
         lockscript: _,
         public_key: _,
         public_key_type: _,
+        user_share: _,
     } = store.dwallet_metadatas.remove(dwallet_id);
     inactive_balances.destroy_empty();
 }
