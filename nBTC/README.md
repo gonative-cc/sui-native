@@ -52,14 +52,10 @@ Each UTXO tracked by the system contains:
 
 For withdrawal requests, the system selects optimal UTXOs to minimize transaction fees, avoid dust outputs, and maintain efficient key rotation. The ranking algorithm evaluates UTXO combinations based on the following criteria:
 
-#### Ranking Criteria
-
 1. **Exact matches** (+1,000 points): Combinations that produce zero change output
 2. **Dust avoidance** (-200 points): Penalizes change outputs below 10,000 satoshis
 3. **Key rotation** (+200 points per UTXO): Prioritizes spending from inactive keys
 4. **Input minimization** (-100 points per input): Reduces transaction size and fees
-
-#### Scoring Formula
 
 ```text
 score = BASE_SCORE
