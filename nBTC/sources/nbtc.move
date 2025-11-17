@@ -528,6 +528,7 @@ public fun add_dwallet(
     dwallet_cap: DWalletCap,
     lockscript: vector<u8>,
     public_key: vector<u8>,
+    user_share: vector<u8>,
     ctx: &mut TxContext,
 ) {
     // TODO: Verify public key and lockscript
@@ -538,7 +539,7 @@ public fun add_dwallet(
     assert!(!contract.storage.exist(dwallet_id), EDuplicatedDWallet);
 
     let p2wpkh = 0;
-    let dmeta = create_dwallet_metadata(p2wpkh, lockscript, public_key, ctx);
+    let dmeta = create_dwallet_metadata(p2wpkh, lockscript, public_key, user_share, ctx);
     contract.storage.add_metadata(dwallet_id, dmeta);
     contract.storage.add_dwallet_cap(dwallet_id, dwallet_cap);
 }

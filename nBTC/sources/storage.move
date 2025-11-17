@@ -13,6 +13,7 @@ public struct DWalletMetadata has store {
     lockscript: vector<u8>, // lock script for this dwallet
     script_type: u8, // script type, not sure we need this
     total_deposit: u64, // total deposit balance
+    user_share: vector<u8>, // public user_share for this nbtc dwallet endpoint
     // map address to amount they deposit/mint
     // only record when wallet is inactive
     inactive_balances: Table<address, u64>,
@@ -30,6 +31,7 @@ public(package) fun create_dwallet_metadata(
     script_type: u8,
     lockscript: vector<u8>,
     public_key: vector<u8>,
+    user_share: vector<u8>,
     ctx: &mut TxContext,
 ): DWalletMetadata {
     DWalletMetadata {
@@ -38,6 +40,7 @@ public(package) fun create_dwallet_metadata(
         script_type,
         public_key_type: 0,
         total_deposit: 0,
+        user_share,
         inactive_balances: table::new(ctx),
     }
 }
@@ -69,6 +72,10 @@ public fun inactive_balances(dmeta: &DWalletMetadata, addr: address): u64 {
         // they don't use this wallet
         0
     }
+}
+
+public fun user_share(dmeta: &DWalletMetadata): vector<u8> {
+    dmeta.user_share
 }
 
 public(package) fun increase_record_balance(
