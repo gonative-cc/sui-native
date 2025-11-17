@@ -531,6 +531,9 @@ public fun add_dwallet(
     ctx: &mut TxContext,
 ) {
     // TODO: Verify public key and lockscript
+    // In the case lockscript is p2wpkh, p2pkh:
+    // - verify public key hash in lock script is compute from public_key
+    // Reseach what we should check when lockscript is taproot, p2wsh(p2sh)..
     let dwallet_id = dwallet_cap.dwallet_id();
     assert!(!contract.storage.exist(dwallet_id), EDuplicatedDWallet);
 
