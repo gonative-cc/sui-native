@@ -51,7 +51,6 @@ fun raw_withdraw_tx_signed_tests() {
     btc_store.add_metadata(
         MOCK_DWALLET_ID!(),
         storage::create_dwallet_metadata(
-            0,
             nbtc_spend_key,
             nbtc_pk,
             vector::empty(),

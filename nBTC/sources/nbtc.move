@@ -538,9 +538,7 @@ public fun add_dwallet(
     let dwallet_id = dwallet_cap.dwallet_id();
     assert!(!contract.storage.exist(dwallet_id), EDuplicatedDWallet);
 
-    let p2wpkh = 0;
     let dmeta = create_dwallet_metadata(
-        p2wpkh,
         lockscript,
         public_key,
         nbtc_endpoint_user_share,
@@ -712,10 +710,7 @@ public fun set_dwallet_cap_for_test(
     dwallet_cap: DWalletCap,
     ctx: &mut TxContext,
 ) {
-    // contract.dwallet_caps.add(spend_script, dwallet_cap);
-    let p2wpkh = 0;
     let dmeta = create_dwallet_metadata(
-        p2wpkh,
         spend_script,
         public_key,
         nbtc_endpoint_user_share,
