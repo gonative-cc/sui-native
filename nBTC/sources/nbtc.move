@@ -9,6 +9,7 @@ use ika::ika::IKA;
 use ika_dwallet_2pc_mpc::coordinator::DWalletCoordinator;
 use ika_dwallet_2pc_mpc::coordinator_inner::{DWalletCap, VerifiedPartialUserSignatureCap};
 use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
+use nbtc::config::{Self, Config};
 use nbtc::nbtc_utxo::{Self, Utxo};
 use nbtc::redeem_request::{Self, RedeemRequest};
 use nbtc::storage::{Storage, create_storage, create_dwallet_metadata};
@@ -91,10 +92,7 @@ public struct NbtcContract has key, store {
     cap: TreasuryCap<NBTC>,
     /// set of "minted" txs
     tx_ids: Table<vector<u8>, bool>,
-    // Bitcoin light client
-    bitcoin_lc: ID,
-    fallback_addr: address,
-    mint_fee: u64,
+    config: Table<u32, Config>,
     fees_collected: Balance<NBTC>,
     // TODO: probably we should have UTXOs / nbtc pubkey
     utxos: Table<u64, Utxo>,
@@ -151,17 +149,13 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
 
     // NOTE: we removed post deployment setup function and didn't want to implement PTB style
     // initialization, so we require setting the address before publishing the package.
-    let bitcoin_spend_key = b""; // TODO: valid bitcoin address
-    assert!(bitcoin_spend_key.length() >= 22);
     transfer::public_freeze_object(metadata);
-    let contract = NbtcContract {
+    let mut contract = NbtcContract {
         id: object::new(ctx),
         version: VERSION,
         cap: treasury_cap,
-        tx_ids: table::new<vector<u8>, bool>(ctx),
-        bitcoin_lc: @bitcoin_lc.to_id(),
-        fallback_addr: @fallback_addr,
-        mint_fee: 10,
+        tx_ids: table::new(ctx),
+        config: table::new(ctx),
         utxos: table::new(ctx),
         fees_collected: balance::zero(),
         next_utxo: 0,
@@ -171,6 +165,8 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         active_dwallet_id: option::none(),
         next_redeem_req: 0,
     };
+
+    contract.config.add(VERSION, config::new(@bitcoin_lc.to_id(), @fallback_addr, 10, ctx));
     transfer::public_share_object(contract);
 
     transfer::transfer(
@@ -203,11 +199,10 @@ fun verify_deposit(
     _payload: vector<u8>,
     ops_arg: u32,
 ): (u64, address, vector<u64>) {
-    let lockscript = contract.storage.dwallet_metadata(dwallet_id).lockscript();
     assert!(contract.version == VERSION, EVersionMismatch);
     assert!(ops_arg == 0 || ops_arg == MINT_OP_APPLY_FEE, EInvalidOpsArg);
     let provided_lc_id = object::id(light_client);
-    assert!(provided_lc_id == contract.get_light_client_id(), EUntrustedLightClient);
+    assert!(provided_lc_id == contract.config().light_client_id(), EUntrustedLightClient);
 
     let mut r = reader::new(tx_bytes);
     let tx = tx::deserialize(&mut r);
@@ -217,6 +212,7 @@ fun verify_deposit(
     // Double spend prevent
     assert!(!contract.tx_ids.contains(tx_id), ETxAlreadyUsed);
     contract.tx_ids.add(tx_id, true);
+    let lockscript = contract.storage.dwallet_metadata(dwallet_id).lockscript();
     // NOTE: We assume only one active key. We should handle mutiple nbtc active key in the
     // future.
     let (amount, mut op_return, vouts) = verify_payment(
@@ -229,7 +225,7 @@ fun verify_deposit(
     );
 
     assert!(amount > 0, EMintAmountIsZero);
-    let mut recipient: address = contract.get_fallback_addr();
+    let mut recipient: address = contract.config().fallback_addr();
     if (op_return.is_some()) {
         let msg = op_return.extract();
         let mut msg_reader = reader::new(msg);
@@ -242,7 +238,7 @@ fun verify_deposit(
             // For op_ret_type=0x0 we expect only 32 bytes. If the stream is longer (more data), then
             // the format is invalid, so moving recipient to fallback.
             if (!msg_reader.end_stream()) {
-                recipient = contract.get_fallback_addr();
+                recipient = contract.config().fallback_addr();
             }
         }
     };
@@ -319,7 +315,7 @@ public fun mint(
     let mut fee_amount = 0;
 
     if (ops_arg == MINT_OP_APPLY_FEE) {
-        fee_amount = amount.min(contract.mint_fee);
+        fee_amount = amount.min(contract.config().mint_fee());
         let fee = minted.split(fee_amount);
         amount = amount - fee_amount;
         contract.fees_collected.join(fee);
@@ -360,7 +356,7 @@ public fun record_inactive_deposit(
     assert!(contract.version == VERSION, EVersionMismatch);
     assert!(ops_arg == 0 || ops_arg == MINT_OP_APPLY_FEE, EInvalidOpsArg);
     let provided_lc_id = object::id(light_client);
-    assert!(provided_lc_id == contract.get_light_client_id(), EUntrustedLightClient);
+    assert!(provided_lc_id == contract.config().light_client_id(), EUntrustedLightClient);
     assert!(
         option::some(dwallet_id) != contract.active_dwallet_id && contract.storage.exist(dwallet_id),
         EInvalidDepositKey,
@@ -497,11 +493,19 @@ public fun storage(contract: &NbtcContract): &Storage {
     &contract.storage
 }
 
+public fun config(contract: &NbtcContract): &Config {
+    &contract.config[VERSION]
+}
+
 /// update_version updates the contract.version to the latest, making the usage of the older
 /// versions not possible
 public fun update_version(contract: &mut NbtcContract) {
     assert!(VERSION > contract.version, EAlreadyUpdated);
     contract.version = VERSION;
+}
+
+public fun package_version(): u32 {
+    VERSION
 }
 
 /// Merge existing UTXOs to a new, aggregated one assigned to the current active spend key.
@@ -517,7 +521,13 @@ public fun withdraw_fees(_: &OpCap, contract: &mut NbtcContract, ctx: &mut TxCon
 }
 
 public fun change_fees(_: &AdminCap, contract: &mut NbtcContract, mint_fee: u64) {
-    contract.mint_fee = mint_fee;
+    let config_mut = &mut contract.config[VERSION];
+}
+
+/// Set config for specific NBTC version.
+/// This should be call by admin before udpate package with the next package_version
+public fun set_config(_: &AdminCap, contract: &mut NbtcContract, version: u32, config: Config) {
+    contract.config.add(version, config);
 }
 
 /// Set a metadata for dwallet
@@ -594,18 +604,18 @@ public fun total_supply(contract: &NbtcContract): u64 {
     coin::total_supply(&contract.cap)
 }
 
-public fun get_light_client_id(contract: &NbtcContract): ID {
-    contract.bitcoin_lc
-}
-
-public fun get_fallback_addr(contract: &NbtcContract): address {
-    contract.fallback_addr
-}
-
-public fun get_mint_fee(contract: &NbtcContract): u64 {
-    contract.mint_fee
-}
-
+// public fun get_light_client_id(contract: &NbtcContract): ID {
+//     contract.bitcoin_lc
+// }
+//
+// public fun get_fallback_addr(contract: &NbtcContract): address {
+//     contract.fallback_addr
+// }
+//
+// public fun get_mint_fee(contract: &NbtcContract): u64 {
+//     contract.mint_fee
+// }
+//
 public fun redeem_request(contract: &NbtcContract, request_id: u64): &RedeemRequest {
     &contract.redeem_requests[request_id]
 }
@@ -631,23 +641,23 @@ public(package) fun init_for_testing(
         ctx,
     );
     transfer::public_freeze_object(metadata);
-    let contract = NbtcContract {
+    let mut contract = NbtcContract {
         id: object::new(ctx),
         version: VERSION,
         cap: contract_cap,
-        tx_ids: table::new<vector<u8>, bool>(ctx),
-        bitcoin_lc: bitcoin_lc.to_id(),
-        fallback_addr,
-        fees_collected: balance::zero(),
+        tx_ids: table::new(ctx),
+        config: table::new(ctx),
         utxos: table::new(ctx),
-        mint_fee: 10,
         redeem_requests: table::new(ctx),
         locked: table::new(ctx),
         next_redeem_req: 0,
         next_utxo: 0,
         active_dwallet_id: option::none(),
+        fees_collected: balance::zero(),
         storage: create_storage(ctx),
     };
+
+    contract.config.add(VERSION, config::new(bitcoin_lc.to_id(), fallback_addr, 10, ctx));
     contract
 }
 
