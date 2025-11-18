@@ -510,6 +510,7 @@ public fun withdraw_fees(_: &OpCap, contract: &mut NbtcContract, ctx: &mut TxCon
 
 public fun change_fees(_: &AdminCap, contract: &mut NbtcContract, mint_fee: u64) {
     let config_mut = &mut contract.config[VERSION];
+    config_mut.set_mint_fee(mint_fee);
 }
 
 /// Set config for specific NBTC version.
