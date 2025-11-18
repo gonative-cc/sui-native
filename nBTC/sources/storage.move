@@ -11,8 +11,8 @@ public struct DWalletMetadata has store {
     public_key: vector<u8>, // public key
     public_key_type: u8, // type of public key of dwallet
     lockscript: vector<u8>, // lock script for this dwallet
-    script_type: u8, // script type, not sure we need this
     total_deposit: u64, // total deposit balance
+    public_user_share: vector<u8>, // "user share" of dwallet
     // map address to amount they deposit/mint
     // only record when wallet is inactive
     inactive_balances: Table<address, u64>,
@@ -27,17 +27,17 @@ public struct Storage has key, store {
 }
 
 public(package) fun create_dwallet_metadata(
-    script_type: u8,
     lockscript: vector<u8>,
     public_key: vector<u8>,
+    public_user_share: vector<u8>,
     ctx: &mut TxContext,
 ): DWalletMetadata {
     DWalletMetadata {
         public_key,
         lockscript,
-        script_type,
         public_key_type: 0,
         total_deposit: 0,
+        public_user_share,
         inactive_balances: table::new(ctx),
     }
 }
@@ -48,10 +48,6 @@ public fun public_key(dmeta: &DWalletMetadata): vector<u8> {
 
 public fun lockscript(dmeta: &DWalletMetadata): vector<u8> {
     dmeta.lockscript
-}
-
-public fun script_type(dmeta: &DWalletMetadata): u8 {
-    dmeta.script_type
 }
 
 public fun total_deposit(dmeta: &DWalletMetadata): u64 {
@@ -69,6 +65,12 @@ public fun inactive_balances(dmeta: &DWalletMetadata, addr: address): u64 {
         // they don't use this wallet
         0
     }
+}
+
+/// Return public user share of dwallet
+/// Ika don't have public api to get it onchain, this is the reason we store it in dwallet metadata
+public fun public_user_share(dmeta: &DWalletMetadata): vector<u8> {
+    dmeta.public_user_share
 }
 
 public(package) fun increase_record_balance(
@@ -140,10 +142,10 @@ public(package) fun remove(store: &mut Storage, dwallet_id: ID) {
     let DWalletMetadata {
         inactive_balances,
         total_deposit: _,
-        script_type: _,
         lockscript: _,
         public_key: _,
         public_key_type: _,
+        public_user_share: _,
     } = store.dwallet_metadatas.remove(dwallet_id);
     inactive_balances.destroy_empty();
 }

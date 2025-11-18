@@ -107,6 +107,7 @@ public fun setup(
     ctr.set_dwallet_cap_for_test(
         nbtc_bitcoin_addr,
         nbtc_bitcoin_addr,
+        vector::empty(),
         dwallet_cap_for_testing(object::id_from_address(@0x01), scenario.ctx()),
         scenario.ctx(),
     );

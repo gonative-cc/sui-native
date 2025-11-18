@@ -528,6 +528,7 @@ public fun add_dwallet(
     dwallet_cap: DWalletCap,
     lockscript: vector<u8>,
     public_key: vector<u8>,
+    nbtc_endpoint_user_share: vector<u8>,
     ctx: &mut TxContext,
 ) {
     // TODO: Verify public key and lockscript
@@ -537,8 +538,12 @@ public fun add_dwallet(
     let dwallet_id = dwallet_cap.dwallet_id();
     assert!(!contract.storage.exist(dwallet_id), EDuplicatedDWallet);
 
-    let p2wpkh = 0;
-    let dmeta = create_dwallet_metadata(p2wpkh, lockscript, public_key, ctx);
+    let dmeta = create_dwallet_metadata(
+        lockscript,
+        public_key,
+        nbtc_endpoint_user_share,
+        ctx,
+    );
     contract.storage.add_metadata(dwallet_id, dmeta);
     contract.storage.add_dwallet_cap(dwallet_id, dwallet_cap);
 }
@@ -701,12 +706,16 @@ public fun set_dwallet_cap_for_test(
     contract: &mut NbtcContract,
     spend_script: vector<u8>,
     public_key: vector<u8>,
+    nbtc_endpoint_user_share: vector<u8>,
     dwallet_cap: DWalletCap,
     ctx: &mut TxContext,
 ) {
-    // contract.dwallet_caps.add(spend_script, dwallet_cap);
-    let p2wpkh = 0;
-    let dmeta = create_dwallet_metadata(p2wpkh, spend_script, public_key, ctx);
+    let dmeta = create_dwallet_metadata(
+        spend_script,
+        public_key,
+        nbtc_endpoint_user_share,
+        ctx,
+    );
     let dwallet_id = dwallet_cap.dwallet_id();
     contract.active_dwallet_id = option::some(dwallet_id);
     contract.storage.add_metadata(dwallet_id, dmeta);
