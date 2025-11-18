@@ -16,8 +16,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     container:
-      image: mysten/sui-tools:ci
-
+      image: mysten/sui-tools:testnet-v1.60.0
     steps:
       - uses: actions/checkout@v4
 
