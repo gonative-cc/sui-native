@@ -74,6 +74,8 @@ public fun inactive_balances(dmeta: &DWalletMetadata, addr: address): u64 {
     }
 }
 
+/// Return public user share of dwallet
+/// Ika don't have public api to get it onchain, this is the reason we store it in dwallet metadata
 public fun user_share(dmeta: &DWalletMetadata): vector<u8> {
     dmeta.user_share
 }
