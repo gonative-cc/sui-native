@@ -489,23 +489,11 @@ public fun withdraw_inactive_deposit(
     amount
 }
 
-public fun storage(contract: &NbtcContract): &Storage {
-    &contract.storage
-}
-
-public fun config(contract: &NbtcContract): &Config {
-    &contract.config[VERSION]
-}
-
 /// update_version updates the contract.version to the latest, making the usage of the older
 /// versions not possible
 public fun update_version(contract: &mut NbtcContract) {
     assert!(VERSION > contract.version, EAlreadyUpdated);
     contract.version = VERSION;
-}
-
-public fun package_version(): u32 {
-    VERSION
 }
 
 /// Merge existing UTXOs to a new, aggregated one assigned to the current active spend key.
@@ -604,20 +592,20 @@ public fun total_supply(contract: &NbtcContract): u64 {
     coin::total_supply(&contract.cap)
 }
 
-// public fun get_light_client_id(contract: &NbtcContract): ID {
-//     contract.bitcoin_lc
-// }
-//
-// public fun get_fallback_addr(contract: &NbtcContract): address {
-//     contract.fallback_addr
-// }
-//
-// public fun get_mint_fee(contract: &NbtcContract): u64 {
-//     contract.mint_fee
-// }
-//
 public fun redeem_request(contract: &NbtcContract, request_id: u64): &RedeemRequest {
     &contract.redeem_requests[request_id]
+}
+
+public fun storage(contract: &NbtcContract): &Storage {
+    &contract.storage
+}
+
+public fun config(contract: &NbtcContract): &Config {
+    &contract.config[VERSION]
+}
+
+public fun package_version(): u32 {
+    VERSION
 }
 //
 // Testing
