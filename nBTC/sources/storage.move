@@ -13,7 +13,7 @@ public struct DWalletMetadata has store {
     lockscript: vector<u8>, // lock script for this dwallet
     script_type: u8, // script type, not sure we need this
     total_deposit: u64, // total deposit balance
-    user_share: vector<u8>, // public user_share for this nbtc dwallet endpoint
+    user_share: vector<u8>, /// "user share" private key
     // map address to amount they deposit/mint
     // only record when wallet is inactive
     inactive_balances: Table<address, u64>,
