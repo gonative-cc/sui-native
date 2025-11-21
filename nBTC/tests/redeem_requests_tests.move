@@ -42,6 +42,7 @@ fun raw_withdraw_tx_signed_tests() {
         btc_receiver,
         amount,
         fee,
+        0,
         scenario.ctx(),
     );
 

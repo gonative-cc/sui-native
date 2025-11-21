@@ -25,6 +25,8 @@ const ERedeemTxSigningNotCompleted: vector<u8> =
 const ESignatureInValid: vector<u8> = b"signature invalid for this input";
 #[error]
 const EInvalidSignatureId: vector<u8> = b"invalid signature id for redeem request";
+#[error]
+const ENotResolving: vector<u8> = b"redeem request is not in resolving status";
 
 const ECDSA: u32 = 0;
 const SHA256: u32 = 1;
@@ -34,6 +36,7 @@ public enum RedeemStatus has copy, drop, store {
     Signing,
     Signed,
     Confirmed,
+    Failed,
 }
 
 public struct RedeemRequest has store {
@@ -49,6 +52,7 @@ public struct RedeemRequest has store {
     sig_hashes: VecMap<u32, vector<u8>>,
     sign_ids: Table<ID, bool>,
     signatures_map: VecMap<u32, vector<u8>>,
+    resolving_started_ms: u64,
 }
 
 // ========== RedeemStatus methods ================
@@ -205,6 +209,7 @@ public fun new(
     recipient_script: vector<u8>,
     amount: u64,
     fee: u64,
+    resolving_started_ms: u64,
     ctx: &mut TxContext,
 ): RedeemRequest {
     RedeemRequest {
@@ -218,10 +223,17 @@ public fun new(
         sign_ids: table::new(ctx),
         signatures_map: vec_map::empty(),
         status: RedeemStatus::Resolving,
+        resolving_started_ms,
     }
 }
 
 public fun utxo_at(r: &RedeemRequest, input_idx: u32): &Utxo { &r.inputs[input_idx as u64] }
+
+public fun amount(r: &RedeemRequest): u64 { r.amount }
+
+public fun fee(r: &RedeemRequest): u64 { r.fee }
+
+public fun resolving_started_ms(r: &RedeemRequest): u64 { r.resolving_started_ms }
 
 public(package) fun validate_signature(
     r: &mut RedeemRequest,
@@ -265,6 +277,18 @@ public fun move_to_signing(r: &mut RedeemRequest, inputs: vector<Utxo>) {
     r.inputs = inputs;
     r.status = RedeemStatus::Signing
 }
+
+public(package) fun resolve(r: &mut RedeemRequest, inputs: vector<Utxo>) {
+    assert!(r.status == RedeemStatus::Resolving, ENotResolving);
+    r.inputs = inputs;
+    r.status = RedeemStatus::Signing;
+}
+
+public(package) fun fail_resolving(r: &mut RedeemRequest) {
+    assert!(r.status == RedeemStatus::Resolving, ENotResolving);
+    r.status = RedeemStatus::Failed;
+}
+
 #[test_only]
 public fun move_to_signed(r: &mut RedeemRequest, signatures: vector<vector<u8>>) {
     r.signatures_map =

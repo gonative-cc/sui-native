@@ -6,6 +6,7 @@ use ika_dwallet_2pc_mpc::ika_dwallet_2pc_mpc_init::{init_for_testing, initialize
 use nbtc::nbtc::NBTC;
 use nbtc::nbtc_tests::setup;
 use nbtc::nbtc_utxo::new_utxo;
+use sui::clock;
 use sui::coin::mint_for_testing;
 use sui::test_scenario::{Self, take_from_address, Scenario};
 use sui::test_utils::destroy;
@@ -51,11 +52,12 @@ fun redeem_happy_case() {
     // create 1000sat NBCT token for test
     let nbtc_coin = mint_for_testing<NBTC>(1000, scenario.ctx());
     let receiver_spend_key = x"00140000000000000000000000000000000000000002";
-    let redeem_id = ctr.redeem(nbtc_coin, receiver_spend_key, scenario.ctx());
+    let clock = clock::create_for_testing(scenario.ctx());
+    let _redeem_id = ctr.redeem(&clock, nbtc_coin, receiver_spend_key, scenario.ctx());
 
     // TODO: proposal UTXO
 
-    let inputs = vector[
+    let _inputs = vector[
         new_utxo(
             x"06ce677fd511851bb6cdacebed863d12dfd231d810e8e9fcba6e791001adf3a6",
             0,
@@ -72,6 +74,7 @@ fun redeem_happy_case() {
     // - Update signature
     // - valiadate the raw tx after signed tx
     // - bun NBTC token
+    clock.destroy_for_testing();
     destroy(lc);
     destroy(ctr);
     scenario.end();
