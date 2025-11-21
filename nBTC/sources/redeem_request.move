@@ -28,6 +28,7 @@ const EInvalidSignatureId: vector<u8> = b"invalid signature id for redeem reques
 
 const ECDSA: u32 = 0;
 const SHA256: u32 = 1;
+const SIGNHASH_ALL: u8 = 0x01;
 
 public enum RedeemStatus has copy, drop, store {
     Resolving, // finding the best UTXOs
@@ -174,7 +175,7 @@ public(package) fun add_signature(
 ) {
     // TODO: ika signature for ECDSA alway return 65 bytes length
     let raw_signature = ika_signature.slice(1, 65); // skip the first element or recover id
-    r.signatures_map.insert(input_idx, der_encode_signature(raw_signature, 0x01));
+    r.signatures_map.insert(input_idx, der_encode_signature(raw_signature, SIGNHASH_ALL));
     if (r.signatures_map.length() == r.inputs.length()) {
         r.status = RedeemStatus::Signed;
     }
@@ -201,7 +202,7 @@ public fun sig_hash(r: &RedeemRequest, input_idx: u32, storage: &Storage): vecto
             input_idx as u64, // input index
             &script_code, // segwit nbtc spend key
             u64_to_le_bytes(r.inputs[input_idx as u64].value()), // amount
-            0x01, // SIGNHASH_ALL
+            SIGNHASH_ALL, // SIGNHASH_ALL
         )
     })
 }
