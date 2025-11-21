@@ -227,6 +227,37 @@ public fun parse_btc_sig(full_sig_from_stack: &mut vector<u8>): (vector<u8>, u8)
     (r_and_s_bytes, sighash_flag)
 }
 
+/// Fomat raw singature (r, s) to btc ECDSA format,
+public fun der_encode_signature(signature: vector<u8>, signature_hash_type: u8): vector<u8> {
+    assert!(signature.length() == 64);
+    let mut r = vector_utils::vector_slice(&signature, 0, 32);
+    let mut s = vector_utils::vector_slice(&signature, 32, 64);
+    if (s[0] >= 0x80) {
+        s.insert(0x00, 0);
+    };
+
+    if (r[0] >= 0x80) {
+        r.insert(0x00, 0);
+    };
+
+    let mut res = vector::empty();
+
+    res.push_back(0x30);
+    if (s.length() != 32 || r.length() != 32) {
+        res.push_back(0x45);
+    } else {
+        res.push_back(0x44)
+    };
+    res.push_back(0x02);
+    res.push_back(r.length() as u8);
+    res.append(r);
+    res.push_back(0x02);
+    res.push_back(s.length() as u8);
+    res.append(s);
+    res.push_back(signature_hash_type);
+    res
+}
+
 #[test]
 fun test_der_int_to_32_bytes_positive_no_padding() {
     let r_val = x"7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"; // 32 bytes, MSB is 0
@@ -271,6 +302,7 @@ fun der_int_to_32_bytes_integer_empty() {
 fun test_parse_btc_sig_valid() {
     let mut full_sig_hex =
         x"3045022100d8a05a72f026dd543a287164d79f496901e8678866a23c9830695f5101add6080220236272d43be9da20ef7a9492510919081340221115420194134399811618199201";
+    let full_sig = full_sig_hex;
     let expected_r = x"d8a05a72f026dd543a287164d79f496901e8678866a23c9830695f5101add608";
     let expected_s = x"236272d43be9da20ef7a94925109190813402211154201941343998116181992";
     let mut expected_rs = expected_r;
@@ -279,12 +311,14 @@ fun test_parse_btc_sig_valid() {
     let (r_and_s_bytes, sighash_flag) = parse_btc_sig(&mut full_sig_hex);
     assert_eq!(r_and_s_bytes, expected_rs);
     assert_eq!(sighash_flag, 0x01);
+    assert_eq!(der_encode_signature(r_and_s_bytes, sighash_flag), full_sig);
 }
 
 #[test]
 fun test_parse_btc_sig_another_valid() {
     let mut full_sig_hex =
         x"3044022010720e86c81bc5ca0593d2a3029c090a6e358e01c7d7d37f77d47b05c3404c0e022012009144c8ef2c4fe5c8164fcc5602db88b549ee8b7f57ac217294bd593be2d001";
+    let full_sig = full_sig_hex;
     let expected_r = x"10720E86C81BC5CA0593D2A3029C090A6E358E01C7D7D37F77D47B05C3404C0E";
     let expected_s = x"12009144C8EF2C4FE5C8164FCC5602DB88B549EE8B7F57AC217294BD593BE2D0";
     let mut expected_rs = expected_r;
@@ -293,6 +327,7 @@ fun test_parse_btc_sig_another_valid() {
     let (r_and_s_bytes, sighash_flag) = parse_btc_sig(&mut full_sig_hex);
     assert_eq!(r_and_s_bytes, expected_rs);
     assert_eq!(sighash_flag, 0x01);
+    assert_eq!(der_encode_signature(r_and_s_bytes, sighash_flag), full_sig);
 }
 
 #[test, expected_failure(abort_code = EBtcSigParsing)]

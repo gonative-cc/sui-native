@@ -260,38 +260,6 @@ public fun get_signature(
     signature.extract()
 }
 
-/// Fomat raw singature to btc ECDSA format
-public fun der_encode_signature(signature: vector<u8>, signature_hash_type: u8): vector<u8> {
-    assert!(signature.length()  == 65);
-    let mut s = signature.slice(1, 33);
-    let mut r = signature.slice(32, 65);
-
-    if (s[0] >= 0x80) {
-        s.insert(0x00, 0);
-    };
-
-    if (r[0] >= 0x80) {
-        r.insert(0x00, 0);
-    };
-
-    let mut res = vector::empty();
-
-    res.push_back(0x30);
-    if (s.length() != 32 || r.length() != 32) {
-        res.push_back(0x45);
-    } else {
-        res.push_back(0x44)
-    };
-    res.push_back(0x02);
-    res.push_back(s.length() as u8);
-    res.append(s);
-    res.push_back(0x02);
-    res.push_back(r.length() as u8);
-    res.append(r);
-    res.push_back(signature_hash_type);
-    res
-}
-
 #[test_only]
 public fun move_to_signing(r: &mut RedeemRequest, inputs: vector<Utxo>) {
     r.inputs = inputs;
