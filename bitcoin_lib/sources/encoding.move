@@ -228,6 +228,7 @@ public fun parse_btc_sig(full_sig_from_stack: &mut vector<u8>): (vector<u8>, u8)
 }
 
 /// Fomat raw singature (r, s) to btc ECDSA format,
+/// Ref: https://learnmeabitcoin.com/technical/keys/signature/
 public fun der_encode_signature(signature: vector<u8>, signature_hash_type: u8): vector<u8> {
     assert!(signature.length() == 64);
     let mut r = vector_utils::vector_slice(&signature, 0, 32);
