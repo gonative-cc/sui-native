@@ -15,6 +15,7 @@ use nbtc::storage::{Storage, create_storage, create_dwallet_metadata};
 use nbtc::verify_payment::verify_payment;
 use sui::address;
 use sui::balance::{Self, Balance};
+use sui::clock::Clock;
 use sui::coin::{Self, Coin, TreasuryCap};
 use sui::event;
 use sui::sui::SUI;
@@ -38,6 +39,8 @@ const ICON_URL: vector<u8> =
 
 /// ops_arg consts
 const MINT_OP_APPLY_FEE: u32 = 1;
+
+const DEFAULT_RESOLVING_WINDOW_MS: u64 = 30 * 60 * 1000; // 30 minutes
 
 /// One Time Witness
 public struct NBTC has drop {}
@@ -72,6 +75,17 @@ const EInputAlreadyUsed: vector<u8> =
     b"this input has been already used in other signature request";
 #[error]
 const EActiveDwalletNotInStorage: vector<u8> = b"try active dwallet not exist in storage";
+#[error]
+const ERedeemAmountMismatch: vector<u8> = b"Total UTXO value mismatch with redeem amount";
+#[error]
+const EInputLengthMismatch: vector<u8> = b"utxo_idxs and dwallet_ids length mismatch";
+#[error]
+const EDwalletIdMismatch: vector<u8> = b"UTXO dwallet_id mismatch";
+#[error]
+const ERedeemWindowExpired: vector<u8> = b"resolving window has expired";
+#[error]
+const ERedeemWindowNotExpired: vector<u8> = b"resolving window has not expired yet";
+
 //
 // Structs
 //
@@ -107,6 +121,7 @@ public struct NbtcContract has key, store {
     // should have one active_dwallet_id
     active_dwallet_id: Option<ID>,
     next_redeem_req: u64,
+    resolving_window_ms: u64,
 }
 
 /// MintEvent is emitted when nBTC is successfully minted.
@@ -170,6 +185,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         storage: create_storage(ctx),
         active_dwallet_id: option::none(),
         next_redeem_req: 0,
+        resolving_window_ms: DEFAULT_RESOLVING_WINDOW_MS,
     };
     transfer::public_share_object(contract);
 
@@ -426,6 +442,7 @@ public fun request_signature_for_input(
 /// Returns total amount of redeemed balance.
 public fun redeem(
     contract: &mut NbtcContract,
+    clock: &Clock,
     coin: Coin<NBTC>,
     recipient_script: vector<u8>,
     ctx: &mut TxContext,
@@ -440,6 +457,7 @@ public fun redeem(
         recipient_script,
         coin.value(),
         150, // TODO: query fee from oracle or give api for user to set this
+        clock.timestamp_ms(),
         ctx,
     );
     // TODO: we repeat this logic a lot of time. Consider to create a generic function for this
@@ -463,6 +481,69 @@ public fun validate_signature(
     assert!(r.has_signature(input_idx), EInputAlreadyUsed);
 
     r.validate_signature(dwallet_coordinator, &contract.storage, input_idx, sign_id);
+}
+
+public fun finalize_resolving(contract: &mut NbtcContract, clock: &Clock, redeem_id: u64) {
+    assert!(contract.version == VERSION, EVersionMismatch);
+    let r = &mut contract.redeem_requests[redeem_id];
+
+    let current_time = clock.timestamp_ms();
+    let deadline = r.resolving_started_ms() + contract.resolving_window_ms;
+    assert!(current_time > deadline, ERedeemWindowNotExpired);
+
+    r.fail_resolving();
+}
+
+public fun resolve_redeem_request(
+    contract: &mut NbtcContract,
+    clock: &Clock,
+    redeem_id: u64,
+    utxo_idxs: vector<u64>,
+    dwallet_ids: vector<ID>,
+) {
+    assert!(contract.version == VERSION, EVersionMismatch);
+    assert!(utxo_idxs.length() == dwallet_ids.length(), EInputLengthMismatch);
+
+    let resolving_window_ms = contract.resolving_window_ms;
+    let dwallet_id = *contract.active_dwallet_id.borrow();
+    let lockscript = contract.active_lockscript();
+
+    let current_time = clock.timestamp_ms();
+    let resolving_started_ms = contract.redeem_requests[redeem_id].resolving_started_ms();
+    let deadline = resolving_started_ms + resolving_window_ms;
+    assert!(current_time <= deadline, ERedeemWindowExpired);
+
+    let requested_amount = contract.redeem_requests[redeem_id].amount();
+
+    let mut inputs = vector[];
+    let mut total_amount = 0;
+    utxo_idxs.length().do!(|i| {
+        let idx = utxo_idxs[i];
+        let dwallet_id_check = dwallet_ids[i];
+        let utxo = contract.utxos.remove(idx);
+        assert!(utxo.dwallet_id() == dwallet_id_check, EDwalletIdMismatch);
+
+        total_amount = total_amount + utxo.value();
+        inputs.push_back(utxo);
+    });
+
+    assert!(total_amount >= requested_amount, ERedeemAmountMismatch);
+
+    let change_amount = total_amount - requested_amount;
+    if (change_amount > 0) {
+        add_utxo_to_contract(
+            contract,
+            x"0000000000000000000000000000000000000000000000000000000000000000", // dummy tx_id for now
+            0,
+            change_amount,
+            lockscript,
+            dwallet_id,
+        );
+    };
+
+    // TODO: Implement best set selection
+    let r = &mut contract.redeem_requests[redeem_id];
+    r.resolve(inputs);
 }
 
 /// Allows user to withdraw back deposited BTC that used an inactive deposit spend key.
@@ -647,6 +728,7 @@ public(package) fun init_for_testing(
         next_utxo: 0,
         active_dwallet_id: option::none(),
         storage: create_storage(ctx),
+        resolving_window_ms: DEFAULT_RESOLVING_WINDOW_MS,
     };
     contract
 }
@@ -669,6 +751,7 @@ public fun create_redeem_request_for_testing(
     recipient_script: vector<u8>,
     amount: u64,
     fee: u64,
+    resolving_started_ms: u64,
     ctx: &mut TxContext,
 ) {
     let lockscript = contract.active_lockscript();
@@ -679,6 +762,7 @@ public fun create_redeem_request_for_testing(
         recipient_script,
         amount,
         fee,
+        resolving_started_ms,
         ctx,
     );
     contract
