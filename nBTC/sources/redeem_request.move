@@ -1,6 +1,6 @@
 module nbtc::redeem_request;
 
-use bitcoin_lib::encoding::u64_to_le_bytes;
+use bitcoin_lib::encoding::{u64_to_le_bytes, der_encode_signature};
 use bitcoin_lib::sighash::{create_segwit_preimage, create_p2wpkh_scriptcode};
 use bitcoin_lib::tx;
 use bitcoin_lib::vector_utils::vector_slice;
@@ -151,10 +151,11 @@ public fun raw_signed_tx(r: &RedeemRequest, storage: &Storage): vector<u8> {
     r.inputs.length().do!(|i| {
         let dwallet_id = r.inputs[i].dwallet_id();
         let public_key = storage.dwallet_metadata(dwallet_id).public_key();
+        let signature = *r.signatures_map.get(&(i as u32));
         witnesses.push_back(
             tx::new_witness(vector[
-                // signature
-                *r.signatures_map.get(&(i as u32)),
+                // encode to btc signature format
+                signature,
                 public_key,
             ]),
         );
@@ -166,8 +167,14 @@ public fun raw_signed_tx(r: &RedeemRequest, storage: &Storage): vector<u8> {
 }
 
 // add valid signature to redeem request for specify input index
-public(package) fun add_signature(r: &mut RedeemRequest, input_idx: u32, signature: vector<u8>) {
-    r.signatures_map.insert(input_idx, signature);
+public(package) fun add_signature(
+    r: &mut RedeemRequest,
+    input_idx: u32,
+    ika_signature: vector<u8>,
+) {
+    // TODO: ika signature for ECDSA alway return 65 bytes length
+    let raw_signature = ika_signature.slice(1, 65); // skip the first element or recover id
+    r.signatures_map.insert(input_idx, der_encode_signature(raw_signature, 0x01));
     if (r.signatures_map.length() == r.inputs.length()) {
         r.status = RedeemStatus::Signed;
     }
