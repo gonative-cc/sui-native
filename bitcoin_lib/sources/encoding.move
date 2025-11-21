@@ -244,11 +244,9 @@ public fun der_encode_signature(signature: vector<u8>, signature_hash_type: u8):
     let mut res = vector::empty();
 
     res.push_back(0x30);
-    if (s.length() != 32 || r.length() != 32) {
-        res.push_back(0x45);
-    } else {
-        res.push_back(0x44)
-    };
+    // data = 0x02 || r.length() || r || 0x02 || s.length() || s
+    // so total len = 4 + r.length() + r.length()
+    res.push_back(4 + (r.length() as u8) + (s.length() as u8));
     res.push_back(0x02);
     res.push_back(r.length() as u8);
     res.append(r);
