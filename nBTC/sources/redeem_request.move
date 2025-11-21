@@ -25,6 +25,8 @@ const ERedeemTxSigningNotCompleted: vector<u8> =
 const ESignatureInValid: vector<u8> = b"signature invalid for this input";
 #[error]
 const EInvalidSignatureId: vector<u8> = b"invalid signature id for redeem request";
+#[error]
+const EInvalidIkaECDSALength: vector<u8> = b"invalid ecdsa signature length from ika format";
 
 const ECDSA: u32 = 0;
 const SHA256: u32 = 1;
@@ -174,6 +176,7 @@ public(package) fun add_signature(
     ika_signature: vector<u8>,
 ) {
     // TODO: ika signature for ECDSA alway return 65 bytes length
+    assert!(ika_signature.length() == 65, EInvalidIkaECDSALength);
     let raw_signature = ika_signature.slice(1, 65); // skip the first element or recover id
     r.signatures_map.insert(input_idx, der_encode_signature(raw_signature, SIGNHASH_ALL));
     if (r.signatures_map.length() == r.inputs.length()) {
