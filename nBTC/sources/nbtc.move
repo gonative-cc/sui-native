@@ -47,6 +47,8 @@ public struct NBTC has drop {}
 //
 
 #[error]
+const EInvalidArguments: vector<u8> = b"Function arguments are not valid";
+#[error]
 const EInvalidDepositKey: vector<u8> = b"Not an nBTC deposit spend key";
 #[error]
 const ETxAlreadyUsed: vector<u8> = b"The Bitcoin transaction ID has been already used for minting";
@@ -72,6 +74,7 @@ const EInputAlreadyUsed: vector<u8> =
     b"this input has been already used in other signature request";
 #[error]
 const EActiveDwalletNotInStorage: vector<u8> = b"try active dwallet not exist in storage";
+
 //
 // Structs
 //
@@ -107,6 +110,8 @@ public struct NbtcContract has key, store {
     // should have one active_dwallet_id
     active_dwallet_id: Option<ID>,
     next_redeem_req: u64,
+    /// minimum amount of time in milliseconds the redeem resolution should take.
+    redeem_duration: u64,
 }
 
 /// MintEvent is emitted when nBTC is successfully minted.
@@ -170,6 +175,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         storage: create_storage(ctx),
         active_dwallet_id: option::none(),
         next_redeem_req: 0,
+        redeem_duration: 5*60_000, // 5min
     };
     transfer::public_share_object(contract);
 
@@ -512,11 +518,19 @@ public fun merge_utxos(_: &mut NbtcContract, _num_utxos: u16) {}
 // Admin functions
 //
 
+public fun update_redeem_duration(_: &OpCap, contract: &mut NbtcContract, redeem_duration: u64) {
+    assert!(VERSION > contract.version, EAlreadyUpdated);
+    assert!(redeem_duration >= 1000, EInvalidArguments); // at least 1s
+    contract.redeem_duration = redeem_duration;
+}
+
 public fun withdraw_fees(_: &OpCap, contract: &mut NbtcContract, ctx: &mut TxContext): Coin<NBTC> {
+    assert!(VERSION > contract.version, EAlreadyUpdated);
     coin::from_balance(contract.fees_collected.withdraw_all(), ctx)
 }
 
-public fun change_fees(_: &AdminCap, contract: &mut NbtcContract, mint_fee: u64) {
+public fun update_fees(_: &AdminCap, contract: &mut NbtcContract, mint_fee: u64) {
+    assert!(VERSION > contract.version, EAlreadyUpdated);
     contract.mint_fee = mint_fee;
 }
 
@@ -646,6 +660,7 @@ public(package) fun init_for_testing(
         next_redeem_req: 0,
         next_utxo: 0,
         active_dwallet_id: option::none(),
+        redeem_duration: 5*60_000, // 5min
         storage: create_storage(ctx),
     };
     contract
