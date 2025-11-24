@@ -177,7 +177,7 @@ public(package) fun add_signature(
 ) {
     //Ika signature for ECDSA alway return 65 bytes length
     assert!(ika_signature.length() == 65, EInvalidIkaECDSALength);
-    let raw_signature = ika_signature.slice(1, 65); // skip the first element or recover id
+    let raw_signature = ika_signature.slice(1, 65); // skip the first byte (pub key recovery byte)
     r.signatures_map.insert(input_idx, der_encode_signature(raw_signature, SIGNHASH_ALL));
     if (r.signatures_map.length() == r.inputs.length()) {
         r.status = RedeemStatus::Signed;
