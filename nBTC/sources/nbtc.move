@@ -80,12 +80,11 @@ const ERedeemAmountMismatch: vector<u8> = b"Total UTXO value mismatch with redee
 #[error]
 const EInputLengthMismatch: vector<u8> = b"utxo_idxs and dwallet_ids length mismatch";
 #[error]
-const EDwalletIdMismatch: vector<u8> = b"UTXO dwallet_id mismatch";
-#[error]
 const ERedeemWindowExpired: vector<u8> = b"resolving window has expired";
 #[error]
 const ERedeemWindowNotExpired: vector<u8> = b"resolving window has not expired yet";
-
+#[error]
+const EInvalidUTXOSet: vector<u8> = b"Invalid utxo set";
 //
 // Structs
 //
@@ -111,7 +110,7 @@ public struct NbtcContract has key, store {
     mint_fee: u64,
     fees_collected: Balance<NBTC>,
     // TODO: probably we should have UTXOs / nbtc pubkey
-    utxos: Table<u64, Utxo>,
+    utxos: Table<u64, Utxo>, // Table<dwallet_id + utxo_idx, Utxo>
     next_utxo: u64,
     // redeem request token for nbtc
     redeem_requests: Table<u64, RedeemRequest>,
@@ -483,7 +482,7 @@ public fun validate_signature(
     r.validate_signature(dwallet_coordinator, &contract.storage, input_idx, sign_id);
 }
 
-public fun finalize_resolving(contract: &mut NbtcContract, clock: &Clock, redeem_id: u64) {
+public fun finalize_redeem_request(contract: &mut NbtcContract, redeem_id: u64, clock: &Clock) {
     assert!(contract.version == VERSION, EVersionMismatch);
     let r = &mut contract.redeem_requests[redeem_id];
 
@@ -494,18 +493,16 @@ public fun finalize_resolving(contract: &mut NbtcContract, clock: &Clock, redeem
     r.fail_resolving();
 }
 
-public fun resolve_redeem_request(
+public fun propose_utxos(
     contract: &mut NbtcContract,
-    clock: &Clock,
     redeem_id: u64,
     utxo_idxs: vector<u64>,
     dwallet_ids: vector<ID>,
+    clock: &Clock,
 ) {
     assert!(contract.version == VERSION, EVersionMismatch);
-    assert!(utxo_idxs.length() == dwallet_ids.length(), EInputLengthMismatch);
 
     let resolving_window_ms = contract.resolving_window_ms;
-    let dwallet_id = *contract.active_dwallet_id.borrow();
     let lockscript = contract.active_lockscript();
 
     let current_time = clock.timestamp_ms();
@@ -515,35 +512,15 @@ public fun resolve_redeem_request(
 
     let requested_amount = contract.redeem_requests[redeem_id].amount();
 
-    let mut inputs = vector[];
-    let mut total_amount = 0;
-    utxo_idxs.length().do!(|i| {
-        let idx = utxo_idxs[i];
-        let dwallet_id_check = dwallet_ids[i];
-        let utxo = contract.utxos.remove(idx);
-        assert!(utxo.dwallet_id() == dwallet_id_check, EDwalletIdMismatch);
-
-        total_amount = total_amount + utxo.value();
-        inputs.push_back(utxo);
-    });
-
-    assert!(total_amount >= requested_amount, ERedeemAmountMismatch);
-
-    let change_amount = total_amount - requested_amount;
-    if (change_amount > 0) {
-        add_utxo_to_contract(
-            contract,
-            x"0000000000000000000000000000000000000000000000000000000000000000", // dummy tx_id for now
-            0,
-            change_amount,
-            lockscript,
-            dwallet_id,
-        );
-    };
+    assert!(
+        validate_utxos(&contract.utxos, &utxo_idxs, &dwallet_ids, requested_amount),
+        EInvalidUTXOSet,
+    );
 
     // TODO: Implement best set selection
     let r = &mut contract.redeem_requests[redeem_id];
-    r.resolve(inputs);
+    let utxos = utxo_idxs.map!(|idx| contract.utxos[idx]);
+    r.set_best_utxos(utxos, dwallet_ids);
 }
 
 /// Allows user to withdraw back deposited BTC that used an inactive deposit spend key.

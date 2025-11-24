@@ -52,6 +52,7 @@ public struct RedeemRequest has store {
     amount: u64,
     fee: u64,
     inputs: vector<Utxo>,
+    dwallet_ids: vector<ID>,
     sig_hashes: VecMap<u32, vector<u8>>,
     sign_ids: Table<ID, bool>,
     signatures_map: VecMap<u32, vector<u8>>,
@@ -209,6 +210,15 @@ public fun sig_hash(r: &RedeemRequest, input_idx: u32, storage: &Storage): vecto
             SIGNHASH_ALL,
         )
     })
+}
+
+public(package) fun set_best_utxos(
+    r: &mut RedeemRequest,
+    utxos: Vector<Utxo>,
+    dwallet_ids: vector<ID>,
+) {
+    r.inputs = utxos;
+    r.dwallet_ids = dwallet_ids;
 }
 
 public fun new(

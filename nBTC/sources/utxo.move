@@ -16,6 +16,8 @@ const EInvalidUtxo: vector<u8> = b"Invalid UTXO";
 #[error]
 const EInsufficientAmount: vector<u8> = b"Total UTXO value is insufficient for withdrawal amount";
 
+#[error]
+const EDwalletIdMismatch: vector<u8> = b"UTXO dwallet_id mismatch";
 // UTXO ranking constants
 const DUST_THRESHOLD: u64 = 10_000; // satoshis
 const BASE_SCORE: u64 = 4_000_000_000_000_000; // 4e15
@@ -123,25 +125,29 @@ public fun utxo_ranking(
 ///
 public fun validate_utxos(
     onchain_utxos: &Table<u64, Utxo>,
-    proposed_indices: &vector<u64>,
+    utxo_ids: &vector<u64>,
+    dwallet_ids: vector<u8>,
     withdrawal_amount: u64,
 ): u64 {
-    assert!(!proposed_indices.is_empty(), EEmptyUtxoSet);
+    assert!(!utxo_ids.is_empty(), EEmptyUtxoSet);
+    assert!(utxo_ids.length() == dwallet_ids.length(), EInputLengthMismatch);
 
-    let len = proposed_indices.length();
+    let len = utxo_ids.length();
+
     let mut total_value: u64 = 0;
     let mut i = 0;
 
-    while (i < len) {
-        let idx = proposed_indices[i];
-
+    len.do!(|i| {
+        let idx = utxo_ids[i];
         // Check UTXO exists in onchain set
+        // TODO: Check if UTXOs is lock by other redeem request (we can use locked utxos from the
+        // same redeem request)
+        // or unlock and abort!
         assert!(onchain_utxos.contains(idx), EInvalidUtxo);
         let onchain_utxo = &onchain_utxos[idx];
 
         total_value = total_value + onchain_utxo.value();
-        i = i + 1;
-    };
+    });
 
     assert!(total_value >= withdrawal_amount, EInsufficientAmount);
 
