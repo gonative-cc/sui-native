@@ -2,6 +2,7 @@
 <!-- markdownlint-disable MD034 -->
 
 # ![nBTC Logo!](../assets/nbtc.svg) nBTC
+
 `nBTC` is the synthetic BTC on Sui, redeemable 1-1 for BTC (on Bitcoin).
 
 It's the first ever synthetic BTC that is
