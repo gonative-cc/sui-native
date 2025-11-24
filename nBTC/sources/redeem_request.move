@@ -1,6 +1,6 @@
 module nbtc::redeem_request;
 
-use bitcoin_lib::encoding::u64_to_le_bytes;
+use bitcoin_lib::encoding::{u64_to_le_bytes, der_encode_signature};
 use bitcoin_lib::sighash::{create_segwit_preimage, create_p2wpkh_scriptcode};
 use bitcoin_lib::tx;
 use bitcoin_lib::vector_utils::vector_slice;
@@ -28,8 +28,11 @@ const EInvalidSignatureId: vector<u8> = b"invalid signature id for redeem reques
 #[error]
 const ENotResolving: vector<u8> = b"redeem request is not in resolving status";
 
+const EInvalidIkaECDSALength: vector<u8> = b"invalid ecdsa signature length from ika format";
+
 const ECDSA: u32 = 0;
 const SHA256: u32 = 1;
+const SIGNHASH_ALL: u8 = 0x01;
 
 public enum RedeemStatus has copy, drop, store {
     Resolving, // finding the best UTXOs
@@ -155,12 +158,9 @@ public fun raw_signed_tx(r: &RedeemRequest, storage: &Storage): vector<u8> {
     r.inputs.length().do!(|i| {
         let dwallet_id = r.inputs[i].dwallet_id();
         let public_key = storage.dwallet_metadata(dwallet_id).public_key();
+        let signature = *r.signatures_map.get(&(i as u32));
         witnesses.push_back(
-            tx::new_witness(vector[
-                // signature
-                *r.signatures_map.get(&(i as u32)),
-                public_key,
-            ]),
+            tx::new_witness(vector[signature, public_key]),
         );
     });
 
@@ -170,8 +170,16 @@ public fun raw_signed_tx(r: &RedeemRequest, storage: &Storage): vector<u8> {
 }
 
 // add valid signature to redeem request for specify input index
-public(package) fun add_signature(r: &mut RedeemRequest, input_idx: u32, signature: vector<u8>) {
-    r.signatures_map.insert(input_idx, signature);
+public(package) fun add_signature(
+    r: &mut RedeemRequest,
+    input_idx: u32,
+    ika_signature: vector<u8>,
+) {
+    // ECDSA Ika signature returns 65 bytes
+    assert!(ika_signature.length() == 65, EInvalidIkaECDSALength);
+    let raw_signature = ika_signature.slice(1, 65); // skip the first byte (pub key recovery byte)
+    // NOTE: With taproot we don't need enocde signature
+    r.signatures_map.insert(input_idx, der_encode_signature(raw_signature, SIGNHASH_ALL));
     if (r.signatures_map.length() == r.inputs.length()) {
         r.status = RedeemStatus::Signed;
     }
@@ -198,7 +206,7 @@ public fun sig_hash(r: &RedeemRequest, input_idx: u32, storage: &Storage): vecto
             input_idx as u64, // input index
             &script_code, // segwit nbtc spend key
             u64_to_le_bytes(r.inputs[input_idx as u64].value()), // amount
-            0x01, // SIGNHASH_ALL
+            SIGNHASH_ALL,
         )
     })
 }
