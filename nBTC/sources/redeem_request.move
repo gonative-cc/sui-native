@@ -175,7 +175,7 @@ public(package) fun add_signature(
     input_idx: u32,
     ika_signature: vector<u8>,
 ) {
-    //Ika signature for ECDSA alway return 65 bytes length
+    // ECDSA Ika signature returns 65 bytes
     assert!(ika_signature.length() == 65, EInvalidIkaECDSALength);
     let raw_signature = ika_signature.slice(1, 65); // skip the first byte (pub key recovery byte)
     r.signatures_map.insert(input_idx, der_encode_signature(raw_signature, SIGNHASH_ALL));
