@@ -47,6 +47,8 @@ public struct NBTC has drop {}
 //
 
 #[error]
+const EInvalidArguments: vector<u8> = b"Function arguments are not valid";
+#[error]
 const EInvalidDepositKey: vector<u8> = b"Not an nBTC deposit spend key";
 #[error]
 const ETxAlreadyUsed: vector<u8> = b"The Bitcoin transaction ID has been already used for minting";
@@ -72,6 +74,7 @@ const EInputAlreadyUsed: vector<u8> =
     b"this input has been already used in other signature request";
 #[error]
 const EActiveDwalletNotInStorage: vector<u8> = b"try active dwallet not exist in storage";
+
 //
 // Structs
 //
@@ -517,7 +520,7 @@ public fun merge_utxos(_: &mut NbtcContract, _num_utxos: u16) {}
 
 public fun update_redeem_duration(_: &OpCap, contract: &mut NbtcContract, redeem_duration: u64) {
     assert!(VERSION > contract.version, EAlreadyUpdated);
-    assert!(redeem_duration >= 1000); // at least 1s
+    assert!(redeem_duration >= 1000, EInvalidArguments); // at least 1s
     contract.redeem_duration = redeem_duration;
 }
 

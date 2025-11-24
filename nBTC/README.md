@@ -51,15 +51,15 @@ Each UTXO tracked by the system contains:
 
 1. User sends `nBTC` to the `NbtcContract` smart contract and creates `RedeemRequest`.
 1. UTXO selection phase starts: for the next `NbtcContract.redeem_duration` milliseconds everyone can propose a UTXO set to redeem.
-   - `RedeemRequest` should remember the best selection and corresponding UTXOs should be temporary locked by `NbtcContract`.
+   - `RedeemRequest` should remember the best selection and corresponding UTXOs should be temporarily locked by `NbtcContract`.
    - If no valid UTXO set is proposed during `redeem_duration`, the UTXO selection phase continues until a valid UTXO set is proposed.
-   - New, better UTXO set can use UTXOs from the former ("current") `RedeemRequest` best UTXOs set, but it can't use UTXOs from another `RedeemRequest`.
+   - New, better UTXO set can use UTXOs from the former ("current") `RedeemRequest` best UTXO set, but it can't use UTXOs from another `RedeemRequest`.
    - When a new, better UTXO set is proposed, UTXOs from the previous set should be unlocked.
 1. After the UTXO selection phase, anyone can trigger Ika SignRequest phase. `NbtcContract` will create Ika SignRequest for every UTXO.
-1. System should should observe competition of Ika SignRequests and validate it.
+1. System should observe completion of Ika SignRequests and validate it.
 1. Once all UTXOs are signed, the `NbtcContract` will compose the final BTC withdraw transaction and emit it in an event. Broadcasting Phase begins.
 1. Now, anyone can broadcast the transaction.
-1. Once the withdraw transaction is minted and have sufficient confirmations, anyone can send a proof of confirmation of the transaction, to finalize the SignRequest and delete UTXOs.
+1. Once the withdraw transaction is minted and has sufficient confirmations, anyone can send a proof of confirmation of the transaction, to finalize the SignRequest and delete UTXOs.
 
 ### Redeem UTXO Selection Rating Algorithm
 
