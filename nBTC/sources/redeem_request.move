@@ -156,11 +156,7 @@ public fun raw_signed_tx(r: &RedeemRequest, storage: &Storage): vector<u8> {
         let public_key = storage.dwallet_metadata(dwallet_id).public_key();
         let signature = *r.signatures_map.get(&(i as u32));
         witnesses.push_back(
-            tx::new_witness(vector[
-                // encode to btc signature format
-                signature,
-                public_key,
-            ]),
+            tx::new_witness(vector[signature, public_key]),
         );
     });
 
@@ -178,6 +174,7 @@ public(package) fun add_signature(
     // ECDSA Ika signature returns 65 bytes
     assert!(ika_signature.length() == 65, EInvalidIkaECDSALength);
     let raw_signature = ika_signature.slice(1, 65); // skip the first byte (pub key recovery byte)
+    // NOTE: With taproot we don't need enocde signature
     r.signatures_map.insert(input_idx, der_encode_signature(raw_signature, SIGNHASH_ALL));
     if (r.signatures_map.length() == r.inputs.length()) {
         r.status = RedeemStatus::Signed;
