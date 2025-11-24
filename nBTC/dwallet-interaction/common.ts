@@ -10,11 +10,6 @@ import {
 	getNetworkConfig,
 	SessionsManagerModule,
 	CoordinatorInnerModule,
-	publicKeyFromDWalletOutput,
-	type IkaConfig,
-	type DWallet,
-	type DWalletCap,
-	type ZeroTrustDWallet,
 	createRandomSessionIdentifier,
 	prepareDKGAsync,
 } from "@ika.xyz/sdk";
@@ -103,7 +98,6 @@ export async function createShareDwallet() {
 		identifier,
 		signer.toSuiAddress(),
 	);
-	//
 
 	const dWalletEncryptionKey = await ikaClient.getLatestNetworkEncryptionKey();
 	const ikaCoin = await getIkaCoin(suiClient, signer.toSuiAddress());
