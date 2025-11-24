@@ -202,7 +202,7 @@ public fun sig_hash(r: &RedeemRequest, input_idx: u32, storage: &Storage): vecto
             input_idx as u64, // input index
             &script_code, // segwit nbtc spend key
             u64_to_le_bytes(r.inputs[input_idx as u64].value()), // amount
-            SIGNHASH_ALL, // SIGNHASH_ALL
+            SIGNHASH_ALL,
         )
     })
 }
