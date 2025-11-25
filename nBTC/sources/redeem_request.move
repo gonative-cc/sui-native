@@ -37,7 +37,6 @@ public enum RedeemStatus has copy, drop, store {
     Signing,
     Signed,
     Confirmed,
-    Failed,
 }
 
 public struct RedeemRequest has store {
@@ -304,7 +303,6 @@ public fun move_to_signing(r: &mut RedeemRequest, inputs: vector<Utxo>) {
     r.inputs = inputs;
     r.status = RedeemStatus::Signing
 }
-
 #[test_only]
 public fun move_to_signed(r: &mut RedeemRequest, signatures: vector<vector<u8>>) {
     r.signatures_map =

@@ -53,11 +53,11 @@ fun redeem_happy_case() {
     let nbtc_coin = mint_for_testing<NBTC>(1000, scenario.ctx());
     let receiver_spend_key = x"00140000000000000000000000000000000000000002";
     let clock = clock::create_for_testing(scenario.ctx());
-    let _redeem_id = ctr.redeem(nbtc_coin, receiver_spend_key, scenario.ctx(), &clock);
+    let redeem_id = ctr.redeem(nbtc_coin, receiver_spend_key, scenario.ctx(), &clock);
 
     // TODO: proposal UTXO
 
-    let _inputs = vector[
+    let inputs = vector[
         new_utxo(
             x"06ce677fd511851bb6cdacebed863d12dfd231d810e8e9fcba6e791001adf3a6",
             0,

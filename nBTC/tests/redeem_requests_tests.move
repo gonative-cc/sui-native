@@ -6,6 +6,7 @@ use nbtc::nbtc_utxo::new_utxo;
 use nbtc::redeem_request;
 use nbtc::storage::{Self, Storage};
 use std::unit_test::assert_eq;
+use sui::clock;
 use sui::test_utils::destroy;
 
 macro fun MOCK_DWALLET_ID(): ID {
@@ -36,13 +37,14 @@ fun raw_withdraw_tx_signed_tests() {
         x"3044022063db5a24fec209152863fb251cc349a7030220bf4ca6e6296002d46d4c3651a502205a0b4b5a520fc42b91b8a888351c1c42bd2864aba2c398007405e957dea77bb101",
     ];
     let fee = 656;
+    let clock = clock::create_for_testing(scenario.ctx());
     let mut r = redeem_request::new(
         nbtc_spend_key,
         sender,
         btc_receiver,
         amount,
         fee,
-        0,
+        clock.timestamp_ms(),
         scenario.ctx(),
     );
 
@@ -68,5 +70,6 @@ fun raw_withdraw_tx_signed_tests() {
     destroy(ctr);
     destroy(r);
     destroy(btc_store);
+    clock.destroy_for_testing();
     scenario.end();
 }
