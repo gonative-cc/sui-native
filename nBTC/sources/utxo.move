@@ -18,6 +18,7 @@ const EInsufficientAmount: vector<u8> = b"Total UTXO value is insufficient for w
 
 #[error]
 const EDwalletIdMismatch: vector<u8> = b"UTXO dwallet_id mismatch";
+
 // UTXO ranking constants
 const DUST_THRESHOLD: u64 = 10_000; // satoshis
 const BASE_SCORE: u64 = 4_000_000_000_000_000; // 4e15
@@ -126,11 +127,11 @@ public fun utxo_ranking(
 public fun validate_utxos(
     onchain_utxos: &Table<u64, Utxo>,
     utxo_ids: &vector<u64>,
-    dwallet_ids: vector<u8>,
+    dwallet_ids: vector<ID>,
     withdrawal_amount: u64,
 ): u64 {
     assert!(!utxo_ids.is_empty(), EEmptyUtxoSet);
-    assert!(utxo_ids.length() == dwallet_ids.length(), EInputLengthMismatch);
+    assert!(utxo_ids.length() == dwallet_ids.length(), EDwalletIdMismatch);
 
     let len = utxo_ids.length();
 
