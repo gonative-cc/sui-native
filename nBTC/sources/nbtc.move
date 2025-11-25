@@ -9,12 +9,13 @@ use ika::ika::IKA;
 use ika_dwallet_2pc_mpc::coordinator::DWalletCoordinator;
 use ika_dwallet_2pc_mpc::coordinator_inner::{DWalletCap, VerifiedPartialUserSignatureCap};
 use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
-use nbtc::nbtc_utxo::{Self, Utxo};
+use nbtc::nbtc_utxo::{Self, Utxo, validate_utxos};
 use nbtc::redeem_request::{Self, RedeemRequest};
 use nbtc::storage::{Storage, create_storage, create_dwallet_metadata};
 use nbtc::verify_payment::verify_payment;
 use sui::address;
 use sui::balance::{Self, Balance};
+use sui::clock::Clock;
 use sui::coin::{Self, Coin, TreasuryCap};
 use sui::event;
 use sui::sui::SUI;
@@ -74,7 +75,14 @@ const EInputAlreadyUsed: vector<u8> =
     b"this input has been already used in other signature request";
 #[error]
 const EActiveDwalletNotInStorage: vector<u8> = b"try active dwallet not exist in storage";
-
+#[error]
+const ERedeemWindowExpired: vector<u8> = b"resolving window has expired";
+#[error]
+const EInvalidUTXOSet: vector<u8> = b"Invalid utxo set";
+#[error]
+const ENoUTXOsProposed: vector<u8> = b"No UTXOs proposed";
+#[error]
+const ENotResolving: vector<u8> = b"redeem request is not in resolving status";
 //
 // Structs
 //
@@ -100,7 +108,7 @@ public struct NbtcContract has key, store {
     mint_fee: u64,
     fees_collected: Balance<NBTC>,
     // TODO: probably we should have UTXOs / nbtc pubkey
-    utxos: Table<u64, Utxo>,
+    utxos: Table<u64, Utxo>, // Table<dwallet_id + utxo_idx, Utxo>
     next_utxo: u64,
     // redeem request token for nbtc
     redeem_requests: Table<u64, RedeemRequest>,
@@ -137,6 +145,18 @@ public struct RedeemInactiveDepositEvent has copy, drop {
     /// Bitcoin recipient
     recipient: vector<u8>,
     amount: u64, // in satoshi
+}
+
+//TODO: Add logic to extract data from redeem inputs for:
+// btc_tx_ids: vector<vector<u8>>,
+// vouts: vector<u32>,
+// script_pubkeys: vector<vector<u8>>,
+// amount_sats_of_utxos: vector<u64>,
+public struct RedeemRequestSigningEvent has copy, drop {
+    redeem_id: u64,
+    recipient_script: vector<u8>,
+    amount: u64,
+    dwallet_ids: vector<ID>,
 }
 
 //
@@ -435,6 +455,7 @@ public fun redeem(
     coin: Coin<NBTC>,
     recipient_script: vector<u8>,
     ctx: &mut TxContext,
+    clock: &Clock,
 ): u64 {
     assert!(contract.version == VERSION, EVersionMismatch);
     // TODO: implement logic to guard burning and manage UTXOs
@@ -446,6 +467,7 @@ public fun redeem(
         recipient_script,
         coin.value(),
         150, // TODO: query fee from oracle or give api for user to set this
+        clock.timestamp_ms(),
         ctx,
     );
     // TODO: we repeat this logic a lot of time. Consider to create a generic function for this
@@ -469,6 +491,56 @@ public fun validate_signature(
     assert!(r.has_signature(input_idx), EInputAlreadyUsed);
 
     r.validate_signature(dwallet_coordinator, &contract.storage, input_idx, sign_id);
+}
+
+//TODO: update event emmitted to include the data from the redeem request
+public fun finalize_redeem_request(contract: &mut NbtcContract, redeem_id: u64, clock: &Clock) {
+    assert!(contract.version == VERSION, EVersionMismatch);
+    let r = &mut contract.redeem_requests[redeem_id];
+
+    // 1. Make sure there is a utxo proposed and we are past the finalization time
+    assert!(r.inputs_length() > 0, ENoUTXOsProposed);
+    assert!(r.status().is_resolving(), ENotResolving);
+
+    let current_time = clock.timestamp_ms();
+    let deadline = r.redeem_created_at() + contract.redeem_duration;
+    assert!(current_time >= deadline, ERedeemWindowExpired);
+
+    r.move_to_signing_status();
+
+    event::emit(RedeemRequestSigningEvent {
+        redeem_id,
+        recipient_script: r.recipient_script(),
+        amount: r.amount(),
+        dwallet_ids: r.dwallet_ids(),
+    });
+}
+
+public fun propose_utxos(
+    contract: &mut NbtcContract,
+    redeem_id: u64,
+    utxo_idxs: vector<u64>,
+    dwallet_ids: vector<ID>,
+    clock: &Clock,
+) {
+    assert!(contract.version == VERSION, EVersionMismatch);
+
+    let r = &mut contract.redeem_requests[redeem_id];
+    assert!(r.status().is_resolving(), ENotResolving);
+
+    let current_time = clock.timestamp_ms();
+    let redeem_created_at = r.redeem_created_at();
+    let deadline = redeem_created_at + contract.redeem_duration;
+    assert!(current_time <= deadline, ERedeemWindowExpired);
+    let requested_amount = r.amount();
+
+    assert!(
+        validate_utxos(&contract.utxos, &utxo_idxs, dwallet_ids, requested_amount) >= requested_amount,
+        EInvalidUTXOSet,
+    );
+
+    let utxos = utxo_idxs.map!(|idx| contract.utxos[idx]);
+    r.set_best_utxos(utxos, dwallet_ids);
 }
 
 /// Allows user to withdraw back deposited BTC that used an inactive deposit spend key.
@@ -684,6 +756,7 @@ public fun create_redeem_request_for_testing(
     recipient_script: vector<u8>,
     amount: u64,
     fee: u64,
+    created_at: u64,
     ctx: &mut TxContext,
 ) {
     let lockscript = contract.active_lockscript();
@@ -694,6 +767,7 @@ public fun create_redeem_request_for_testing(
         recipient_script,
         amount,
         fee,
+        created_at,
         ctx,
     );
     contract

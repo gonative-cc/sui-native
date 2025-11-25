@@ -31,6 +31,7 @@ fun validate_utxos_working_case() {
     let total_value = nbtc_utxo::validate_utxos(
         &onchain_utxos,
         &proposed_indices,
+        vector[MOCK_DWALLET_ID!(), MOCK_DWALLET_ID!()],
         withdrawal_amount,
     );
 
@@ -57,6 +58,7 @@ fun validate_utxos_empty_indices() {
     nbtc_utxo::validate_utxos(
         &onchain_utxos,
         &proposed_indices,
+        vector[MOCK_DWALLET_ID!()],
         10000,
     );
 
@@ -74,6 +76,7 @@ fun validate_utxos_nonexistent_index() {
     nbtc_utxo::validate_utxos(
         &onchain_utxos,
         &proposed_indices,
+        vector[MOCK_DWALLET_ID!()],
         10000,
     );
 
@@ -97,6 +100,7 @@ fun validate_utxos_insufficient_amount() {
     nbtc_utxo::validate_utxos(
         &onchain_utxos,
         &proposed_indices,
+        vector[MOCK_DWALLET_ID!()],
         100000,
     );
 
@@ -120,6 +124,7 @@ fun validate_utxos_exact_match() {
     let total_value = nbtc_utxo::validate_utxos(
         &onchain_utxos,
         &proposed_indices,
+        vector[MOCK_DWALLET_ID!()],
         50000,
     );
 

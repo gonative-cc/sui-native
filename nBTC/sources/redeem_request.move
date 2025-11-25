@@ -49,9 +49,11 @@ public struct RedeemRequest has store {
     amount: u64,
     fee: u64,
     inputs: vector<Utxo>,
+    dwallet_ids: vector<ID>,
     sig_hashes: VecMap<u32, vector<u8>>,
     sign_ids: Table<ID, bool>,
     signatures_map: VecMap<u32, vector<u8>>,
+    created_at: u64,
 }
 
 // ========== RedeemStatus methods ================
@@ -91,6 +93,18 @@ public fun has_signature(r: &RedeemRequest, input_idx: u32): bool {
 
 public fun status(r: &RedeemRequest): &RedeemStatus {
     &r.status
+}
+
+public fun recipient_script(r: &RedeemRequest): vector<u8> { r.recipient_script }
+
+public fun dwallet_ids(r: &RedeemRequest): vector<ID> { r.dwallet_ids }
+
+public fun redeem_created_at(r: &RedeemRequest): u64 { r.created_at }
+
+public fun inputs_length(r: &RedeemRequest): u64 { r.inputs.length() }
+
+public fun move_to_signing_status(r: &mut RedeemRequest) {
+    r.status = RedeemStatus::Signing;
 }
 
 public(package) fun request_signature_for_input(
@@ -207,12 +221,22 @@ public fun sig_hash(r: &RedeemRequest, input_idx: u32, storage: &Storage): vecto
     })
 }
 
+public(package) fun set_best_utxos(
+    r: &mut RedeemRequest,
+    utxos: vector<Utxo>,
+    dwallet_ids: vector<ID>,
+) {
+    r.inputs = utxos;
+    r.dwallet_ids = dwallet_ids;
+}
+
 public fun new(
     nbtc_spend_script: vector<u8>,
     redeemer: address,
     recipient_script: vector<u8>,
     amount: u64,
     fee: u64,
+    created_at: u64,
     ctx: &mut TxContext,
 ): RedeemRequest {
     RedeemRequest {
@@ -226,10 +250,16 @@ public fun new(
         sign_ids: table::new(ctx),
         signatures_map: vec_map::empty(),
         status: RedeemStatus::Resolving,
+        dwallet_ids: vector::empty(),
+        created_at,
     }
 }
 
 public fun utxo_at(r: &RedeemRequest, input_idx: u32): &Utxo { &r.inputs[input_idx as u64] }
+
+public fun amount(r: &RedeemRequest): u64 { r.amount }
+
+public fun fee(r: &RedeemRequest): u64 { r.fee }
 
 public(package) fun validate_signature(
     r: &mut RedeemRequest,
