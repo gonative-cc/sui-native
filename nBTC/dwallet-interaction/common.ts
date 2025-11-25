@@ -12,9 +12,22 @@ import {
 	CoordinatorInnerModule,
 	createRandomSessionIdentifier,
 	prepareDKGAsync,
+	publicKeyFromDWalletOutput,
+	type DWalletWithState,
 } from "@ika.xyz/sdk";
 import { Transaction, type TransactionObjectArgument } from "@mysten/sui/transactions";
 import "dotenv/config";
+
+import * as bitcoin from "bitcoinjs-lib";
+
+const REGTEST = bitcoin.networks.regtest;
+
+export type Config = {
+	nbtc: string,
+	dwalletId: string,
+	adminCap: string,
+	packageId: string,
+}
 
 
 export async function generateKeypair() {
@@ -59,6 +72,19 @@ export function createIkaClient(suiClient: SuiClient) {
 		config: getNetworkConfig("testnet"),
 	});
 }
+
+
+export function loadConfig(): Config {
+
+	let config: Config = {
+		nbtc: process.env.NBTC!,
+		dwalletId: process.env.DWALLET_ID!,
+		adminCap: process.env.ADMINCAP!,
+		packageId: process.env.PACKAGE_ID!
+	}
+	return config
+}
+
 
 export async function executeTransaction(suiClient: SuiClient, transaction: Transaction) {
 	return suiClient.signAndExecuteTransaction({
@@ -138,4 +164,18 @@ export async function createShareDwallet() {
 	});
 	console.log("New dwallet id = ", dWalletID);
 	return activeDWallet
+}
+
+
+// return metadata for dwallet
+export async function getDwalletMetadata(dWallet: DWalletWithState<'Active'>) {
+	const publicKey = await publicKeyFromDWalletOutput(Curve.SECP256K1, Buffer.from(dWallet.state.Active?.public_output));
+	const addr = bitcoin.payments.p2wpkh({ pubkey: publicKey, network: REGTEST }).address!;
+	const lockscript = bitcoin.payments.p2wpkh({ pubkey: publicKey, network: REGTEST }).output;
+
+	return {
+		publicKey,
+		addr,
+		lockscript,
+	}
 }

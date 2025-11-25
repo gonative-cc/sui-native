@@ -21,8 +21,7 @@ use fun vector_slice as vector.slice;
 #[error]
 const ERedeemTxSigningNotCompleted: vector<u8> =
     b"The signature for the redeem has not been completed";
-#[error]
-const ESignatureInValid: vector<u8> = b"signature invalid for this input";
+const ESignatureInValid: u64 = 100;
 #[error]
 const EInvalidSignatureId: vector<u8> = b"invalid signature id for redeem request";
 #[error]
@@ -49,9 +48,11 @@ public struct RedeemRequest has store {
     amount: u64,
     fee: u64,
     inputs: vector<Utxo>,
+    dwallet_ids: vector<ID>,
     sig_hashes: VecMap<u32, vector<u8>>,
     sign_ids: Table<ID, bool>,
     signatures_map: VecMap<u32, vector<u8>>,
+    created_at: u64,
 }
 
 // ========== RedeemStatus methods ================
@@ -91,6 +92,18 @@ public fun has_signature(r: &RedeemRequest, input_idx: u32): bool {
 
 public fun status(r: &RedeemRequest): &RedeemStatus {
     &r.status
+}
+
+public fun recipient_script(r: &RedeemRequest): vector<u8> { r.recipient_script }
+
+public fun dwallet_ids(r: &RedeemRequest): vector<ID> { r.dwallet_ids }
+
+public fun redeem_created_at(r: &RedeemRequest): u64 { r.created_at }
+
+public fun inputs_length(r: &RedeemRequest): u64 { r.inputs.length() }
+
+public fun move_to_signing_status(r: &mut RedeemRequest) {
+    r.status = RedeemStatus::Signing;
 }
 
 public(package) fun request_signature_for_input(
@@ -184,7 +197,7 @@ public(package) fun add_signature(
 /// Returns signature hash for input_idx-th in redeem transaction
 public fun sig_hash(r: &RedeemRequest, input_idx: u32, storage: &Storage): vector<u8> {
     r.sig_hashes.try_get(&input_idx).extract_or!({
-        let dwallet_id = r.inputs[input_idx as u64].dwallet_id();
+        let dwallet_id = r.dwallet_ids[input_idx as u64];
         let lockscript = storage.dwallet_metadata(dwallet_id).lockscript();
         let tx = compose_withdraw_tx(
             lockscript,
@@ -193,18 +206,29 @@ public fun sig_hash(r: &RedeemRequest, input_idx: u32, storage: &Storage): vecto
             r.amount,
             r.fee, // TODO:: Set fee at parameter, or query from oracle
         );
-        let input_spend_script = r.inputs[input_idx as u64].spend_script();
+        let input_spend_script = storage.dwallet_metadata(dwallet_id).lockscript();
         let script_code = create_p2wpkh_scriptcode(
             input_spend_script.slice(2, 22) // nbtc public key hash
         );
-        create_segwit_preimage(
-            &tx,
-            input_idx as u64, // input index
-            &script_code, // segwit nbtc spend key
-            u64_to_le_bytes(r.inputs[input_idx as u64].value()), // amount
-            SIGNHASH_ALL,
+        std::hash::sha2_256(
+            create_segwit_preimage(
+                &tx,
+                input_idx as u64, // input index
+                &script_code, // segwit nbtc spend key
+                u64_to_le_bytes(r.inputs[input_idx as u64].value()), // amount
+                SIGNHASH_ALL,
+            ),
         )
     })
+}
+
+public(package) fun set_best_utxos(
+    r: &mut RedeemRequest,
+    utxos: vector<Utxo>,
+    dwallet_ids: vector<ID>,
+) {
+    r.inputs = utxos;
+    r.dwallet_ids = dwallet_ids;
 }
 
 public fun new(
@@ -213,6 +237,7 @@ public fun new(
     recipient_script: vector<u8>,
     amount: u64,
     fee: u64,
+    created_at: u64,
     ctx: &mut TxContext,
 ): RedeemRequest {
     RedeemRequest {
@@ -226,10 +251,16 @@ public fun new(
         sign_ids: table::new(ctx),
         signatures_map: vec_map::empty(),
         status: RedeemStatus::Resolving,
+        dwallet_ids: vector::empty(),
+        created_at,
     }
 }
 
 public fun utxo_at(r: &RedeemRequest, input_idx: u32): &Utxo { &r.inputs[input_idx as u64] }
+
+public fun amount(r: &RedeemRequest): u64 { r.amount }
+
+public fun fee(r: &RedeemRequest): u64 { r.fee }
 
 public(package) fun validate_signature(
     r: &mut RedeemRequest,
@@ -241,11 +272,11 @@ public(package) fun validate_signature(
     // TODO: ensure we get right spend key, because this spend key can also inactive_spend_key
     assert!(r.sign_ids.contains(sign_id), EInvalidSignatureId);
     let sign_hash = r.sig_hash(input_idx, storage);
-    let dwallet_id = r.utxo_at(input_idx).dwallet_id();
+    let dwallet_id = r.dwallet_ids[input_idx as u64];
     let signature = get_signature(dwallet_coordinator, dwallet_id, sign_id);
     let pk = storage.dwallet_metadata(dwallet_id).public_key();
     let is_valid = sui::ecdsa_k1::secp256k1_verify(
-        &signature,
+        &vector_slice(&signature, 1, 65),
         &pk,
         &sign_hash,
         SHA256 as u8,
