@@ -525,23 +525,21 @@ public fun propose_utxos(
 ) {
     assert!(contract.version == VERSION, EVersionMismatch);
 
-    let _lockscript = contract.active_lockscript();
+    let r = &mut contract.redeem_requests[redeem_id];
+    assert!(r.status().is_resolving(), ENotResolving);
 
     let current_time = clock.timestamp_ms();
-    let redeem_created_at = contract.redeem_requests[redeem_id].redeem_created_at();
+    let redeem_created_at = r.redeem_created_at();
     let deadline = redeem_created_at + contract.redeem_duration;
     assert!(current_time <= deadline, ERedeemWindowExpired);
-
-    let requested_amount = contract.redeem_requests[redeem_id].amount();
+    let requested_amount = r.amount();
 
     assert!(
         validate_utxos(&contract.utxos, &utxo_idxs, dwallet_ids, requested_amount) >= requested_amount,
         EInvalidUTXOSet,
     );
 
-    let r = &mut contract.redeem_requests[redeem_id];
     let utxos = utxo_idxs.map!(|idx| contract.utxos[idx]);
-    assert!(r.status().is_resolving(), ENotResolving);
     r.set_best_utxos(utxos, dwallet_ids);
 }
 
