@@ -8,7 +8,7 @@ import { BufferWriter } from "bitcoinjs-lib/src/bufferutils";
 import { sha256 } from "@noble/hashes/sha2.js";
 import * as varuint from "varuint-bitcoin";
 
-import { publicKeyFromDWalletOutput, type DWallet, type SharedDWallet } from "@ika.xyz/sdk";
+import { Curve, publicKeyFromDWalletOutput, type DWallet, type SharedDWallet } from "@ika.xyz/sdk";
 import { sign_message } from "./sign";
 import { createIkaClient, createSuiClient } from "./common";
 
@@ -153,9 +153,11 @@ async function getBTCAddress(dWalletID: string) {
 	});
 
 	let publicKey = await publicKeyFromDWalletOutput(
+		Curve.SECP256K1,
 		Uint8Array.from(dWallet.state.Active?.public_output as number[]),
 	);
 	let ecpk = Buffer.from(bcs.byteVector().parse(publicKey));
+
 
 	let dwalletAddress = bitcoin.payments.p2wpkh({
 		pubkey: ecpk,
@@ -173,6 +175,7 @@ async function redeemTx(dWalletID: string, receiverAddress: string, amountTx: nu
 	});
 
 	let publicKey = await publicKeyFromDWalletOutput(
+		Curve.SECP256K1,
 		Uint8Array.from(dWallet.state.Active?.public_output as number[]),
 	);
 	let ecpk = Buffer.from(bcs.byteVector().parse(publicKey));

@@ -16,6 +16,7 @@ import {
 import { Transaction, type TransactionObjectArgument } from "@mysten/sui/transactions";
 import "dotenv/config";
 
+
 export async function generateKeypair() {
 	const seed = new Uint8Array(randomBytes(32));
 	const userKeypair = Ed25519Keypair.deriveKeypairFromSeed(
@@ -90,7 +91,7 @@ export async function createShareDwallet() {
 		userShareEncryptionKeys: keypairs.userShareEncryptionKeys
 	})
 	const identifier = createRandomSessionIdentifier();
-
+	console.log("debug");
 	const dkgRequestInput = await prepareDKGAsync(
 		ikaClient,
 		curve,
@@ -100,7 +101,9 @@ export async function createShareDwallet() {
 	);
 
 	const dWalletEncryptionKey = await ikaClient.getLatestNetworkEncryptionKey();
+	console.log("debug r2");
 	const ikaCoin = await getIkaCoin(suiClient, signer.toSuiAddress());
+	console.log("debug");
 	const [dWalletCap] = await ikaTransaction.requestDWalletDKGWithPublicUserShare({
 		publicKeyShareAndProof: dkgRequestInput.userDKGMessage,
 		publicUserSecretKeyShare: dkgRequestInput.userSecretKeyShare, // <-- Public, not encrypted

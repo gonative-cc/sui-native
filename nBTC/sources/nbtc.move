@@ -151,8 +151,6 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
 
     // NOTE: we removed post deployment setup function and didn't want to implement PTB style
     // initialization, so we require setting the address before publishing the package.
-    let bitcoin_spend_key = b""; // TODO: valid bitcoin address
-    assert!(bitcoin_spend_key.length() >= 22);
     transfer::public_freeze_object(metadata);
     let contract = NbtcContract {
         id: object::new(ctx),
@@ -464,6 +462,8 @@ public fun validate_signature(
 
     r.validate_signature(dwallet_coordinator, &contract.storage, input_idx, sign_id);
 }
+
+public fun update_utxos(contract: &mut NbtcContract, tx_bytes: vector<u8>) {}
 
 /// Allows user to withdraw back deposited BTC that used an inactive deposit spend key.
 /// When user deposits to an inactive Bitcoin key, nBTC is not minted.
