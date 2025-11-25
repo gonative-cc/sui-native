@@ -148,15 +148,15 @@ public struct RedeemInactiveDepositEvent has copy, drop {
 }
 
 //TODO: Add logic to extract data from redeem inputs for:
-// btc_tx_ids: vector<vector<u8>>,
-// vouts: vector<u32>,
-// script_pubkeys: vector<vector<u8>>,
-// amount_sats_of_utxos: vector<u64>,
 public struct RedeemRequestSigningEvent has copy, drop {
     redeem_id: u64,
     recipient_script: vector<u8>,
     amount: u64,
     dwallet_ids: vector<ID>,
+    btc_tx_ids: vector<vector<u8>>,
+    vouts: vector<u32>,
+    spend_script: vector<vector<u8>>,
+    amount_sats_of_utxos: vector<u64>,
 }
 
 //
@@ -508,11 +508,28 @@ public fun finalize_redeem_request(contract: &mut NbtcContract, redeem_id: u64, 
 
     r.move_to_signing_status();
 
+    let inputs = r.inputs();
+    let mut btc_tx_ids: vector<vector<u8>> = vector[];
+    let mut vouts: vector<u32> = vector[];
+    let mut spend_script: vector<vector<u8>> = vector[];
+    let mut amount_sats_of_utxos: vector<u64> = vector[];
+
+    inputs.length().do!(|i| {
+        btc_tx_ids.push_back(inputs[i].tx_id());
+        vouts.push_back(inputs[i].vout());
+        spend_script.push_back(inputs[i].spend_script());
+        amount_sats_of_utxos.push_back(inputs[i].value());
+    });
+
     event::emit(RedeemRequestSigningEvent {
         redeem_id,
         recipient_script: r.recipient_script(),
         amount: r.amount(),
         dwallet_ids: r.dwallet_ids(),
+        btc_tx_ids,
+        vouts,
+        spend_script,
+        amount_sats_of_utxos,
     });
 }
 

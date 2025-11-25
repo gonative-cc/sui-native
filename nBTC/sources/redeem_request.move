@@ -107,6 +107,8 @@ public fun move_to_signing_status(r: &mut RedeemRequest) {
     r.status = RedeemStatus::Signing;
 }
 
+public fun inputs(r: &RedeemRequest): &vector<Utxo> { &r.inputs }
+
 public(package) fun request_signature_for_input(
     r: &mut RedeemRequest,
     dwallet_coordinator: &mut DWalletCoordinator,
