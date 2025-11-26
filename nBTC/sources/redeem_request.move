@@ -12,12 +12,12 @@ use nbtc::nbtc_utxo::Utxo;
 use nbtc::storage::Storage;
 use nbtc::tx_composer::compose_withdraw_tx;
 use sui::coin::Coin;
+use sui::event;
 use sui::sui::SUI;
 use sui::table::{Self, Table};
 use sui::vec_map::{Self, VecMap};
 
 use fun vector_slice as vector.slice;
-
 #[error]
 const ERedeemTxSigningNotCompleted: vector<u8> =
     b"The signature for the redeem has not been completed";
@@ -54,6 +54,12 @@ public struct RedeemRequest has store {
     sign_ids: Table<ID, bool>,
     signatures_map: VecMap<u32, vector<u8>>,
     created_at: u64,
+}
+
+//TODO: Add logic to extract data from redeem inputs for:
+public struct RedeemRequestReadyForSigningEvent has copy, drop {
+    id: u64,
+    inputs: vector<Utxo>,
 }
 
 // ========== RedeemStatus methods ================
@@ -103,8 +109,12 @@ public fun redeem_created_at(r: &RedeemRequest): u64 { r.created_at }
 
 public fun inputs_length(r: &RedeemRequest): u64 { r.inputs.length() }
 
-public fun move_to_signing_status(r: &mut RedeemRequest) {
+public fun move_to_signing_status(r: &mut RedeemRequest, redeem_id: u64) {
     r.status = RedeemStatus::Signing;
+    event::emit(RedeemRequestReadyForSigningEvent {
+        id: redeem_id,
+        inputs: *r.inputs(),
+    });
 }
 
 public fun inputs(r: &RedeemRequest): &vector<Utxo> { &r.inputs }

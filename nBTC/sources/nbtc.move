@@ -147,12 +147,6 @@ public struct RedeemInactiveDepositEvent has copy, drop {
     amount: u64, // in satoshi
 }
 
-//TODO: Add logic to extract data from redeem inputs for:
-public struct RedeemRequestSigningEvent has copy, drop {
-    redeem_id: u64,
-    inputs: vector<Utxo>,
-}
-
 //
 // Functions
 //
@@ -500,12 +494,7 @@ public fun finalize_redeem_request(contract: &mut NbtcContract, redeem_id: u64, 
     let deadline = r.redeem_created_at() + contract.redeem_duration;
     assert!(current_time >= deadline, ERedeemWindowExpired);
 
-    r.move_to_signing_status();
-
-    event::emit(RedeemRequestSigningEvent {
-        redeem_id,
-        inputs: *r.inputs(),
-    });
+    r.move_to_signing_status(redeem_id);
 }
 
 public fun propose_utxos(
