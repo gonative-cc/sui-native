@@ -128,10 +128,7 @@ public struct MintEvent has copy, drop {
     recipient: address,
     amount: u64, // in satoshi
     fee: u64,
-    // TODO: maybe we should change to bitcoin address format?
-    bitcoin_spend_key: vector<u8>,
-    btc_tx_id: vector<u8>,
-    utxo_idx: vector<u64>,
+    utxos: vector<Utxo>,
 }
 
 public struct InactiveDepositEvent has copy, drop {
@@ -145,6 +142,14 @@ public struct RedeemInactiveDepositEvent has copy, drop {
     /// Bitcoin recipient
     recipient: vector<u8>,
     amount: u64, // in satoshi
+}
+
+public struct RedeemRequestCreatedEvent has copy, drop {
+    redeem_id: u64,
+    redeemer: address,
+    recipient_script: vector<u8>,
+    amount: u64, // in satoshi
+    created_at: u64,
 }
 
 //
@@ -342,13 +347,13 @@ public fun mint(
     if (amount > 0) transfer::public_transfer(coin::from_balance(minted, ctx), recipient)
     else minted.destroy_zero();
 
+    let utxos = utxo_idx.map!(|idx| contract.utxos[idx]);
+
     event::emit(MintEvent {
         recipient,
         amount,
         fee: fee_amount,
-        bitcoin_spend_key: contract.active_lockscript(),
-        btc_tx_id: vector[], // tx_id is stored in the UTXO itself
-        utxo_idx,
+        utxos,
     });
 }
 
@@ -460,11 +465,20 @@ public fun redeem(
     );
     // TODO: we repeat this logic a lot of time. Consider to create a generic function for this
     // type.
+    let amount = r.amount();
+    let created_at = r.redeem_created_at();
     let redeem_id = contract.next_redeem_req;
     contract.redeem_requests.add(redeem_id, r);
     contract.locked.add(redeem_id, coin);
     contract.next_redeem_req = redeem_id + 1;
 
+    event::emit(RedeemRequestCreatedEvent {
+        redeem_id,
+        redeemer: ctx.sender(),
+        recipient_script,
+        amount,
+        created_at,
+    });
     return redeem_id
 }
 

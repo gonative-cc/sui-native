@@ -109,6 +109,8 @@ public fun redeem_created_at(r: &RedeemRequest): u64 { r.created_at }
 
 public fun inputs_length(r: &RedeemRequest): u64 { r.inputs.length() }
 
+public fun amount(r: &RedeemRequest): u64 { r.amount }
+
 public fun move_to_signing_status(r: &mut RedeemRequest, redeem_id: u64) {
     r.status = RedeemStatus::Signing;
     event::emit(RedeemRequestReadyForSigningEvent {
@@ -266,8 +268,6 @@ public fun new(
 }
 
 public fun utxo_at(r: &RedeemRequest, input_idx: u32): &Utxo { &r.inputs[input_idx as u64] }
-
-public fun amount(r: &RedeemRequest): u64 { r.amount }
 
 public fun fee(r: &RedeemRequest): u64 { r.fee }
 
