@@ -128,7 +128,10 @@ public struct MintEvent has copy, drop {
     recipient: address,
     amount: u64, // in satoshi
     fee: u64,
-    utxos: vector<Utxo>,
+    bitcoin_spend_key: vector<u8>,
+    btc_tx_id: vector<u8>,
+    utxo_idx: vector<u64>,
+    dwallet_ids: vector<ID>,
 }
 
 public struct InactiveDepositEvent has copy, drop {
@@ -150,6 +153,13 @@ public struct RedeemRequestCreatedEvent has copy, drop {
     recipient_script: vector<u8>,
     amount: u64, // in satoshi
     created_at: u64,
+}
+
+public struct SignatureConfirmedEvent has copy, drop {
+    redeem_id: u64,
+    input_idx: u32,
+    sign_id: ID,
+    is_fully_signed: bool,
 }
 
 //
@@ -348,12 +358,17 @@ public fun mint(
     else minted.destroy_zero();
 
     let utxos = utxo_idx.map!(|idx| contract.utxos[idx]);
+    let btc_tx_id = utxos[0].tx_id();
+    let dwallet_ids = utxos.map!(|u| u.dwallet_id());
 
     event::emit(MintEvent {
         recipient,
         amount,
         fee: fee_amount,
-        utxos,
+        bitcoin_spend_key: contract.active_lockscript(),
+        btc_tx_id,
+        utxo_idx,
+        dwallet_ids,
     });
 }
 
@@ -493,6 +508,14 @@ public fun validate_signature(
     assert!(r.has_signature(input_idx), EInputAlreadyUsed);
 
     r.validate_signature(dwallet_coordinator, &contract.storage, input_idx, sign_id);
+
+    let is_fully_signed = r.status().is_signed();
+    event::emit(SignatureConfirmedEvent {
+        redeem_id,
+        input_idx,
+        sign_id,
+        is_fully_signed,
+    });
 }
 
 //TODO: update event emmitted to include the data from the redeem request
