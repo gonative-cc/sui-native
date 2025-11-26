@@ -147,18 +147,6 @@ public struct RedeemInactiveDepositEvent has copy, drop {
     amount: u64, // in satoshi
 }
 
-//TODO: Add logic to extract data from redeem inputs for:
-// btc_tx_ids: vector<vector<u8>>,
-// vouts: vector<u32>,
-// script_pubkeys: vector<vector<u8>>,
-// amount_sats_of_utxos: vector<u64>,
-public struct RedeemRequestSigningEvent has copy, drop {
-    redeem_id: u64,
-    recipient_script: vector<u8>,
-    amount: u64,
-    dwallet_ids: vector<ID>,
-}
-
 //
 // Functions
 //
@@ -415,7 +403,7 @@ public fun record_inactive_deposit(
 /// Request signing for specific input in redeem transaction,
 /// partial_user_signature_cap: Created by future sign request
 /// Because we use shared dwallet this is already public and we don't need to send "user share's"
-/// signarure. The Ika also auto checks if the message we want to sign is identical between messages
+/// signature. The Ika also auto checks if the message we want to sign is identical between messages
 /// signed by nbtc user share and message we request here.
 /// We will:
 ///  - compute the sign hash for specific input
@@ -506,14 +494,7 @@ public fun finalize_redeem_request(contract: &mut NbtcContract, redeem_id: u64, 
     let deadline = r.redeem_created_at() + contract.redeem_duration;
     assert!(current_time >= deadline, ERedeemWindowExpired);
 
-    r.move_to_signing_status();
-
-    event::emit(RedeemRequestSigningEvent {
-        redeem_id,
-        recipient_script: r.recipient_script(),
-        amount: r.amount(),
-        dwallet_ids: r.dwallet_ids(),
-    });
+    r.move_to_signing_status(redeem_id);
 }
 
 public fun propose_utxos(
