@@ -113,11 +113,9 @@ public fun move_to_signing_status(r: &mut RedeemRequest, redeem_id: u64) {
     r.status = RedeemStatus::Signing;
     event::emit(RedeemRequestReadyForSigningEvent {
         id: redeem_id,
-        inputs: *r.inputs(),
+        inputs: r.inputs,
     });
 }
-
-public fun inputs(r: &RedeemRequest): &vector<Utxo> { &r.inputs }
 
 public(package) fun request_signature_for_input(
     r: &mut RedeemRequest,
