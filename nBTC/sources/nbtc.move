@@ -151,7 +151,7 @@ public struct RedeemInactiveDepositEvent has copy, drop {
 public struct RedeemRequestCreatedEvent has copy, drop {
     redeem_id: u64,
     redeemer: address,
-    recipient_script: vector<u8>,
+    recipient_script: vector<u8>, // Full Bitcoin pubkey/lockscript
     amount: u64, // in satoshi
     created_at: u64,
 }
@@ -159,7 +159,6 @@ public struct RedeemRequestCreatedEvent has copy, drop {
 public struct SignatureConfirmedEvent has copy, drop {
     redeem_id: u64,
     input_idx: u32,
-    sign_id: ID,
     is_fully_signed: bool,
 }
 
@@ -446,6 +445,7 @@ public fun request_signature_for_input(
     request.request_signature_for_input(
         dwallet_coordinator,
         &contract.storage,
+        request_id,
         input_idx,
         user_sig_cap,
         session_identifier,
@@ -512,7 +512,6 @@ public fun validate_signature(
     event::emit(SignatureConfirmedEvent {
         redeem_id,
         input_idx,
-        sign_id,
         is_fully_signed,
     });
 }

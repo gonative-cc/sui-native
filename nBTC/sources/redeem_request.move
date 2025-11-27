@@ -62,6 +62,12 @@ public struct RedeemRequestReadyForSigningEvent has copy, drop {
     inputs: vector<Utxo>,
 }
 
+public struct RequestSignatureEvent has copy, drop {
+    redeem_id: u64,
+    sign_id: ID, // IKA sign session ID
+    input_idx: u32,
+}
+
 // ========== RedeemStatus methods ================
 
 public fun is_resolving(status: &RedeemStatus): bool {
@@ -123,6 +129,7 @@ public(package) fun request_signature_for_input(
     r: &mut RedeemRequest,
     dwallet_coordinator: &mut DWalletCoordinator,
     storage: &Storage,
+    redeem_id: u64,
     input_idx: u32,
     user_sig_cap: VerifiedPartialUserSignatureCap,
     session_identifier: SessionIdentifier,
@@ -152,6 +159,12 @@ public(package) fun request_signature_for_input(
     );
 
     r.set_sign_request_metadata(input_idx, sig_hash, sign_id);
+
+    event::emit(RequestSignatureEvent {
+        redeem_id,
+        sign_id,
+        input_idx,
+    });
 }
 
 public(package) fun set_sign_request_metadata(
