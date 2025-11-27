@@ -7,6 +7,8 @@ import { createIkaClient, createSuiClient, executeTransaction, getDwalletMetadat
 import { fromHex, toHex } from "@mysten/sui/utils";
 
 import { getUTXOs } from "./btc-helper";
+import type { IkaClient } from "@ika.xyz/sdk";
+import type { SuiClient } from "@mysten/sui/client";
 
 export async function initialization(dwalletId: string, config: Config) {
 	const suiClient = createSuiClient();
@@ -48,12 +50,10 @@ export async function initialization(dwalletId: string, config: Config) {
 }
 
 
-export async function mint_nbtc_for_testing(dwalletId: string, config: Config) {
-	const suiClient = createSuiClient();
-	const ikaClient = createIkaClient(suiClient);
-	await ikaClient.initialize();
+// init nbtc state for testing,
+// TODO: this function should remove after have e2e tests
+export async function mint_nbtc_for_testing(ikaClient: IkaClient, suiClient: SuiClient, dwalletId: string, config: Config) {
 	const dWallet = await ikaClient.getDWalletInParticularState(dwalletId, 'Active');
-
 	let {
 		addr
 	} = await getDwalletMetadata(dWallet);

@@ -14,7 +14,7 @@ import {
 	type SharedDWallet,
 	type ZeroTrustDWallet,
 } from "@ika.xyz/sdk";
-import { SuiClient } from "@mysten/sui/client";
+import { SuiClient, type SuiObjectChangeCreated } from "@mysten/sui/client";
 import { Transaction } from "@mysten/sui/transactions";
 import {
 	createIkaClient,
@@ -22,9 +22,9 @@ import {
 	executeTransaction,
 	getIkaCoin,
 	mkSigner,
+	type Config,
 } from "./common";
 import { bcs } from "@mysten/sui/bcs";
-import { loadConfig } from "./initialization";
 import { toHex } from "@mysten/sui/utils";
 
 // Decode Signature
@@ -189,10 +189,7 @@ export async function completeFetureRequest(dWallet: DWalletWithState<'Active'>,
 	await executeTransaction(suiClient, transaction);
 }
 
-export async function getSigHash(r: number, input_idx: number) {
-
-	let config = loadConfig();
-	let suiClient = createSuiClient();
+export async function getSigHash(suiClient: SuiClient, r: number, input_idx: number, config: Config) {
 	let tx = new Transaction();
 
 	let redeem = tx.moveCall({
@@ -250,29 +247,22 @@ export async function getSigHash(r: number, input_idx: number) {
 		}
 	)
 
-
 	let ans = await suiClient.devInspectTransactionBlock({
 		transactionBlock: tx,
 		sender: mkSigner().toSuiAddress()
 	})
-	console.log(ans)
 	let encoded = ans.results![2]?.returnValues![0]![0]!
 	let decoded = bcs.byteVector().parse(Uint8Array.from(encoded))
 	return decoded
 }
 
-export async function createUserSigCap(dwalletId: string, presign_id: string, message: Uint8Array) {
-	let suiClient = createSuiClient();
-	let ikaClient = createIkaClient(suiClient);
-	await ikaClient.initialize();
-	const signer = mkSigner();
-
-	const transaction = new Transaction();
-	const ikaTransaction = new IkaTransaction({
+export async function createUserSigCap(ikaClient: IkaClient, suiClient: SuiClient, dwalletId: string, presign_id: string, message: Uint8Array) {
+	let transaction = new Transaction();
+	let ikaTransaction = new IkaTransaction({
 		ikaClient,
 		transaction,
 	})
-
+	const signer = mkSigner();
 	const dWallet = await ikaClient.getDWalletInParticularState(dwalletId, 'Active');
 	const ikaCoin = await getIkaCoin(suiClient, signer.toSuiAddress());
 	const presign = await ikaClient.getPresignInParticularState(presign_id, 'Completed');
@@ -318,13 +308,11 @@ export async function createUserSigCap(dwalletId: string, presign_id: string, me
 	return verifiedPartialSignature
 }
 
-export async function request_signature_for_input(r: number, input_idx: number, capid: string) {
+export async function request_signature_for_input(r: number, input_idx: number, capid: string, config: Config) {
 	let suiClient = createSuiClient();
 	let ikaClient = createIkaClient(suiClient);
 	await ikaClient.initialize();
 	const signer = mkSigner();
-
-	let config = loadConfig();
 
 	let tx = new Transaction();
 	let ikaTx = new IkaTransaction({
@@ -354,22 +342,10 @@ export async function request_signature_for_input(r: number, input_idx: number, 
 			tx.gas
 		]
 	})
-	// let ans = await suiClient.devInspectTransactionBlock({
-	// 	transactionBlock: tx,
-	// 	sender: mkSigner().toSuiAddress()
-	// })
-	// console.log(ans);
 	await executeTransaction(suiClient, tx);
 }
 
-export async function verifySignature(r: number, input_idx: number, signId: string) {
-	let suiClient = createSuiClient();
-	let ikaClient = createIkaClient(suiClient);
-	await ikaClient.initialize();
-	const signer = mkSigner();
-
-	let config = loadConfig();
-
+export async function verifySignature(suiClient: SuiClient, r: number, input_idx: number, signId: string, config: Config) {
 	const tx = new Transaction();
 	tx.moveCall({
 		target: `${config.packageId}::nbtc::validate_signature`,
@@ -385,14 +361,9 @@ export async function verifySignature(r: number, input_idx: number, signId: stri
 	await executeTransaction(suiClient, tx);
 }
 
-
-
-export async function getRawTx(r: number) {
-
-	let config = loadConfig();
-	let suiClient = createSuiClient();
+// get raw tx for redeem_request after signed
+export async function getRawTx(suiClient: SuiClient, r: number, config: Config) {
 	let tx = new Transaction();
-
 	let redeem = tx.moveCall({
 		target: `${config.packageId}::nbtc::redeem_request`,
 		arguments: [
@@ -400,17 +371,13 @@ export async function getRawTx(r: number) {
 			tx.pure.u64(r)
 		]
 	})
-
-
 	let storage = tx.moveCall({
 		target: `${config.packageId}::nbtc::storage`,
 		arguments: [
 			tx.object(config.nbtc)
 		]
 	});
-
-
-	let sig = tx.moveCall(
+	tx.moveCall(
 		{
 			target: `${config.packageId}::redeem_request::raw_signed_tx`,
 			arguments: [
@@ -420,17 +387,12 @@ export async function getRawTx(r: number) {
 		}
 	)
 
-
-
 	let ans = await suiClient.devInspectTransactionBlock({
 		transactionBlock: tx,
 		sender: mkSigner().toSuiAddress()
 	})
-	console.log(ans.results)
 	let encoded = ans.results![2]?.returnValues![0]![0]!
 	let decoded = bcs.byteVector().parse(Uint8Array.from(encoded))
-
-	console.log(toHex(decoded));
 	return toHex(decoded)
 }
 

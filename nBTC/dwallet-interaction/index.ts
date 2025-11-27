@@ -1,17 +1,21 @@
 import { Command } from "commander";
-import { createShareDwallet, loadConfig } from "./common";
-import { getBTCAddress, redeemTx, sendBTCTx } from "./btc-helper";
+import { createIkaClient, createShareDwallet, createSuiClient, loadConfig } from "./common";
+import { sendBTCTx } from "./btc-helper";
 import { globalPreSign, completeFetureRequest, sign_message, getSigHash, createUserSigCap, request_signature_for_input, verifySignature, getRawTx } from "./sign";
 import { initialization, mint_nbtc_for_testing } from "./initialization";
-const program = new Command();
-
 
 const config = loadConfig();
+
+let suiClient = createSuiClient();
+let ikaClient = createIkaClient(suiClient);
+await ikaClient.initialize();
+
+const program = new Command();
 program
 	.command("new-share-dwallet")
 	.description("Create share Dwallet")
 	.action(async () => {
-		let dwallet = await createShareDwallet();
+		let dwallet = await createShareDwallet(ikaClient, suiClient);
 		await initialization(dwallet.id.id, config);
 	});
 
@@ -19,32 +23,35 @@ program
 	.command("init-token")
 	.description("Init token")
 	.action(async () => {
-		await mint_nbtc_for_testing(config.dwalletId, config);
+		await mint_nbtc_for_testing(ikaClient, suiClient, config.dwalletId, config);
 	});
 program
-	.command("redeem")
-	.description("redeem")
-	.action(async () => {
+	.command("request_signature <redeem_id> <input_idx>")
+	.description("Request a signature for specify input_idx for redeem transaction have redeem_id")
+	.action(async (redeem_id, input_idx) => {
 		let gPreSign = await globalPreSign()
-		let message = await getSigHash(19, 0);
+		let message = await getSigHash(suiClient, redeem_id, input_idx, config);
 		let dwalletID = loadConfig().dwalletId
-		let userSigCap = await createUserSigCap(dwalletID, gPreSign, message)
-		await request_signature_for_input(19, 0, userSigCap.cap_id);
+		let userSigCap = await createUserSigCap(ikaClient, suiClient, dwalletID, gPreSign, message)
+		await request_signature_for_input(redeem_id, input_idx, userSigCap.cap_id, config);
 	});
 
 program
-	.command("verify")
-	.description("redeem")
-	.action(async () => {
-		await verifySignature(20, 0, "0x865f8e5efb3f02b4ab4474cb2920a0a59d7745b2d622f1a50a2342308a57865c")
+	.command("verify <redeem_id> <input_idx> <sign_id>")
+	.description("Verify the signature for specify input_idx on redeem request tx with the sign_id")
+	.action(async (redeem_id, input_idx, sign_id) => {
+		await verifySignature(suiClient, redeem_id, input_idx, sign_id, config)
 	});
 
 program
-	.command("raw_tx")
-	.description("raw_tx")
-	.action(async () => {
-		let data = await getRawTx(20);
+	.command("raw_tx <redeem_id>")
+	.description("Get a raw redeem transaction")
+	.action(async (redeem_id) => {
+		let data = await getRawTx(suiClient, redeem_id, config);
 		await sendBTCTx(data)
 	});
+
+
+
 
 program.parse(process.argv);

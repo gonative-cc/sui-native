@@ -73,7 +73,6 @@ export function createIkaClient(suiClient: SuiClient) {
 	});
 }
 
-
 export function loadConfig(): Config {
 
 	let config: Config = {
@@ -102,11 +101,7 @@ export async function getIkaCoin(suiClient: SuiClient, addr: string): Promise<st
 	return coins.data[0]?.coinObjectId;
 }
 
-export async function createShareDwallet() {
-	const suiClient = createSuiClient();
-	const ikaClient = createIkaClient(suiClient);
-	await ikaClient.initialize();
-
+export async function createShareDwallet(ikaClient: IkaClient, suiClient: SuiClient) {
 	const curve = Curve.SECP256K1;
 	const keypairs = await generateKeypair();
 	const signer = mkSigner();
@@ -117,7 +112,6 @@ export async function createShareDwallet() {
 		userShareEncryptionKeys: keypairs.userShareEncryptionKeys
 	})
 	const identifier = createRandomSessionIdentifier();
-	console.log("debug");
 	const dkgRequestInput = await prepareDKGAsync(
 		ikaClient,
 		curve,
@@ -127,9 +121,7 @@ export async function createShareDwallet() {
 	);
 
 	const dWalletEncryptionKey = await ikaClient.getLatestNetworkEncryptionKey();
-	console.log("debug r2");
 	const ikaCoin = await getIkaCoin(suiClient, signer.toSuiAddress());
-	console.log("debug");
 	const [dWalletCap] = await ikaTransaction.requestDWalletDKGWithPublicUserShare({
 		publicKeyShareAndProof: dkgRequestInput.userDKGMessage,
 		publicUserSecretKeyShare: dkgRequestInput.userSecretKeyShare, // <-- Public, not encrypted
