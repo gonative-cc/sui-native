@@ -124,14 +124,16 @@ public struct NbtcContract has key, store {
 
 /// MintEvent is emitted when nBTC is successfully minted.
 public struct MintEvent has copy, drop {
-    /// Sui recipient
+    // Sui recipient
     recipient: address,
-    amount: u64, // in satoshi
     fee: u64,
-    // TODO: maybe we should change to bitcoin address format?
-    bitcoin_spend_key: vector<u8>,
-    btc_tx_id: vector<u8>,
-    utxo_idx: vector<u64>,
+    dwallet_id: ID,
+    utxo_id: u64,
+    // btc data
+    btc_script_publickey: vector<u8>,
+    btc_tx_id: vector<u8>, // TODO: maybe we should change to bitcoin address format?
+    btc_vout: u32,
+    btc_amount: u64, // in satoshi
 }
 
 public struct InactiveDepositEvent has copy, drop {
@@ -145,6 +147,26 @@ public struct RedeemInactiveDepositEvent has copy, drop {
     /// Bitcoin recipient
     recipient: vector<u8>,
     amount: u64, // in satoshi
+}
+
+public struct RedeemRequestEvent has copy, drop {
+    redeem_id: u64,
+    redeemer: address,
+    recipient_script: vector<u8>, // Full Bitcoin pubkey/lockscript
+    amount: u64, // in satoshi
+    created_at: u64,
+}
+
+public struct SignatureConfirmedEvent has copy, drop {
+    redeem_id: u64,
+    input_idx: u32,
+    is_fully_signed: bool,
+}
+
+public struct ProposeUtxoEvent has copy, drop {
+    redeem_id: u64,
+    dwallet_ids: vector<ID>,
+    utxo_ids: vector<u64>,
 }
 
 //
@@ -316,7 +338,7 @@ public fun mint(
     ctx: &mut TxContext,
 ) {
     let active_dwallet_id = *contract.active_dwallet_id.borrow();
-    let (mut amount, recipient, utxo_idx) = contract.verify_deposit(
+    let (mut amount, recipient, utxo_ids) = contract.verify_deposit(
         light_client,
         active_dwallet_id,
         tx_bytes,
@@ -342,13 +364,17 @@ public fun mint(
     if (amount > 0) transfer::public_transfer(coin::from_balance(minted, ctx), recipient)
     else minted.destroy_zero();
 
+    let btc_tx_id = contract.utxos[utxo_ids[0]].tx_id();
+    let btc_vout = contract.utxos[utxo_ids[0]].vout();
     event::emit(MintEvent {
         recipient,
-        amount,
         fee: fee_amount,
-        bitcoin_spend_key: contract.active_lockscript(),
-        btc_tx_id: vector[], // tx_id is stored in the UTXO itself
-        utxo_idx,
+        dwallet_id: active_dwallet_id,
+        utxo_id: utxo_ids[0],
+        btc_script_publickey: contract.active_lockscript(),
+        btc_tx_id,
+        btc_vout,
+        btc_amount: amount,
     });
 }
 
@@ -427,6 +453,7 @@ public fun request_signature_for_input(
     request.request_signature_for_input(
         dwallet_coordinator,
         &contract.storage,
+        request_id,
         input_idx,
         user_sig_cap,
         session_identifier,
@@ -461,6 +488,15 @@ public fun redeem(
     // TODO: we repeat this logic a lot of time. Consider to create a generic function for this
     // type.
     let redeem_id = contract.next_redeem_req;
+
+    event::emit(RedeemRequestEvent {
+        redeem_id,
+        redeemer: ctx.sender(),
+        recipient_script,
+        amount: r.amount(),
+        created_at: r.redeem_created_at(),
+    });
+
     contract.redeem_requests.add(redeem_id, r);
     contract.locked.add(redeem_id, coin);
     contract.next_redeem_req = redeem_id + 1;
@@ -479,6 +515,13 @@ public fun validate_signature(
     assert!(r.has_signature(input_idx), EInputAlreadyUsed);
 
     r.validate_signature(dwallet_coordinator, &contract.storage, input_idx, sign_id);
+
+    let is_fully_signed = r.status().is_signed();
+    event::emit(SignatureConfirmedEvent {
+        redeem_id,
+        input_idx,
+        is_fully_signed,
+    });
 }
 
 //TODO: update event emmitted to include the data from the redeem request
@@ -492,7 +535,7 @@ public fun finalize_redeem_request(contract: &mut NbtcContract, redeem_id: u64, 
 
     let current_time = clock.timestamp_ms();
     let deadline = r.redeem_created_at() + contract.redeem_duration;
-    assert!(current_time >= deadline, ERedeemWindowExpired);
+    assert!(current_time > deadline, ERedeemWindowExpired);
 
     r.move_to_signing_status(redeem_id);
 }
@@ -500,7 +543,7 @@ public fun finalize_redeem_request(contract: &mut NbtcContract, redeem_id: u64, 
 public fun propose_utxos(
     contract: &mut NbtcContract,
     redeem_id: u64,
-    utxo_idxs: vector<u64>,
+    utxo_ids: vector<u64>,
     dwallet_ids: vector<ID>,
     clock: &Clock,
 ) {
@@ -516,12 +559,18 @@ public fun propose_utxos(
     let requested_amount = r.amount();
 
     assert!(
-        validate_utxos(&contract.utxos, &utxo_idxs, dwallet_ids, requested_amount) >= requested_amount,
+        validate_utxos(&contract.utxos, &utxo_ids, dwallet_ids, requested_amount) >= requested_amount,
         EInvalidUTXOSet,
     );
 
-    let utxos = utxo_idxs.map!(|idx| contract.utxos[idx]);
+    let utxos = utxo_ids.map!(|idx| contract.utxos[idx]);
     r.set_best_utxos(utxos, dwallet_ids);
+
+    event::emit(ProposeUtxoEvent {
+        redeem_id,
+        dwallet_ids,
+        utxo_ids,
+    })
 }
 
 /// Allows user to withdraw back deposited BTC that used an inactive deposit spend key.
