@@ -12,12 +12,12 @@ use nbtc::nbtc_utxo::Utxo;
 use nbtc::storage::Storage;
 use nbtc::tx_composer::compose_withdraw_tx;
 use sui::coin::Coin;
+use sui::event;
 use sui::sui::SUI;
 use sui::table::{Self, Table};
 use sui::vec_map::{Self, VecMap};
 
 use fun vector_slice as vector.slice;
-
 #[error]
 const ERedeemTxSigningNotCompleted: vector<u8> =
     b"The signature for the redeem has not been completed";
@@ -53,6 +53,18 @@ public struct RedeemRequest has store {
     sign_ids: Table<ID, bool>,
     signatures_map: VecMap<u32, vector<u8>>,
     created_at: u64,
+}
+
+//TODO: Add logic to extract data from redeem inputs for:
+public struct RedeemRequestReadyForSigningEvent has copy, drop {
+    id: u64,
+    inputs: vector<Utxo>,
+}
+
+public struct RequestSignatureEvent has copy, drop {
+    redeem_id: u64,
+    sign_id: ID, // IKA sign session ID
+    input_idx: u32,
 }
 
 // ========== RedeemStatus methods ================
@@ -102,14 +114,21 @@ public fun redeem_created_at(r: &RedeemRequest): u64 { r.created_at }
 
 public fun inputs_length(r: &RedeemRequest): u64 { r.inputs.length() }
 
-public fun move_to_signing_status(r: &mut RedeemRequest) {
+public fun amount(r: &RedeemRequest): u64 { r.amount }
+
+public fun move_to_signing_status(r: &mut RedeemRequest, redeem_id: u64) {
     r.status = RedeemStatus::Signing;
+    event::emit(RedeemRequestReadyForSigningEvent {
+        id: redeem_id,
+        inputs: r.inputs,
+    });
 }
 
 public(package) fun request_signature_for_input(
     r: &mut RedeemRequest,
     dwallet_coordinator: &mut DWalletCoordinator,
     storage: &Storage,
+    redeem_id: u64,
     input_idx: u32,
     user_sig_cap: VerifiedPartialUserSignatureCap,
     session_identifier: SessionIdentifier,
@@ -139,6 +158,12 @@ public(package) fun request_signature_for_input(
     );
 
     r.set_sign_request_metadata(input_idx, sig_hash, sign_id);
+
+    event::emit(RequestSignatureEvent {
+        redeem_id,
+        sign_id,
+        input_idx,
+    });
 }
 
 public(package) fun set_sign_request_metadata(
@@ -257,8 +282,6 @@ public fun new(
 }
 
 public fun utxo_at(r: &RedeemRequest, input_idx: u32): &Utxo { &r.inputs[input_idx as u64] }
-
-public fun amount(r: &RedeemRequest): u64 { r.amount }
 
 public fun fee(r: &RedeemRequest): u64 { r.fee }
 
