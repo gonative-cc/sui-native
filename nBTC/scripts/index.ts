@@ -42,7 +42,7 @@ program
 	.description(
 		"Request a signature for specify input_idx for redeem transaction have redeem_id",
 	)
-	.action(async (redeem_id, input_idx) => {
+	.action(async (redeem_id: number, input_idx: number) => {
 		let gPreSign = await globalPreSign();
 		let message = await getSigHash(suiClient, redeem_id, input_idx, config);
 		let dwalletID = loadConfig().dwalletId;
@@ -66,14 +66,14 @@ program
 	.description(
 		"Verify the signature for specify input_idx on redeem request tx with the sign_id",
 	)
-	.action(async (redeem_id, input_idx, sign_id) => {
+	.action(async (redeem_id: number, input_idx: number, sign_id: string) => {
 		await verifySignature(suiClient, redeem_id, input_idx, sign_id, config);
 	});
 
 program
 	.command("raw_tx <redeem_id>")
 	.description("Get a raw redeem transaction")
-	.action(async (redeem_id) => {
+	.action(async (redeem_id: number) => {
 		let data = await getRawTx(suiClient, redeem_id, config);
 		await sendBTCTx(data);
 	});
