@@ -700,39 +700,6 @@ public fun remove_utxo(_: &AdminCap, contract: &mut NbtcContract, utxo_idx: u64)
     contract.utxos.remove(utxo_idx);
 }
 
-/// use for demo only!
-public fun mint_nbtc_with_admin(
-    _: &AdminCap,
-    contract: &mut NbtcContract,
-    tx_id: vector<u8>,
-    vout: u32,
-    value: u64,
-    ctx: &mut TxContext,
-) {
-    let lockscript = contract.active_lockscript();
-    let dwallet_id = *contract.active_dwallet_id.borrow();
-    contract.add_utxo_to_contract(tx_id, vout, value, lockscript, dwallet_id);
-    // let minted = contract.cap.mint_balance(value);
-    // transfer::public_transfer(coin::from_balance(minted, ctx), ctx.sender());
-
-    let utxo = nbtc_utxo::new_utxo(tx_id, vout, value, lockscript, dwallet_id);
-    let mut r = redeem_request::new(
-        lockscript,
-        ctx.sender(),
-        x"00147c619b661b6511972466e25a13a3177dd048204a",
-        value,
-        150,
-        0,
-        ctx,
-    );
-
-    r.set_best_utxos(vector[utxo], vector[dwallet_id]);
-    let redeem_id = contract.next_redeem_req;
-
-    r.move_to_signing_status(redeem_id);
-    contract.redeem_requests.add(redeem_id, r);
-    contract.next_redeem_req = redeem_id + 1;
-}
 //
 // View functions
 //

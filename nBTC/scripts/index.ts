@@ -9,7 +9,7 @@ import {
 	verifySignature,
 	getRawTx,
 } from "./sign";
-import { initialization, mint_nbtc_for_testing } from "./initialization";
+import { initialization } from "./initialization";
 
 const config = loadConfig();
 
@@ -26,12 +26,6 @@ program
 		await initialization(dwallet.id.id, config);
 	});
 
-program
-	.command("init-token")
-	.description("Init token")
-	.action(async () => {
-		await mint_nbtc_for_testing(ikaClient, suiClient, config.dwalletId, config);
-	});
 program
 	.command("request_signature <redeem_id> <input_idx>")
 	.description("Request a signature for specify input_idx for redeem transaction have redeem_id")

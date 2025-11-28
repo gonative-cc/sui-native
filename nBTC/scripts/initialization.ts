@@ -49,30 +49,3 @@ export async function initialization(dwalletId: string, config: Config) {
 	await executeTransaction(suiClient, tx);
 }
 
-// init nbtc state for testing,
-// TODO: this function should remove after have e2e tests
-export async function mint_nbtc_for_testing(
-	ikaClient: IkaClient,
-	suiClient: SuiClient,
-	dwalletId: string,
-	config: Config,
-) {
-	const dWallet = await ikaClient.getDWalletInParticularState(dwalletId, "Active");
-	let { addr } = await getDwalletMetadata(dWallet);
-
-	let utxos = await getUTXOs(addr);
-	let tx = new Transaction();
-	for (let i = 0; i < utxos.length; i++) {
-		tx.moveCall({
-			target: `${config.packageId}::nbtc::mint_nbtc_with_admin`,
-			arguments: [
-				tx.object(config.adminCap),
-				tx.object(config.nbtc),
-				tx.pure.vector("u8", fromHex(utxos[i].txid).reverse()),
-				tx.pure.u32(utxos[i].vout),
-				tx.pure.u64(utxos[i].value),
-			],
-		});
-	}
-	await executeTransaction(suiClient, tx);
-}
