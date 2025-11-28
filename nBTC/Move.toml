@@ -1,6 +1,6 @@
 [package]
 name = "nBTC"
-edition = "2024.beta"
+edition = "2024.alpha"
 license = "MPL-2.0"
 authors = ["Native"]
 

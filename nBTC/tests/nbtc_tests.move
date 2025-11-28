@@ -7,11 +7,10 @@ use bitcoin_lib::header;
 use bitcoin_spv::light_client::{new_light_client, LightClient};
 use ika_dwallet_2pc_mpc::coordinator_inner::dwallet_cap_for_testing;
 use nbtc::nbtc::{Self, NbtcContract, EMintAmountIsZero, ETxAlreadyUsed, EAlreadyUpdated, NBTC};
-use std::unit_test::assert_eq;
+use std::unit_test::{assert_eq, destroy};
 use sui::address;
 use sui::coin::Coin;
 use sui::test_scenario::{Self, take_from_address, Scenario};
-use sui::test_utils::destroy;
 
 // The fallback Sui address to receive nBTC if OP_RETURN data is invalid or missing.
 // Use for test
@@ -101,7 +100,6 @@ public fun setup(
     let mut ctr = nbtc::init_for_testing(
         lc.client_id().to_address(),
         FALLBACK_ADDR,
-        nbtc_bitcoin_addr,
         scenario.ctx(),
     );
     ctr.set_dwallet_cap_for_test(

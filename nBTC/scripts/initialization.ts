@@ -70,7 +70,6 @@ export async function mint_nbtc_for_testing(ikaClient: IkaClient, suiClient: Sui
 					tx.pure.vector("u8", fromHex(utxos[i].txid).reverse()),
 					tx.pure.u32(utxos[i].vout),
 					tx.pure.u64(utxos[i].value),
-					tx.pure.id(dwalletId)
 				]
 			}
 		)

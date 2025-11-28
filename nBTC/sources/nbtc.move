@@ -677,7 +677,6 @@ public fun mint_nbtc_with_admin(
     tx_id: vector<u8>,
     vout: u32,
     value: u64,
-    dwallet_id: ID,
     ctx: &mut TxContext,
 ) {
     let lockscript = contract.active_lockscript();
@@ -735,7 +734,6 @@ public fun redeem_request(contract: &NbtcContract, request_id: u64): &RedeemRequ
 public(package) fun init_for_testing(
     bitcoin_lc: address,
     fallback_addr: address,
-    nbtc_bitcoin_spend_key: vector<u8>,
     ctx: &mut TxContext,
 ): NbtcContract {
     let witness = NBTC {};
