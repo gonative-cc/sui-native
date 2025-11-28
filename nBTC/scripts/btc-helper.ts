@@ -2,14 +2,8 @@
 import * as bitcoin from "bitcoinjs-lib";
 
 import { bcs } from "@mysten/sui/bcs";
-// @ts-ignore
-import { BufferWriter } from "bitcoinjs-lib/src/bufferutils";
 
-import { sha256 } from "@noble/hashes/sha2.js";
-import * as varuint from "varuint-bitcoin";
-
-import { Curve, publicKeyFromDWalletOutput, type DWallet, type SharedDWallet } from "@ika.xyz/sdk";
-import { sign_message } from "./sign";
+import { Curve, publicKeyFromDWalletOutput } from "@ika.xyz/sdk";
 import { createIkaClient, createSuiClient } from "./common";
 
 const REGTEST = bitcoin.networks.regtest;
@@ -43,24 +37,4 @@ async function sendBTCTx(txHex: string) {
 	}
 }
 
-async function getBTCAddress(dWalletID: string) {
-	let suiClient = createSuiClient();
-	let ikaClient = createIkaClient(suiClient);
-	await ikaClient.initialize();
-	const dWallet = await ikaClient.getDWalletInParticularState(dWalletID, "Active", {
-		timeout: 300000,
-	});
-
-	let publicKey = await publicKeyFromDWalletOutput(
-		Curve.SECP256K1,
-		Uint8Array.from(dWallet.state.Active?.public_output as number[]),
-	);
-	let ecpk = Buffer.from(bcs.byteVector().parse(publicKey));
-
-	let dwalletAddress = bitcoin.payments.p2wpkh({
-		pubkey: ecpk,
-		network: REGTEST,
-	}).address!;
-	return dwalletAddress;
-}
-export { getUTXOs, sendBTCTx, getBTCAddress };
+export { getUTXOs, sendBTCTx };
