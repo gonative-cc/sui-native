@@ -34,7 +34,8 @@ program
 		let message = await getSigHash(suiClient, redeem_id, input_idx, config);
 		let dwalletID = loadConfig().dwalletId;
 		let userSigCap = await createUserSigCap(ikaClient, suiClient, dwalletID, gPreSign, message);
-		await request_signature_for_input(redeem_id, input_idx, userSigCap.cap_id, config);
+		let signID = await request_signature_for_input(redeem_id, input_idx, userSigCap.cap_id, config);
+		console.log(signID);
 	});
 
 program
