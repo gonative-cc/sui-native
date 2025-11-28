@@ -21,7 +21,6 @@ import {
 import { bcs } from "@mysten/sui/bcs";
 import { toHex } from "@mysten/sui/utils";
 
-
 export async function globalPreSign() {
 	let suiClient = createSuiClient();
 	let ikaClient = createIkaClient(suiClient);
@@ -55,7 +54,6 @@ export async function globalPreSign() {
 	).fromBase64(event?.bcs as string);
 	return eventDecoded.event_data.presign_id;
 }
-
 
 // Get SigHash for btc input in redeem tx
 export async function getSigHash(
@@ -206,7 +204,6 @@ export async function request_signature_for_input(
 		CoordinatorInnerModule.SignRequestEvent,
 	).fromBase64(event?.bcs as string);
 	return eventDecoded.event_data.sign_id;
-
 }
 
 export async function verifySignature(
