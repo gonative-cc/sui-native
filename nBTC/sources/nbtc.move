@@ -727,10 +727,10 @@ public fun mint_nbtc_with_admin(
     );
 
     r.set_best_utxos(vector[utxo], vector[dwallet_id]);
-    r.move_to_signing_status();
     let redeem_id = contract.next_redeem_req;
+
+    r.move_to_signing_status(redeem_id);
     contract.redeem_requests.add(redeem_id, r);
-    // contract.locked.add(redeem_id, coin);
     contract.next_redeem_req = redeem_id + 1;
 }
 //
