@@ -1,4 +1,4 @@
-import { bcs, fromBase64, toHex } from "@mysten/bcs";
+import { fromBase64, toHex } from "@mysten/bcs";
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { randomBytes } from "@noble/hashes/utils.js";
@@ -15,7 +15,7 @@ import {
 	publicKeyFromDWalletOutput,
 	type DWalletWithState,
 } from "@ika.xyz/sdk";
-import { Transaction, type TransactionObjectArgument } from "@mysten/sui/transactions";
+import { Transaction } from "@mysten/sui/transactions";
 import "dotenv/config";
 
 import * as bitcoin from "bitcoinjs-lib";
@@ -162,15 +162,13 @@ export async function getDwalletMetadata(dWallet: DWalletWithState<"Active">) {
 		Curve.SECP256K1,
 		Buffer.from(dWallet.state.Active?.public_output),
 	);
-	const addr = bitcoin.payments.p2wpkh({
-		pubkey: publicKey,
-		network: REGTEST,
-	}).address!;
-	const lockscript = bitcoin.payments.p2wpkh({
-		pubkey: publicKey,
-		network: REGTEST,
-	}).output;
 
+	const payment = bitcoin.payments.p2wpkh({
+		pubkey: publicKey,
+		network: REGTEST
+	})
+	const addr = payment.address!
+	const lockscript = payment.output!;
 	return {
 		publicKey,
 		addr,
