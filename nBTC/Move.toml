@@ -1,5 +1,7 @@
 [package]
 name = "nBTC"
+
+# edition should be 2024.beta, we use alpha for "extend" feature in test
 edition = "2024.alpha"
 license = "MPL-2.0"
 authors = ["Native"]

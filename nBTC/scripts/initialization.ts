@@ -48,4 +48,3 @@ export async function initialization(dwalletId: string, config: Config) {
 
 	await executeTransaction(suiClient, tx);
 }
-
