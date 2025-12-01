@@ -53,7 +53,7 @@ fun mint_and_assert(
 
     let coin = take_from_address<Coin<NBTC>>(scenario, expected_recipient);
     let amount = coin.value();
-    if (ops_arg == MINT_OP_APPLY_FEE) assert_eq!(amount, expected_amount - ctr.get_mint_fee())
+    if (ops_arg == MINT_OP_APPLY_FEE) assert_eq!(amount, expected_amount - ctr.config().mint_fee())
     else assert_eq!(amount, expected_amount);
     destroy(coin);
 }
@@ -171,7 +171,7 @@ fun test_mint_with_fee() {
     );
 
     // mint with fallback should take fee as well.
-    assert_eq!(ctr.get_fees_collected(), 2*ctr.get_mint_fee());
+    assert_eq!(ctr.get_fees_collected(), 2*ctr.config().mint_fee());
     let total_amount = ctr.active_balance();
     let total_amount_expected =
         get_fallback_mint_data().expected_amount +
