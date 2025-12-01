@@ -84,6 +84,8 @@ const EInvalidUTXOSet: vector<u8> = b"Invalid utxo set";
 const ENoUTXOsProposed: vector<u8> = b"No UTXOs proposed";
 #[error]
 const ENotResolving: vector<u8> = b"redeem request is not in resolving status";
+#[error]
+const EInvalidDWalletCoordinator: vector<u8> = b"Invalid Dwallet coordinator";
 //
 // Structs
 //
@@ -447,10 +449,13 @@ public fun request_signature_for_input(
     payment_sui: &mut Coin<SUI>,
     ctx: &mut TxContext,
 ) {
-    assert!(object::id(dwallet_coordinator) == contract.config().ika_coordinator(), 0);
+    assert!(
+        object::id(dwallet_coordinator) == contract.config().dwallet_coordinator(),
+        EInvalidDWalletCoordinator,
+    );
     let request = &mut contract.redeem_requests[request_id];
     assert!(request.status().is_signing(), ENotReadlyForSign);
-    assert!(request.has_signature(input_idx), EInputAlreadyUsed);
+    assert!(!request.has_signature(input_idx), EInputAlreadyUsed);
     request.request_signature_for_input(
         dwallet_coordinator,
         &contract.storage,
@@ -512,6 +517,10 @@ public fun validate_signature(
     input_idx: u32,
     sign_id: ID,
 ) {
+    assert!(
+        object::id(dwallet_coordinator) == contract.config().dwallet_coordinator(),
+        EInvalidDWalletCoordinator,
+    );
     let r = &mut contract.redeem_requests[redeem_id];
     assert!(r.has_signature(input_idx), EInputAlreadyUsed);
 
