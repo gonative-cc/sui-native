@@ -92,13 +92,17 @@ export async function executeTransaction(suiClient: SuiClient, transaction: Tran
 	});
 }
 
-export async function getIkaCoin(suiClient: SuiClient, addr: string): Promise<string | undefined> {
+export async function getIkaCoin(suiClient: SuiClient, addr: string): Promise<string> {
 	const coins = await suiClient.getCoins({
 		owner: addr,
 		coinType: "0x1f26bb2f711ff82dcda4d02c77d5123089cb7f8418751474b9fb744ce031526a::ika::IKA",
 		limit: 2,
 	});
-	return coins.data[0]?.coinObjectId;
+
+	if (coins.data.length == 0) {
+		throw new Error("No Ika coin on this address, please add Ika token")
+	}
+	return coins.data[0]?.coinObjectId!;
 }
 
 export async function createShareDwallet(ikaClient: IkaClient, suiClient: SuiClient) {
@@ -128,7 +132,7 @@ export async function createShareDwallet(ikaClient: IkaClient, suiClient: SuiCli
 		userPublicOutput: dkgRequestInput.userPublicOutput,
 		curve,
 		dwalletNetworkEncryptionKeyId: dWalletEncryptionKey.id,
-		ikaCoin: transaction.object(ikaCoin as string),
+		ikaCoin: transaction.object(ikaCoin),
 		suiCoin: transaction.gas,
 		sessionIdentifier: ikaTransaction.registerSessionIdentifier(identifier),
 	});
