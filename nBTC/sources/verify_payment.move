@@ -40,7 +40,8 @@ public fun verify_payment(
     let mut i = 0;
     while (i < outputs.length()) {
         let o = &outputs[i];
-        if (o.script_pubkey() == receiver_script_pubkey) {
+        if (o.script_pubkey() == receiver_script_pubkey && amount == 0) {
+            // we select the first utxo user create for us
             amount = amount + o.amount();
             vouts.push_back(i as u32);
         } else if (o.is_op_return() && op_return.is_none()) {

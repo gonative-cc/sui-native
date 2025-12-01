@@ -1,6 +1,6 @@
 module nbtc::redeem_request;
 
-use bitcoin_lib::encoding::u64_to_le_bytes;
+use bitcoin_lib::encoding::{u64_to_le_bytes, der_encode_signature};
 use bitcoin_lib::sighash::{create_segwit_preimage, create_p2wpkh_scriptcode};
 use bitcoin_lib::tx;
 use bitcoin_lib::vector_utils::vector_slice;
@@ -12,12 +12,12 @@ use nbtc::nbtc_utxo::Utxo;
 use nbtc::storage::Storage;
 use nbtc::tx_composer::compose_withdraw_tx;
 use sui::coin::Coin;
+use sui::event;
 use sui::sui::SUI;
 use sui::table::{Self, Table};
 use sui::vec_map::{Self, VecMap};
 
 use fun vector_slice as vector.slice;
-
 #[error]
 const ERedeemTxSigningNotCompleted: vector<u8> =
     b"The signature for the redeem has not been completed";
@@ -25,9 +25,12 @@ const ERedeemTxSigningNotCompleted: vector<u8> =
 const ESignatureInValid: vector<u8> = b"signature invalid for this input";
 #[error]
 const EInvalidSignatureId: vector<u8> = b"invalid signature id for redeem request";
+#[error]
+const EInvalidIkaECDSALength: vector<u8> = b"invalid ecdsa signature length from ika format";
 
 const ECDSA: u32 = 0;
 const SHA256: u32 = 1;
+const SIGNHASH_ALL: u8 = 0x01;
 
 public enum RedeemStatus has copy, drop, store {
     Resolving, // finding the best UTXOs
@@ -46,9 +49,23 @@ public struct RedeemRequest has store {
     amount: u64,
     fee: u64,
     inputs: vector<Utxo>,
+    dwallet_ids: vector<ID>,
     sig_hashes: VecMap<u32, vector<u8>>,
     sign_ids: Table<ID, bool>,
     signatures_map: VecMap<u32, vector<u8>>,
+    created_at: u64,
+}
+
+//TODO: Add logic to extract data from redeem inputs for:
+public struct RedeemRequestReadyForSigningEvent has copy, drop {
+    id: u64,
+    inputs: vector<Utxo>,
+}
+
+public struct RequestSignatureEvent has copy, drop {
+    redeem_id: u64,
+    sign_id: ID, // IKA sign session ID
+    input_idx: u32,
 }
 
 // ========== RedeemStatus methods ================
@@ -90,10 +107,29 @@ public fun status(r: &RedeemRequest): &RedeemStatus {
     &r.status
 }
 
+public fun recipient_script(r: &RedeemRequest): vector<u8> { r.recipient_script }
+
+public fun dwallet_ids(r: &RedeemRequest): vector<ID> { r.dwallet_ids }
+
+public fun redeem_created_at(r: &RedeemRequest): u64 { r.created_at }
+
+public fun inputs_length(r: &RedeemRequest): u64 { r.inputs.length() }
+
+public fun amount(r: &RedeemRequest): u64 { r.amount }
+
+public fun move_to_signing_status(r: &mut RedeemRequest, redeem_id: u64) {
+    r.status = RedeemStatus::Signing;
+    event::emit(RedeemRequestReadyForSigningEvent {
+        id: redeem_id,
+        inputs: r.inputs,
+    });
+}
+
 public(package) fun request_signature_for_input(
     r: &mut RedeemRequest,
     dwallet_coordinator: &mut DWalletCoordinator,
     storage: &Storage,
+    redeem_id: u64,
     input_idx: u32,
     user_sig_cap: VerifiedPartialUserSignatureCap,
     session_identifier: SessionIdentifier,
@@ -123,6 +159,12 @@ public(package) fun request_signature_for_input(
     );
 
     r.set_sign_request_metadata(input_idx, sig_hash, sign_id);
+
+    event::emit(RequestSignatureEvent {
+        redeem_id,
+        sign_id,
+        input_idx,
+    });
 }
 
 public(package) fun set_sign_request_metadata(
@@ -151,12 +193,9 @@ public fun raw_signed_tx(r: &RedeemRequest, storage: &Storage): vector<u8> {
     r.inputs.length().do!(|i| {
         let dwallet_id = r.inputs[i].dwallet_id();
         let public_key = storage.dwallet_metadata(dwallet_id).public_key();
+        let signature = *r.signatures_map.get(&(i as u32));
         witnesses.push_back(
-            tx::new_witness(vector[
-                // signature
-                *r.signatures_map.get(&(i as u32)),
-                public_key,
-            ]),
+            tx::new_witness(vector[signature, public_key]),
         );
     });
 
@@ -166,8 +205,16 @@ public fun raw_signed_tx(r: &RedeemRequest, storage: &Storage): vector<u8> {
 }
 
 // add valid signature to redeem request for specify input index
-public(package) fun add_signature(r: &mut RedeemRequest, input_idx: u32, signature: vector<u8>) {
-    r.signatures_map.insert(input_idx, signature);
+public(package) fun add_signature(
+    r: &mut RedeemRequest,
+    input_idx: u32,
+    ika_signature: vector<u8>,
+) {
+    // ECDSA Ika signature returns 65 bytes
+    assert!(ika_signature.length() == 65, EInvalidIkaECDSALength);
+    let raw_signature = ika_signature.slice(1, 65); // skip the first byte (pub key recovery byte)
+    // NOTE: With taproot we don't need enocde signature
+    r.signatures_map.insert(input_idx, der_encode_signature(raw_signature, SIGNHASH_ALL));
     if (r.signatures_map.length() == r.inputs.length()) {
         r.status = RedeemStatus::Signed;
     }
@@ -194,9 +241,18 @@ public fun sig_hash(r: &RedeemRequest, input_idx: u32, storage: &Storage): vecto
             input_idx as u64, // input index
             &script_code, // segwit nbtc spend key
             u64_to_le_bytes(r.inputs[input_idx as u64].value()), // amount
-            0x01, // SIGNHASH_ALL
+            SIGNHASH_ALL,
         )
     })
+}
+
+public(package) fun set_best_utxos(
+    r: &mut RedeemRequest,
+    utxos: vector<Utxo>,
+    dwallet_ids: vector<ID>,
+) {
+    r.inputs = utxos;
+    r.dwallet_ids = dwallet_ids;
 }
 
 public fun new(
@@ -205,6 +261,7 @@ public fun new(
     recipient_script: vector<u8>,
     amount: u64,
     fee: u64,
+    created_at: u64,
     ctx: &mut TxContext,
 ): RedeemRequest {
     RedeemRequest {
@@ -218,10 +275,14 @@ public fun new(
         sign_ids: table::new(ctx),
         signatures_map: vec_map::empty(),
         status: RedeemStatus::Resolving,
+        dwallet_ids: vector::empty(),
+        created_at,
     }
 }
 
 public fun utxo_at(r: &RedeemRequest, input_idx: u32): &Utxo { &r.inputs[input_idx as u64] }
+
+public fun fee(r: &RedeemRequest): u64 { r.fee }
 
 public(package) fun validate_signature(
     r: &mut RedeemRequest,
