@@ -1,4 +1,3 @@
-
 import { Transaction } from "@mysten/sui/transactions";
 import {
 	createIkaClient,
@@ -7,7 +6,6 @@ import {
 	getDwalletMetadata,
 	type Config,
 } from "./common";
-
 
 // Get dwallet metadata for  and add dwallet to smart contract for a dwallet have dwallet id
 export async function initialization(dwalletId: string, config: Config) {

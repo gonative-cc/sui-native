@@ -4,7 +4,7 @@ We have a few scripts which is help deploy nBTC and interact with nbtc core func
 
 ## Setup .env
 
-```
+```bash
 MNEMONIC= sui mnemonic, we use this for sign tx
 NBTC=nbtc contract object id
 DWALLET_ID= dwallet id of entry point of dwallet
