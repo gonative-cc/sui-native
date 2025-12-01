@@ -100,7 +100,7 @@ export async function getIkaCoin(suiClient: SuiClient, addr: string): Promise<st
 	});
 
 	if (coins.data.length == 0) {
-		throw new Error("No Ika coin on this address, please add Ika token")
+		throw new Error("No Ika coin on this address, please add Ika token");
 	}
 	return coins.data[0]?.coinObjectId!;
 }
@@ -169,9 +169,9 @@ export async function getDwalletMetadata(dWallet: DWalletWithState<"Active">) {
 
 	const payment = bitcoin.payments.p2wpkh({
 		pubkey: publicKey,
-		network: REGTEST
-	})
-	const addr = payment.address!
+		network: REGTEST,
+	});
+	const addr = payment.address!;
 	const lockscript = payment.output!;
 	return {
 		publicKey,

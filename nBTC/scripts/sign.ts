@@ -99,7 +99,6 @@ export async function getSigHash(
 	});
 	let encoded = ans.results![2]?.returnValues![0]![0]!;
 	return bcs.byteVector().parse(Uint8Array.from(encoded));
-
 }
 
 export async function createUserSigCap(
@@ -148,11 +147,10 @@ export async function createUserSigCap(
 		eventDecoded.event_data.partial_centralized_signed_message_id;
 
 	return await ikaClient.getPartialUserSignatureInParticularState(
- 		partialCentralizedSignedMessageID,
- 		"NetworkVerificationCompleted",
- 		{ timeout: 60000, interval: 1000 },
- 	);
-
+		partialCentralizedSignedMessageID,
+		"NetworkVerificationCompleted",
+		{ timeout: 60000, interval: 1000 },
+	);
 }
 
 export async function request_signature_for_input(
