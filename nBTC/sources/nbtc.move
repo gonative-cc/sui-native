@@ -202,7 +202,12 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         redeem_duration: 5*60_000, // 5min
     };
 
-    contract.config.add(VERSION, config::new(@bitcoin_lc.to_id(), @fallback_addr, 10, ctx));
+    contract
+        .config
+        .add(
+            VERSION,
+            config::new(@bitcoin_lc.to_id(), @fallback_addr, 10, @ika_coordinator.to_id(), ctx),
+        );
     transfer::public_share_object(contract);
 
     transfer::transfer(
@@ -442,10 +447,10 @@ public fun request_signature_for_input(
     payment_sui: &mut Coin<SUI>,
     ctx: &mut TxContext,
 ) {
+    assert!(object::id(dwallet_coordinator) == contract.config().ika_coordinator(), 0);
     let request = &mut contract.redeem_requests[request_id];
     assert!(request.status().is_signing(), ENotReadlyForSign);
     assert!(request.has_signature(input_idx), EInputAlreadyUsed);
-
     request.request_signature_for_input(
         dwallet_coordinator,
         &contract.storage,
@@ -732,6 +737,7 @@ public(package) fun init_for_testing(
     bitcoin_lc: address,
     fallback_addr: address,
     nbtc_bitcoin_spend_key: vector<u8>,
+    ika_coordinator: ID,
     ctx: &mut TxContext,
 ): NbtcContract {
     let witness = NBTC {};
@@ -762,7 +768,9 @@ public(package) fun init_for_testing(
         storage: create_storage(ctx),
     };
 
-    contract.config.add(VERSION, config::new(bitcoin_lc.to_id(), fallback_addr, 10, ctx));
+    contract
+        .config
+        .add(VERSION, config::new(bitcoin_lc.to_id(), fallback_addr, 10, ika_coordinator, ctx));
     contract
 }
 

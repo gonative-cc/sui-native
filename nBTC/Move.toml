@@ -26,6 +26,7 @@ nbtc = "0x0"
 # TODO: need to set these addresses for mainnet
 bitcoin_lc = "0x1001"
 fallback_addr = "0x1002"
+ika_coordinator = "0x1003"
 
 [dev-dependencies]
 # The dev-dependencies section allows overriding dependencies for `--test` and
