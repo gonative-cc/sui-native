@@ -98,8 +98,8 @@ export async function getSigHash(
 		sender: mkSigner().toSuiAddress(),
 	});
 	let encoded = ans.results![2]?.returnValues![0]![0]!;
-	let decoded = bcs.byteVector().parse(Uint8Array.from(encoded));
-	return decoded;
+	return bcs.byteVector().parse(Uint8Array.from(encoded));
+
 }
 
 export async function createUserSigCap(
@@ -147,13 +147,12 @@ export async function createUserSigCap(
 	const partialCentralizedSignedMessageID =
 		eventDecoded.event_data.partial_centralized_signed_message_id;
 
-	const verifiedPartialSignature = await ikaClient.getPartialUserSignatureInParticularState(
-		partialCentralizedSignedMessageID,
-		"NetworkVerificationCompleted",
-		{ timeout: 60000, interval: 1000 },
-	);
+	return await ikaClient.getPartialUserSignatureInParticularState(
+ 		partialCentralizedSignedMessageID,
+ 		"NetworkVerificationCompleted",
+ 		{ timeout: 60000, interval: 1000 },
+ 	);
 
-	return verifiedPartialSignature;
 }
 
 export async function request_signature_for_input(
