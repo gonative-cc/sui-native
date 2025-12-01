@@ -1,11 +1,15 @@
 module nbtc::config;
 
-/// Config for NBTC
+/// Metadata for nBTC hold the information about btc light client object, fee
+/// and default fallback address
 public struct Config has key, store {
     id: UID,
     // Bitcoin light client
     light_client_id: ID,
+    // nBTC mint fee on sui
     mint_fee: u64,
+    // fallback address, we mint nbtc to this address
+    // when user don't set OP_RETURN script
     fallback_addr: address,
 }
 
