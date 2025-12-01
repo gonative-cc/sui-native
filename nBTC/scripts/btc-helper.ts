@@ -1,13 +1,6 @@
 // Importing the bitcoin lib
 import * as bitcoin from "bitcoinjs-lib";
 
-import { bcs } from "@mysten/sui/bcs";
-
-import { Curve, publicKeyFromDWalletOutput } from "@ika.xyz/sdk";
-import { createIkaClient, createSuiClient } from "./common";
-
-const REGTEST = bitcoin.networks.regtest;
-
 // Getting the unspent transaction output for a given address
 async function getUTXOs(address: string) {
 	const utxoUrl = `http://localhost:3002/address/${address}/utxo`;

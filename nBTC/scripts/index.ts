@@ -19,8 +19,8 @@ await ikaClient.initialize();
 
 const program = new Command();
 program
-	.command("new-share-dwallet")
-	.description("Create share Dwallet")
+	.command("init_dwallet")
+	.description("Create share Dwallet and add this to nNBTC object")
 	.action(async () => {
 		let dwallet = await createShareDwallet(ikaClient, suiClient);
 		await initialization(dwallet.id.id, config);

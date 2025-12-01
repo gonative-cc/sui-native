@@ -1,6 +1,3 @@
-// Initialization nBTC object script
-//
-//
 
 import { Transaction } from "@mysten/sui/transactions";
 import {
@@ -8,15 +5,11 @@ import {
 	createSuiClient,
 	executeTransaction,
 	getDwalletMetadata,
-	mkSigner,
 	type Config,
 } from "./common";
-import { fromHex } from "@mysten/sui/utils";
 
-import { getUTXOs } from "./btc-helper";
-import type { IkaClient } from "@ika.xyz/sdk";
-import type { SuiClient } from "@mysten/sui/client";
 
+// Get dwallet metadata for  and add dwallet to smart contract for a dwallet have dwallet id
 export async function initialization(dwalletId: string, config: Config) {
 	const suiClient = createSuiClient();
 	const ikaClient = createIkaClient(suiClient);

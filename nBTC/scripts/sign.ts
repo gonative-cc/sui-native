@@ -153,6 +153,12 @@ export async function createUserSigCap(
 	);
 }
 
+// call function request_signature_for_input
+// inputs:
+// - r: redeem request
+// - input_idx: input index of redeem tx
+// - capid: UnverifiedPartialUserSignatureCap id create by request_future_sign
+// - config: config setup for nbtc, check e2e README
 export async function request_signature_for_input(
 	r: number,
 	input_idx: number,
@@ -203,6 +209,12 @@ export async function request_signature_for_input(
 	return eventDecoded.event_data.sign_id;
 }
 
+// call nbtc verify signature from ika
+// inputs:
+// - r: request id
+// - input_idx: redeem tx input index
+// - signId: object store signature of ika signing session, we can fetch it SignRequestEvent
+// - config: config setup for nbtc, check e2e README
 export async function verifySignature(
 	suiClient: SuiClient,
 	r: number,

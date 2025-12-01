@@ -105,6 +105,7 @@ export async function getIkaCoin(suiClient: SuiClient, addr: string): Promise<st
 	return coins.data[0]?.coinObjectId!;
 }
 
+
 export async function createShareDwallet(ikaClient: IkaClient, suiClient: SuiClient) {
 	const curve = Curve.SECP256K1;
 	const keypairs = await generateKeypair();
