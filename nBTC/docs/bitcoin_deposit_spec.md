@@ -23,7 +23,7 @@ The nBTC contract parses transaction outputs (from index 0 to N). It applies a *
 
 This output defines the amount of `BTC` to be minted in form of `nBTC` on Sui.
 
-- **Scirpt**: Must strictly match the active **nBTC DWallet lock scirpt** (e.g., the specific P2WPKH or P2TR script hash registered in the contract, if the contract only registered one for eg. P2TR any other scirpts destined to this address will be ignored).
+- **Script**: Must strictly match the active **nBTC DWallet lock script** (e.g., the specific P2WPKH or P2TR script hash registered in the contract, if the contract only registered one for eg, P2TR, any other scripts destined to this address will be ignored).
 - **Amount**: Must be > 0 satoshis.
 - **Parsing Rule**: The system scans outputs in order. The **first** output matching the registered script is recorded as the `nBTC` deposit.
 - _Warning_: Any subsequent outputs to the same address in the same transaction are ignored.
