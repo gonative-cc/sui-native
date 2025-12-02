@@ -789,6 +789,11 @@ public fun get_fees_collected(contract: &NbtcContract): u64 {
 }
 
 #[test_only]
+public fun redeem_duration(contract: &NbtcContract): u64 {
+    contract.redeem_duration
+}
+
+#[test_only]
 public fun add_utxo_for_test(ctr: &mut NbtcContract, idx: u64, utxo: Utxo) {
     ctr.utxos.add(idx, utxo);
 }
