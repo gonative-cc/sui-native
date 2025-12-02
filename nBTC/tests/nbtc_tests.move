@@ -52,7 +52,7 @@ fun mint_and_assert(
 
     let coin = take_from_address<Coin<NBTC>>(scenario, expected_recipient);
     let amount = coin.value();
-    if (ops_arg == MINT_OP_APPLY_FEE) assert_eq!(amount, expected_amount - ctr.get_mint_fee())
+    if (ops_arg == MINT_OP_APPLY_FEE) assert_eq!(amount, expected_amount - ctr.config().mint_fee())
     else assert_eq!(amount, expected_amount);
     destroy(coin);
 }
@@ -89,7 +89,7 @@ public fun setup(
     sender: address,
 ): (LightClient, NbtcContract, Scenario) {
     let mut scenario = test_scenario::begin(sender);
-
+    let dwallet_coordinator = @0x01.to_id(); // dummy dwallet coordinator
     let headers = vector[
         header::new(
             x"00000020a97594d6b5b9369535da225d464bde7e0ae3794e9b270a010000000000000000addcae45a90f73dc68e3225b2d0be1c155bf9b0864f187e31203079c0b6d42c5bb27e8585a330218b119eaee",
@@ -100,6 +100,8 @@ public fun setup(
     let mut ctr = nbtc::init_for_testing(
         lc.client_id().to_address(),
         FALLBACK_ADDR,
+        nbtc_bitcoin_addr,
+        dwallet_coordinator,
         scenario.ctx(),
     );
     ctr.set_dwallet_cap_for_test(
@@ -169,7 +171,7 @@ fun test_mint_with_fee() {
     );
 
     // mint with fallback should take fee as well.
-    assert_eq!(ctr.get_fees_collected(), 2*ctr.get_mint_fee());
+    assert_eq!(ctr.get_fees_collected(), 2*ctr.config().mint_fee());
     let total_amount = ctr.active_balance();
     let total_amount_expected =
         get_fallback_mint_data().expected_amount +
