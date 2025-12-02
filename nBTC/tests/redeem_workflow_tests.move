@@ -11,8 +11,6 @@ use sui::test_utils::destroy;
 const NBTC_SCRIPT_PUBKEY: vector<u8> = x"76a914509a651dd392e1bc125323f629b67d65cca3d4bb88ac";
 const ADMIN: address = @0xad;
 
-// ========== Happy Case Tests ==========
-
 #[test]
 fun test_redeem_workflow_happy_case() {
     let (lc, mut ctr, mut scenario) = setup(NBTC_SCRIPT_PUBKEY, ADMIN);
@@ -23,7 +21,7 @@ fun test_redeem_workflow_happy_case() {
         new_utxo(
             x"06ce677fd511851bb6cdacebed863d12dfd231d810e8e9fcba6e791001adf3a6",
             1,
-            2500, // UTXO has 1500 sats
+            2500,
             NBTC_SCRIPT_PUBKEY,
             dwallet_id,
         ),
