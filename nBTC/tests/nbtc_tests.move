@@ -90,7 +90,7 @@ public fun setup(
     sender: address,
 ): (LightClient, NbtcContract, Scenario) {
     let mut scenario = test_scenario::begin(sender);
-    let ika_coordinator = @0x01.to_id(); // dummy ika coordinator
+    let dwallet_coordinator = @0x01.to_id(); // dummy dwallet coordinator
     let headers = vector[
         header::new(
             x"00000020a97594d6b5b9369535da225d464bde7e0ae3794e9b270a010000000000000000addcae45a90f73dc68e3225b2d0be1c155bf9b0864f187e31203079c0b6d42c5bb27e8585a330218b119eaee",
@@ -102,7 +102,7 @@ public fun setup(
         lc.client_id().to_address(),
         FALLBACK_ADDR,
         nbtc_bitcoin_addr,
-        ika_coordinator,
+        dwallet_coordinator,
         scenario.ctx(),
     );
     ctr.set_dwallet_cap_for_test(
