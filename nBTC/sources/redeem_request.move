@@ -172,7 +172,9 @@ public(package) fun set_sign_request_metadata(
     sig_hash: vector<u8>,
     sign_id: ID,
 ) {
-    r.sig_hashes.insert(input_idx, sig_hash);
+    if (!r.sig_hashes.contains(&input_idx)) {
+        r.sig_hashes.insert(input_idx, sig_hash);
+    };
     r.sign_ids.add(sign_id, true);
 }
 
@@ -219,7 +221,7 @@ public(package) fun add_signature(
     }
 }
 
-/// Returns signature hash for input_idx-th in redeem transaction
+/// Returns sighash for input_idx-th in redeem transaction
 public fun sig_hash(r: &RedeemRequest, input_idx: u32, storage: &Storage): vector<u8> {
     r.sig_hashes.try_get(&input_idx).extract_or!({
         let dwallet_id = r.dwallet_ids[input_idx as u64];
