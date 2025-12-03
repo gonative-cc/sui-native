@@ -21,7 +21,8 @@ use fun vector_slice as vector.slice;
 #[error]
 const ERedeemTxSigningNotCompleted: vector<u8> =
     b"The signature for the redeem has not been completed";
-const ESignatureInValid: u64 = 100;
+#[error]
+const ESignatureInValid: vector<u8> = b"signature invalid for this input";
 #[error]
 const EInvalidSignatureId: vector<u8> = b"invalid signature id for redeem request";
 #[error]
