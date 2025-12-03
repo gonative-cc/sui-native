@@ -63,3 +63,4 @@ The amount of nBTC minted is calculated as follows:
 
 ```text
 MintedAmount = DepositAmount - NbtcProtocolFee
+```
