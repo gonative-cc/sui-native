@@ -36,7 +36,7 @@ bun run scripts/index.ts init_dwallet
 bun run index.ts request_signature <redeem_id> <input_idx>
 ```
 
-The function above will return the `signature_id` 
+The function above will return the `signature_id`
 
 ## Validate signature for input
 

@@ -28,7 +28,9 @@ program
 
 program
 	.command("request_signature <redeem_id> <input_idx>")
-	.description("Requests a signature for a specific input_idx of the given redeem transaction (redeem_id)")
+	.description(
+		"Requests a signature for a specific input_idx of the given redeem transaction (redeem_id)",
+	)
 	.action(async (redeem_id: number, input_idx: number) => {
 		let gPreSign = await globalPreSign();
 		let message = await getSigHash(suiClient, redeem_id, input_idx, config);
