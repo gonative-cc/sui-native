@@ -36,13 +36,14 @@ program
 		let message = await getSigHash(suiClient, redeem_id, input_idx, config);
 		let dwalletID = loadConfig().dwalletId;
 		let userSigCap = await createUserSigCap(ikaClient, suiClient, dwalletID, gPreSign, message);
+		// we use signID to query the signature after ika response
 		let signID = await request_signature_for_input(
 			redeem_id,
 			input_idx,
 			userSigCap.cap_id,
 			config,
 		);
-		console.log(signID);
+		console.log("Ika sign id =", signID);
 	});
 
 program
