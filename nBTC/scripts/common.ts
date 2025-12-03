@@ -100,14 +100,14 @@ export async function getIkaCoin(suiClient: SuiClient, addr: string): Promise<st
 	});
 
 	if (coins.data.length == 0) {
-		throw new Error("No Ika coin on this address, please add Ika token");
+		throw new Error("The address does not have any IKA coins, please add some");
 	}
 	return coins.data[0]?.coinObjectId!;
 }
 
-export async function createShareDwallet(ikaClient: IkaClient, suiClient: SuiClient) {
+export async function createSharedDwallet(ikaClient: IkaClient, suiClient: SuiClient) {
 	const curve = Curve.SECP256K1;
-	const keypairs = await generateKeypair();
+	const keypair = await generateKeypair();
 	const signer = mkSigner();
 	const transaction = new Transaction();
 	const ikaTransaction = new IkaTransaction({

@@ -14,13 +14,13 @@ PACKAGE_ID=nbtc package id
 
 ## Initialization
 
-Public package use sui cli, and update the .env file.
+Publish the package using sui-cli, and update the .env file.
 
 ```bash
 sui client publish
 ```
 
-Create a new dwallet, add dwallet to nBTC object and active this dwallet
+Create a new dwallet, add it to the nBTC object and activate it
 
 ```bash
 bun run scripts/index.ts init_dwallet
@@ -30,17 +30,17 @@ bun run scripts/index.ts init_dwallet
 
 <!-- ## TODO: Create redeem request -->
 
-## Request signature from ika for inputs in redeem transaction
+## Request signature from ika for the inputs in redeem transaction
 
 ```bash
 bun run index.ts request_signature <redeem_id> <input_idx>
 ```
 
-We will receive the sign id after call this function.
+The function above will return the `signature_id` 
 
 ## Validate signature for input
 
-Verify the signature Ika created, if signature valid we add mark input is signed.
+Verify the signature Ika created, if the signature is valid we will mark that input as `signed`.
 
 ```bash
 bun run index.ts verify <redeem_id> <input_idx> <sign_id>

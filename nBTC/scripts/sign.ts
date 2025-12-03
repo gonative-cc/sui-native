@@ -32,7 +32,7 @@ export async function globalPreSign() {
 		ikaClient,
 		transaction,
 	});
-	const ikacoin = await getIkaCoin(suiClient, signer.toSuiAddress());
+	const ikaCoin = await getIkaCoin(suiClient, signer.toSuiAddress());
 	const dWalletEncryptionKey = await ikaClient.getLatestNetworkEncryptionKey();
 
 	const presignCap = ikaTransaction.requestGlobalPresign({

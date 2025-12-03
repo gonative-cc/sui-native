@@ -14,7 +14,7 @@ async function getUTXOs(address: string) {
 	return utxos;
 }
 
-async function sendBTCTx(txHex: string) {
+async function broadcastBtcTx(txHex: string) {
 	const broadcastUrl = `http://localhost:3002/tx`;
 	try {
 		const response = await fetch(broadcastUrl, {
