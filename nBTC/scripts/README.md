@@ -43,5 +43,13 @@ The function above will return the `signature_id`
 Verify the signature Ika created, if the signature is valid we will mark that input as `signed`.
 
 ```bash
-bun run index.ts verify <redeem_id> <input_idx> <sign_id>
+bun run index.ts verify_sign <redeem_id> <input_idx> <sign_id>
+```
+
+## Query and broadcast redeem tx
+
+Verify the signature Ika created, if the signature is valid we will mark that input as `signed`.
+
+```bash
+bun run index.ts raw_redeem_tx redeem_id
 ```

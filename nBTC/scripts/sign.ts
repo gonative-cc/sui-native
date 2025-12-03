@@ -8,7 +8,7 @@ import {
 	type IkaClient,
 	type SharedDWallet,
 } from "@ika.xyz/sdk";
-import { SuiClient, type SuiObjectChangeCreated } from "@mysten/sui/client";
+import { SuiClient } from "@mysten/sui/client";
 import { Transaction } from "@mysten/sui/transactions";
 import {
 	createIkaClient,
@@ -20,7 +20,11 @@ import {
 } from "./common";
 import { bcs } from "@mysten/sui/bcs";
 import { toHex } from "@mysten/sui/utils";
-
+/**
+ * Initiates a global presign object and return presign id
+ *
+ * @returns A promise that resolves to the unique Presign ID (`presign_id`) as a string.
+ */
 export async function globalPreSign() {
 	let suiClient = createSuiClient();
 	let ikaClient = createIkaClient(suiClient);
@@ -55,7 +59,18 @@ export async function globalPreSign() {
 	return eventDecoded.event_data.presign_id;
 }
 
-// Get SigHash for btc input in redeem tx
+/**
+ * Computes the Bitcoin Signature Hash (SigHash) required for signing a transaction.
+ *
+ * This function utilizes Sui client data and transaction configuration to determine
+ * the final hash that needs to be signed by the dWallet network.
+ *
+ * @param suiClient The initialized Sui client instance for network interaction.
+ * @param r A nonce or session identifier related to the transaction.
+ * @param input_idx The index of the input being signed in the raw Bitcoin transaction.
+ * @param config The sui package config
+ * @returns A promise that resolves to the computed BTC SigHash as a hexadecimal string.
+ */
 export async function getSigHash(
 	suiClient: SuiClient,
 	r: number,
@@ -87,11 +102,24 @@ export async function getSigHash(
 	return bcs.byteVector().parse(Uint8Array.from(encoded));
 }
 
+/**
+ * Creates the  UnverifiedPartialUserSignatureCap object by requesting a future signature on Sui.
+ *
+ * This process involves verifying a completed presignature and authorizing the signing
+ * of a specific message (`message`, usually a transaction hash) by the dWallet.
+ *
+ * @param ikaClient The initialized Ika client for protocol-specific calls.
+ * @param suiClient The initialized Sui client instance.
+ * @param dwalletId The ID of the active dWallet to be used.
+ * @param presignId The ID of the completed presign request.
+ * @param message The hash or message data (Uint8Array) to be signed.
+ * @returns A promise that resolves to the completed UnverifiedPartialUserSignatureCap object.
+ */
 export async function createUserSigCap(
 	ikaClient: IkaClient,
 	suiClient: SuiClient,
 	dwalletId: string,
-	presign_id: string,
+	presignId: string,
 	message: Uint8Array,
 ) {
 	let transaction = new Transaction();
@@ -102,7 +130,7 @@ export async function createUserSigCap(
 	const signer = mkSigner();
 	const dWallet = await ikaClient.getDWalletInParticularState(dwalletId, "Active");
 	const ikaCoin = await getIkaCoin(suiClient, signer.toSuiAddress());
-	const presign = await ikaClient.getPresignInParticularState(presign_id, "Completed");
+	const presign = await ikaClient.getPresignInParticularState(presignId, "Completed");
 	const partialUserSignatureCap = await ikaTransaction.requestFutureSign({
 		dWallet: dWallet as SharedDWallet,
 		hashScheme: Hash.SHA256,
@@ -139,12 +167,19 @@ export async function createUserSigCap(
 	);
 }
 
-// call function request_signature_for_input
-// inputs:
-// - r: redeem request
-// - input_idx: input index of redeem tx
-// - capid: UnverifiedPartialUserSignatureCap id create by request_future_sign
-// - config: config setup for nbtc, check e2e README
+/**
+ * Executes a Move call on Sui to request the final partial signature for a specific
+ * Bitcoin input index of a redeem transaction.
+ *
+ * This function consumes the `UnverifiedPartialUserSignatureCap`
+ * (`capid`) to request the dWallet network to sign the transaction input.
+ *
+ * @param r The nonce or session identifier related to the redeem request.
+ * @param input_idx The index of the Bitcoin input being signed (0-indexed).
+ * @param capid The object ID of the `UnverifiedPartialUserSignatureCap` created earlier.
+ * @param config The configuration object containing IDs like `packageId` and `nbtc` object ID.
+ * @returns A promise that resolves to the unique Sign ID (`sign_id`) as a string.
+ */
 export async function request_signature_for_input(
 	r: number,
 	input_idx: number,
@@ -194,13 +229,17 @@ export async function request_signature_for_input(
 	).fromBase64(event?.bcs as string);
 	return eventDecoded.event_data.sign_id;
 }
-
-// call nbtc verify signature from ika
-// inputs:
-// - r: request id
-// - input_idx: redeem tx input index
-// - signId: object store signature of ika signing session, we can fetch it SignRequestEvent
-// - config: config setup for nbtc, check e2e README
+/**
+ * Executes a Move call on Sui to verify the validity of a signature create by Ika for
+ * a Bitcoin transaction input details.
+ *
+ * @param suiClient The initialized Sui client instance.
+ * @param r redeem request ID
+ * @param input_idx The index of the Bitcoin input being signed (0-indexed).
+ * @param signId The object ID of the sign session we request before
+ * @param config The configuration object containing IDs like `packageId` and `nbtc` object ID.
+ * @returns A promise that resolves when the verification transaction is executed successfully (no explicit return value).
+ */
 export async function verifySignature(
 	suiClient: SuiClient,
 	r: number,
@@ -223,7 +262,14 @@ export async function verifySignature(
 	await executeTransaction(suiClient, tx);
 }
 
-// get raw tx for redeem_request after signed
+/**
+ * Return a raw signed BTC redeem transaction
+ *
+ * @param suiClient The initialized Sui client instance.
+ * @param r redeem request ID
+ * @param config The configuration object containing IDs like `packageId` and `nbtc` object ID.
+ * @returns A redeem tx in Hex format
+ */
 export async function getRedeemBtcTx(suiClient: SuiClient, r: number, config: Config) {
 	let tx = new Transaction();
 	let redeem = tx.moveCall({

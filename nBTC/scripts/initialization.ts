@@ -7,7 +7,17 @@ import {
 	type Config,
 } from "./common";
 
-// Get dwallet metadata for  and add dwallet to smart contract for a dwallet have dwallet id
+/**
+ * Initializes the nBTC smart contract by registering an existing active dWallet and
+ * setting it as the contract's current active dWallet for transaction processing.
+ *
+ * This function fetches the dWallet's Bitcoin metadata (public key and lockscript)
+ * and passes it, along with the dWallet capability, to the nBTC Move module.
+ *
+ * @param dwalletId The ID of the fully initialized and "Active" dWallet object.
+ * @param config The configuration object containing IDs like `packageId`, `adminCap`, and `nbtc` object ID.
+ * @returns A promise that resolves when the initialization transaction is executed successfully (no explicit return value).
+ */
 export async function initialization(dwalletId: string, config: Config) {
 	const suiClient = createSuiClient();
 	const ikaClient = createIkaClient(suiClient);

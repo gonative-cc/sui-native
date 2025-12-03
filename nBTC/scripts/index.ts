@@ -24,6 +24,7 @@ program
 	.action(async () => {
 		let dwallet = await createSharedDwallet(ikaClient, suiClient);
 		await initialization(dwallet.id.id, config);
+		console.log(`Successfully created and initialized Dwallet with ID: ${dwallet.id.id}`);
 	});
 
 program
@@ -54,10 +55,11 @@ program
 	});
 
 program
-	.command("raw_tx <redeem_id>")
-	.description("Get a raw redeem transaction")
+	.command("raw_redeem_tx <redeem_id>")
+	.description("Get a raw redeem transaction and broadcast it")
 	.action(async (redeem_id: number) => {
 		let rawTx = await getRedeemBtcTx(suiClient, redeem_id, config);
+		console.log("Raw redeem tx = ", rawTx);
 		await broadcastBtcTx(rawTx);
 	});
 

@@ -105,6 +105,13 @@ export async function getIkaCoin(suiClient: SuiClient, addr: string): Promise<st
 	return coins.data[0]?.coinObjectId!;
 }
 
+/**
+ * Creates and initializes a new shared dWallet
+ *
+ * @param ikaClient The initialized Ika client for protocol-specific calls.
+ * @param suiClient The initialized Sui client instance.
+ * @returns A promise that resolves to the fully initialized and "Active" shared dWallet object.
+ */
 export async function createSharedDwallet(ikaClient: IkaClient, suiClient: SuiClient) {
 	const curve = Curve.SECP256K1;
 	const keypair = await generateKeypair();
@@ -160,7 +167,13 @@ export async function createSharedDwallet(ikaClient: IkaClient, suiClient: SuiCl
 	return activeDWallet;
 }
 
-// return metadata for dwallet
+/**
+ * Extracts essential Bitcoin metadata (public key, P2WPKH address, and lockscript)
+ * from a activated shared dWallet object.
+ *
+ * @param dWallet The active shared dWallet
+ * @returns An object containing the derived `publicKey` (Buffer), P2WPKH `addr` (string), and `lockscript` (Buffer).
+ */
 export async function getDwalletMetadata(dWallet: DWalletWithState<"Active">) {
 	const publicKey = await publicKeyFromDWalletOutput(
 		Curve.SECP256K1,
