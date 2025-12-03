@@ -4,7 +4,7 @@ module nbtc::redeem_workflow_tests;
 use nbtc::nbtc::NBTC;
 use nbtc::nbtc_tests::setup;
 use nbtc::nbtc_utxo::new_utxo;
-use std::unit_test::destroy;
+use std::unit_test::{assert_eq, destroy};
 use sui::clock;
 use sui::coin::mint_for_testing;
 
@@ -45,15 +45,15 @@ fun test_redeem_workflow_happy_case() {
     let (lc, mut ctr, redeem_id, dwallet_id, scenario, mut clock) = setup_redeem_test(2500, 1000);
 
     let request = ctr.redeem_request(redeem_id);
-    assert!(request.status().is_resolving());
+    assert_eq!(request.status().is_resolving(), true);
 
     let utxo_ids = vector[0];
     let dwallet_ids = vector[dwallet_id];
     ctr.propose_utxos(redeem_id, utxo_ids, dwallet_ids, &clock);
 
     let request = ctr.redeem_request(redeem_id);
-    assert!(request.status().is_resolving());
-    assert!(request.inputs_length() == 1);
+    assert_eq!(request.status().is_resolving(), true);
+    assert_eq!(request.inputs_length(), 1);
 
     let redeem_duration = ctr.redeem_duration();
     clock.increment_for_testing(redeem_duration + 1);
@@ -61,7 +61,7 @@ fun test_redeem_workflow_happy_case() {
     ctr.finalize_redeem_request(redeem_id, &clock);
 
     let request = ctr.redeem_request(redeem_id);
-    assert!(request.status().is_signing());
+    assert_eq!(request.status().is_signing(), true);
 
     clock.destroy_for_testing();
     destroy(lc);
@@ -106,6 +106,26 @@ fun test_finalize_fails_before_deadline() {
     ctr.propose_utxos(redeem_id, utxo_ids, dwallet_ids, &clock);
 
     ctr.finalize_redeem_request(redeem_id, &clock);
+
+    clock.destroy_for_testing();
+    destroy(lc);
+    destroy(ctr);
+    scenario.end();
+}
+
+#[test, expected_failure(abort_code = nbtc::nbtc::ENotResolving)]
+fun test_propose_fails_when_not_resolving() {
+    let (lc, mut ctr, redeem_id, dwallet_id, scenario, mut clock) = setup_redeem_test(1500, 1000);
+
+    let utxo_ids = vector[0];
+    let dwallet_ids = vector[dwallet_id];
+    ctr.propose_utxos(redeem_id, utxo_ids, dwallet_ids, &clock);
+
+    let redeem_duration = ctr.redeem_duration();
+    clock.increment_for_testing(redeem_duration + 1);
+    ctr.finalize_redeem_request(redeem_id, &clock);
+
+    ctr.propose_utxos(redeem_id, utxo_ids, dwallet_ids, &clock);
 
     clock.destroy_for_testing();
     destroy(lc);
