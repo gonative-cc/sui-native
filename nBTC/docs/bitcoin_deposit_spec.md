@@ -17,7 +17,7 @@ Standard Bitcoin inputs (P2PKH, P2WPKH, P2TR, etc.).
 
 ## Outputs Structure & Validation
 
-The nBTC contract parses transaction outputs (from index 0 to N). It applies a **"First Match"** policy for identifying relevant outputs.
+The nBTC contract parses transaction outputs (from index 0). It applies a **"First Match"** policy for identifying relevant outputs.
 
 ### A. Deposit Output (The Payment)
 
@@ -61,6 +61,5 @@ Standard change outputs back to the sender.
 
 The amount of nBTC minted is calculated as follows:
 
-```
+```text
 MintedAmount = DepositAmount - NbtcProtocolFee
-```
