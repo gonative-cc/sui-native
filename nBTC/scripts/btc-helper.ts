@@ -1,6 +1,3 @@
-// Importing the bitcoin lib
-import * as bitcoin from "bitcoinjs-lib";
-
 // Getting the unspent transaction output for a given address
 async function getUTXOs(address: string) {
 	const utxoUrl = `http://localhost:3002/address/${address}/utxo`;
@@ -30,4 +27,4 @@ async function broadcastBtcTx(txHex: string) {
 	}
 }
 
-export { getUTXOs, sendBTCTx };
+export { getUTXOs, broadcastBtcTx };

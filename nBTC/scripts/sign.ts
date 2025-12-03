@@ -38,7 +38,7 @@ export async function globalPreSign() {
 	const presignCap = ikaTransaction.requestGlobalPresign({
 		curve: Curve.SECP256K1,
 		signatureAlgorithm: SignatureAlgorithm.ECDSASecp256k1,
-		ikaCoin: transaction.object(ikacoin as string),
+		ikaCoin: transaction.object(ikaCoin),
 		suiCoin: transaction.gas,
 		dwalletNetworkEncryptionKeyId: dWalletEncryptionKey.id,
 	});
@@ -74,23 +74,9 @@ export async function getSigHash(
 		arguments: [tx.object(config.nbtc)],
 	});
 
-	let sig = tx.moveCall({
+	tx.moveCall({
 		target: `${config.packageId}::redeem_request::sig_hash`,
 		arguments: [redeem, tx.pure.u32(input_idx), storage],
-	});
-
-	let status = tx.moveCall({
-		target: `${config.packageId}::redeem_request::status`,
-		arguments: [redeem],
-	});
-
-	tx.moveCall({
-		target: `${config.packageId}::redeem_request::is_signed`,
-		arguments: [status],
-	});
-	tx.moveCall({
-		target: `${config.packageId}::redeem_request::has_signature`,
-		arguments: [redeem, tx.pure.u32(0)],
 	});
 
 	let ans = await suiClient.devInspectTransactionBlock({
@@ -120,7 +106,7 @@ export async function createUserSigCap(
 	const partialUserSignatureCap = await ikaTransaction.requestFutureSign({
 		dWallet: dWallet as SharedDWallet,
 		hashScheme: Hash.SHA256,
-		ikaCoin: transaction.object(ikaCoin as string),
+		ikaCoin: transaction.object(ikaCoin),
 		message,
 		presign,
 		signatureScheme: SignatureAlgorithm.ECDSASecp256k1,
@@ -194,7 +180,7 @@ export async function request_signature_for_input(
 			tx.pure.u32(input_idx),
 			verifiedCap,
 			ikaTx.createSessionIdentifier(),
-			tx.object(ikaCoin as string),
+			tx.object(ikaCoin),
 			tx.gas,
 		],
 	});

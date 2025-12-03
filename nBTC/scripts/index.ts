@@ -1,6 +1,6 @@
 import { Command } from "commander";
-import { createIkaClient, createShareDwallet, createSuiClient, loadConfig } from "./common";
-import { sendBTCTx } from "./btc-helper";
+import { createIkaClient, createSharedDwallet, createSuiClient, loadConfig } from "./common";
+import { broadcastBtcTx } from "./btc-helper";
 import {
 	globalPreSign,
 	getSigHash,
@@ -22,7 +22,7 @@ program
 	.command("init_dwallet")
 	.description("Creates a shared Dwallet and adds it to the nNBTC object")
 	.action(async () => {
-		let dwallet = await createShareDwallet(ikaClient, suiClient);
+		let dwallet = await createSharedDwallet(ikaClient, suiClient);
 		await initialization(dwallet.id.id, config);
 	});
 
@@ -34,7 +34,7 @@ program
 		let message = await getSigHash(suiClient, redeem_id, input_idx, config);
 		let dwalletID = loadConfig().dwalletId;
 		let userSigCap = await createUserSigCap(ikaClient, suiClient, dwalletID, gPreSign, message);
-		let sigID = await request_signature_for_input(
+		let signID = await request_signature_for_input(
 			redeem_id,
 			input_idx,
 			userSigCap.cap_id,
@@ -55,7 +55,7 @@ program
 	.description("Get a raw redeem transaction")
 	.action(async (redeem_id: number) => {
 		let rawTx = await getRawTx(suiClient, redeem_id, config);
-		await sendBTCTx(data);
+		await broadcastBtcTx(rawTx);
 	});
 
 program.parse(process.argv);

@@ -113,13 +113,13 @@ export async function createSharedDwallet(ikaClient: IkaClient, suiClient: SuiCl
 	const ikaTransaction = new IkaTransaction({
 		ikaClient,
 		transaction,
-		userShareEncryptionKeys: keypairs.userShareEncryptionKeys,
+		userShareEncryptionKeys: keypair.userShareEncryptionKeys,
 	});
 	const identifier = createRandomSessionIdentifier();
 	const dkgRequestInput = await prepareDKGAsync(
 		ikaClient,
 		curve,
-		keypairs.userShareEncryptionKeys,
+		keypair.userShareEncryptionKeys,
 		identifier,
 		signer.toSuiAddress(),
 	);
