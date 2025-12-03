@@ -475,8 +475,8 @@ public fun redeem(
     contract: &mut NbtcContract,
     coin: Coin<NBTC>,
     recipient_script: vector<u8>,
-    ctx: &mut TxContext,
     clock: &Clock,
+    ctx: &mut TxContext,
 ): u64 {
     assert!(contract.version == VERSION, EVersionMismatch);
     // TODO: implement logic to guard burning and manage UTXOs
@@ -786,6 +786,10 @@ public(package) fun init_for_testing(
 #[test_only]
 public fun get_fees_collected(contract: &NbtcContract): u64 {
     contract.fees_collected.value()
+}
+
+public fun redeem_duration(contract: &NbtcContract): u64 {
+    contract.redeem_duration
 }
 
 #[test_only]
