@@ -7,7 +7,7 @@ import {
 	createUserSigCap,
 	request_signature_for_input,
 	verifySignature,
-	getRawTx,
+	getRedeemBtcTx,
 } from "./sign";
 import { initialization } from "./initialization";
 
@@ -44,8 +44,8 @@ program
 	});
 
 program
-	.command("verify <redeem_id> <input_idx> <sign_id>")
-	.description("Verify the signature for specify input_idx on redeem request tx with the sign_id")
+	.command("verify_sign <redeem_id> <input_idx> <sign_id>")
+	.description("Verify the signature we created to spend input_idx in redeem request transaction")
 	.action(async (redeem_id: number, input_idx: number, sign_id: string) => {
 		await verifySignature(suiClient, redeem_id, input_idx, sign_id, config);
 	});
@@ -54,7 +54,7 @@ program
 	.command("raw_tx <redeem_id>")
 	.description("Get a raw redeem transaction")
 	.action(async (redeem_id: number) => {
-		let rawTx = await getRawTx(suiClient, redeem_id, config);
+		let rawTx = await getRedeemBtcTx(suiClient, redeem_id, config);
 		await broadcastBtcTx(rawTx);
 	});
 

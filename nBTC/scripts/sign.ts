@@ -224,7 +224,7 @@ export async function verifySignature(
 }
 
 // get raw tx for redeem_request after signed
-export async function getRawTx(suiClient: SuiClient, r: number, config: Config) {
+export async function getRedeemBtcTx(suiClient: SuiClient, r: number, config: Config) {
 	let tx = new Transaction();
 	let redeem = tx.moveCall({
 		target: `${config.packageId}::nbtc::redeem_request`,
@@ -239,11 +239,11 @@ export async function getRawTx(suiClient: SuiClient, r: number, config: Config) 
 		arguments: [redeem, storage],
 	});
 
-	let ans = await suiClient.devInspectTransactionBlock({
+	let result = await suiClient.devInspectTransactionBlock({
 		transactionBlock: tx,
 		sender: mkSigner().toSuiAddress(),
 	});
-	let encoded = ans.results![2]?.returnValues![0]![0]!;
+	let encoded = result.results![2]?.returnValues![0]![0]!;
 	let decoded = bcs.byteVector().parse(Uint8Array.from(encoded));
 	return toHex(decoded);
 }
