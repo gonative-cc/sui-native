@@ -1,28 +1,28 @@
 # BTC Redemption CLI Tool
 
-This command-line interface (CLI) is designed to manage the complete workflow of redeeming wrapped Bitcoin (nNBTC) back to native BTC. The process is orchestrated on the Sui blockchain using a shared Dwallet and integrates with the **Ika client** for Multi-Party Computation (MPC) signing of Bitcoin transactions.
+This command-line interface (CLI) is designed to manage the complete workflow of redeeming nBTC coin back to native BTC. The process is orchestrated on the Sui blockchain using a shared dWallet and integrates with the **Ika client** signing of Bitcoin transactions.
 
 ## ⚙️ Prerequisites
 
-The CLI tool requires connection details and security credentials to interact with the Sui blockchain, the Dwallet, and the nNBTC contract. The script uses `loadConfig()`, which typically reads from a local `.env` file.
+The CLI tool requires connection details and security credentials to interact with the Sui blockchain, the dWallet, and the nBTC contract. The script uses `loadConfig()`, which typically reads from a local `.env` file.
 
 ### Environment Variable (`.env`) Setup
 
 Ensure your `.env` file contains the following variables.
 
-| Variable Name | Type     | Description                                                                                            |
-| :------------ | :------- | :----------------------------------------------------------------------------------------------------- |
-| `MNEMONIC`    | `string` | **Sui Mnemonic.** The 12 or 24-word recovery phrase for the Sui address used to sign transactions.     |
-| `NBTC`        | `string` | **nNBTC Contract Object ID.** The Sui object ID for the main Native Wrapped BTC contract instance.     |
-| `DWALLET_ID`  | `string` | **Shared Dwallet Object ID.** The ID of the shared Dwallet that holds the BTC custody keys.            |
-| `ADMINCAP`    | `string` | **Admin Capability Object ID.** The object ID for the administrative capability of the nNBTC contract. |
-| `PACKAGE_ID`  | `string` | **nNBTC Package ID.** The published object ID of the Sui Move package containing the nNBTC module.     |
+| Variable Name | Type     | Description                                                                                           |
+| :------------ | :------- | :---------------------------------------------------------------------------------------------------- |
+| `MNEMONIC`    | `string` | **Sui Mnemonic.** The 12 or 24-word recovery phrase for the Sui address used to sign transactions.    |
+| `NBTC`        | `string` | **nBTC Contract Object ID.** The Sui object ID for the nBTC contract instance.                        |
+| `DWALLET_ID`  | `string` | **Shared Dwallet Object ID.** The ID of the shared Dwallet of deposit entry.                          |
+| `ADMINCAP`    | `string` | **Admin Capability Object ID.** The object ID for the administrative capability of the nBTC contract. |
+| `PACKAGE_ID`  | `string` | **nBTC Package ID.** The published object ID of the Sui Move package containing the nBTC module.      |
 
 #### Example `.env` File
 
 ```bash
 # SUI Wallet Mnemonic for signing
-MNEMONIC="seed word one two three four five six seven eight nine ten eleven twelve"
+MNEMONIC=""
 
 # Object IDs from Sui Deployment
 NBTC="0x123...456"
@@ -33,33 +33,36 @@ PACKAGE_ID="0x987...654"
 DWALLET_ID="0x555...aaa"
 ```
 
-All commands are executed using node your_script_name.js <command> [arguments]. The commands must generally be executed in order, following the lifecycle of a BTC redemption.
+All commands are executed using `bun index.ts <command> [arguments]`. The commands must generally be executed in order, following the lifecycle of a BTC redemption.
 
-## 1. init_dwallet
+### Setup and registration dWallet to nBTC
 
-Purpose: Setup and registration.
+Creates a new shared dWallet object on Sui (the secure custodian for BTC key shares). It then runs an initialization function to link the dWallet ID to the nBTC contract object, preparing the system for redemption requests.
 
-Description: Creates a new shared Dwallet object on Sui (the secure custodian for BTC key shares). It then runs an initialization function to link the Dwallet ID to the nNBTC contract object, preparing the system for redemption requests.
+```bash
+bun index.ts init_dwallet
+```
 
-## 2. request_signature <redeem_id> <input_idx>
+### Initiates the signing process
 
-Purpose: Initiates the signing process.
-Arguments: <redeem_id> (number), <input_idx> (number)
+```bash
+bun index.ts request_signature <redeem_id> <input_idx>
+```
 
-Description: Prepares the necessary data for the Ika MPC service. It calculates the BTC transaction hash (sigHash) for a specific input, creates a user authorization object (userSigCap), and submits the request to Ika, returning a signID used to track the signature's status.
+Prepares the necessary data for the Ika MPC service. It calculates the BTC transaction hash (sigHash) for a specific input, creates a user authorization object (userSigCap), and submits the request to Ika, returning a signID used to track the signature's status.
 
-## 3. verify_sign <redeem_id> <input_idx> <sign_id>
+### Signature validation
 
-Purpose: Signature validation.
+```bash
+bun index.ts verify_sign <redeem_id> <input_idx> <sign_id>
+```
 
-Arguments: <redeem_id> (number), <input_idx> (number), <sign_id> (string)
+Verifies that the signature generated by the Ika service is correct and valid for the specified Bitcoin input and redemption request, confirming the MPC signing was successful.
 
-Description: Verifies that the signature generated by the Ika service is correct and valid for the specified Bitcoin input and redemption request, confirming the MPC signing was successful.
+### Query redeem tx and broadcast
 
-## 4. raw_redeem_tx <redeem_id>
+```bash
+bun index.ts raw_redeem_tx <redeem_id>
+```
 
-Purpose: Final execution and broadcast.
-
-Arguments: <redeem_id> (number)
-
-Description: Once all necessary inputs are signed and verified, this command retrieves the complete, fully signed raw Bitcoin transaction. It then broadcasts this raw transaction to the Bitcoin network using broadcastBtcTx, completing the redemption and releasing the native BTC.
+Once all necessary inputs are signed and verified, this command retrieves the complete, fully signed raw Bitcoin transaction. It then broadcasts this raw transaction to the Bitcoin network using `broadcastBtcTx`, completing the redemption and releasing the native BTC.
