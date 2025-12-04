@@ -9,9 +9,7 @@ use bitcoin_lib::encoding::{
     script_to_var_bytes,
     u64_to_le_bytes
 };
-use bitcoin_lib::input;
-use bitcoin_lib::output;
-use bitcoin_lib::tx::{Self, Transaction};
+use bitcoin_lib::tx::Transaction;
 use std::hash::sha2_256 as sha256;
 
 #[test_only]
@@ -146,9 +144,9 @@ public fun taproot_sighash_keyspending_path(
     previous_pubscripts: vector<vector<u8>>,
     values: vector<u64>,
     hash_type: u8, // right now only SIGNASH ALL
-    leaf_hash: u8,
-    annex: u8, // ???
-) {
+    leaf_hash: Option<vector<u8>>,
+    annex: Option<vector<u8>>, // ???
+): vector<u8> {
     let output_type = if (hash_type  == SIGHASH_DEFAULT) {
         SIGHASH_ALL
     } else {
@@ -203,9 +201,9 @@ public fun taproot_sighash_keyspending_path(
     if ((is_none || is_single) == false) {
         preimage.append(hash_outputs);
     };
-    // let spend_type = (leaf_hash ? 2 : 0) + (annex ? 1 : 0);
-    let mut spend_type: u8 = if (leaf_hash == 2) 2 else 0
-             + if (annex == 1) 1 else 0;
+    let spend_type: u8 = if (leaf_hash.is_some()) 2
+    else 0
+             + if (annex.is_some()) 1 else 0;
     preimage.push_back(spend_type);
     if (is_any_one_can_pay) {
         let inp = tx.input_at(input_idx_to_sign as u64);
@@ -218,6 +216,26 @@ public fun taproot_sighash_keyspending_path(
     } else {
         preimage.append(u32_to_le_bytes(input_idx_to_sign));
     };
+
+    // annex always none on BTC now
+    if (annex.is_some()) {};
+
+    if (is_single) {
+        preimage.append(hash_outputs);
+    };
+
+    // use taproot spending path
+
+    if (leaf_hash.is_some()) {
+        preimage.append(*leaf_hash.borrow());
+        preimage.push_back(0);
+        preimage.append(x"ffffffff");
+    };
+    // sha256("TapSighash") = f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a031
+    let mut hash_data = x"f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a031";
+    hash_data.push_back(0x00);
+    hash_data.append(preimage);
+    sha256(hash_data)
 }
 
 #[test]
