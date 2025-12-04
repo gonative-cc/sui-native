@@ -3,10 +3,16 @@
 module bitcoin_lib::sighash;
 
 use bitcoin_lib::crypto::hash256;
-use bitcoin_lib::encoding::{u32_to_le_bytes, zerohash_32bytes, script_to_var_bytes};
+use bitcoin_lib::encoding::{
+    u32_to_le_bytes,
+    zerohash_32bytes,
+    script_to_var_bytes,
+    u64_to_le_bytes
+};
 use bitcoin_lib::input;
 use bitcoin_lib::output;
 use bitcoin_lib::tx::{Self, Transaction};
+use std::hash::sha2_256 as sha256;
 
 #[test_only]
 use std::unit_test::assert_eq;
@@ -28,7 +34,10 @@ const OP_CHECKSIG: u8 = 0xac; // 172
 const SIGHASH_ALL: u8 = 0x01;
 const SIGHASH_NONE: u8 = 0x02;
 const SIGHASH_SINGLE: u8 = 0x03;
-const SIGHASH_ANYONECANPAY_FLAG: u8 = 0x80;
+const SIGHASH_ANYONECANPAY: u8 = 0x80;
+const SIGHASH_DEFAULT: u8 = 0x00;
+const SIGHASH_OUTPUT_MASK: u8 = 0x03;
+const SIGHASH_INPUT_MASK: u8 = 0x80;
 
 #[error]
 const EInvalidPKHLength: vector<u8> = b"PHK length must be 20";
@@ -58,7 +67,7 @@ public fun create_segwit_preimage(
     preimage.append(transaction.version());
 
     // HASH256(concatenation of all (input.tx_id + input.vout))
-    let hash_prevouts: vector<u8> = if ((sighash_type & SIGHASH_ANYONECANPAY_FLAG) == 0) {
+    let hash_prevouts: vector<u8> = if ((sighash_type & SIGHASH_ANYONECANPAY) == 0) {
         let mut all_prevouts_concat = vector[];
         transaction.inputs().length().do!(|i| {
             let input_ref = transaction.input_at(i);
@@ -75,7 +84,7 @@ public fun create_segwit_preimage(
     let base_sighash_type = sighash_type & 0x1f; // Mask off ANYONECANPAY bit
 
     let hash_sequence = if (
-        (sighash_type & SIGHASH_ANYONECANPAY_FLAG) == 0 &&
+        (sighash_type & SIGHASH_ANYONECANPAY) == 0 &&
             base_sighash_type != SIGHASH_NONE &&
             base_sighash_type != SIGHASH_SINGLE
     ) {
@@ -128,6 +137,87 @@ public fun create_segwit_preimage(
     preimage.append(transaction.locktime());
     preimage.append(u32_to_le_bytes((sighash_type as u32)));
     preimage //Complete preimage data to be hashed (Once and later edcsa::verify will hash second time)
+}
+
+// support SIGHASH_ALL only
+public fun taproot_sighash_keyspending_path(
+    tx: &Transaction,
+    input_idx_to_sign: u32,
+    previous_pubscripts: vector<vector<u8>>,
+    values: vector<u64>,
+    hash_type: u8, // right now only SIGNASH ALL
+    leaf_hash: u8,
+    annex: u8, // ???
+) {
+    let output_type = if (hash_type  == SIGHASH_DEFAULT) {
+        SIGHASH_ALL
+    } else {
+        hash_type & SIGHASH_OUTPUT_MASK
+    };
+    let input_type = hash_type & SIGHASH_INPUT_MASK;
+    let is_any_one_can_pay = input_type == SIGHASH_ANYONECANPAY;
+    let is_none = output_type == SIGHASH_NONE;
+    let is_single = output_type == SIGHASH_SINGLE;
+    let mut hash_prevouts = vector::empty();
+    let mut hash_amounts = vector::empty();
+    let mut hash_script_pubkeys = vector::empty();
+    let mut hash_sequences = vector::empty();
+    let mut hash_outputs = vector::empty();
+    if (!is_any_one_can_pay) {
+        tx.inputs().do!(|input| {
+            hash_prevouts.append(input.tx_id());
+            hash_prevouts.append(input.vout());
+            hash_sequences.append(input.sequence());
+        });
+        hash_prevouts = sha256(hash_prevouts);
+        hash_sequences = sha256(hash_sequences);
+        values.do!(|value| {
+            hash_amounts.append(u64_to_le_bytes(value));
+        });
+        hash_amounts = sha256(hash_amounts);
+
+        previous_pubscripts.do!(|pub_scripts| {
+            hash_script_pubkeys.append(pub_scripts)
+        });
+        hash_script_pubkeys = sha256(hash_script_pubkeys);
+    };
+    if ((is_none || is_single) == false) {
+        tx.outputs().do!(|output| {
+            hash_outputs.append(output.amount_bytes());
+            hash_outputs.append(output.script_pubkey());
+        });
+        hash_outputs = sha256(hash_outputs);
+    } else if (is_single && (input_idx_to_sign as u64 < tx.outputs().length())) {
+        let output = tx.output_at(input_idx_to_sign as u64);
+        hash_outputs.append(output.amount_bytes());
+        hash_outputs.append(output.script_pubkey());
+        hash_outputs = sha256(hash_outputs);
+    };
+    let mut preimage = vector::empty();
+    preimage.append(vector[hash_type]);
+    preimage.append(tx.version());
+    preimage.append(hash_prevouts);
+    preimage.append(hash_amounts);
+    preimage.append(hash_script_pubkeys);
+    preimage.append(hash_sequences);
+    if ((is_none || is_single) == false) {
+        preimage.append(hash_outputs);
+    };
+    // let spend_type = (leaf_hash ? 2 : 0) + (annex ? 1 : 0);
+    let mut spend_type: u8 = if (leaf_hash == 2) 2 else 0
+             + if (annex == 1) 1 else 0;
+    preimage.push_back(spend_type);
+    if (is_any_one_can_pay) {
+        let inp = tx.input_at(input_idx_to_sign as u64);
+        preimage.append(inp.tx_id());
+        preimage.append(inp.vout());
+        preimage.append(u64_to_le_bytes(values[input_idx_to_sign as u64]));
+        preimage.append(
+            script_to_var_bytes(&previous_pubscripts[input_idx_to_sign as u64]),
+        );
+    } else {
+        preimage.append(u32_to_le_bytes(input_idx_to_sign));
+    };
 }
 
 #[test]
