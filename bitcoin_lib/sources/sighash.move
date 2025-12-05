@@ -38,7 +38,12 @@ const SIGHASH_OUTPUT_MASK: u8 = 0x03;
 const SIGHASH_INPUT_MASK: u8 = 0x80;
 
 #[error]
-const EInvalidPKHLength: vector<u8> = b"PHK length must be 20";
+const EInvalidPKHLength: vector<u8> = b"PKH length must be 20";
+#[error]
+const EPreviousPubScriptLengthMismach: vector<u8> =
+    b"Previous pubscripts length mismatch with inputs length";
+#[error]
+const EValuesLengthMismatch: vector<u8> = b"size of values mismatch with inputs length";
 
 public fun create_p2wpkh_scriptcode(pkh: vector<u8>): vector<u8> {
     assert!(pkh.length() == 20, EInvalidPKHLength);
@@ -153,6 +158,8 @@ public fun taproot_sighash(
     leaf_hash: Option<vector<u8>>, // for spend utxo by key path this is none
     annex: Option<vector<u8>>, // BTC don't active this yet!
 ): vector<u8> {
+    assert!(previous_pubscripts.length() == tx.inputs().length(), EPreviousPubScriptLengthMismach);
+    assert!(values.length() == tx.inputs().length(), EValuesLengthMismatch);
     //follow https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#common-signature-message
     let output_type = if (hash_type  == SIGHASH_DEFAULT) {
         SIGHASH_ALL
