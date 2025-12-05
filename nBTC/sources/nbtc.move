@@ -522,7 +522,7 @@ public fun validate_signature(
         EInvalidDWalletCoordinator,
     );
     let r = &mut contract.redeem_requests[redeem_id];
-    assert!(r.has_signature(input_idx), EInputAlreadyUsed);
+    assert!(!r.has_signature(input_idx), EInputAlreadyUsed);
 
     r.validate_signature(dwallet_coordinator, &contract.storage, input_idx, sign_id);
 
