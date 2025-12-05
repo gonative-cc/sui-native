@@ -212,6 +212,8 @@ public fun taproot_sighash(
     };
 
     let mut preimage = vector::empty();
+    // BIP-341: When hash_type == SIGHASH_DEFAULT (0x00), treat as SIGHASH_ALL for output logic,
+    // but the signature preimage must use the actual hash_type byte provided (0x00).
     preimage.append(vector[hash_type]);
     preimage.append(tx.version());
     preimage.append(tx.locktime());
