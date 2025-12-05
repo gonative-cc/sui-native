@@ -140,10 +140,10 @@ public fun create_segwit_preimage(
 /// Compute sighash of taproot transaction
 /// tx: The taproot tx
 /// input_idx_to_sign: the input id we want to sign
-/// previous_pubscripts: the previous pubscript of all inputs
-/// values: the values in utxos we wat to spend
+/// previous_pubscripts: the previous pubscripts of all inputs
+/// values: the values in utxos we want to spend
 /// leaf_hash: leaf hash of script we want to spend,  for spend utxo by key path this is none
-/// annex: a reserved space for future upgrades. BTC don't active this yet
+/// annex: a reserved space for future upgrades. BTC doesn't use this yet
 public fun taproot_sighash(
     tx: &Transaction,
     input_idx_to_sign: u32,
@@ -211,10 +211,8 @@ public fun taproot_sighash(
     if ((is_none || is_single) == false) {
         preimage.append(hash_outputs);
     };
-    let spend_type: u8 =
-        (if (leaf_hash.is_some()) 2
-    else 0)
-             + (if (annex.is_some()) 1 else 0);
+    let mut spend_type: u8 =if (leaf_hash.is_some()) 2 else 0;
+    spend_type = spend_type + if (annex.is_some()) 1 else 0;
     preimage.push_back(spend_type);
     if (is_any_one_can_pay) {
         let inp = tx.input_at(input_idx_to_sign as u64);
@@ -245,9 +243,8 @@ public fun taproot_sighash(
 
     // sha256("TapSighash") = f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a031
     // we duplicate tag + data, and sha256 the whole data
-    // https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#specification
-    let mut hash_data = x"f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a031";
-    hash_data.append(x"f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a031");
+    // we need to duplicate it.
+    let mut hash_data = x"f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a031f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a031";
     // Extra zero byte because:
     // https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#cite_note-20
     hash_data.push_back(0x00);
