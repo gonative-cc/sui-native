@@ -142,7 +142,7 @@ public fun create_segwit_preimage(
 /// input_idx_to_sign: the input id we want to sign
 /// previous_pubscripts: the previous pubscript of all inputs
 /// values: the values in utxos we wat to spend
-/// leaf_hash: leaf hash of scprit we want to spend,  for spend utxo by key path this is none
+/// leaf_hash: leaf hash of script we want to spend,  for spend utxo by key path this is none
 /// annex: a reserved space for future upgrades. BTC don't active this yet
 public fun taproot_sighash(
     tx: &Transaction,
