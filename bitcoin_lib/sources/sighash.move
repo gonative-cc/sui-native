@@ -242,8 +242,10 @@ public fun taproot_sighash(
         preimage.push_back(0);
         preimage.append(x"ffffffff");
     };
+
     // sha256("TapSighash") = f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a031
     // we duplicate tag + data, and sha256 the whole data
+    // https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#specification
     let mut hash_data = x"f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a031";
     hash_data.append(x"f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a031");
     // Extra zero byte because:
