@@ -211,7 +211,7 @@ public fun taproot_sighash(
     if ((is_none || is_single) == false) {
         preimage.append(hash_outputs);
     };
-    let mut spend_type: u8 =if (leaf_hash.is_some()) 2 else 0;
+    let mut spend_type: u8 = if (leaf_hash.is_some()) 2 else 0;
     spend_type = spend_type + if (annex.is_some()) 1 else 0;
     preimage.push_back(spend_type);
     if (is_any_one_can_pay) {
@@ -242,9 +242,12 @@ public fun taproot_sighash(
     };
 
     // sha256("TapSighash") = f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a031
-    // we duplicate tag + data, and sha256 the whole data
-    // we need to duplicate it.
-    let mut hash_data = x"f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a031f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a031";
+    // hash_tag(x) = SHA256(SHA256(tag) || SHA256(tag) || x)
+    // in our case tag is "TapSighash"
+    // https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#specification
+    // duplicate sha256("TapSighash");
+    let mut hash_data =
+        x"f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a031f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a031";
     // Extra zero byte because:
     // https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#cite_note-20
     hash_data.push_back(0x00);
