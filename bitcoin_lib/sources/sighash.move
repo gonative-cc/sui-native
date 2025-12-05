@@ -312,6 +312,7 @@ fun test_create_p2wpkh_scriptcode() {
 
 #[test]
 fun test_taproot_sighash() {
+    // data from https://github.com/bitcoinjs/bitcoinjs-lib/blob/13aea8c84236fe14d7260a9ffaaf0a0489ef70b1/test/fixtures/transaction.json#L812
     let mut r = bitcoin_lib::reader::new(
         x"02000000097de20cbff686da83a54981d2b9bab3586f4ca7e48f57f5b55963115f3b334e9c010000000000000000d7b7cab57b1393ace2d064f4d4a2cb8af6def61273e127517d44759b6dafdd990000000000fffffffff8e1f583384333689228c5d28eac13366be082dc57441760d957275419a418420000000000fffffffff0689180aa63b30cb162a73c6d2a38b7eeda2a83ece74310fda0843ad604853b0100000000feffffff0c638ca38362001f5e128a01ae2b379288eb22cfaf903652b2ec1c88588f487a0000000000feffffff956149bdc66faa968eb2be2d2faa29718acbfe3941215893a2a3446d32acd05000000000000000000081efa267f1f0e46e054ecec01773de7c844721e010c2db5d5864a6a6b53e013a010000000000000000a690669c3c4a62507d93609810c6de3f99d1a6e311fe39dd23683d695c07bdee0000000000ffffffff727ab5f877438496f8613ca84002ff38e8292f7bd11f0a9b9b83ebd16779669e0100000000ffffffff0200ca9a3b000000001976a91406afd46bcdfd22ef94ac122aa11f241244a37ecc88ac807840cb0000000020ac9a87f5594be208f8532db38cff670c450ed2fea8fcdefcc9a663f78bab962b0065cd1d",
     );
@@ -343,9 +344,23 @@ fun test_taproot_sighash() {
     ];
 
     // vector of (input_idx_to_sign, hash_type)
-    let test_case_inputs = vector[vector[0, 3]];
+    let test_case_inputs = vector[
+        vector[0, 3],
+        vector[1, 0x83],
+        vector[3, 0x01],
+        vector[4, 0x00],
+        vector[6, 0x02],
+        vector[7, 0x82],
+        vector[8, 0x81],
+    ];
     let test_case_outputs = vector[
         x"7e584883b084ace0469c6962a9a7d2a9060e1f3c218ab40d32c77651482122bc",
+        x"325a644af47e8a5a2591cda0ab0723978537318f10e6a63d4eed783b96a71a4d",
+        x"6ffd256e108685b41831385f57eebf2fca041bc6b5e607ea11b3e03d4cf9d9ba",
+        x"9f90136737540ccc18707e1fd398ad222a1a7e4dd65cbfd22dbe4660191efa58",
+        x"835c9ab6084ed9a8ae9b7cda21e0aa797aca3b76a54bd1e3c7db093f6c57e23f",
+        x"df1cca638283c667084b8ffe6bf6e116cc5a53cf7ae1202c5fee45a9085f1ba5",
+        x"30319859ca79ea1b7a9782e9daebc46e4ca4ca2bc04c9c53b2ec87fa83a526bd",
     ];
 
     test_case_inputs.length().do!(|i| {
