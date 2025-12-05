@@ -156,6 +156,7 @@ public fun taproot_sighash_keyspending_path(
     let is_any_one_can_pay = input_type == SIGHASH_ANYONECANPAY;
     let is_none = output_type == SIGHASH_NONE;
     let is_single = output_type == SIGHASH_SINGLE;
+
     let mut hash_prevouts = vector::empty();
     let mut hash_amounts = vector::empty();
     let mut hash_script_pubkeys = vector::empty();
@@ -238,6 +239,8 @@ public fun taproot_sighash_keyspending_path(
     sha256(hash_data)
 }
 
+#[test_only]
+use bitcoin_lib::{input, output, tx};
 #[test]
 fun test_create_segwit_preimage_lmb_example() {
     // all the data for the test copied from the exmaple https://learnmeabitcoin.com/technical/keys/signature/
@@ -297,5 +300,7 @@ fun test_create_p2wpkh_scriptcode() {
     assert_eq!(create_p2wpkh_scriptcode(pkh), expected_script_code);
 }
 
+#[test]
+fun test_taproot_sighash() {}
 // TODO: add a test case where user spends two UTXOs
 //
