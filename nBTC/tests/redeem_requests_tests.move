@@ -4,10 +4,9 @@ module nbtc::redeem_request_tests;
 use nbtc::nbtc_tests::setup;
 use nbtc::nbtc_utxo::new_utxo;
 use nbtc::redeem_request;
-use nbtc::storage::{Self, Storage};
-use std::unit_test::assert_eq;
+use nbtc::storage;
+use std::unit_test::{assert_eq, destroy};
 use sui::clock;
-use sui::test_utils::destroy;
 
 macro fun MOCK_DWALLET_ID(): ID {
     object::id_from_address(@0x01)

@@ -1,7 +1,7 @@
 #[test_only]
 module nbtc::e2e_tests;
 
-use ika_common::advance_epoch_approver::create;
+/*use ika_common::advance_epoch_approver::create;
 use ika_dwallet_2pc_mpc::ika_dwallet_2pc_mpc_init::{init_for_testing, initialize_for_testing};
 use nbtc::nbtc::NBTC;
 use nbtc::nbtc_tests::setup;
@@ -79,3 +79,4 @@ fun redeem_happy_case() {
     destroy(ctr);
     scenario.end();
 }
+*/

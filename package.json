@@ -9,20 +9,24 @@
 	"scripts": {
 		"lint": "echo \"Error: no linter specified\"",
 		"typecheck": "tsc --noEmit",
-		"format:all": "prettier --no-config -w .",
+		"format:all": "prettier -w .",
 		"format:move": "prettier-move --config .prettier-move.json -w",
 		"format:move-all": "prettier-move --config .prettier-move.json -w **/*.move",
 		"test": "bun test"
 	},
 	"dependencies": {
+		"@ika.xyz/sdk": "^0.2.2",
+		"@mysten/sui": "^1.45.0",
 		"bip32": "5.0.0-rc.0",
 		"bip39": "^3.1.0",
-		"bitcoinjs-lib": "^6.1.7",
+		"bitcoinjs-lib": "^7.0.0",
+		"commander": "^14.0.2",
+		"dotenv": "^17.2.3",
 		"tiny-secp256k1": "^2.2.4"
 	},
 	"devDependencies": {
 		"@types/bun": "latest",
-		"@types/node": "^24.9.1",
+		"@types/node": "^24.10.1",
 		"typescript": "^5.9.3"
 	},
 	"peerDependencies": {

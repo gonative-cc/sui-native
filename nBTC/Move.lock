@@ -2,7 +2,7 @@
 
 [move]
 version = 3
-manifest_digest = "922C9DCA925B115B982EB05C165DADCFD7AED02BDB5566F9413566CE18DD9F8C"
+manifest_digest = "E72FF32C2AB792217E5E8736243631179C0EC6B7A160C3CE61EACD19B95110D7"
 deps_digest = "8227D341C0550A37580C10FA45FE148A465225149C69D179737E0FE454AD6AEC"
 dependencies = [
   { id = "Bridge", name = "Bridge" },
@@ -72,7 +72,7 @@ dependencies = [
 
 [[move.package]]
 id = "ika"
-source = { git = "https://github.com/gonative-cc/dwallet-network.git", rev = "feat/unit-test-support", subdir = "contracts/ika" }
+source = { git = "https://github.com/dwallet-labs/ika.git", rev = "main", subdir = "deployed_contracts/testnet/ika" }
 
 dependencies = [
   { id = "Bridge", name = "Bridge" },
@@ -83,7 +83,7 @@ dependencies = [
 
 [[move.package]]
 id = "ika_common"
-source = { git = "https://github.com/gonative-cc/dwallet-network.git", rev = "feat/unit-test-support", subdir = "contracts/ika_common" }
+source = { git = "https://github.com/dwallet-labs/ika.git", rev = "main", subdir = "deployed_contracts/testnet/ika_common" }
 
 dependencies = [
   { id = "Bridge", name = "Bridge" },
@@ -95,7 +95,7 @@ dependencies = [
 
 [[move.package]]
 id = "ika_dwallet_2pc_mpc"
-source = { git = "https://github.com/gonative-cc/dwallet-network.git", rev = "feat/unit-test-support", subdir = "contracts/ika_dwallet_2pc_mpc" }
+source = { git = "https://github.com/dwallet-labs/ika.git", rev = "main", subdir = "deployed_contracts/testnet/ika_dwallet_2pc_mpc" }
 
 dependencies = [
   { id = "Bridge", name = "Bridge" },
