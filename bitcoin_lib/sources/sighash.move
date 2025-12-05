@@ -205,12 +205,7 @@ public fun taproot_sighash(
         hash_outputs.append(output.amount_bytes());
         hash_outputs.append(script_to_var_bytes(&output.script_pubkey()));
         hash_outputs = sha256(hash_outputs);
-    } else if (is_single && (input_idx_to_sign as u64 >= tx.outputs().length())) {
-        // BIP-341: SIGHASH_SINGLE with input index out of range.
-        // hash_outputs intentionally left empty (no output hash included).
-        // This matches the required behavior: the hash is still computed, but without any output hash.
     };
-
     let mut preimage = vector::empty();
     // BIP-341: When hash_type == SIGHASH_DEFAULT (0x00), treat as SIGHASH_ALL for output logic,
     // but the signature preimage must use the actual hash_type byte provided (0x00).
