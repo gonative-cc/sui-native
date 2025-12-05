@@ -137,15 +137,23 @@ public fun create_segwit_preimage(
     preimage //Complete preimage data to be hashed (Once and later edcsa::verify will hash second time)
 }
 
+/// Compute sighash of taproot transaction
+/// tx: The taproot tx
+/// input_idx_to_sign: the input id we want to sign
+/// previous_pubscripts: the previous pubscript of all inputs
+/// values: the values in utxos we wat to spend
+/// leaf_hash: leaf hash of scprit we want to spend,  for spend utxo by key path this is none
+/// annex: a reserved space for future upgrades. BTC don't active this yet
 public fun taproot_sighash(
     tx: &Transaction,
     input_idx_to_sign: u32,
     previous_pubscripts: vector<vector<u8>>,
     values: vector<u64>,
     hash_type: u8,
-    leaf_hash: Option<vector<u8>>,
-    annex: Option<vector<u8>>,
+    leaf_hash: Option<vector<u8>>, // for spend utxo by key path this is none
+    annex: Option<vector<u8>>, // BTC don't active this yet!
 ): vector<u8> {
+    //follow https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#common-signature-message
     let output_type = if (hash_type  == SIGHASH_DEFAULT) {
         SIGHASH_ALL
     } else {
@@ -191,11 +199,7 @@ public fun taproot_sighash(
         hash_outputs.append(script_to_var_bytes(&output.script_pubkey()));
         hash_outputs = sha256(hash_outputs);
     };
-    // std::debug::print(&hash_prevouts);
-    // std::debug::print(&hash_amounts);
-    // std::debug::print(&hash_script_pubkeys);
-    // std::debug::print(&hash_sequences);
-    //
+
     let mut preimage = vector::empty();
     preimage.append(vector[hash_type]);
     preimage.append(tx.version());
@@ -233,17 +237,17 @@ public fun taproot_sighash(
     };
 
     // use taproot spending path
-
     if (leaf_hash.is_some()) {
         preimage.append(*leaf_hash.borrow());
         preimage.push_back(0);
         preimage.append(x"ffffffff");
     };
-    // std::debug::print(&preimage);
     // sha256("TapSighash") = f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a031
-    // we duplicate tag + data
+    // we duplicate tag + data, and sha256 the whole data
     let mut hash_data = x"f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a031";
     hash_data.append(x"f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a031");
+    // Extra zero byte because:
+    // https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#cite_note-20
     hash_data.push_back(0x00);
     hash_data.append(preimage);
     sha256(hash_data)
