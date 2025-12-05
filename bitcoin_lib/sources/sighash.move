@@ -137,15 +137,14 @@ public fun create_segwit_preimage(
     preimage //Complete preimage data to be hashed (Once and later edcsa::verify will hash second time)
 }
 
-// support SIGHASH_ALL only
-public fun taproot_sighash_keyspending_path(
+public fun taproot_sighash(
     tx: &Transaction,
     input_idx_to_sign: u32,
     previous_pubscripts: vector<vector<u8>>,
     values: vector<u64>,
-    hash_type: u8, // right now only SIGNASH ALL
+    hash_type: u8,
     leaf_hash: Option<vector<u8>>,
-    annex: Option<vector<u8>>, // ???
+    annex: Option<vector<u8>>,
 ): vector<u8> {
     let output_type = if (hash_type  == SIGHASH_DEFAULT) {
         SIGHASH_ALL
@@ -176,25 +175,31 @@ public fun taproot_sighash_keyspending_path(
         hash_amounts = sha256(hash_amounts);
 
         previous_pubscripts.do!(|pub_scripts| {
-            hash_script_pubkeys.append(pub_scripts)
+            hash_script_pubkeys.append(script_to_var_bytes(&pub_scripts))
         });
         hash_script_pubkeys = sha256(hash_script_pubkeys);
     };
     if ((is_none || is_single) == false) {
         tx.outputs().do!(|output| {
             hash_outputs.append(output.amount_bytes());
-            hash_outputs.append(output.script_pubkey());
+            hash_outputs.append(script_to_var_bytes(&output.script_pubkey()));
         });
         hash_outputs = sha256(hash_outputs);
     } else if (is_single && (input_idx_to_sign as u64 < tx.outputs().length())) {
         let output = tx.output_at(input_idx_to_sign as u64);
         hash_outputs.append(output.amount_bytes());
-        hash_outputs.append(output.script_pubkey());
+        hash_outputs.append(script_to_var_bytes(&output.script_pubkey()));
         hash_outputs = sha256(hash_outputs);
     };
+    // std::debug::print(&hash_prevouts);
+    // std::debug::print(&hash_amounts);
+    // std::debug::print(&hash_script_pubkeys);
+    // std::debug::print(&hash_sequences);
+    //
     let mut preimage = vector::empty();
     preimage.append(vector[hash_type]);
     preimage.append(tx.version());
+    preimage.append(tx.locktime());
     preimage.append(hash_prevouts);
     preimage.append(hash_amounts);
     preimage.append(hash_script_pubkeys);
@@ -202,9 +207,10 @@ public fun taproot_sighash_keyspending_path(
     if ((is_none || is_single) == false) {
         preimage.append(hash_outputs);
     };
-    let spend_type: u8 = if (leaf_hash.is_some()) 2
-    else 0
-             + if (annex.is_some()) 1 else 0;
+    let spend_type: u8 =
+        (if (leaf_hash.is_some()) 2
+    else 0)
+             + (if (annex.is_some()) 1 else 0);
     preimage.push_back(spend_type);
     if (is_any_one_can_pay) {
         let inp = tx.input_at(input_idx_to_sign as u64);
@@ -214,6 +220,7 @@ public fun taproot_sighash_keyspending_path(
         preimage.append(
             script_to_var_bytes(&previous_pubscripts[input_idx_to_sign as u64]),
         );
+        preimage.append(inp.sequence());
     } else {
         preimage.append(u32_to_le_bytes(input_idx_to_sign));
     };
@@ -232,8 +239,11 @@ public fun taproot_sighash_keyspending_path(
         preimage.push_back(0);
         preimage.append(x"ffffffff");
     };
+    // std::debug::print(&preimage);
     // sha256("TapSighash") = f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a031
+    // we duplicate tag + data
     let mut hash_data = x"f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a031";
+    hash_data.append(x"f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a031");
     hash_data.push_back(0x00);
     hash_data.append(preimage);
     sha256(hash_data)
@@ -301,6 +311,57 @@ fun test_create_p2wpkh_scriptcode() {
 }
 
 #[test]
-fun test_taproot_sighash() {}
+fun test_taproot_sighash() {
+    let mut r = bitcoin_lib::reader::new(
+        x"02000000097de20cbff686da83a54981d2b9bab3586f4ca7e48f57f5b55963115f3b334e9c010000000000000000d7b7cab57b1393ace2d064f4d4a2cb8af6def61273e127517d44759b6dafdd990000000000fffffffff8e1f583384333689228c5d28eac13366be082dc57441760d957275419a418420000000000fffffffff0689180aa63b30cb162a73c6d2a38b7eeda2a83ece74310fda0843ad604853b0100000000feffffff0c638ca38362001f5e128a01ae2b379288eb22cfaf903652b2ec1c88588f487a0000000000feffffff956149bdc66faa968eb2be2d2faa29718acbfe3941215893a2a3446d32acd05000000000000000000081efa267f1f0e46e054ecec01773de7c844721e010c2db5d5864a6a6b53e013a010000000000000000a690669c3c4a62507d93609810c6de3f99d1a6e311fe39dd23683d695c07bdee0000000000ffffffff727ab5f877438496f8613ca84002ff38e8292f7bd11f0a9b9b83ebd16779669e0100000000ffffffff0200ca9a3b000000001976a91406afd46bcdfd22ef94ac122aa11f241244a37ecc88ac807840cb0000000020ac9a87f5594be208f8532db38cff670c450ed2fea8fcdefcc9a663f78bab962b0065cd1d",
+    );
+
+    let txn = tx::deserialize(&mut r);
+
+    let previous_output_pubscripts = vector[
+        x"512053a1f6e454df1aa2776a2814a721372d6258050de330b3c6d10ee8f4e0dda343",
+        x"5120147c9c57132f6e7ecddba9800bb0c4449251c92a1e60371ee77557b6620f3ea3",
+        x"76a914751e76e8199196d454941c45d1b3a323f1433bd688ac",
+        x"5120e4d810fd50586274face62b8a807eb9719cef49c04177cc6b76a9a4251d5450e",
+        x"512091b64d5324723a985170e4dc5a0f84c041804f2cd12660fa5dec09fc21783605",
+        x"00147dd65592d0ab2fe0d0257d571abf032cd9db93dc",
+        x"512075169f4001aa68f15bbed28b218df1d0a62cbbcf1188c6665110c293c907b831",
+        x"51200f63ca2c7639b9bb4be0465cc0aa3ee78a0761ba5f5f7d6ff8eab340f09da561",
+        x"5120053690babeabbb7850c32eead0acf8df990ced79f7a31e358fabf2658b4bc587",
+    ];
+
+    let values = vector[
+        420000000,
+        462000000,
+        294000000,
+        504000000,
+        630000000,
+        378000000,
+        672000000,
+        546000000,
+        588000000,
+    ];
+
+    // vector of (input_idx_to_sign, hash_type)
+    let test_case_inputs = vector[vector[0, 3]];
+    let test_case_outputs = vector[
+        x"7e584883b084ace0469c6962a9a7d2a9060e1f3c218ab40d32c77651482122bc",
+    ];
+
+    test_case_inputs.length().do!(|i| {
+        let input_idx_to_sign = test_case_inputs[i][0] as u32;
+        let hash_type = test_case_inputs[i][1] as u8;
+        let sighash = taproot_sighash(
+            &txn,
+            input_idx_to_sign,
+            previous_output_pubscripts,
+            values,
+            hash_type,
+            option::none(),
+            option::none(),
+        );
+        assert_eq!(sighash, test_case_outputs[i]);
+    });
+}
 // TODO: add a test case where user spends two UTXOs
 //
