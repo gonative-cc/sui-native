@@ -254,13 +254,15 @@ public fun bigendian_from_u256(number: u256): vector<u8> {
 /// 0x01 <= s <= 0x7FFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF 5D576E73 57A4501D DFE92F46 681B20A0
 /// (r, s) use big endian format
 public fun sig_low_s(sig_s: vector<u8>): vector<u8> {
-    let mut s_num = big_endian_to_u256(s);
+    let mut s_num = big_endian_to_u256(sig_s);
     let half_n = 0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0;
     let n = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141;
     if (s_num > half_n) {
         s_num = n - s_num;
-    };
-    bigendian_from_u256(s_num)
+        bigendian_from_u256(s_num)
+    } else {
+        sig_s
+    }
 }
 
 /// Fomat raw singature (r, s) to btc ECDSA format,
@@ -274,7 +276,7 @@ public fun der_encode_signature(signature: vector<u8>, signature_hash_type: u8):
         r.insert(0x00, 0);
     };
 
-    s = low_s(s);
+    s = sig_low_s(s);
     if (s[0] >= 0x80) {
         s.insert(0x00, 0);
     };
