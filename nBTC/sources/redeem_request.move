@@ -262,7 +262,7 @@ public fun sig_hash(r: &RedeemRequest, input_idx: u32, storage: &Storage): vecto
             std::hash::sha2_256(
                 create_segwit_preimage(
                     &tx,
-                    input_idx as u64, // input index
+                    input_idx, // input index
                     &script_code, // segwit nbtc spend key
                     u64_to_le_bytes(r.inputs[input_idx as u64].value()), // amount
                     SIGNHASH_ALL,

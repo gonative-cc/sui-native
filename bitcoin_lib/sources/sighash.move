@@ -61,7 +61,7 @@ public fun create_p2wpkh_scriptcode(pkh: vector<u8>): vector<u8> {
 /// https://learnmeabitcoin.com/technical/keys/signature/ -> Segwit Algorithm
 public fun create_segwit_preimage(
     transaction: &Transaction,
-    input_idx_to_sign: u64,
+    input_idx_to_sign: u32,
     input_script: &vector<u8>, // For P2WPKH: 0x1976a914{PKH}88ac. For P2WSH: the witnessScript.
     amount_spent_by_this_input: vector<u8>,
     sighash_type: u8,
@@ -102,7 +102,7 @@ public fun create_segwit_preimage(
     preimage.append(hash_sequence);
 
     // Serialize the TXID and VOUT for the input were signing
-    let current_input = transaction.input_at(input_idx_to_sign);
+    let current_input = transaction.input_at(input_idx_to_sign as u64);
     preimage.append(current_input.tx_id());
     preimage.append(current_input.vout());
 
@@ -124,9 +124,9 @@ public fun create_segwit_preimage(
         });
         hash256(all_outputs_concat)
     } else if (
-        base_sighash_type == SIGHASH_SINGLE && input_idx_to_sign < transaction.outputs().length()
+        base_sighash_type == SIGHASH_SINGLE && (input_idx_to_sign as u64) < transaction.outputs().length()
     ) {
-        let output_to_sign = transaction.output_at(input_idx_to_sign);
+        let output_to_sign = transaction.output_at(input_idx_to_sign as u64);
         let mut single_output_concatenated = vector[];
         single_output_concatenated.append(output_to_sign.amount_bytes());
         single_output_concatenated.append(
@@ -302,7 +302,7 @@ fun test_create_segwit_preimage_lmb_example() {
         vector[],
     );
 
-    let input_idx_to_sign = 0u64;
+    let input_idx_to_sign = 0u32;
     let input_script = x"76a914aa966f56de599b4094b61aa68a2b3df9e97e9c4888ac";
     let amount_spent_by_this_input = x"3075000000000000";
     let sighash_type = SIGHASH_ALL; // 0x01

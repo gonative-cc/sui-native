@@ -648,7 +648,7 @@ fun create_sighash(ip: &Interpreter, pub_key: vector<u8>, sighash_flag: u8): vec
 
         let bip143_preimage = sighash::create_segwit_preimage(
             &ctx.tx,
-            ctx.input_index,
+            ctx.input_index as u32,
             &script_code_to_use_for_sighash,
             u64_to_le_bytes(ctx.amount),
             sighash_flag,
