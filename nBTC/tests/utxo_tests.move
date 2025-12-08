@@ -20,11 +20,11 @@ fun validate_utxos_working_case() {
     let tx_id_1 = x"1111111111111111111111111111111111111111111111111111111111111111";
     let spend_key = x"0014e8340a12dd2c95e5fedc8b088a81dcac42c106fb";
     let utxo_1 = nbtc_utxo::new_utxo(tx_id_1, 0, 50000);
-    nbtc_utxo::add(&mut onchain_utxos, MOCK_DWALLET_ID!(), utxo_1);
+    onchain_utxos.add(MOCK_DWALLET_ID!(), utxo_1);
 
     let tx_id_2 = x"2222222222222222222222222222222222222222222222222222222222222222";
     let utxo_2 = nbtc_utxo::new_utxo(tx_id_2, 1, 30000);
-    nbtc_utxo::add(&mut onchain_utxos, MOCK_DWALLET_ID!(), utxo_2);
+    onchain_utxos.add(MOCK_DWALLET_ID!(), utxo_2);
 
     let proposed_indices = vector[0, 1];
     let withdrawal_amount = 70000;
@@ -51,7 +51,7 @@ fun validate_utxos_empty_indices() {
 
     let tx_id = x"1111111111111111111111111111111111111111111111111111111111111111";
     let utxo = nbtc_utxo::new_utxo(tx_id, 0, 50000);
-    nbtc_utxo::add(&mut onchain_utxos, MOCK_DWALLET_ID!(), utxo);
+    onchain_utxos.add(MOCK_DWALLET_ID!(), utxo);
 
     let proposed_indices = vector[];
 
@@ -92,7 +92,7 @@ fun validate_utxos_insufficient_amount() {
 
     let tx_id = x"1111111111111111111111111111111111111111111111111111111111111111";
     let utxo = nbtc_utxo::new_utxo(tx_id, 0, 50000);
-    nbtc_utxo::add(&mut onchain_utxos, MOCK_DWALLET_ID!(), utxo);
+    onchain_utxos.add(MOCK_DWALLET_ID!(), utxo);
 
     let proposed_indices = vector[0];
 
@@ -115,7 +115,7 @@ fun validate_utxos_exact_match() {
 
     let tx_id = x"1111111111111111111111111111111111111111111111111111111111111111";
     let utxo = nbtc_utxo::new_utxo(tx_id, 0, 50000);
-    nbtc_utxo::add(&mut onchain_utxos, MOCK_DWALLET_ID!(), utxo);
+    onchain_utxos.add(MOCK_DWALLET_ID!(), utxo);
 
     let proposed_indices = vector[0];
 

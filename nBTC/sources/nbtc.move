@@ -792,7 +792,7 @@ public fun redeem_duration(contract: &NbtcContract): u64 {
 #[test_only]
 public fun add_utxo_for_test(ctr: &mut NbtcContract, _idx: u64, utxo: Utxo) {
     let dwallet_id = *option::borrow(&ctr.active_dwallet_id);
-    nbtc_utxo::add(&mut ctr.utxo_map, dwallet_id, utxo);
+    ctr.utxo_map.add(dwallet_id, utxo);
 }
 
 #[test_only]

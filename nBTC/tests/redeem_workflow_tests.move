@@ -25,7 +25,11 @@ fun setup_redeem_test(
     sui::test_scenario::Scenario,
     clock::Clock,
 ) {
-    let (lc, mut ctr, mut scenario) = setup(NBTC_SCRIPT_PUBKEY, ADMIN);
+    let (lc, mut ctr, mut scenario) = setup(
+        NBTC_SCRIPT_PUBKEY,
+        ADMIN,
+        object::id_from_address(ADMIN),
+    );
 
     let dwallet_id = object::id_from_address(ADMIN);
     let utxo = new_utxo(TX_HASH, 0, utxo_amount);

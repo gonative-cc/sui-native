@@ -1,7 +1,7 @@
 #[test_only]
 module nbtc::utxo_ranking_tests;
 
-use nbtc::nbtc_utxo::{new_utxo, utxo_ranking, new_utxo_map, add};
+use nbtc::nbtc_utxo::{new_utxo, utxo_ranking, new_utxo_map};
 use std::unit_test::{assert_eq, destroy};
 use sui::test_scenario;
 
@@ -30,28 +30,28 @@ fun exact_match_wins_over_change() {
         0,
         35_000_000,
     );
-    add(&mut utxo_map, active_dwallet_id, utxo1);
+    utxo_map.add(active_dwallet_id, utxo1);
 
     let utxo2 = new_utxo(
         x"b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2",
         1,
         30_000_000,
     );
-    add(&mut utxo_map, active_dwallet_id, utxo2);
+    utxo_map.add(active_dwallet_id, utxo2);
 
     let utxo3 = new_utxo(
         x"c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3",
         0,
         20_000_000,
     );
-    add(&mut utxo_map, active_dwallet_id, utxo3);
+    utxo_map.add(active_dwallet_id, utxo3);
 
     let utxo4 = new_utxo(
         x"d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4",
         2,
         15_000_000,
     );
-    add(&mut utxo_map, active_dwallet_id, utxo4);
+    utxo_map.add(active_dwallet_id, utxo4);
 
     let utxo_ids1 = vector[0, 1, 2, 3];
     let dwallet_ids1 = vector[
@@ -72,21 +72,21 @@ fun exact_match_wins_over_change() {
         0,
         110_000_000,
     );
-    add(&mut utxo_map2, active_dwallet_id, utxo5);
+    utxo_map2.add(active_dwallet_id, utxo5);
 
     let utxo6 = new_utxo(
         x"f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6",
         1,
         80_000_000,
     );
-    add(&mut utxo_map2, active_dwallet_id, utxo6);
+    utxo_map2.add(active_dwallet_id, utxo6);
 
     let utxo7 = new_utxo(
         x"a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7",
         0,
         50_000_000,
     );
-    add(&mut utxo_map2, active_dwallet_id, utxo7);
+    utxo_map2.add(active_dwallet_id, utxo7);
 
     let utxo_ids2 = vector[0, 1, 2];
     let dwallet_ids2 = vector[active_dwallet_id, active_dwallet_id, active_dwallet_id];
@@ -116,35 +116,35 @@ fun inactive_keys_with_exact_match_rank_above() {
         0,
         60_000_000,
     );
-    add(&mut utxo_map, inactive_dwallet_id, utxo1);
+    utxo_map.add(inactive_dwallet_id, utxo1);
 
     let utxo2 = new_utxo(
         x"c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9",
         1,
         40_000_000,
     );
-    add(&mut utxo_map, inactive_dwallet_id, utxo2);
+    utxo_map.add(inactive_dwallet_id, utxo2);
 
     let utxo3 = new_utxo(
         x"dad1dad1dad1dad1dad1dad1dad1dad1dad1dad1dad1dad1dad1dad1dad1dad1",
         2,
         30_000_000,
     );
-    add(&mut utxo_map, inactive_dwallet_id, utxo3);
+    utxo_map.add(inactive_dwallet_id, utxo3);
 
     let utxo4 = new_utxo(
         x"ebe2ebe2ebe2ebe2ebe2ebe2ebe2ebe2ebe2ebe2ebe2ebe2ebe2ebe2ebe2ebe2",
         0,
         20_000_000,
     );
-    add(&mut utxo_map, inactive_dwallet_id, utxo4);
+    utxo_map.add(inactive_dwallet_id, utxo4);
 
     let utxo5 = new_utxo(
         x"fcf3fcf3fcf3fcf3fcf3fcf3fcf3fcf3fcf3fcf3fcf3fcf3fcf3fcf3fcf3fcf3",
         1,
         10_000_000,
     );
-    add(&mut utxo_map, inactive_dwallet_id, utxo5);
+    utxo_map.add(inactive_dwallet_id, utxo5);
 
     let utxo_ids1 = vector[0, 1, 2, 3, 4];
     let dwallet_ids1 = vector[
@@ -166,28 +166,28 @@ fun inactive_keys_with_exact_match_rank_above() {
         0,
         110_000_000,
     );
-    add(&mut utxo_map2, active_dwallet_id, utxo6);
+    utxo_map2.add(active_dwallet_id, utxo6);
 
     let utxo7 = new_utxo(
         x"b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1",
         2,
         90_000_000,
     );
-    add(&mut utxo_map2, active_dwallet_id, utxo7);
+    utxo_map2.add(active_dwallet_id, utxo7);
 
     let utxo8 = new_utxo(
         x"c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2",
         1,
         70_000_000,
     );
-    add(&mut utxo_map2, active_dwallet_id, utxo8);
+    utxo_map2.add(active_dwallet_id, utxo8);
 
     let utxo9 = new_utxo(
         x"d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3",
         0,
         50_000_000,
     );
-    add(&mut utxo_map2, active_dwallet_id, utxo9);
+    utxo_map2.add(active_dwallet_id, utxo9);
 
     let utxo_ids2 = vector[0, 1, 2, 3];
     let dwallet_ids2 = vector[
@@ -221,7 +221,7 @@ fun minimize_inputs_priority() {
         0,
         110_000_000,
     );
-    add(&mut utxo_map, active_dwallet_id, utxo1);
+    utxo_map.add(active_dwallet_id, utxo1);
 
     let utxo_ids1 = vector[0];
     let dwallet_ids1 = vector[active_dwallet_id];
@@ -237,35 +237,35 @@ fun minimize_inputs_priority() {
         0,
         20_000_000,
     );
-    add(&mut utxo_map2, active_dwallet_id, utxo2);
+    utxo_map2.add(active_dwallet_id, utxo2);
 
     let utxo3 = new_utxo(
         x"3333333333333333333333333333333333333333333333333333333333333333",
         1,
         20_000_000,
     );
-    add(&mut utxo_map2, active_dwallet_id, utxo3);
+    utxo_map2.add(active_dwallet_id, utxo3);
 
     let utxo4 = new_utxo(
         x"4444444444444444444444444444444444444444444444444444444444444444",
         2,
         20_000_000,
     );
-    add(&mut utxo_map2, active_dwallet_id, utxo4);
+    utxo_map2.add(active_dwallet_id, utxo4);
 
     let utxo5 = new_utxo(
         x"5555555555555555555555555555555555555555555555555555555555555555",
         3,
         20_000_000,
     );
-    add(&mut utxo_map2, active_dwallet_id, utxo5);
+    utxo_map2.add(active_dwallet_id, utxo5);
 
     let utxo6 = new_utxo(
         x"6666666666666666666666666666666666666666666666666666666666666666",
         4,
         20_000_000,
     );
-    add(&mut utxo_map2, active_dwallet_id, utxo6);
+    utxo_map2.add(active_dwallet_id, utxo6);
 
     let utxo_ids2 = vector[0, 1, 2, 3, 4];
     let dwallet_ids2 = vector[
@@ -300,7 +300,7 @@ fun dust_penalized() {
         0,
         100_008_000,
     );
-    add(&mut utxo_map, active_dwallet_id, utxo1);
+    utxo_map.add(active_dwallet_id, utxo1);
 
     let utxo_ids1 = vector[0];
     let dwallet_ids1 = vector[active_dwallet_id];
@@ -316,7 +316,7 @@ fun dust_penalized() {
         0,
         100_050_000,
     );
-    add(&mut utxo_map2, active_dwallet_id, utxo2);
+    utxo_map2.add(active_dwallet_id, utxo2);
 
     let utxo_ids2 = vector[0];
     let dwallet_ids2 = vector[active_dwallet_id];

@@ -10,6 +10,7 @@ use nbtc::nbtc::{Self, NbtcContract, EMintAmountIsZero, ETxAlreadyUsed, EAlready
 use std::unit_test::{assert_eq, destroy};
 use sui::address;
 use sui::coin::Coin;
+use sui::object;
 use sui::test_scenario::{Self, take_from_address, Scenario};
 
 // The fallback Sui address to receive nBTC if OP_RETURN data is invalid or missing.
@@ -87,9 +88,10 @@ fun get_fallback_mint_data(): TestData {
 public fun setup(
     nbtc_bitcoin_addr: vector<u8>,
     sender: address,
+    dwallet_id: ID,
 ): (LightClient, NbtcContract, Scenario) {
     let mut scenario = test_scenario::begin(sender);
-    let dwallet_coordinator = @0x01.to_id(); // dummy dwallet coordinator
+    let dwallet_coordinator = dwallet_id;
     let headers = vector[
         header::new(
             x"00000020a97594d6b5b9369535da225d464bde7e0ae3794e9b270a010000000000000000addcae45a90f73dc68e3225b2d0be1c155bf9b0864f187e31203079c0b6d42c5bb27e8585a330218b119eaee",
@@ -108,7 +110,7 @@ public fun setup(
         nbtc_bitcoin_addr,
         nbtc_bitcoin_addr,
         vector::empty(),
-        dwallet_cap_for_testing(object::id_from_address(@0x01), scenario.ctx()),
+        dwallet_cap_for_testing(dwallet_id, scenario.ctx()),
         scenario.ctx(),
     );
     (lc, ctr, scenario)
@@ -117,7 +119,11 @@ public fun setup(
 #[test]
 fun test_nbtc_mint() {
     let sender = @0x1;
-    let (lc, mut ctr, mut scenario) = setup(NBTC_SCRIPT_PUBKEY, sender);
+    let (lc, mut ctr, mut scenario) = setup(
+        NBTC_SCRIPT_PUBKEY,
+        sender,
+        object::id_from_address(@0x01),
+    );
 
     mint_and_assert(
         &mut scenario,
@@ -149,7 +155,11 @@ fun test_nbtc_mint() {
 #[test]
 fun test_mint_with_fee() {
     let sender = @0x1;
-    let (lc, mut ctr, mut scenario) = setup(NBTC_SCRIPT_PUBKEY, sender);
+    let (lc, mut ctr, mut scenario) = setup(
+        NBTC_SCRIPT_PUBKEY,
+        sender,
+        object::id_from_address(@0x01),
+    );
 
     mint_and_assert(
         &mut scenario,
@@ -190,6 +200,7 @@ fun test_nbtc_mint_fail_amount_is_zero() {
     let (lc, mut ctr, mut scenario) = setup(
         x"76a914509a651dd392e1bc125323f629b67d65cca3d4ff88ac",
         sender,
+        object::id_from_address(@0x01),
     );
     let data = get_valid_mint_data();
 
@@ -213,7 +224,11 @@ fun test_nbtc_mint_fail_amount_is_zero() {
 #[expected_failure(abort_code = ETxAlreadyUsed)]
 fun test_nbtc_mint_fail_tx_already_used() {
     let sender = @0x1;
-    let (lc, mut ctr, mut scenario) = setup(NBTC_SCRIPT_PUBKEY, sender);
+    let (lc, mut ctr, mut scenario) = setup(
+        NBTC_SCRIPT_PUBKEY,
+        sender,
+        object::id_from_address(@0x01),
+    );
     let data = get_valid_mint_data();
 
     // First mint, should succeed
@@ -248,7 +263,11 @@ fun test_nbtc_mint_fail_tx_already_used() {
 #[test, expected_failure(abort_code = EAlreadyUpdated)]
 fun test_update_version_fail() {
     let sender = @0x01;
-    let (_lc, mut ctr, _scenario) = setup(NBTC_SCRIPT_PUBKEY, sender);
+    let (_lc, mut ctr, _scenario) = setup(
+        NBTC_SCRIPT_PUBKEY,
+        sender,
+        object::id_from_address(@0x01),
+    );
     nbtc::update_version(&mut ctr);
     abort
 }

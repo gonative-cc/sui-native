@@ -326,8 +326,9 @@ public fun get_signature(
 }
 
 #[test_only]
-public fun move_to_signing(r: &mut RedeemRequest, inputs: vector<Utxo>) {
+public fun move_to_signing(r: &mut RedeemRequest, inputs: vector<Utxo>, dwallet_ids: vector<ID>) {
     r.inputs = inputs;
+    r.dwallet_ids = dwallet_ids;
     r.status = RedeemStatus::Signing
 }
 

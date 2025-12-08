@@ -16,7 +16,7 @@ fun raw_withdraw_tx_signed_tests() {
     let nbtc_spend_key = x"00145c2dc82f606be66506b7403f9b304f5e0908b652";
     let nbtc_pk = x"0329cdb63380e0a7109773703534659df6be41c48b4e80e5da77eb384ff7d41be2";
     let sender = @0x1;
-    let (lc, mut ctr, mut scenario) = setup(nbtc_spend_key, sender);
+    let (lc, mut ctr, mut scenario) = setup(nbtc_spend_key, sender, object::id_from_address(@0x01));
 
     scenario.next_tx(sender);
 
@@ -45,7 +45,7 @@ fun raw_withdraw_tx_signed_tests() {
         scenario.ctx(),
     );
 
-    r.move_to_signing(utxos);
+    r.move_to_signing(utxos, vector[object::id_from_address(@0x01)]);
     r.move_to_signed(signatures);
     let mut btc_store = storage::create_storage(scenario.ctx());
     btc_store.add_metadata(
