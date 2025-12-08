@@ -33,7 +33,10 @@ const EInvalidSignatureId: vector<u8> = b"invalid signature id for redeem reques
 #[error]
 const EInvalidIkaECDSALength: vector<u8> = b"invalid ecdsa signature length from ika format";
 
+// signature algorithm
 const ECDSA: u32 = 0;
+const Taproot: u32 = 1;
+// hash function
 const SHA256: u32 = 1;
 const SIGNHASH_ALL: u8 = 0x01;
 
@@ -145,15 +148,25 @@ public(package) fun request_signature_for_input(
     // This should include other information for create sign hash
     let sig_hash = r.sig_hash(input_idx, storage);
 
-    let dwallet_id = r.utxo_at(input_idx).dwallet_id();
+    let dwallet_id = r.dwallet_ids[input_idx as u64];
     let dwallet_cap = storage.dwallet_cap(dwallet_id);
-    let message_approval = dwallet_coordinator.approve_message(
-        dwallet_cap,
-        ECDSA,
-        SHA256,
-        sig_hash,
-    );
+    let lockscript = storage.dwallet_metadata(dwallet_id).lockscript();
 
+    let message_approval = if (script::is_taproot(lockscript)) {
+        dwallet_coordinator.approve_message(
+            dwallet_cap,
+            ECDSA,
+            SHA256,
+            sig_hash,
+        )
+    } else {
+        dwallet_coordinator.approve_message(
+            dwallet_cap,
+            ECDSA,
+            SHA256,
+            sig_hash,
+        )
+    };
     let sign_id = dwallet_coordinator.request_sign_with_partial_user_signature_and_return_id(
         user_sig_cap,
         message_approval,
