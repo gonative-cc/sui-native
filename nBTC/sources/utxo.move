@@ -106,35 +106,42 @@ public fun next_utxo(utxo_map: &UtxoMap): u64 {
     utxo_map.next_utxo
 }
 
-/// # Criterias:
-/// 1. Prefer fewer inputs
-/// 2. Avoid creating dust change
-/// 3. Prefer spending from inactive keys
-/// 4. Prefer exact matches
+///  Criterias:
+///  Prefer fewer inputs
+///  Avoid creating dust change
+///  Prefer spending from inactive keys
+///  Prefer exact matches
 public fun utxo_ranking(
     utxo_map: &UtxoMap,
     utxo_ids: vector<u64>,
     dwallet_ids: vector<ID>,
     withdraw_amount: u64,
     active_dwallet_id: ID,
-): u64 { let number_utxo = utxo_ids.length(); let mut sum: u64 = 0; number_utxo.do!(|i| {
+): u64 {
+    let number_utxo = utxo_ids.length();
+    let mut sum: u64 = 0;
+    number_utxo.do!(|i| {
         let utxo = utxo_map.get_utxo(utxo_ids[i], dwallet_ids[i]);
         sum = sum + utxo.value();
-    });  if (sum < withdraw_amount) {
+    });
+    if (sum < withdraw_amount) {
         return 0
-    };  let change = sum - withdraw_amount; let mut score = BASE_SCORE;  // 1) Fewer inputs
-    score = score - (number_utxo * INPUTS_PENALTY);  // 2) Prefer inactive keys
+    };
+    let change = sum - withdraw_amount;
+    let mut score = BASE_SCORE;
+    score = score - (number_utxo * INPUTS_PENALTY);
     number_utxo.do!(|i| {
         if (dwallet_ids[i] != active_dwallet_id) {
             score = score + INACTIVE_BONUS;
         };
-    });  // 3) Change shaping
+    });
     if (change == 0) {
-        // Perfect match
         score = score + NO_CHANGE_BONUS;
     } else if (change < DUST_THRESHOLD) {
         score = score - DUST_PENALTY;
-    };  score }
+    };
+    score
+}
 
 /// Validates a set of proposed UTXOs for withdrawal request.
 ///
