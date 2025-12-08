@@ -7,6 +7,7 @@ use bitcoin_lib::header;
 use bitcoin_spv::light_client::{new_light_client, LightClient};
 use ika_dwallet_2pc_mpc::coordinator_inner::dwallet_cap_for_testing;
 use nbtc::nbtc::{Self, NbtcContract, EMintAmountIsZero, ETxAlreadyUsed, EAlreadyUpdated, NBTC};
+use nbtc::test_constants::MOCK_DWALLET_ID;
 use std::unit_test::{assert_eq, destroy};
 use sui::address;
 use sui::coin::Coin;
@@ -122,7 +123,7 @@ fun test_nbtc_mint() {
     let (lc, mut ctr, mut scenario) = setup(
         NBTC_SCRIPT_PUBKEY,
         sender,
-        object::id_from_address(@0x01),
+        MOCK_DWALLET_ID!(),
     );
 
     mint_and_assert(
@@ -158,7 +159,7 @@ fun test_mint_with_fee() {
     let (lc, mut ctr, mut scenario) = setup(
         NBTC_SCRIPT_PUBKEY,
         sender,
-        object::id_from_address(@0x01),
+        MOCK_DWALLET_ID!(),
     );
 
     mint_and_assert(
@@ -200,7 +201,7 @@ fun test_nbtc_mint_fail_amount_is_zero() {
     let (lc, mut ctr, mut scenario) = setup(
         x"76a914509a651dd392e1bc125323f629b67d65cca3d4ff88ac",
         sender,
-        object::id_from_address(@0x01),
+        MOCK_DWALLET_ID!(),
     );
     let data = get_valid_mint_data();
 

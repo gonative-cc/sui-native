@@ -4,6 +4,7 @@ module nbtc::redeem_workflow_tests;
 use nbtc::nbtc::NBTC;
 use nbtc::nbtc_tests::setup;
 use nbtc::nbtc_utxo::{new_utxo, add};
+use nbtc::test_constants::MOCK_DWALLET_ID;
 use std::unit_test::{assert_eq, destroy};
 use sui::clock;
 use sui::coin::mint_for_testing;
@@ -28,10 +29,10 @@ fun setup_redeem_test(
     let (lc, mut ctr, mut scenario) = setup(
         NBTC_SCRIPT_PUBKEY,
         ADMIN,
-        object::id_from_address(ADMIN),
+        MOCK_DWALLET_ID!(),
     );
 
-    let dwallet_id = object::id_from_address(ADMIN);
+    let dwallet_id = MOCK_DWALLET_ID!();
     let utxo = new_utxo(TX_HASH, 0, utxo_amount);
     ctr.add_utxo_for_test(0, utxo);
 

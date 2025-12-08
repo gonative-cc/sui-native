@@ -4,12 +4,10 @@ module nbtc::tx_composer_tests;
 use bitcoin_lib::encoding::u64_to_le_bytes;
 use bitcoin_lib::sighash::{create_segwit_preimage, create_p2wpkh_scriptcode};
 use nbtc::nbtc_utxo::new_utxo;
+use nbtc::test_constants::MOCK_DWALLET_ID;
 use nbtc::tx_composer::compose_withdraw_tx;
 use std::unit_test::assert_eq;
 
-macro fun MOCK_DWALLET_ID(): ID {
-    object::id_from_address(@0x01)
-}
 #[test]
 fun create_unsign_reedem_tx_happy_case() {
     let nbtc_spend_script = x"0014e8340a12dd2c95e5fedc8b088a81dcac42c106fb";
