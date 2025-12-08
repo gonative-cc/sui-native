@@ -215,9 +215,7 @@ public fun raw_signed_tx(r: &RedeemRequest, storage: &Storage): vector<u8> {
             tx::new_witness(witness),
         );
     });
-
     tx.set_witness(witnesses);
-
     tx.serialize_segwit()
 }
 
