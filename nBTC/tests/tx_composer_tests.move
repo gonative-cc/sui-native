@@ -11,7 +11,7 @@ macro fun MOCK_DWALLET_ID(): ID {
     object::id_from_address(@0x01)
 }
 #[test]
-fun create_unsign_reedem_tx_happy_case() {
+fun create_unsign_redeem_tx_happy_case() {
     let nbtc_spend_script = x"0014e8340a12dd2c95e5fedc8b088a81dcac42c106fb";
 
     let spend_key = x"0014e8340a12dd2c95e5fedc8b088a81dcac42c106fb";

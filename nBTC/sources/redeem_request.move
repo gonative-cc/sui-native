@@ -94,7 +94,7 @@ public fun is_signed(status: &RedeemStatus): bool {
     }
 }
 
-public fun is_comfirmed(status: &RedeemStatus): bool {
+public fun is_confirmed(status: &RedeemStatus): bool {
     match (status) {
         RedeemStatus::Confirmed => true,
         _ => false,
@@ -219,13 +219,13 @@ public fun raw_signed_tx(r: &RedeemRequest, storage: &Storage): vector<u8> {
     tx.serialize_segwit()
 }
 
-// add valid signature to redeem request for specify input index
+// add valid signature to redeem request for specific input index
 public(package) fun add_signature(
     r: &mut RedeemRequest,
     input_idx: u32,
     ika_signature: vector<u8>,
 ) {
-    // NOTE: With taproot we don't need enocde signature
+    // NOTE: With taproot we don't need encode signature
     r.signatures_map.insert(input_idx, ika_signature);
     if (r.signatures_map.length() == r.inputs.length()) {
         r.status = RedeemStatus::Signed;
