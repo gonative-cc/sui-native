@@ -255,8 +255,9 @@ public fun bigendian_from_u256(number: u256): vector<u8> {
 /// (r, s) use big endian format
 public fun low_s(s: vector<u8>): vector<u8> {
     let mut s_num = big_endian_to_u256(s);
-    let n = 0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0;
-    if (s_num > n) {
+    let half_n = 0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0;
+    let n = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141;
+    if (s_num > half_n) {
         s_num = n - s_num;
     };
     bigendian_from_u256(s_num)
