@@ -28,8 +28,6 @@ fun raw_withdraw_tx_signed_tests() {
             x"9dafd815a150414d02047a22ab806dbd2f43d0e1ea5922dadd5396f6d6776920",
             41,
             amount,
-            spend_key,
-            MOCK_DWALLET_ID!(),
         ),
     ];
     let signatures = vector[

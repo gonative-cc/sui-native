@@ -764,11 +764,10 @@ public(package) fun init_for_testing(
         cap: contract_cap,
         tx_ids: table::new(ctx),
         config: table::new(ctx),
-        utxos: table::new(ctx),
+        utxo_map: new_utxo_map(ctx),
         redeem_requests: table::new(ctx),
         locked: table::new(ctx),
         next_redeem_req: 0,
-        next_utxo: 0,
         active_dwallet_id: option::none(),
         fees_collected: balance::zero(),
         redeem_duration: 5*60_000, // 5min
@@ -791,8 +790,14 @@ public fun redeem_duration(contract: &NbtcContract): u64 {
 }
 
 #[test_only]
-public fun add_utxo_for_test(ctr: &mut NbtcContract, idx: u64, utxo: Utxo) {
-    ctr.utxos.add(idx, utxo);
+public fun add_utxo_for_test(ctr: &mut NbtcContract, _idx: u64, utxo: Utxo) {
+    let dwallet_id = *option::borrow(&ctr.active_dwallet_id);
+    nbtc_utxo::add(&mut ctr.utxo_map, dwallet_id, utxo);
+}
+
+#[test_only]
+public fun borrow_utxo_map_for_test(ctr: &NbtcContract): &UtxoMap {
+    &ctr.utxo_map
 }
 
 #[test_only]

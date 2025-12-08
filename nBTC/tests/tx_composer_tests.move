@@ -20,15 +20,11 @@ fun create_unsign_reedem_tx_happy_case() {
             x"c22646a7af0b3862c27dadab84cfb4a58dd9e1e4a417e7517bff7f05ae4c575e",
             1,
             9979700,
-            spend_key,
-            MOCK_DWALLET_ID!(),
         ),
         new_utxo(
             x"2879c6bf4c92618ae198e516c9414629ad7499bd94fe71a3f1614b76ab4fe3c6",
             0,
             10000000,
-            spend_key,
-            MOCK_DWALLET_ID!(),
         ),
     ];
 
