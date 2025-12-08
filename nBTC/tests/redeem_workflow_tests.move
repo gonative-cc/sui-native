@@ -3,7 +3,7 @@ module nbtc::redeem_workflow_tests;
 
 use nbtc::nbtc::NBTC;
 use nbtc::nbtc_tests::setup;
-use nbtc::nbtc_utxo::{new_utxo, add};
+use nbtc::nbtc_utxo::new_utxo;
 use nbtc::test_constants::MOCK_DWALLET_ID;
 use std::unit_test::{assert_eq, destroy};
 use sui::clock;

@@ -4,7 +4,6 @@ module nbtc::utxo_tests;
 use nbtc::nbtc_utxo;
 use nbtc::test_constants::MOCK_DWALLET_ID;
 use std::unit_test::{assert_eq, destroy};
-use sui::table;
 use sui::test_scenario as ts;
 
 #[test]

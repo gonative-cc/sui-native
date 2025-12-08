@@ -10,7 +10,7 @@ use ika_dwallet_2pc_mpc::coordinator::DWalletCoordinator;
 use ika_dwallet_2pc_mpc::coordinator_inner::{DWalletCap, VerifiedPartialUserSignatureCap};
 use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
 use nbtc::config::{Self, Config};
-use nbtc::nbtc_utxo::{Self, Utxo, validate_utxos, UtxoMap, new_utxo_map};
+use nbtc::nbtc_utxo::{Self, validate_utxos, UtxoMap, new_utxo_map};
 use nbtc::redeem_request::{Self, RedeemRequest};
 use nbtc::storage::{Storage, create_storage, create_dwallet_metadata};
 use nbtc::verify_payment::verify_payment;
@@ -788,6 +788,9 @@ public fun get_fees_collected(contract: &NbtcContract): u64 {
 public fun redeem_duration(contract: &NbtcContract): u64 {
     contract.redeem_duration
 }
+
+#[test_only]
+use nbtc::nbtc_utxo::Utxo;
 
 #[test_only]
 public fun add_utxo_for_test(ctr: &mut NbtcContract, _idx: u64, utxo: Utxo) {
