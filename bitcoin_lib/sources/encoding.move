@@ -227,7 +227,9 @@ public fun parse_btc_sig(full_sig_from_stack: &mut vector<u8>): (vector<u8>, u8)
     (r_and_s_bytes, sighash_flag)
 }
 
-/// covert litle endian bytes to u256
+/// Converts big endian bytes to a u256 integer.
+/// The input bytes should be in big endian format (most significant byte first).
+/// Returns the corresponding u256 value.
 public fun big_endian_to_u256(bytes: vector<u8>): u256 {
     let mut number: u256 = 0;
     let mut b = bytes;
@@ -238,7 +240,13 @@ public fun big_endian_to_u256(bytes: vector<u8>): u256 {
     number
 }
 
-public fun bigendian_from_u256(number: u256): vector<u8> {
+/// Converts a u256 integer to big endian bytes.
+/// Returns the bytes in big endian format (most significant byte first).
+/// For the special case of 0, returns a single byte 0x00.
+public fun big_endian_from_u256(number: u256): vector<u8> {
+    if (number == 0) {
+        return vector[0x00]
+    };
     let mut n = number;
     let mut b = vector[];
     while (n > 0) {
@@ -259,7 +267,7 @@ public fun sig_low_s(sig_s: vector<u8>): vector<u8> {
     let n = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141;
     if (s_num > half_n) {
         s_num = n - s_num;
-        bigendian_from_u256(s_num)
+        big_endian_from_u256(s_num)
     } else {
         sig_s
     }
