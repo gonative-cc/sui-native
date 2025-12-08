@@ -1,7 +1,8 @@
 // TODO: Refactor to bitcoinlib
 module nbtc::nbtc_utxo;
 
-use sui::table::Table;
+use bitcoin_lib::encoding::u64_to_le_bytes;
+use sui::table::{Self, Table};
 
 //
 // Errors
@@ -27,28 +28,24 @@ const INACTIVE_BONUS: u64 = 200;
 const NO_CHANGE_BONUS: u64 = 1_000;
 const DUST_PENALTY: u64 = 200;
 
-// TODO: we need to store them by owner (the nBTC key)?
 public struct Utxo has copy, drop, store {
-    tx_id: vector<u8>, // TODO: this is 32-byte hash. we can also use vector<u8>
-    vout: u32,
-    value: u64,
-    dwallet_id: ID,
-    spend_script: vector<u8>,
-}
-
-public fun new_utxo(
     tx_id: vector<u8>,
     vout: u32,
     value: u64,
-    spend_script: vector<u8>,
-    dwallet_id: ID,
-): Utxo {
+}
+
+public struct UtxoMap has key, store {
+    id: UID,
+    // mapping (dwallet_id + utxo_idxs) => Utxo
+    utxos: Table<vector<u8>, Utxo>,
+    next_utxo: u64,
+}
+
+public fun new_utxo(tx_id: vector<u8>, vout: u32, value: u64): Utxo {
     Utxo {
         tx_id,
         vout,
         value,
-        dwallet_id,
-        spend_script,
     }
 }
 
@@ -64,12 +61,49 @@ public fun value(utxo: &Utxo): u64 {
     utxo.value
 }
 
-public fun dwallet_id(utxo: &Utxo): ID {
-    utxo.dwallet_id
+public(package) fun new_utxo_map(ctx: &mut TxContext): UtxoMap {
+    UtxoMap {
+        id: object::new(ctx),
+        utxos: table::new(ctx),
+        next_utxo: 0,
+    }
 }
 
-public fun spend_script(utxo: &Utxo): vector<u8> {
-    utxo.spend_script
+public(package) fun utxo_key(idx: u64, dwallet_id: ID): vector<u8> {
+    let mut ukey = u64_to_le_bytes(idx);
+    ukey.append(dwallet_id.id_to_bytes());
+    ukey
+}
+
+public(package) fun add(utxo_map: &mut UtxoMap, dwallet_id: ID, utxo: Utxo) {
+    utxo_map.utxos.add(utxo_key(utxo_map.next_utxo, dwallet_id), utxo);
+    utxo_map.next_utxo = utxo_map.next_utxo + 1;
+}
+
+public(package) fun remove(utxo_map: &mut UtxoMap, idx: u64, dwallet_id: ID) {
+    utxo_map.utxos.remove(utxo_key(idx, dwallet_id));
+}
+
+public(package) fun contains(utxo_map: &UtxoMap, ukey: vector<u8>): bool {
+    utxo_map.utxos.contains(ukey)
+}
+
+public(package) fun get_utxo(utxo_map: &UtxoMap, idx: u64, dwallet_id: ID): &Utxo {
+    &utxo_map.utxos[utxo_key(idx, dwallet_id)]
+}
+
+public(package) fun get_utxo_by_ukey(utxo_map: &UtxoMap, ukey: vector<u8>): &Utxo {
+    &utxo_map.utxos[ukey]
+}
+
+public(package) fun get_utxo_copy(utxo_map: &UtxoMap, idx: u64, dwallet_id: ID): Utxo {
+    // TODO: check move have sugar syntax for this case?
+    let ref = &utxo_map.utxos[utxo_key(idx, dwallet_id)];
+    *ref
+}
+
+public fun next_utxo(utxo_map: &UtxoMap): u64 {
+    utxo_map.next_utxo
 }
 
 /// # Criterias:
@@ -78,43 +112,29 @@ public fun spend_script(utxo: &Utxo): vector<u8> {
 /// 3. Prefer spending from inactive keys
 /// 4. Prefer exact matches
 public fun utxo_ranking(
-    utxos: &vector<Utxo>,
+    utxo_map: &UtxoMap,
+    utxo_ids: vector<u64>,
+    dwallet_ids: vector<ID>,
     withdraw_amount: u64,
-    active_spend_key: &vector<u8>,
-): u64 {
-    let mut sum: u64 = 0;
-    utxos.length().do!(|i| {
-        sum = sum + utxos[i].value;
-    });
-
-    if (sum < withdraw_amount) {
+    active_dwallet_id: ID,
+): u64 { let number_utxo = utxo_ids.length(); let mut sum: u64 = 0; number_utxo.do!(|i| {
+        let utxo = utxo_map.get_utxo(utxo_ids[i], dwallet_ids[i]);
+        sum = sum + utxo.value();
+    });  if (sum < withdraw_amount) {
         return 0
-    };
-
-    let change = sum - withdraw_amount;
-    let mut score = BASE_SCORE;
-
-    // 1) Fewer inputs
-    let number_inputs = utxos.length();
-    score = score - (number_inputs * INPUTS_PENALTY);
-
-    // 2) Prefer inactive keys
-    utxos.length().do!(|i| {
-        if (&utxos[i].spend_script != active_spend_key) {
+    };  let change = sum - withdraw_amount; let mut score = BASE_SCORE;  // 1) Fewer inputs
+    score = score - (number_utxo * INPUTS_PENALTY);  // 2) Prefer inactive keys
+    number_utxo.do!(|i| {
+        if (dwallet_ids[i] != active_dwallet_id) {
             score = score + INACTIVE_BONUS;
         };
-    });
-
-    // 3) Change shaping
+    });  // 3) Change shaping
     if (change == 0) {
         // Perfect match
         score = score + NO_CHANGE_BONUS;
     } else if (change < DUST_THRESHOLD) {
         score = score - DUST_PENALTY;
-    };
-
-    score
-}
+    };  score }
 
 /// Validates a set of proposed UTXOs for withdrawal request.
 ///
@@ -125,7 +145,7 @@ public fun utxo_ranking(
 /// 4. Validates that all UTXOs exist in the onchain UTXO set
 ///
 public fun validate_utxos(
-    onchain_utxos: &Table<u64, Utxo>,
+    utxo_map: &UtxoMap,
     utxo_ids: &vector<u64>,
     dwallet_ids: vector<ID>,
     withdrawal_amount: u64,
@@ -140,14 +160,17 @@ public fun validate_utxos(
 
     len.do!(|i| {
         let idx = utxo_ids[i];
+        let dwallet_id = dwallet_ids[i];
+        let ukey = utxo_key(idx, dwallet_id);
         // Check UTXO exists in onchain set
         // TODO: Check if UTXOs is lock by other redeem request (we can use locked utxos from the
         // same redeem request)
         // or unlock and abort!
-        assert!(onchain_utxos.contains(idx), EInvalidUtxo);
-        let onchain_utxo = &onchain_utxos[idx];
+        assert!(utxo_map.contains(ukey), EInvalidUtxo);
 
-        total_value = total_value + onchain_utxo.value();
+        let utxo = utxo_map.get_utxo_by_ukey(ukey);
+
+        total_value = total_value + utxo.value();
     });
 
     assert!(total_value >= withdrawal_amount, EInsufficientAmount);

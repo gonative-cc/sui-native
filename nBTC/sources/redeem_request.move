@@ -140,7 +140,7 @@ public(package) fun request_signature_for_input(
     // This should include other information for create sign hash
     let sig_hash = r.sig_hash(input_idx, storage);
 
-    let dwallet_id = r.utxo_at(input_idx).dwallet_id();
+    let dwallet_id = r.dwallet_ids[input_idx as u64];
     let dwallet_cap = storage.dwallet_cap(dwallet_id);
     let message_approval = dwallet_coordinator.approve_message(
         dwallet_cap,
@@ -193,7 +193,7 @@ public fun raw_signed_tx(r: &RedeemRequest, storage: &Storage): vector<u8> {
 
     let mut witnesses = vector[];
     r.inputs.length().do!(|i| {
-        let dwallet_id = r.inputs[i].dwallet_id();
+        let dwallet_id = r.dwallet_ids[i];
         let public_key = storage.dwallet_metadata(dwallet_id).public_key();
         let signature = *r.signatures_map.get(&(i as u32));
         witnesses.push_back(
