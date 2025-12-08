@@ -1,7 +1,12 @@
 module nbtc::redeem_request;
 
 use bitcoin_lib::encoding::{u64_to_le_bytes, der_encode_signature};
-use bitcoin_lib::sighash::{create_segwit_preimage, create_p2wpkh_scriptcode};
+use bitcoin_lib::script;
+use bitcoin_lib::sighash::{
+    create_segwit_preimage,
+    create_p2wpkh_scriptcode,
+    taproot_sighash_preimage
+};
 use bitcoin_lib::tx;
 use bitcoin_lib::vector_utils::vector_slice;
 use ika::ika::IKA;
@@ -234,19 +239,36 @@ public fun sig_hash(r: &RedeemRequest, input_idx: u32, storage: &Storage): vecto
             r.amount,
             r.fee, // TODO:: Set fee at parameter, or query from oracle
         );
-        let input_spend_script = storage.dwallet_metadata(dwallet_id).lockscript();
-        let script_code = create_p2wpkh_scriptcode(
-            input_spend_script.slice(2, 22) // nbtc public key hash
-        );
-        std::hash::sha2_256(
-            create_segwit_preimage(
+
+        if (script::is_taproot(lockscript)) {
+            let previous_pubscripts = r
+                .dwallet_ids
+                .map!(|dwallet_id| storage.dwallet_metadata(dwallet_id).lockscript());
+            let previous_values = r.inputs.map!(|inp| inp.value());
+
+            taproot_sighash_preimage(
                 &tx,
-                input_idx as u64, // input index
-                &script_code, // segwit nbtc spend key
-                u64_to_le_bytes(r.inputs[input_idx as u64].value()), // amount
+                input_idx,
+                previous_pubscripts,
+                previous_values,
                 SIGNHASH_ALL,
-            ),
-        )
+                option::none(),
+                option::none(),
+            )
+        } else {
+            let script_code = create_p2wpkh_scriptcode(
+                lockscript.slice(2, 22) // nbtc public key hash
+            );
+            std::hash::sha2_256(
+                create_segwit_preimage(
+                    &tx,
+                    input_idx as u64, // input index
+                    &script_code, // segwit nbtc spend key
+                    u64_to_le_bytes(r.inputs[input_idx as u64].value()), // amount
+                    SIGNHASH_ALL,
+                ),
+            )
+        }
     })
 }
 
