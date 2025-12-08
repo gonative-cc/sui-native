@@ -253,7 +253,7 @@ public fun bigendian_from_u256(number: u256): vector<u8> {
 /// (r, s) is ECDSA signarure, s MUST:
 /// 0x01 <= s <= 0x7FFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF 5D576E73 57A4501D DFE92F46 681B20A0
 /// (r, s) use big endian format
-public fun low_s(s: vector<u8>): vector<u8> {
+public fun sig_low_s(sig_s: vector<u8>): vector<u8> {
     let mut s_num = big_endian_to_u256(s);
     let half_n = 0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0;
     let n = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141;
