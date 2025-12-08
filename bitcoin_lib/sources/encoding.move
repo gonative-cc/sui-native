@@ -14,7 +14,7 @@ const EDerIntParsing: vector<u8> = b"Error parsing DER to Int";
 const EBtcSigParsing: vector<u8> = b"Error parsing bitcoin signature";
 
 #[error]
-const EOverflowVector: vector<u8> = b"Can't covert vector to u64 b/c overflow";
+const EOverflowVector: vector<u8> = b"Can't convert vector to u64 b/c overflow";
 
 /// Converts vector bytes in the little-endian form to a u64 integer
 public fun le_bytes_to_u64(v: vector<u8>): u64 {
@@ -50,9 +50,14 @@ public fun u64_to_le_bytes(val: u64): vector<u8> {
     bytes
 }
 
-/// Converts u64 into the CScriptNum byte vector format.
-/// This is the format expected to be pushed onto the stack.
-/// https://github.com/bitcoin/bitcoin/blob/87ec923d3a7af7b30613174b41c6fb11671df466/src/script/script.h#L349
+/// Converts a u64 integer to the CScriptNum byte vector format.
+/// This is the format expected to be pushed onto the stack in Bitcoin scripts.
+/// CScriptNum represents signed integers in Bitcoin script, with the following rules:
+/// - Numbers are encoded in little-endian format
+/// - The most significant bit of the last byte indicates the sign (1 = negative, 0 = positive)
+/// - If the MSB would be 1 for a positive number, a padding byte 0x00 is added
+/// - Zero is represented by an empty vector
+/// Reference: https://github.com/bitcoin/bitcoin/blob/87ec923d3a7af7b30613174b41c6fb11671df466/src/script/script.h#L349
 public fun u64_to_cscriptnum(n: u64): vector<u8> {
     let mut result_bytes = vector::empty<u8>();
     if (n == 0) {
@@ -60,15 +65,17 @@ public fun u64_to_cscriptnum(n: u64): vector<u8> {
     };
 
     let mut n = n;
-    // convert to little endian
+    // Convert to little endian by extracting bytes from least significant to most significant
     while (n > 0) {
         result_bytes.push_back((n & 0xff) as u8);
         n = n >> 8;
     };
 
-    // padding
+    // Add padding if needed to ensure the number is interpreted as positive
+    // In CScriptNum, if the highest bit of the last byte is 1, it's interpreted as negative
+    // So for positive numbers, we add a 0x00 byte if the MSB would be 1
     if (result_bytes.length() > 0) {
-        let last_index = result_bytes.length() -1;
+        let last_index = result_bytes.length() - 1;
         let last_byte = *result_bytes.borrow(last_index);
         if ((last_byte & 0x80) != 0) {
             result_bytes.push_back(0x00);
@@ -77,11 +84,21 @@ public fun u64_to_cscriptnum(n: u64): vector<u8> {
     result_bytes
 }
 
+/// Returns a vector representing the boolean value "true" (0x01) in Bitcoin script.
+/// In Bitcoin script, non-zero values are considered true, with 0x01 being the canonical representation.
 public fun vector_true(): vector<u8> { vector[0x01] }
 
+/// Returns a vector representing the boolean value "false" (empty vector) in Bitcoin script.
+/// In Bitcoin script, the empty vector is the canonical representation of false.
 public fun vector_false(): vector<u8> { vector[] }
 
-/// Encodes a u64 into VarInt format.
+/// Encodes a u64 into VarInt (Variable Integer) format.
+/// VarInt is used in Bitcoin to encode integers in a compact way:
+/// - 0-252: 1 byte (value itself)
+/// - 253-65535: 3 bytes (0xFD + 2-byte little-endian value)
+/// - 65536-4294967295: 5 bytes (0xFE + 4-byte little-endian value)
+/// - 4294967296+: 9 bytes (0xFF + 8-byte little-endian value)
+/// Returns the VarInt encoding as a byte vector.
 public fun u64_to_varint_bytes(n: u64): vector<u8> {
     let mut ans = vector::empty<u8>();
     let mut n = n;
@@ -109,7 +126,10 @@ public fun u64_to_varint_bytes(n: u64): vector<u8> {
     ans
 }
 
-/// Prepends the VarInt encoding of the script len to the script.
+/// Prepends the VarInt encoding of the script length to the script.
+/// In Bitcoin, scriptPubKey and scriptSig are prefixed with their length encoded as VarInt.
+/// This creates the complete script format used in transactions.
+/// Returns a new vector containing: VarInt(length) + script_bytes
 public fun script_to_var_bytes(script: &vector<u8>): vector<u8> {
     let len = script.length();
     let mut result = u64_to_varint_bytes(len);
@@ -118,11 +138,22 @@ public fun script_to_var_bytes(script: &vector<u8>): vector<u8> {
 }
 
 /// Returns a vector with 32 zero bytes.
+/// This is commonly used in Bitcoin as the null hash value or for padding.
+/// Returns a 32-byte vector filled with 0x00.
 public fun zerohash_32bytes(): vector<u8> {
     vector::tabulate!(32, |_| 0)
 }
 
-/// Parses a DER-encoded positvie integer value (r or s) to 32-byte vector
+/// Parses a DER-encoded positive integer value (r or s) to a 32-byte vector.
+/// DER (Distinguished Encoding Rules) integers can have leading zeros and variable lengths.
+/// This function normalizes DER integers to exactly 32 bytes for Bitcoin signature components.
+///
+/// Input requirements:
+/// - Length must be 1-33 bytes
+/// - If length is 33, first byte must be 0x00 (sign byte) and second byte must have MSB=1
+/// - No invalid leading zeros for short numbers
+///
+/// Returns a 32-byte vector with the integer value, padded with leading zeros if needed.
 fun der_int_to_32_bytes(val_bytes: &vector<u8>): vector<u8> {
     let len = val_bytes.length();
 
@@ -131,29 +162,32 @@ fun der_int_to_32_bytes(val_bytes: &vector<u8>): vector<u8> {
     let offset;
     let mut value_len = 32;
     if (len == 33) {
-        // prefix 0x00
+        // DER format: 0x00 prefix to ensure positive number
         assert!(val_bytes[0] == 0x00, EDerIntParsing);
         assert!(val_bytes[1] & 0x80 != 0, EDerIntParsing);
-        // check if MSB od second byte is 1, else wrong padding
-        offset = 1; // skip 0x00
+        // Check if MSB of second byte is 1, else wrong padding
+        offset = 1; // Skip the 0x00 prefix
     } else if (len == 32) {
-        // no prefix
+        // Already 32 bytes, no padding needed
         offset = 0;
     } else {
-        // padding needed
-        assert!(!(val_bytes[0] == 0x00 && len > 1), EDerIntParsing); // wrong leading 0x00 for short number
+        // Short number, need padding with leading zeros
+        assert!(!(val_bytes[0] == 0x00 && len > 1), EDerIntParsing); // Wrong leading 0x00 for short number
         offset = 0;
         value_len = len;
     };
+
     let mut result_32_bytes = vector::empty<u8>();
     let num_padding_zeros = 32 - value_len;
 
+    // Add leading zeros for padding
     let mut i = 0;
     while (i < num_padding_zeros) {
         result_32_bytes.push_back(0x00);
         i = i + 1;
     };
 
+    // Copy the actual value bytes
     i = 0;
     while (i < value_len) {
         result_32_bytes.push_back(val_bytes[offset+i]);
@@ -164,18 +198,25 @@ fun der_int_to_32_bytes(val_bytes: &vector<u8>): vector<u8> {
 }
 
 /// Parses a single DER-encoded INT from der_bytes at the current cursor and modifies the cursor.
+/// DER INT format: 0x02 <length> <value_bytes>
+/// This function extracts the value bytes and advances the cursor past the INT.
+/// Returns the value bytes of the DER-encoded integer.
 fun parse_der_encoded_int_value(
     der_bytes: &vector<u8>,
     cursor: &mut u64,
     der_len: u64,
 ): vector<u8> {
+    // Check for INT tag (0x02)
     assert!(*cursor < der_len && der_bytes[*cursor] == 0x02, EBtcSigParsing);
     *cursor = *cursor + 1;
     assert!(*cursor < der_len, EBtcSigParsing);
 
+    // Read the length byte
     let component_len = (der_bytes[*cursor] as u64);
     *cursor = *cursor + 1;
     assert!(component_len > 0 && *cursor + component_len <= der_len, EBtcSigParsing);
+
+    // Extract the value bytes
     let value_der_bytes = vector_utils::vector_slice(
         der_bytes,
         *cursor,
@@ -186,13 +227,20 @@ fun parse_der_encoded_int_value(
     value_der_bytes
 }
 
-/// Parses a DER encoded Bitcoin signature (r,s + sighash flag)
-/// Returns a tuple containing the 64-byte concat(r,s) and sighash_flag.
+/// Parses a DER-encoded Bitcoin signature (r,s + sighash flag).
+/// Bitcoin signatures in DER format: 0x30 <total_len> 0x02 <r_len> <r> 0x02 <s_len> <s>
+/// This function extracts the r and s components, normalizes them to 32 bytes each,
+/// and separates the sighash flag from the end.
+///
+/// Returns a tuple containing:
+/// - A 64-byte vector: concatenation of r (32 bytes) + s (32 bytes)
+/// - The sighash flag (1 byte)
 public fun parse_btc_sig(full_sig_from_stack: &mut vector<u8>): (vector<u8>, u8) {
-    // TODO: use reader module
+    // TODO: use reader module instead of manual parsing
     let total_len = full_sig_from_stack.length();
     assert!(total_len >= 8 && total_len <= 73, EBtcSigParsing);
 
+    // Extract sighash flag (last byte) and get DER bytes
     let sighash_flag = full_sig_from_stack.pop_back();
     let der_bytes = full_sig_from_stack;
     let der_len = der_bytes.length();
@@ -201,26 +249,28 @@ public fun parse_btc_sig(full_sig_from_stack: &mut vector<u8>): (vector<u8>, u8)
 
     let mut cursor = 0;
 
-    // SEQUENCE tag (0x30)
+    // Check SEQUENCE tag (0x30)
     assert!(cursor < der_len && der_bytes[cursor] == 0x30, EBtcSigParsing);
     cursor = cursor + 1;
     assert!(cursor < der_len, EBtcSigParsing);
 
+    // Check sequence length
     let seq_len = (der_bytes[cursor] as u64);
     cursor = cursor + 1;
     assert!(seq_len == der_len - cursor, EBtcSigParsing);
 
-    // Parse R
+    // Parse R component
     let r_value_der = parse_der_encoded_int_value(der_bytes, &mut cursor, der_len);
     let r_32_bytes = der_int_to_32_bytes(&r_value_der);
 
-    // Parse S
+    // Parse S component
     let s_value_der = parse_der_encoded_int_value(der_bytes, &mut cursor, der_len);
     let s_32_bytes = der_int_to_32_bytes(&s_value_der);
 
+    // Verify we've consumed the entire DER encoding
     assert!(cursor == der_len, EBtcSigParsing);
 
-    // concat (r,s)
+    // Concatenate r and s into 64-byte vector
     let mut r_and_s_bytes = r_32_bytes;
     r_and_s_bytes.append(s_32_bytes);
 
@@ -257,15 +307,17 @@ public fun big_endian_from_u256(number: u256): vector<u8> {
     b
 }
 
-/// BIP-0146 https://github.com/bitcoin/bips/blob/master/bip-0146.mediawiki
-/// (r, s) is ECDSA signarure, s MUST:
-/// 0x01 <= s <= 0x7FFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF 5D576E73 57A4501D DFE92F46 681B20A0
-/// (r, s) use big endian format
+/// Ensures S component is in low range per BIP-146.
+/// If S > n/2, returns n - S. Otherwise returns S unchanged.
+/// Input: 32-byte big-endian S value
+/// Output: Normalized 32-byte big-endian S value
+///
+/// n = secp256k1 curve order = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141
 public fun sig_low_s(sig_s: vector<u8>): vector<u8> {
     let mut s_num = big_endian_to_u256(sig_s);
-    let half_n = 0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0;
-    let n = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141;
-    if (s_num > half_n) {
+    let n = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141; // secp256k1 curve order
+
+    if (s_num > n / 2) {
         s_num = n - s_num;
         big_endian_from_u256(s_num)
     } else {
@@ -273,8 +325,25 @@ public fun sig_low_s(sig_s: vector<u8>): vector<u8> {
     }
 }
 
-/// Fomat raw singature (r, s) to btc ECDSA format,
-/// Ref: https://learnmeabitcoin.com/technical/keys/signature/
+/// Formats raw signature (r, s) to Bitcoin ECDSA DER format.
+///
+/// This function converts a 64-byte raw signature (32-byte r + 32-byte s) into
+/// the DER (Distinguished Encoding Rules) format expected by Bitcoin.
+///
+/// DER format: 0x30 <total_len> 0x02 <r_len> <r> 0x02 <s_len> <s>
+/// Where:
+/// - 0x30: SEQUENCE tag
+/// - <total_len>: Total length of the sequence
+/// - 0x02: INTEGER tag
+/// - <r_len>, <s_len>: Length of r and s components
+/// - <r>, <s>: The actual r and s values
+///
+/// Reference: https://learnmeabitcoin.com/technical/keys/signature/
+///
+/// Input:
+///   - signature: 64-byte vector (r || s, both 32 bytes, big-endian)
+///   - signature_hash_type: 1-byte sighash flag (SIGHASH_ALL, etc.)
+/// Output: DER-encoded signature with sighash flag appended
 public fun der_encode_signature(signature: vector<u8>, signature_hash_type: u8): vector<u8> {
     assert!(signature.length() == 64);
     let mut r = vector_utils::vector_slice(&signature, 0, 32);
