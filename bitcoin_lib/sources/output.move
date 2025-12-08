@@ -41,16 +41,16 @@ public fun is_P2WSH(output: &Output): bool {
     script::is_P2WSH(output.script_pubkey)
 }
 
-public fun is_P2PHK(output: &Output): bool {
-    script::is_P2PHK(output.script_pubkey)
+public fun is_P2PKH(output: &Output): bool {
+    script::is_P2PKH(output.script_pubkey)
 }
 
 public fun is_op_return(output: &Output): bool {
     script::is_op_return(output.script_pubkey)
 }
 
-public fun is_P2WPHK(output: &Output): bool {
-    script::is_P2WPHK(output.script_pubkey)
+public fun is_P2WPKH(output: &Output): bool {
+    script::is_P2WPKH(output.script_pubkey)
 }
 
 public fun is_taproot(output: &Output): bool {

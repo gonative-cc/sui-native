@@ -1,6 +1,7 @@
 module nbtc::redeem_request;
 
 use bitcoin_lib::encoding::{u64_to_le_bytes, der_encode_signature};
+use bitcoin_lib::script;
 use bitcoin_lib::sighash::{create_segwit_preimage, create_p2wpkh_scriptcode};
 use bitcoin_lib::tx;
 use bitcoin_lib::vector_utils::vector_slice;
@@ -27,6 +28,8 @@ const ESignatureInValid: vector<u8> = b"signature invalid for this input";
 const EInvalidSignatureId: vector<u8> = b"invalid signature id for redeem request";
 #[error]
 const EInvalidIkaECDSALength: vector<u8> = b"invalid ecdsa signature length from ika format";
+#[error]
+const EUnsupportLockscript: vector<u8> = b"unsuport lockscript";
 
 const ECDSA: u32 = 0;
 const SHA256: u32 = 1;
@@ -194,10 +197,22 @@ public fun raw_signed_tx(r: &RedeemRequest, storage: &Storage): vector<u8> {
     let mut witnesses = vector[];
     r.inputs.length().do!(|i| {
         let dwallet_id = r.inputs[i].dwallet_id();
-        let public_key = storage.dwallet_metadata(dwallet_id).public_key();
-        let signature = *r.signatures_map.get(&(i as u32));
+        let dwallet_metadata = storage.dwallet_metadata(dwallet_id);
+        let lockscript = dwallet_metadata.lockscript();
+        let ika_signature = *r.signatures_map.get(&(i as u32));
+        let witness = if (script::is_taproot(lockscript)) {
+            vector[ika_signature]
+        } else if (script::is_P2WPKH(lockscript)) {
+            // ECDSA Ika signature returns 65 bytes
+            assert!(ika_signature.length() == 65, EInvalidIkaECDSALength);
+            let raw_signature = ika_signature.slice(1, 65); // skip the first byte (pub key recovery byte)
+            let public_key = storage.dwallet_metadata(dwallet_id).public_key();
+            vector[der_encode_signature(raw_signature, SIGNHASH_ALL), public_key]
+        } else {
+            abort EUnsupportLockscript
+        };
         witnesses.push_back(
-            tx::new_witness(vector[signature, public_key]),
+            tx::new_witness(witness),
         );
     });
 
@@ -212,11 +227,8 @@ public(package) fun add_signature(
     input_idx: u32,
     ika_signature: vector<u8>,
 ) {
-    // ECDSA Ika signature returns 65 bytes
-    assert!(ika_signature.length() == 65, EInvalidIkaECDSALength);
-    let raw_signature = ika_signature.slice(1, 65); // skip the first byte (pub key recovery byte)
     // NOTE: With taproot we don't need enocde signature
-    r.signatures_map.insert(input_idx, der_encode_signature(raw_signature, SIGNHASH_ALL));
+    r.signatures_map.insert(input_idx, ika_signature);
     if (r.signatures_map.length() == r.inputs.length()) {
         r.status = RedeemStatus::Signed;
     }

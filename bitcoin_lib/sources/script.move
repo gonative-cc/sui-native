@@ -44,7 +44,7 @@ public fun is_P2WSH(script: vector<u8>): bool {
 	script[1] == OP_DATA_32
 }
 
-public fun is_P2PHK(script: vector<u8>): bool {
+public fun is_P2PKH(script: vector<u8>): bool {
     script.length() == 25 &&
 		script[0] == OP_DUP &&
 		script[1] == OP_HASH160 &&
@@ -57,7 +57,7 @@ public fun is_op_return(script: vector<u8>): bool {
     script.length() > 0 && script[0] == OP_RETURN
 }
 
-public fun is_P2WPHK(script: vector<u8>): bool {
+public fun is_P2WPKH(script: vector<u8>): bool {
     script.length() == 22 &&
         script[0] == OP_0 &&
         script[1] == OP_DATA_20
@@ -74,9 +74,9 @@ public fun is_taproot(script: vector<u8>): bool {
 /// extracts public key hash (PKH) from the output in P2PHK or P2WPKH
 /// returns an empty vector in case it was not able to extract it
 public fun extract_public_key_hash(script: vector<u8>): Option<vector<u8>> {
-    if (is_P2PHK(script)) {
+    if (is_P2PKH(script)) {
         return option::some(vector_slice(&script, 3, 23))
-    } else if (is_P2WPHK(script)) {
+    } else if (is_P2WPKH(script)) {
         return option::some(vector_slice(&script, 2, 22))
     };
     option::none()
