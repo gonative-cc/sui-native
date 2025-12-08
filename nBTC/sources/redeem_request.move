@@ -29,7 +29,7 @@ const EInvalidSignatureId: vector<u8> = b"invalid signature id for redeem reques
 #[error]
 const EInvalidIkaECDSALength: vector<u8> = b"invalid ecdsa signature length from ika format";
 #[error]
-const EUnsupportLockscript: vector<u8> = b"unsuport lockscript";
+const EUnsupportedLockscript: vector<u8> = b"unsupported lockscript";
 
 const ECDSA: u32 = 0;
 const SHA256: u32 = 1;
@@ -209,7 +209,7 @@ public fun raw_signed_tx(r: &RedeemRequest, storage: &Storage): vector<u8> {
             let public_key = storage.dwallet_metadata(dwallet_id).public_key();
             vector[der_encode_signature(raw_signature, SIGNHASH_ALL), public_key]
         } else {
-            abort EUnsupportLockscript
+            abort EUnsupportedLockscript
         };
         witnesses.push_back(
             tx::new_witness(witness),
