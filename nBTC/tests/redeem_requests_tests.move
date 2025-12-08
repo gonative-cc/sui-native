@@ -33,7 +33,7 @@ fun raw_withdraw_tx_signed_tests() {
         ),
     ];
     let signatures = vector[
-        x"3044022063db5a24fec209152863fb251cc349a7030220bf4ca6e6296002d46d4c3651a502205a0b4b5a520fc42b91b8a888351c1c42bd2864aba2c398007405e957dea77bb101",
+        x"0063db5a24fec209152863fb251cc349a7030220bf4ca6e6296002d46d4c3651a55a0b4b5a520fc42b91b8a888351c1c42bd2864aba2c398007405e957dea77bb1",
     ];
     let fee = 656;
     let clock = clock::create_for_testing(scenario.ctx());

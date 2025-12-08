@@ -227,18 +227,55 @@ public fun parse_btc_sig(full_sig_from_stack: &mut vector<u8>): (vector<u8>, u8)
     (r_and_s_bytes, sighash_flag)
 }
 
+/// covert litle endian bytes to u256
+public fun big_endian_to_u256(bytes: vector<u8>): u256 {
+    let mut number: u256 = 0;
+    let mut b = bytes;
+    b.reverse();
+    b.length().do!(|i| {
+        number = number + ((b[i] as u256) << ((i * 8) as u8));
+    });
+    number
+}
+
+public fun bigendian_from_u256(number: u256): vector<u8> {
+    let mut n = number;
+    let mut b = vector[];
+    while (n > 0) {
+        b.push_back((n & 0xFF) as u8);
+        n = n >> 8;
+    };
+    b.reverse();
+    b
+}
+
+/// BIP-0146 https://github.com/bitcoin/bips/blob/master/bip-0146.mediawiki
+/// (r, s) is ECDSA signarure, s MUST:
+/// 0x01 <= s <= 0x7FFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF 5D576E73 57A4501D DFE92F46 681B20A0
+/// (r, s) use big endian format
+public fun low_s(s: vector<u8>): vector<u8> {
+    let mut s_num = big_endian_to_u256(s);
+    let n = 0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0;
+    if (s_num > n) {
+        s_num = n - s_num;
+    };
+    bigendian_from_u256(s_num)
+}
+
 /// Fomat raw singature (r, s) to btc ECDSA format,
 /// Ref: https://learnmeabitcoin.com/technical/keys/signature/
 public fun der_encode_signature(signature: vector<u8>, signature_hash_type: u8): vector<u8> {
     assert!(signature.length() == 64);
     let mut r = vector_utils::vector_slice(&signature, 0, 32);
     let mut s = vector_utils::vector_slice(&signature, 32, 64);
-    if (s[0] >= 0x80) {
-        s.insert(0x00, 0);
-    };
 
     if (r[0] >= 0x80) {
         r.insert(0x00, 0);
+    };
+
+    s = low_s(s);
+    if (s[0] >= 0x80) {
+        s.insert(0x00, 0);
     };
 
     let mut res = vector::empty();
