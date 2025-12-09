@@ -87,9 +87,7 @@ public(package) fun lock_utxo(
 
 public(package) fun unlock_utxo(utxo_map: &mut UtxoMap, idx: u64, dwallet_id: ID) {
     let ukey = utxo_key(idx, dwallet_id);
-    if (utxo_map.locked_utxos.contains(ukey)) {
-        utxo_map.locked_utxos.remove(ukey);
-    };
+    utxo_map.locked_utxos.remove(ukey);
 }
 
 public(package) fun utxo_key(idx: u64, dwallet_id: ID): vector<u8> {
@@ -196,10 +194,8 @@ public fun validate_utxos(
         // Check UTXO exists
         assert!(utxo_map.contains(ukey), EInvalidUtxo);
 
-        // Check if it is locked by another request
         if (utxo_map.locked_utxos.contains(ukey)) {
-            let locked_by = utxo_map.locked_utxos[ukey];
-            assert!(locked_by == redeem_request_id, EUtxoLockedByAnotherRequest);
+            assert!(utxo_map.locked_utxos[ukey] == redeem_request_id, EUtxoLockedByAnotherRequest);
         };
 
         let utxo = utxo_map.get_utxo_by_ukey(ukey);

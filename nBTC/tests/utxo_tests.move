@@ -30,6 +30,7 @@ fun validate_utxos_working_case() {
         &proposed_indices,
         vector[MOCK_DWALLET_ID!(), MOCK_DWALLET_ID!()],
         withdrawal_amount,
+        0,
     );
 
     assert_eq!(total_value, 80000);
@@ -56,6 +57,7 @@ fun validate_utxos_empty_indices() {
         &proposed_indices,
         vector[MOCK_DWALLET_ID!()],
         10000,
+        0,
     );
 
     abort
@@ -74,6 +76,7 @@ fun validate_utxos_nonexistent_index() {
         &proposed_indices,
         vector[MOCK_DWALLET_ID!()],
         10000,
+        0,
     );
 
     abort
@@ -97,6 +100,7 @@ fun validate_utxos_insufficient_amount() {
         &proposed_indices,
         vector[MOCK_DWALLET_ID!()],
         100000,
+        0,
     );
 
     abort
@@ -120,6 +124,7 @@ fun validate_utxos_exact_match() {
         &proposed_indices,
         vector[MOCK_DWALLET_ID!()],
         50000,
+        0,
     );
 
     assert_eq!(total_value, 50000);
