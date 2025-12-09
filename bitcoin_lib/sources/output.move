@@ -7,7 +7,6 @@ use bitcoin_lib::opcode;
 use bitcoin_lib::reader::Reader;
 use bitcoin_lib::vector_utils::vector_slice;
 
-// === BTC script opcodes are now in bitcoin_lib::opcode module ===
 
 /// Output in btc transaction
 public struct Output has copy, drop, store {
