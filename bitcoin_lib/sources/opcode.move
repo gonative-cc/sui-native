@@ -15,7 +15,7 @@ module bitcoin_lib::opcode;
 /// To use an opcode value in another module:
 /// ```move
 /// use bitcoin_lib::opcode;
-/// let checklocktimeverify = opcode::OP_CHECKLOCKTIMEVERIFY();
+/// let checklocktimeverify = opcode::OP_CHECKLOCKTIMEVERIFY!();
 /// ```
 ///
 /// OPCODE CATEGORIES:
