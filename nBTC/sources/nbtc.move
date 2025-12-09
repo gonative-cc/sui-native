@@ -567,7 +567,7 @@ public fun propose_utxos(
     let requested_amount = r.amount();
 
     assert!(
-        contract.utxo_map.validate_utxos(&utxo_ids, dwallet_ids, requested_amount) >= requested_amount,
+        contract.utxo_map.validate_utxos(&utxo_ids, dwallet_ids, requested_amount, redeem_id) >= requested_amount,
         EInvalidUTXOSet,
     );
 
