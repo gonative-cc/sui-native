@@ -310,7 +310,7 @@ public fun big_endian_from_u256(number: u256): vector<u8> {
 /// Ensures S component is in low range per BIP-146.
 /// If S > n/2, returns n - S. Otherwise returns S unchanged.
 /// Input: 32-byte big-endian S value
-/// Output: Normalized 32-byte big-endian S value
+/// Output: Normalized variable-length big-endian S value (leading zeros stripped)
 ///
 /// n = secp256k1 curve order = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141
 public fun sig_low_s(sig_s: vector<u8>): vector<u8> {
