@@ -24,7 +24,6 @@ use std::hash::sha2_256;
 
 #[test_only]
 use std::unit_test::assert_eq;
-// Opcodes are now defined in bitcoin_lib::opcode module
 
 // Constants for interpreter operation results
 const SUCCESS: u64 = 0;
