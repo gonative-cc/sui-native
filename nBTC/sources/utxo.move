@@ -97,8 +97,7 @@ public(package) fun get_utxo_by_ukey(utxo_map: &UtxoMap, ukey: vector<u8>): &Utx
 }
 
 public(package) fun get_utxo_copy(utxo_map: &UtxoMap, idx: u64, dwallet_id: ID): Utxo {
-    // TODO: check move have sugar syntax for this case?
-    let ref = &utxo_map.utxos[utxo_key(idx, dwallet_id)];
+    let ref = get_utxo(utxo_map, idx, dwallet_id);
     *ref
 }
 
