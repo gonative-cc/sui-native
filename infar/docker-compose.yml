@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  esplora-regtest:
+    image: blockstream/esplora:latest
+    container_name: esplora-regtest
+
+    # CRITICAL: This startup script is required to launch the full stack.
+    # The arguments are: <network> <service_mode>
+    command: bash -c "/srv/explorer/run.sh bitcoin-regtest explorer"
+
+    ports:
+      - 8080:80      # Web Interface (http://localhost:8080)
+      - 50001:50001
+
+    volumes:
+      # specific volume for regtest data persistence
+      - ./esplora-regtest-data:/data
+
+    environment:
+      # 1 = Disable pre-caching stats (Speeds up startup for empty Regtest chains)
+      - NO_PRECACHE=1
+      # 1 = Use lightweight indexing (saves disk, but less searchable)
+      # Keep 0 for Regtest since the chain is small anyway
+      - ENABLE_LIGHTMODE=0
+      - DEBUG=verbose
