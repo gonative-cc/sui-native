@@ -136,7 +136,6 @@ public fun validate_utxos(
     let len = utxo_ids.length();
 
     let mut total_value: u64 = 0;
-    let mut i = 0;
 
     len.do!(|i| {
         let idx = utxo_ids[i];

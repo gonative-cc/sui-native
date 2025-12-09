@@ -29,6 +29,8 @@ const EInvalidSignatureId: vector<u8> = b"invalid signature id for redeem reques
 #[error]
 const EInvalidIkaECDSALength: vector<u8> = b"invalid ecdsa signature length from ika format";
 #[error]
+const EInvalidIkaSchnorrLength: vector<u8> = b"invalid schnorr signature length from ika format";
+#[error]
 const EUnsupportedLockscript: vector<u8> = b"unsupported lockscript";
 
 const ECDSA: u32 = 0;
