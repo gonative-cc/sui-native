@@ -2,6 +2,29 @@
 
 module bitcoin_lib::opcode;
 
+// === BITCOIN SCRIPT OPCODES ===
+//
+// Complete list of Bitcoin Script opcodes according to Bitcoin specification.
+// Reference: https://en.bitcoin.it/wiki/Script#Opcodes
+//
+// OPCODE CATEGORIES:
+//
+// Constants: OP_0, OP_1NEGATE, OP_1-OP_16
+// Flow Control: OP_IF, OP_NOTIF, OP_ELSE, OP_ENDIF, OP_VERIFY
+// Stack: OP_DROP, OP_DUP, OP_NIP, OP_OVER, OP_PICK, OP_ROLL, OP_SWAP, OP_TUCK
+// Stack Spacing: OP_2DROP, OP_2DUP, OP_3DUP, OP_2OVER, OP_2ROT, OP_2SWAP
+// String: OP_SIZE, OP_CAT (disabled), OP_SUBSTR (disabled), OP_LEFT (disabled), OP_RIGHT (disabled)
+// Bitwise: OP_INVERT (disabled), OP_AND (disabled), OP_OR (disabled), OP_XOR (disabled)
+// Arithmetic: OP_1ADD, OP_1SUB, OP_NEGATE, OP_ABS, OP_NOT, OP_0NOTEQUAL, OP_ADD, OP_SUB, OP_MUL (disabled), OP_DIV (disabled), OP_MOD (disabled), OP_LSHIFT (disabled), OP_RSHIFT (disabled)
+// Comparison: OP_EQUAL, OP_EQUALVERIFY, OP_NUMEQUAL, OP_NUMEQUALVERIFY, OP_NUMNOTEQUAL, OP_LESSTHAN, OP_GREATERTHAN, OP_LESSTHANOREQUAL, OP_GREATERTHANOREQUAL, OP_MIN, OP_MAX
+// Crypto: OP_RIPEMD160, OP_SHA1, OP_SHA256, OP_HASH160, OP_HASH256, OP_CODESEPARATOR, OP_CHECKSIG, OP_CHECKSIGVERIFY, OP_CHECKMULTISIG, OP_CHECKMULTISIGVERIFY
+// Locktime: OP_CHECKLOCKTIMEVERIFY, OP_CHECKSEQUENCEVERIFY
+// Nop: OP_NOP, OP_NOP4-OP_NOP10
+// Tapscript: OP_CHECKSIGADD
+//
+// DISABLED/INVALID opcodes cause script execution to fail
+//
+
 // === PUSH BYTES OPCODES ===
 
 /// Push the next 1 byte as an array onto the stack
@@ -396,19 +419,19 @@ public macro fun OP_PUSHDATA4(): u8 {
     0x4e
 }
 
+// === CONSTANTS ===
+
 /// Push the number -1 onto the stack
 public macro fun OP_1NEGATE(): u8 {
     0x4f
 }
 
-/// Word for the Bitcoin protocol version
+/// Word for the Bitcoin protocol version - INVALID/RESERVED
 public macro fun OP_RESERVED(): u8 {
     0x50
 }
 
-// === CONSTANTS ===
-
-/// An empty array of bytes is pushed onto the stack (not a no-op: an item is added to the stack)
+/// Push an empty array onto the stack
 public macro fun OP_0(): u8 {
     0x00
 }
@@ -500,10 +523,12 @@ public macro fun OP_NOP(): u8 {
     0x61
 }
 
-/// Word for the Bitcoin protocol version
+/// Word for the Bitcoin protocol version - INVALID/RESERVED
 public macro fun OP_VER(): u8 {
     0x62
 }
+
+// === FLOW CONTROL ===
 
 /// If the top stack value is not 0, the statements are executed. The top stack value is removed.
 public macro fun OP_IF(): u8 {
@@ -515,12 +540,12 @@ public macro fun OP_NOTIF(): u8 {
     0x64
 }
 
-/// Fail the script immediately unless already in an OP_IF/OP_NOTIF statement
+/// Fail the script immediately - INVALID/RESERVED
 public macro fun OP_VERIF(): u8 {
     0x65
 }
 
-/// Fail the script immediately unless already in an OP_IF/OP_NOTIF statement
+/// Fail the script immediately - INVALID/RESERVED
 public macro fun OP_VERNOTIF(): u8 {
     0x66
 }
@@ -642,25 +667,32 @@ public macro fun OP_TUCK(): u8 {
     0x7d
 }
 
-/// Concatenates two strings
+/// Concatenates two strings - DISABLED
 public macro fun OP_CAT(): u8 {
     0x7e
 }
 
-/// Returns a section of a string
+/// Returns a section of a string - DISABLED
 public macro fun OP_SUBSTR(): u8 {
     0x7f
 }
 
-/// Keeps only the leftmost bytes from a string
+/// Keeps only the leftmost bytes from a string - DISABLED
 public macro fun OP_LEFT(): u8 {
     0x80
 }
 
-/// Keeps only the rightmost bytes from a string
+/// Keeps only the rightmost bytes from a string - DISABLED
 public macro fun OP_RIGHT(): u8 {
     0x81
 }
+
+// DISABLED OPCODES: These will cause script execution to fail
+//
+// String: OP_CAT, OP_SUBSTR, OP_LEFT, OP_RIGHT
+// Bitwise: OP_INVERT, OP_AND, OP_OR, OP_XOR
+// Arithmetic: OP_2MUL, OP_2DIV, OP_MUL, OP_DIV, OP_MOD, OP_LSHIFT, OP_RSHIFT
+//
 
 /// Returns the length of the string at the top of the stack
 public macro fun OP_SIZE(): u8 {
@@ -669,22 +701,22 @@ public macro fun OP_SIZE(): u8 {
 
 // === BITWISE LOGIC OPCODES ===
 
-/// Flips the bits
+/// Flips the bits - DISABLED
 public macro fun OP_INVERT(): u8 {
     0x83
 }
 
-/// Boolean and between each bit in the inputs
+/// Boolean and between each bit in the inputs - DISABLED
 public macro fun OP_AND(): u8 {
     0x84
 }
 
-/// Boolean or between each bit in the inputs
+/// Boolean or between each bit in the inputs - DISABLED
 public macro fun OP_OR(): u8 {
     0x85
 }
 
-/// Boolean exclusive or between each bit in the inputs
+/// Boolean exclusive or between each bit in the inputs - DISABLED
 public macro fun OP_XOR(): u8 {
     0x86
 }
@@ -701,15 +733,17 @@ public macro fun OP_EQUALVERIFY(): u8 {
     0x88
 }
 
-/// Word for the Bitcoin protocol version
+/// Word for the Bitcoin protocol version - INVALID/RESERVED
 public macro fun OP_RESERVED1(): u8 {
     0x89
 }
 
-/// Word for the Bitcoin protocol version
+/// Word for the Bitcoin protocol version - INVALID/RESERVED
 public macro fun OP_RESERVED2(): u8 {
     0x8a
 }
+
+// === ARITHMETIC ===
 
 /// 1 is added to the input
 public macro fun OP_1ADD(): u8 {
@@ -721,12 +755,12 @@ public macro fun OP_1SUB(): u8 {
     0x8c
 }
 
-/// The input is multiplied by 2
+/// The input is multiplied by 2 - DISABLED
 public macro fun OP_2MUL(): u8 {
     0x8d
 }
 
-/// The input is divided by 2
+/// The input is divided by 2 - DISABLED
 public macro fun OP_2DIV(): u8 {
     0x8e
 }
@@ -761,27 +795,27 @@ public macro fun OP_SUB(): u8 {
     0x94
 }
 
-/// a is multiplied by b
+/// a is multiplied by b - DISABLED
 public macro fun OP_MUL(): u8 {
     0x95
 }
 
-/// a is divided by b
+/// a is divided by b - DISABLED
 public macro fun OP_DIV(): u8 {
     0x96
 }
 
-/// Returns the remainder after dividing a by b
+/// Returns the remainder after dividing a by b - DISABLED
 public macro fun OP_MOD(): u8 {
     0x97
 }
 
-/// Shifts a left b bits, preserving sign
+/// Shifts a left b bits, preserving sign - DISABLED
 public macro fun OP_LSHIFT(): u8 {
     0x98
 }
 
-/// Shifts a right b bits, preserving sign
+/// Shifts a right b bits, preserving sign - DISABLED
 public macro fun OP_RSHIFT(): u8 {
     0x99
 }
@@ -853,22 +887,22 @@ public macro fun OP_RIPEMD160(): u8 {
     0xa6
 }
 
-/// The input is hashed using SHA-1
+/// Input is hashed using SHA-1
 public macro fun OP_SHA1(): u8 {
     0xa7
 }
 
-/// The input is hashed using SHA-256
+/// Input is hashed using SHA-256
 public macro fun OP_SHA256(): u8 {
     0xa8
 }
 
-/// The input is hashed using SHA-256 and then RIPEMD-160
+/// Input is hashed using SHA-256 and then RIPEMD-160
 public macro fun OP_HASH160(): u8 {
     0xa9
 }
 
-/// The input is hashed two times with SHA-256
+/// Input is hashed two times with SHA-256
 public macro fun OP_HASH256(): u8 {
     0xaa
 }
@@ -878,17 +912,17 @@ public macro fun OP_CODESEPARATOR(): u8 {
     0xab
 }
 
-/// The entire transaction's outputs, inputs, and script (from the most recently-executed CODESEPARATOR to the end) are hashed. The signature used by OP_CHECKSIG must be a valid signature for this hash and public key. If it is, 1 is returned, 0 otherwise.
+/// Pop a signature and public key, verify signature for transaction. Push 1 if valid, 0 otherwise
 public macro fun OP_CHECKSIG(): u8 {
     0xac
 }
 
-/// Same as OP_CHECKSIG, but OP_VERIFY is executed afterward
+/// Same as OP_CHECKSIG but runs OP_VERIFY afterward
 public macro fun OP_CHECKSIGVERIFY(): u8 {
     0xad
 }
 
-/// For each signature and public key pair, an OP_CHECKSIG is executed. If more signatures are valid than are required, 1 is returned, 0 otherwise
+/// Pop N signatures, N public keys, and N. Verify each signature. Push 1 if all valid, 0 otherwise
 public macro fun OP_CHECKMULTISIG(): u8 {
     0xae
 }
@@ -900,18 +934,13 @@ public macro fun OP_CHECKMULTISIGVERIFY(): u8 {
 
 // === LOCKTIME OPCODES ===
 
-/// Does nothing (NOP)
-public macro fun OP_NOP1(): u8 {
-    0xb0
-}
-
-/// Does nothing (NOP)
-public macro fun OP_NOP2(): u8 {
+/// Check if transaction locktime is as required (BIP 65)
+public macro fun OP_CHECKLOCKTIMEVERIFY(): u8 {
     0xb1
 }
 
-/// Does nothing (NOP)
-public macro fun OP_NOP3(): u8 {
+/// Check if transaction sequence is as required (BIP 112)
+public macro fun OP_CHECKSEQUENCEVERIFY(): u8 {
     0xb2
 }
 
@@ -950,29 +979,24 @@ public macro fun OP_NOP10(): u8 {
     0xb9
 }
 
-/// Check if transaction sequence is as required
-public macro fun OP_CHECKSEQUENCEVERIFY(): u8 {
-    0xb2
-}
+// === TAPSCRIPT (BIP 342) ===
 
-/// Check if transaction locktime is as required
-public macro fun OP_CHECKLOCKTIMEVERIFY(): u8 {
-    0xb1
-}
-
-/// Adds the signature to the public key
+/// Pop signature, public key, and counter. Verify signature and increment counter if valid. Push new counter
 public macro fun OP_CHECKSIGADD(): u8 {
     0xba
 }
 
-// === INTERNAL/UNKNOWN OPCODES ===
+// === UNKNOWN OPCODES ===
 
-/// Unknown opcode (Bitcoin Core internal)
+/// NOTE: This opcode is disabled in Bitcoin Core and will cause script execution to fail
+/// Range: 0xBB to 0xF9 (187 to 249)
+/// Using any of these opcodes will result in script failure
 public macro fun OP_UNKNOWN187(): u8 {
     0xbb
 }
 
-/// Unknown opcode
+/// Unknown opcode - DISABLED
+/// NOTE: This opcode is disabled in Bitcoin Core and will cause script execution to fail
 public macro fun OP_UNKNOWN188(): u8 {
     0xbc
 }
@@ -1282,32 +1306,60 @@ public macro fun OP_UNKNOWN249(): u8 {
     0xf9
 }
 
-/// Bitcoin Core internal
+// === BITCOIN CORE INTERNAL OPCODES (0xFA - 0xFE) ===
+//
+// IMPORTANT: All opcodes in this section are Bitcoin Core INTERNAL USE ONLY
+// and are DISABLED in actual Bitcoin scripts.
+//
+// These opcodes are used internally by Bitcoin Core for:
+// - Script parsing and compilation
+// - Internal data structure representation
+// - Optimization and analysis
+//
+// They are NOT part of the Bitcoin consensus rules and will cause
+// script execution to fail with EInternalBitcoinCoreOpcode error.
+//
+// Reference: https://github.com/bitcoin/bitcoin/blob/master/src/script/script.h
+// https://github.com/btcsuite/btcd/blob/v0.24.2/txscript/opcode.go#L581
+//
+
+/// Bitcoin Core internal - DISABLED in actual Bitcoin scripts
+/// NOTE: Used internally by Bitcoin Core for representing small integers in script parsing
+/// Using this opcode in a Bitcoin script will cause execution to fail
 public macro fun OP_SMALLINTEGER(): u8 {
     0xfa
 }
 
-/// Bitcoin Core internal
+/// Bitcoin Core internal - DISABLED in actual Bitcoin scripts
+/// NOTE: Used internally by Bitcoin Core for handling multiple public keys
+/// Using this opcode in a Bitcoin script will cause execution to fail
 public macro fun OP_PUBKEYS(): u8 {
     0xfb
 }
 
-/// Unknown opcode
+/// Unknown opcode - DISABLED
+/// NOTE: This opcode is disabled in Bitcoin Core and will cause script execution to fail
 public macro fun OP_UNKNOWN252(): u8 {
     0xfc
 }
 
-/// Bitcoin Core internal
+/// Bitcoin Core internal - DISABLED in actual Bitcoin scripts
+/// NOTE: Used internally by Bitcoin Core for public key hash operations
+/// Using this opcode in a Bitcoin script will cause execution to fail
 public macro fun OP_PUBKEYHASH(): u8 {
     0xfd
 }
 
-/// Bitcoin Core internal
+/// Bitcoin Core internal - DISABLED in actual Bitcoin scripts
+/// NOTE: Used internally by Bitcoin Core for public key operations
+/// Using this opcode in a Bitcoin script will cause execution to fail
 public macro fun OP_PUBKEY(): u8 {
     0xfe
 }
 
-/// Invalid opcode
+/// Invalid opcode - completely invalid opcode that will always cause script failure
+/// NOTE: This opcode is disabled in Bitcoin Core and will cause script execution to fail
+/// Reference: https://github.com/bitcoin/bitcoin/blob/master/src/script/script.h
 public macro fun OP_INVALIDOPCODE(): u8 {
     0xff
 }
