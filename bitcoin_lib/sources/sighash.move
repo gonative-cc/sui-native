@@ -16,7 +16,6 @@ use std::hash::sha2_256 as sha256;
 #[test_only]
 use std::unit_test::assert_eq;
 
-// Opcode constants are now in bitcoin_lib::opcode module
 /// Sighash types
 const SIGHASH_ALL: u8 = 0x01;
 const SIGHASH_NONE: u8 = 0x02;
