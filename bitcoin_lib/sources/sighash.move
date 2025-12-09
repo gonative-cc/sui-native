@@ -9,25 +9,14 @@ use bitcoin_lib::encoding::{
     script_to_var_bytes,
     u64_to_le_bytes
 };
+use bitcoin_lib::opcode;
 use bitcoin_lib::tx::Transaction;
 use std::hash::sha2_256 as sha256;
 
 #[test_only]
 use std::unit_test::assert_eq;
 
-// TODO: use macro to create share constants
-
-/// These constants are the values of the official opcodes used on the btc wiki,
-/// in bitcoin core and in most if not all other references and software related
-/// to handling BTC scripts.
-/// https://github.com/btcsuite/btcd/blob/master/txscript/opcode.go
-const OP_PUSHBYTES_20: u8 = 0x14; // 20
-const OP_DUP: u8 = 0x76; // 118
-/// Compare the top two items on the stack and halts the script if they are not equal.
-const OP_EQUALVERIFY: u8 = 0x88; // 136
-const OP_HASH160: u8 = 0xa9; // 169
-// const OP_CODESEPARATOR: u8 = 0xab; // 171
-const OP_CHECKSIG: u8 = 0xac; // 172
+// Opcode constants are now in bitcoin_lib::opcode module
 /// Sighash types
 const SIGHASH_ALL: u8 = 0x01;
 const SIGHASH_NONE: u8 = 0x02;
@@ -48,12 +37,12 @@ const EValuesLengthMismatch: vector<u8> = b"size of values mismatch with inputs 
 public fun create_p2wpkh_scriptcode(pkh: vector<u8>): vector<u8> {
     assert!(pkh.length() == 20, EInvalidPKHLength);
     let mut script = vector::empty<u8>();
-    script.push_back(OP_DUP);
-    script.push_back(OP_HASH160);
-    script.push_back(OP_PUSHBYTES_20);
+    script.push_back(opcode::OP_DUP!());
+    script.push_back(opcode::OP_HASH160!());
+    script.push_back(opcode::OP_PUSHBYTES_20!());
     script.append(pkh);
-    script.push_back(OP_EQUALVERIFY);
-    script.push_back(OP_CHECKSIG);
+    script.push_back(opcode::OP_EQUALVERIFY!());
+    script.push_back(opcode::OP_CHECKSIG!());
     script
 }
 
