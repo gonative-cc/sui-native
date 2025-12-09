@@ -1,9 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
 
-module bitcoin_lib::opcode;
-
-// === BITCOIN SCRIPT OPCODES ===
-
 /// IMPORTANT: In Move, constants cannot be exported from modules. To make opcode values
 /// available to other modules, we must define them as public macros instead of constants.
 /// This is why all opcodes are defined as `public macro fun` rather than `const`.
@@ -35,6 +31,7 @@ module bitcoin_lib::opcode;
 ///
 /// DISABLED/INVALID opcodes cause script execution to fail
 ///
+module bitcoin_lib::opcode;
 
 // === PUSH BYTES OPCODES ===
 
