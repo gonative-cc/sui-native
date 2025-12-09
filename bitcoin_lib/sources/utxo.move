@@ -8,7 +8,6 @@ use bitcoin_lib::opcode;
 use bitcoin_lib::output::Output;
 use bitcoin_lib::vector_utils::vector_slice;
 
-
 /// We represent UTXOs as a map of {key: OutPoint, value: Data}
 /// OutPoint is a name used to identify UTXO in bitcoind
 /// OutPoint is a UTXO ID

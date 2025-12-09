@@ -7,7 +7,6 @@ use bitcoin_lib::opcode;
 use bitcoin_lib::reader::Reader;
 use bitcoin_lib::vector_utils::vector_slice;
 
-
 /// Output in btc transaction
 public struct Output has copy, drop, store {
     amount: u64,

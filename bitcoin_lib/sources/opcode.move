@@ -3,27 +3,38 @@
 module bitcoin_lib::opcode;
 
 // === BITCOIN SCRIPT OPCODES ===
-//
-// Complete list of Bitcoin Script opcodes according to Bitcoin specification.
-// Reference: https://en.bitcoin.it/wiki/Script#Opcodes
-//
-// OPCODE CATEGORIES:
-//
-// Constants: OP_0, OP_1NEGATE, OP_1-OP_16
-// Flow Control: OP_IF, OP_NOTIF, OP_ELSE, OP_ENDIF, OP_VERIFY
-// Stack: OP_DROP, OP_DUP, OP_NIP, OP_OVER, OP_PICK, OP_ROLL, OP_SWAP, OP_TUCK
-// Stack Spacing: OP_2DROP, OP_2DUP, OP_3DUP, OP_2OVER, OP_2ROT, OP_2SWAP
-// String: OP_SIZE, OP_CAT (disabled), OP_SUBSTR (disabled), OP_LEFT (disabled), OP_RIGHT (disabled)
-// Bitwise: OP_INVERT (disabled), OP_AND (disabled), OP_OR (disabled), OP_XOR (disabled)
-// Arithmetic: OP_1ADD, OP_1SUB, OP_NEGATE, OP_ABS, OP_NOT, OP_0NOTEQUAL, OP_ADD, OP_SUB, OP_MUL (disabled), OP_DIV (disabled), OP_MOD (disabled), OP_LSHIFT (disabled), OP_RSHIFT (disabled)
-// Comparison: OP_EQUAL, OP_EQUALVERIFY, OP_NUMEQUAL, OP_NUMEQUALVERIFY, OP_NUMNOTEQUAL, OP_LESSTHAN, OP_GREATERTHAN, OP_LESSTHANOREQUAL, OP_GREATERTHANOREQUAL, OP_MIN, OP_MAX
-// Crypto: OP_RIPEMD160, OP_SHA1, OP_SHA256, OP_HASH160, OP_HASH256, OP_CODESEPARATOR, OP_CHECKSIG, OP_CHECKSIGVERIFY, OP_CHECKMULTISIG, OP_CHECKMULTISIGVERIFY
-// Locktime: OP_CHECKLOCKTIMEVERIFY, OP_CHECKSEQUENCEVERIFY
-// Nop: OP_NOP, OP_NOP4-OP_NOP10
-// Tapscript: OP_CHECKSIGADD
-//
-// DISABLED/INVALID opcodes cause script execution to fail
-//
+
+/// IMPORTANT: In Move, constants cannot be exported from modules. To make opcode values
+/// available to other modules, we must define them as public macros instead of constants.
+/// This is why all opcodes are defined as `public macro fun` rather than `const`.
+///
+/// Complete list of Bitcoin Script opcodes according to Bitcoin specification.
+/// Reference: https://en.bitcoin.it/wiki/Script#Opcodes
+///
+/// USAGE:
+/// To use an opcode value in another module:
+/// ```move
+/// use bitcoin_lib::opcode;
+/// let checklocktimeverify = opcode::OP_CHECKLOCKTIMEVERIFY();
+/// ```
+///
+/// OPCODE CATEGORIES:
+///
+/// Constants: OP_0, OP_1NEGATE, OP_1-OP_16
+/// Flow Control: OP_IF, OP_NOTIF, OP_ELSE, OP_ENDIF, OP_VERIFY
+/// Stack: OP_DROP, OP_DUP, OP_NIP, OP_OVER, OP_PICK, OP_ROLL, OP_SWAP, OP_TUCK
+/// Stack Spacing: OP_2DROP, OP_2DUP, OP_3DUP, OP_2OVER, OP_2ROT, OP_2SWAP
+/// String: OP_SIZE, OP_CAT (disabled), OP_SUBSTR (disabled), OP_LEFT (disabled), OP_RIGHT (disabled)
+/// Bitwise: OP_INVERT (disabled), OP_AND (disabled), OP_OR (disabled), OP_XOR (disabled)
+/// Arithmetic: OP_1ADD, OP_1SUB, OP_NEGATE, OP_ABS, OP_NOT, OP_0NOTEQUAL, OP_ADD, OP_SUB, OP_MUL (disabled), OP_DIV (disabled), OP_MOD (disabled), OP_LSHIFT (disabled), OP_RSHIFT (disabled)
+/// Comparison: OP_EQUAL, OP_EQUALVERIFY, OP_NUMEQUAL, OP_NUMEQUALVERIFY, OP_NUMNOTEQUAL, OP_LESSTHAN, OP_GREATERTHAN, OP_LESSTHANOREQUAL, OP_GREATERTHANOREQUAL, OP_MIN, OP_MAX
+/// Crypto: OP_RIPEMD160, OP_SHA1, OP_SHA256, OP_HASH160, OP_HASH256, OP_CODESEPARATOR, OP_CHECKSIG, OP_CHECKSIGVERIFY, OP_CHECKMULTISIG, OP_CHECKMULTISIGVERIFY
+/// Locktime: OP_CHECKLOCKTIMEVERIFY, OP_CHECKSEQUENCEVERIFY
+/// Nop: OP_NOP, OP_NOP4-OP_NOP10
+/// Tapscript: OP_CHECKSIGADD
+///
+/// DISABLED/INVALID opcodes cause script execution to fail
+///
 
 // === PUSH BYTES OPCODES ===
 
