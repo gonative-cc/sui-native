@@ -200,10 +200,12 @@ public fun raw_signed_tx(r: &RedeemRequest, storage: &Storage): vector<u8> {
         let dwallet_metadata = storage.dwallet_metadata(dwallet_id);
         let lockscript = dwallet_metadata.lockscript();
         let ika_signature = *r.signatures_map.get(&(i as u32));
+        // Taproot witness expects a 64-byte Schnorr signature, no sighash flag byte.
         let witness = if (script::is_taproot(lockscript)) {
+            assert!(ika_signature.length() == 64, EInvalidIkaSchnorrLength);
             vector[ika_signature]
         } else if (script::is_P2WPKH(lockscript)) {
-            // ECDSA Ika signature returns 65 bytes
+            // P2WPKH witness expects a 65-byte ECDSA signature (with recovery byte).
             assert!(ika_signature.length() == 65, EInvalidIkaECDSALength);
             let raw_signature = ika_signature.slice(1, 65); // skip the first byte (pub key recovery byte)
             let public_key = storage.dwallet_metadata(dwallet_id).public_key();
