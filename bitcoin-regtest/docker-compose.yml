@@ -11,7 +11,7 @@ services:
 
     ports:
       - 8080:80      # Web Interface (http://localhost:8080)
-      - 50001:50001
+      - 127.0.0.1:50001:50001
 
     volumes:
       # specific volume for regtest data persistence
