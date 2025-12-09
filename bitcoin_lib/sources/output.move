@@ -3,37 +3,9 @@
 module bitcoin_lib::output;
 
 use bitcoin_lib::encoding::{u64_to_le_bytes, u64_to_varint_bytes, le_bytes_to_u64};
+use bitcoin_lib::opcode;
 use bitcoin_lib::reader::Reader;
 use bitcoin_lib::vector_utils::vector_slice;
-
-// === BTC script opcodes ===
-/// An empty array of bytes is pushed onto the stack. (This is not a no-op: an item is added to the stack.)
-const OP_0: u8 = 0x00;
-const OP_1: u8 = 0x51;
-/// Duplicates the top stack item
-const OP_DUP: u8 = 0x76;
-/// Pop the top stack item and push its RIPEMD(SHA256(top item)) hash
-const OP_HASH160: u8 = 0xa9;
-/// Push the next 20 bytes as an array onto the stack
-const OP_DATA_20: u8 = 0x14;
-///
-const OP_DATA_32: u8 = 0x20;
-///
-const OP_EQUAL: u8 = 0x87;
-/// Returns success if the inputs are exactly equal, failure otherwise
-const OP_EQUALVERIFY: u8 = 0x88;
-/// https://en.bitcoin.it/wiki/OP_CHECKSIG pushing 1/0 for success/failure
-const OP_CHECKSIG: u8 = 0xac;
-/// nulldata script
-const OP_RETURN: u8 = 0x6a;
-/// Read the next 4 bytes as N. Push the next N bytes as an array onto the stack.
-const OP_PUSHDATA4: u8 = 0x4e;
-/// Read the next 2 bytes as N. Push the next N bytes as an array onto the stack.
-const OP_PUSHDATA2: u8 = 0x4d;
-/// Read the next byte as N. Push the next N bytes as an array onto the stack.
-const OP_PUSHDATA1: u8 = 0x4c;
-/// Push the next 75 bytes onto the stack.
-const OP_DATA_75: u8 = 0x4b;
 
 /// Output in btc transaction
 public struct Output has copy, drop, store {
@@ -65,46 +37,46 @@ public fun script_pubkey(output: &Output): vector<u8> {
 public fun is_P2SH(output: &Output): bool {
     let script = output.script_pubkey();
     script.length() == 23 &&
-	script[0] == OP_HASH160 &&
-	script[1] == OP_DATA_20 &&
-	script[22] == OP_EQUAL
+	script[0] == opcode::OP_HASH160!() &&
+	script[1] == opcode::OP_PUSHBYTES_20!() &&
+	script[22] == opcode::OP_EQUAL!()
 }
 
 public fun is_P2WSH(output: &Output): bool {
     let script = output.script_pubkey();
     script.length() == 34 &&
-	script[0] == OP_0 &&
-	script[1] == OP_DATA_32
+	script[0] == opcode::OP_0!() &&
+	script[1] == opcode::OP_PUSHBYTES_32!()
 }
 
 public fun is_P2PHK(output: &Output): bool {
     let script = output.script_pubkey();
 
     script.length() == 25 &&
-		script[0] == OP_DUP &&
-		script[1] == OP_HASH160 &&
-		script[2] == OP_DATA_20 &&
-		script[23] == OP_EQUALVERIFY &&
-		script[24] == OP_CHECKSIG
+		script[0] == opcode::OP_DUP!() &&
+		script[1] == opcode::OP_HASH160!() &&
+		script[2] == opcode::OP_PUSHBYTES_20!() &&
+		script[23] == opcode::OP_EQUALVERIFY!() &&
+		script[24] == opcode::OP_CHECKSIG!()
 }
 
 public fun is_op_return(output: &Output): bool {
     let script = output.script_pubkey;
-    script.length() > 0 && script[0] == OP_RETURN
+    script.length() > 0 && script[0] == opcode::OP_RETURN!()
 }
 
 public fun is_P2WPHK(output: &Output): bool {
     let script = output.script_pubkey;
     script.length() == 22 &&
-        script[0] == OP_0 &&
-        script[1] == OP_DATA_20
+        script[0] == opcode::OP_0!() &&
+        script[1] == opcode::OP_PUSHBYTES_20!()
 }
 
 public fun is_taproot(output: &Output): bool {
     let script = output.script_pubkey;
     script.length() == 34 &&
-	script[0] == OP_1 &&
-	script[1] == OP_DATA_32
+	script[0] == opcode::OP_1!() &&
+	script[1] == opcode::OP_PUSHBYTES_32!()
 }
 
 // TODO: add support script addresses.
@@ -161,17 +133,17 @@ public fun op_return(output: &Output): Option<vector<u8>> {
     };
 
     // TODO: better document here. maybe use some ascii chart
-    if (script[1] <= OP_DATA_75) {
+    if (script[1] <= opcode::OP_PUSHBYTES_75!()) {
         // script = OP_RETURN OP_DATA_<len> DATA
         //          |      2 bytes         |  the rest |
         return option::some(vector_slice(&script, 2, script.length()))
     };
-    if (script[1] == OP_PUSHDATA1) {
+    if (script[1] == opcode::OP_PUSHDATA1!()) {
         // script = OP_RETURN OP_PUSHDATA1 <1 bytes>    DATA
         //          |      3 bytes                  |  the rest |
         return option::some(vector_slice(&script, 3, script.length()))
     };
-    if (script[1] == OP_PUSHDATA2) {
+    if (script[1] == opcode::OP_PUSHDATA2!()) {
         // script = OP_RETURN OP_PUSHDATA2 <2 bytes>   DATA
         //          |      4 bytes                  |  the rest |
         return option::some(vector_slice(&script, 4, script.length()))
