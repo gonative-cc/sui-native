@@ -92,6 +92,7 @@ public fun setup(
     dwallet_id: ID,
 ): (LightClient, NbtcContract, Scenario) {
     let mut scenario = test_scenario::begin(sender);
+    // TODO: we should use a dummy or create parameter for function setup
     let dwallet_coordinator = dwallet_id;
     let headers = vector[
         header::new(
