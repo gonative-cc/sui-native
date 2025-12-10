@@ -119,7 +119,9 @@ function getEnvConfig(): AppConfig {
 	const btcNetwork = Number(env.BTC_NETWORK || 2); // Default to regtest (2) if not provided
 	const validBtcNetworks = [0, 1, 2]; // 0=mainnet, 1=testnet, 2=regtest
 	if (!validBtcNetworks.includes(btcNetwork)) {
-		throw new Error(`Invalid BTC_NETWORK: ${btcNetwork}. Must be 0 (mainnet), 1 (testnet), or 2 (regtest)`);
+		throw new Error(
+			`Invalid BTC_NETWORK: ${btcNetwork}. Must be 0 (mainnet), 1 (testnet), or 2 (regtest)`,
+		);
 	}
 
 	return {
