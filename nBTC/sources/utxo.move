@@ -191,7 +191,6 @@ public fun validate_utxos(
         let idx = utxo_ids[i];
         let dwallet_id = dwallet_ids[i];
         let ukey = utxo_key(idx, dwallet_id);
-        // Check UTXO exists
         assert!(utxo_map.contains(ukey), EInvalidUtxo);
 
         if (utxo_map.locked_utxos.contains(ukey)) {
