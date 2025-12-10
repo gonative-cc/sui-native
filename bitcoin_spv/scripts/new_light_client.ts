@@ -64,7 +64,6 @@ function getEnvConfig(): AppConfig {
 		"SPV_PACKAGE_ID",
 		"BITCOIN_LIB_PACKAGE_ID",
 		"HEADERS",
-		"BTC_NETWORK",
 		"BTC_HEIGHT",
 		"PARENT_CHAIN_WORK",
 		"CONFIRMATION_DEPTH",
@@ -121,7 +120,7 @@ function getEnvConfig(): AppConfig {
 		bitcoinLibPackageId: env.BITCOIN_LIB_PACKAGE_ID!,
 		network: network,
 		headers: validateHeaders(env.HEADERS!),
-		btcNetwork: Number(env.BTC_NETWORK),
+		btcNetwork: Number(env.BTC_NETWORK || 2), // Default to regtest (2) if not provided
 		btcHeight: Number(env.BTC_HEIGHT),
 		parentChainWork: env.PARENT_CHAIN_WORK!,
 		confirmationDepth: Number(env.CONFIRMATION_DEPTH),
