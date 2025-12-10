@@ -164,6 +164,7 @@ export async function createSharedDwallet(ikaClient: IkaClient, suiClient: SuiCl
 		interval: 1000,
 	});
 	console.log("New dwallet id = ", dWalletID);
+	console.log("Dwallet metadata: ", await getDwalletMetadata(activeDWallet));
 	return activeDWallet;
 }
 

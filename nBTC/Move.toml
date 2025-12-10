@@ -2,16 +2,16 @@
 name = "nBTC"
 
 # edition should be 2024.beta, we use alpha for "extend" feature in test
-edition = "2024.alpha"
+edition = "2024.beta"
 license = "MPL-2.0"
 authors = ["Native"]
 
 [dependencies]
-bitcoin_spv = {local = "../bitcoin_spv"}
-bitcoin_lib = {local = "../bitcoin_lib"}
-ika_common = {git = "https://github.com/dwallet-labs/ika.git", subdir = "deployed_contracts/testnet/ika_common", rev = "main"}
-ika_dwallet_2pc_mpc = {git = "https://github.com/dwallet-labs/ika.git", subdir = "deployed_contracts/testnet/ika_dwallet_2pc_mpc", rev = "main"}
-ika = {git = "https://github.com/dwallet-labs/ika.git", subdir = "deployed_contracts/testnet/ika", rev = "main"}
+bitcoin_spv = { local = "../bitcoin_spv" }
+bitcoin_lib = { local = "../bitcoin_lib" }
+ika_common = { git = "https://github.com/dwallet-labs/ika.git", subdir = "deployed_contracts/testnet/ika_common", rev = "main" }
+ika_dwallet_2pc_mpc = { git = "https://github.com/dwallet-labs/ika.git", subdir = "deployed_contracts/testnet/ika_dwallet_2pc_mpc", rev = "main" }
+ika = { git = "https://github.com/dwallet-labs/ika.git", subdir = "deployed_contracts/testnet/ika", rev = "main" }
 # For remote import, use the `{ git = "...", subdir = "...", rev = "..." }`.
 # Revision can be a branch, a tag, and a commit hash.
 # MyRemotePackage = { git = "https://some.remote/host.git", subdir = "remote/path", rev = "main" }
@@ -26,9 +26,9 @@ ika = {git = "https://github.com/dwallet-labs/ika.git", subdir = "deployed_contr
 [addresses]
 nbtc = "0x0"
 # TODO: need to set these addresses for mainnet
-bitcoin_lc = "0x1001"
-fallback_addr = "0x1002"
-ika_coordinator = "0x1003"
+bitcoin_lc = "0xed0877a279110aab81c99f7956e3db5e7549f4c5b0f6cf163a51a5a2f9d5afa3"
+fallback_addr = "0x0c62bfbe82105cd8b783ae9d5b8b582b2b579fa86d3089acd7cbeb763e367867"
+ika_coordinator = "0x6573a6c13daf26a64eb8a37d3c7a4391b353031e223072ca45b1ff9366f59293"
 
 [dev-dependencies]
 # The dev-dependencies section allows overriding dependencies for `--test` and
