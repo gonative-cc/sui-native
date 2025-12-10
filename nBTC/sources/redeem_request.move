@@ -50,6 +50,7 @@ public struct RedeemRequest has store {
     fee: u64,
     inputs: vector<Utxo>,
     dwallet_ids: vector<ID>,
+    utxo_ids: vector<u64>,
     sig_hashes: VecMap<u32, vector<u8>>,
     sign_ids: Table<ID, bool>,
     signatures_map: VecMap<u32, vector<u8>>,
@@ -110,6 +111,8 @@ public fun status(r: &RedeemRequest): &RedeemStatus {
 public fun recipient_script(r: &RedeemRequest): vector<u8> { r.recipient_script }
 
 public fun dwallet_ids(r: &RedeemRequest): vector<ID> { r.dwallet_ids }
+
+public fun utxo_ids(r: &RedeemRequest): vector<u64> { r.utxo_ids }
 
 public fun redeem_created_at(r: &RedeemRequest): u64 { r.created_at }
 
@@ -254,9 +257,11 @@ public(package) fun set_best_utxos(
     r: &mut RedeemRequest,
     utxos: vector<Utxo>,
     dwallet_ids: vector<ID>,
+    utxo_ids: vector<u64>,
 ) {
     r.inputs = utxos;
     r.dwallet_ids = dwallet_ids;
+    r.utxo_ids = utxo_ids;
 }
 
 public fun new(
@@ -280,6 +285,7 @@ public fun new(
         signatures_map: vec_map::empty(),
         status: RedeemStatus::Resolving,
         dwallet_ids: vector::empty(),
+        utxo_ids: vector::empty(),
         created_at,
     }
 }
@@ -326,9 +332,15 @@ public fun get_signature(
 }
 
 #[test_only]
-public fun move_to_signing(r: &mut RedeemRequest, inputs: vector<Utxo>, dwallet_ids: vector<ID>) {
+public fun move_to_signing(
+    r: &mut RedeemRequest,
+    inputs: vector<Utxo>,
+    dwallet_ids: vector<ID>,
+    utxo_ids: vector<u64>,
+) {
     r.inputs = inputs;
     r.dwallet_ids = dwallet_ids;
+    r.utxo_ids = utxo_ids;
     r.status = RedeemStatus::Signing
 }
 
