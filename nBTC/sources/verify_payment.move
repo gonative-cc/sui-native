@@ -2,7 +2,7 @@
 
 module nbtc::verify_payment;
 
-use bitcoin_parser::tx::Transaction;
+use bitcoin_lib::tx::Transaction;
 use bitcoin_spv::light_client::LightClient;
 
 #[error]
@@ -28,21 +28,28 @@ public fun verify_payment(
     tx_index: u64,
     transaction: &Transaction,
     receiver_script_pubkey: vector<u8>,
-): (u64, Option<vector<u8>>) {
+): (u64, Option<vector<u8>>, vector<u32>) {
     let mut amount = 0;
     let mut op_return = option::none();
+    let mut vouts: vector<u32> = vector[];
     let tx_id = transaction.tx_id();
 
     assert!(lc.verify_tx(height, tx_id, proof, tx_index), ETxNotInBlock);
     let outputs = transaction.outputs();
-    outputs.do!(|o| {
-        if (o.script_pubkey() == receiver_script_pubkey) {
+
+    let mut i = 0;
+    while (i < outputs.length()) {
+        let o = &outputs[i];
+        if (o.script_pubkey() == receiver_script_pubkey && amount == 0) {
+            // we select the first utxo user create for us
             amount = amount + o.amount();
+            vouts.push_back(i as u32);
         } else if (o.is_op_return() && op_return.is_none()) {
             // we select the first OP RETURN
             op_return = o.op_return();
-        }
-    });
+        };
+        i = i + 1;
+    };
 
-    (amount, op_return)
+    (amount, op_return, vouts)
 }

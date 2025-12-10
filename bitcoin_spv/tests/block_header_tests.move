@@ -3,7 +3,7 @@
 #[test_only]
 module bitcoin_spv::block_header_tests;
 
-use bitcoin_parser::header::{Self, BlockHeader};
+use bitcoin_lib::header::{Self, BlockHeader};
 use bitcoin_spv::block_header::{EPoW, calc_work, pow_check, target};
 use std::unit_test::assert_eq;
 

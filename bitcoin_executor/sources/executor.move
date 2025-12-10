@@ -2,13 +2,14 @@
 
 module bitcoin_executor::bitcoin_executor;
 
-use bitcoin_executor::interpreter::{run, create_p2wpkh_scriptcode};
+use bitcoin_executor::interpreter::run;
 use bitcoin_executor::stack;
-use bitcoin_executor::utxo::{Self, OutPoint, Data};
-use bitcoin_parser::block;
-use bitcoin_parser::encoding::le_bytes_to_u64;
-use bitcoin_parser::output;
-use bitcoin_parser::tx::Transaction;
+use bitcoin_lib::block;
+use bitcoin_lib::encoding::le_bytes_to_u64;
+use bitcoin_lib::output;
+use bitcoin_lib::sighash::create_p2wpkh_scriptcode;
+use bitcoin_lib::tx::Transaction;
+use bitcoin_lib::utxo::{Self, OutPoint, Data};
 use sui::table::{Self, Table};
 
 #[test_only]

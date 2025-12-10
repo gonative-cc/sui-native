@@ -1,12 +1,15 @@
 [package]
 name = "nBTC"
-edition = "2024.beta"
+
+# edition should be 2024.beta, we use alpha for "extend" feature in test
+edition = "2024.alpha"
 license = "MPL-2.0"
 authors = ["Native"]
 
 [dependencies]
 bitcoin_spv = {local = "../bitcoin_spv"}
-bitcoin_parser = {local = "../bitcoin_parser"}
+bitcoin_lib = {local = "../bitcoin_lib"}
+ika_common = {git = "https://github.com/dwallet-labs/ika.git", subdir = "deployed_contracts/testnet/ika_common", rev = "main"}
 ika_dwallet_2pc_mpc = {git = "https://github.com/dwallet-labs/ika.git", subdir = "deployed_contracts/testnet/ika_dwallet_2pc_mpc", rev = "main"}
 ika = {git = "https://github.com/dwallet-labs/ika.git", subdir = "deployed_contracts/testnet/ika", rev = "main"}
 # For remote import, use the `{ git = "...", subdir = "...", rev = "..." }`.
@@ -25,6 +28,7 @@ nbtc = "0x0"
 # TODO: need to set these addresses for mainnet
 bitcoin_lc = "0x1001"
 fallback_addr = "0x1002"
+ika_coordinator = "0x1003"
 
 [dev-dependencies]
 # The dev-dependencies section allows overriding dependencies for `--test` and

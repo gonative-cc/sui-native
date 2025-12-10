@@ -3,9 +3,9 @@
 #[test_only]
 module nbtc::verify_payment_tests;
 
-use bitcoin_parser::header;
-use bitcoin_parser::reader;
-use bitcoin_parser::tx;
+use bitcoin_lib::header;
+use bitcoin_lib::reader;
+use bitcoin_lib::tx;
 use bitcoin_spv::light_client::new_light_client;
 use nbtc::verify_payment::{verify_payment, ETxNotInBlock};
 use std::unit_test::assert_eq;
@@ -59,7 +59,7 @@ fun verify_payment_happy_cases() {
     let tx_id = transaction.tx_id();
     // Tx: 6dfb16dd580698242bcfd8e433d557ed8c642272a368894de27292a8844a4e75 (Height 303,699)
     // from mainnet
-    let (amount, mut message) = verify_payment(
+    let (amount, mut message, _vout) = verify_payment(
         &lc,
         start_block_height,
         proof,
@@ -71,7 +71,7 @@ fun verify_payment_happy_cases() {
     assert_eq!(tx_id, x"754e4a84a89272e24d8968a37222648ced57d533e4d8cf2b24980658dd16fb6d");
     assert_eq!(amount, 412133);
     assert_eq!(message.extract(), x"68656c6c6f20776f726c64");
-    sui::test_utils::destroy(lc);
+    std::unit_test::destroy(lc);
     scenario.end();
 }
 
@@ -109,7 +109,7 @@ fun verify_payment_with_P2WPHK_output_happy_cases() {
     );
     let transaction = tx::deserialize(&mut r);
     let tx_id = transaction.tx_id();
-    let (amount, mut message) = verify_payment(
+    let (amount, mut message, _vout) = verify_payment(
         &lc,
         start_block_height,
         proof,
@@ -121,7 +121,7 @@ fun verify_payment_with_P2WPHK_output_happy_cases() {
     assert_eq!(tx_id, x"df88e4ad22477438db0a80979cf3dea033aa968c97fe06270f8864941a30649b");
     assert_eq!(amount, 412133);
     assert_eq!(message.extract(), x"68656c6c6f20776f726c64");
-    sui::test_utils::destroy(lc);
+    std::unit_test::destroy(lc);
     scenario.end();
 }
 
@@ -160,7 +160,7 @@ fun verify_payment_with_mutiple_op_return_happy_cases() {
     );
     let transaction = tx::deserialize(&mut r);
     let tx_id = transaction.tx_id();
-    let (amount, mut message) = verify_payment(
+    let (amount, mut message, _vout) = verify_payment(
         &lc,
         start_block_height,
         proof,
@@ -172,7 +172,7 @@ fun verify_payment_with_mutiple_op_return_happy_cases() {
     assert_eq!(tx_id, x"d8960c58576b2813a74910080540eafa2077d5ea0284e308956e6da01cb4c122");
     assert_eq!(amount, 0);
     assert_eq!(message.extract(), x"68656c6c6f20776f726c64");
-    sui::test_utils::destroy(lc);
+    std::unit_test::destroy(lc);
     scenario.end();
 }
 
@@ -229,9 +229,7 @@ fun verify_payment_for_tx_not_in_block_shoul_fail() {
         &transaction,
         x"e6228f7a5ee6b15c7cccfd9f9cb7e86992610845",
     );
-
-    sui::test_utils::destroy(lc);
-    scenario.end();
+    abort
 }
 
 #[test, expected_failure(abort_code = ETxNotInBlock)]
@@ -287,7 +285,5 @@ fun verify_payment_on_block_not_finalize_should_fail() {
         &transaction,
         x"e6228f7a5ee6b15c7cccfd9f9cb7e86992610845",
     );
-
-    sui::test_utils::destroy(lc);
-    scenario.end();
+    abort
 }

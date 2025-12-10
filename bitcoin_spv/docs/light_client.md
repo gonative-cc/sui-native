@@ -20,6 +20,7 @@
 - [Function `cleanup`](<#(bitcoin_spv=0x0)_light_client_cleanup>)
 - [Function `head_height`](<#(bitcoin_spv=0x0)_light_client_head_height>)
 - [Function `head_hash`](<#(bitcoin_spv=0x0)_light_client_head_hash>)
+- [Function `verify_blocks`](<#(bitcoin_spv=0x0)_light_client_verify_blocks>)
 - [Function `head`](<#(bitcoin_spv=0x0)_light_client_head>)
 - [Function `finalized_height`](<#(bitcoin_spv=0x0)_light_client_finalized_height>)
 - [Function `verify_tx`](<#(bitcoin_spv=0x0)_light_client_verify_tx>)
@@ -35,10 +36,11 @@
 - [Function `retarget_algorithm`](<#(bitcoin_spv=0x0)_light_client_retarget_algorithm>)
 - [Function `update_version`](<#(bitcoin_spv=0x0)_light_client_update_version>)
 
-<pre><code><b>use</b> (bitcoin_parser=0x0)::crypto;
-<b>use</b> (bitcoin_parser=0x0)::encoding;
-<b>use</b> (bitcoin_parser=0x0)::header;
-<b>use</b> (bitcoin_parser=0x0)::reader;
+<pre><code><b>use</b> (bitcoin_lib=0x0)::crypto;
+<b>use</b> (bitcoin_lib=0x0)::encoding;
+<b>use</b> (bitcoin_lib=0x0)::header;
+<b>use</b> (bitcoin_lib=0x0)::reader;
+<b>use</b> (bitcoin_lib=0x0)::vector_utils;
 <b>use</b> (bitcoin_spv=0x0)::<a href="../bitcoin_spv/header.md#(bitcoin_spv=0x0)_block_header">block_header</a>;
 <b>use</b> (bitcoin_spv=0x0)::<a href="../bitcoin_spv/btc_math.md#(bitcoin_spv=0x0)_btc_math">btc_math</a>;
 <b>use</b> (bitcoin_spv=0x0)::<a href="../bitcoin_spv/light_block.md#(bitcoin_spv=0x0)_light_block">light_block</a>;
@@ -292,7 +294,7 @@ LightClient constructor. Create light client and verify data.
 *parent_chain_work: chain_work at parent block of start_height block.
 \*confirmation_depth: the depth from which a block is considered <code>confirmed</code>.
 
-<pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_new_light_client">new_light_client</a>(<a href="../bitcoin_spv/params.md#(bitcoin_spv=0x0)_params">params</a>: (bitcoin_spv=0x0)::<a href="../bitcoin_spv/params.md#(bitcoin_spv=0x0)_params_Params">params::Params</a>, start_height: u64, trusted_headers: vector&lt;(bitcoin_parser=0x0)::header::BlockHeader&gt;, parent_chain_work: u256, confirmation_depth: u64, ctx: &<b>mut</b> <a href="../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): (bitcoin_spv=0x0)::<a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_LightClient">light_client::LightClient</a>
+<pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_new_light_client">new_light_client</a>(<a href="../bitcoin_spv/params.md#(bitcoin_spv=0x0)_params">params</a>: (bitcoin_spv=0x0)::<a href="../bitcoin_spv/params.md#(bitcoin_spv=0x0)_params_Params">params::Params</a>, start_height: u64, trusted_headers: vector&lt;(bitcoin_lib=0x0)::header::BlockHeader&gt;, parent_chain_work: u256, confirmation_depth: u64, ctx: &<b>mut</b> <a href="../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): (bitcoin_spv=0x0)::<a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_LightClient">light_client::LightClient</a>
 </code></pre>
 
 <details>
@@ -350,7 +352,7 @@ start_height: the height of the first trusted header
 trusted_header: The list of trusted header in hex encode.
 previous_chain_work: the chain_work at parent block of start_height block
 
-<pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_initialize_light_client">initialize_light_client</a>(network: u8, start_height: u64, trusted_headers: vector&lt;(bitcoin_parser=0x0)::header::BlockHeader&gt;, parent_chain_work: u256, confirmation_depth: u64, ctx: &<b>mut</b> <a href="../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>)
+<pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_initialize_light_client">initialize_light_client</a>(network: u8, start_height: u64, trusted_headers: vector&lt;(bitcoin_lib=0x0)::header::BlockHeader&gt;, parent_chain_work: u256, confirmation_depth: u64, ctx: &<b>mut</b> <a href="../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>)
 </code></pre>
 
 <details>
@@ -394,7 +396,7 @@ previous_chain_work: the chain_work at parent block of start_height block
 Insert new headers to extend the LC chain. Fails if the included headers don't
 create a heavier chain or fork.
 
-<pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_insert_headers">insert_headers</a>(lc: &<b>mut</b> (bitcoin_spv=0x0)::<a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_LightClient">light_client::LightClient</a>, headers: vector&lt;(bitcoin_parser=0x0)::header::BlockHeader&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_insert_headers">insert_headers</a>(lc: &<b>mut</b> (bitcoin_spv=0x0)::<a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_LightClient">light_client::LightClient</a>, headers: vector&lt;(bitcoin_lib=0x0)::header::BlockHeader&gt;)
 </code></pre>
 
 <details>
@@ -547,7 +549,7 @@ Insert new header to bitcoin spv
   NOTE: this function doesn't do fork checks and overwrites the current fork. So it must be
   only called internally.
 
-<pre><code><b>public</b>(package) <b>fun</b> <a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_insert_header">insert_header</a>(lc: &<b>mut</b> (bitcoin_spv=0x0)::<a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_LightClient">light_client::LightClient</a>, parent: &(bitcoin_spv=0x0)::<a href="../bitcoin_spv/light_block.md#(bitcoin_spv=0x0)_light_block_LightBlock">light_block::LightBlock</a>, header: (bitcoin_parser=0x0)::header::BlockHeader): (bitcoin_spv=0x0)::<a href="../bitcoin_spv/light_block.md#(bitcoin_spv=0x0)_light_block_LightBlock">light_block::LightBlock</a>
+<pre><code><b>public</b>(package) <b>fun</b> <a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_insert_header">insert_header</a>(lc: &<b>mut</b> (bitcoin_spv=0x0)::<a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_LightClient">light_client::LightClient</a>, parent: &(bitcoin_spv=0x0)::<a href="../bitcoin_spv/light_block.md#(bitcoin_spv=0x0)_light_block_LightBlock">light_block::LightBlock</a>, header: (bitcoin_lib=0x0)::header::BlockHeader): (bitcoin_spv=0x0)::<a href="../bitcoin_spv/light_block.md#(bitcoin_spv=0x0)_light_block_LightBlock">light_block::LightBlock</a>
 </code></pre>
 
 <details>
@@ -604,7 +606,7 @@ X-Y-Z-A
 |-A
 |-A
 
-<pre><code><b>fun</b> <a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_extend_chain">extend_chain</a>(lc: &<b>mut</b> (bitcoin_spv=0x0)::<a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_LightClient">light_client::LightClient</a>, parent: (bitcoin_spv=0x0)::<a href="../bitcoin_spv/light_block.md#(bitcoin_spv=0x0)_light_block_LightBlock">light_block::LightBlock</a>, headers: vector&lt;(bitcoin_parser=0x0)::header::BlockHeader&gt;): (bitcoin_spv=0x0)::<a href="../bitcoin_spv/light_block.md#(bitcoin_spv=0x0)_light_block_LightBlock">light_block::LightBlock</a>
+<pre><code><b>fun</b> <a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_extend_chain">extend_chain</a>(lc: &<b>mut</b> (bitcoin_spv=0x0)::<a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_LightClient">light_client::LightClient</a>, parent: (bitcoin_spv=0x0)::<a href="../bitcoin_spv/light_block.md#(bitcoin_spv=0x0)_light_block_LightBlock">light_block::LightBlock</a>, headers: vector&lt;(bitcoin_lib=0x0)::header::BlockHeader&gt;): (bitcoin_spv=0x0)::<a href="../bitcoin_spv/light_block.md#(bitcoin_spv=0x0)_light_block_LightBlock">light_block::LightBlock</a>
 </code></pre>
 
 <details>
@@ -686,6 +688,35 @@ Returns height of the blockchain head (latest, not confirmed block).
 <pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_head_hash">head_hash</a>(lc: &<a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_LightClient">LightClient</a>): vector&lt;u8&gt; {
     <b>assert</b>!(lc.version == <a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_VERSION">VERSION</a>, <a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_EVersionMismatch">EVersionMismatch</a>);
     lc.<a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_head_hash">head_hash</a>
+}
+</code></pre>
+
+</details>
+
+<a name="(bitcoin_spv=0x0)_light_client_verify_blocks"></a>
+
+## Function `verify_blocks`
+
+Returns vector of booleans, where each element corresponds to a block hash
+from the input vector. <code><b>true</b></code> if its in the heaviest chain, <code><b>false</b></code> otherwise.
+
+<pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_verify_blocks">verify_blocks</a>(lc: &(bitcoin_spv=0x0)::<a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_LightClient">light_client::LightClient</a>, block_hashes: vector&lt;vector&lt;u8&gt;&gt;): vector&lt;bool&gt;
+</code></pre>
+
+<details>
+<summary>Implementation</summary>
+
+<pre><code><b>public</b> <b>fun</b> <a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_verify_blocks">verify_blocks</a>(lc: &<a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_LightClient">LightClient</a>, block_hashes: vector&lt;vector&lt;u8&gt;&gt;): vector&lt;bool&gt; {
+    <b>assert</b>!(lc.version == <a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_VERSION">VERSION</a>, <a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_EVersionMismatch">EVersionMismatch</a>);
+    block_hashes.map!(|block_hash| {
+        <b>if</b> (!lc.light_block_by_hash.contains(block_hash)) {
+            <b>false</b>
+        } <b>else</b> {
+            <b>let</b> <a href="../bitcoin_spv/light_block.md#(bitcoin_spv=0x0)_light_block">light_block</a> = lc.<a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_get_light_block_by_hash">get_light_block_by_hash</a>(block_hash);
+            <b>let</b> main_chain_hash_at_height = lc.<a href="../bitcoin_spv/light_client.md#(bitcoin_spv=0x0)_light_client_get_block_hash_by_height">get_block_hash_by_height</a>(<a href="../bitcoin_spv/light_block.md#(bitcoin_spv=0x0)_light_block">light_block</a>.height());
+            block_hash == main_chain_hash_at_height
+        }
+    })
 }
 </code></pre>
 

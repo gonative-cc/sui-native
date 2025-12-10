@@ -3,14 +3,14 @@
 #[test_only]
 module nbtc::nbtc_tests;
 
-use bitcoin_parser::header;
+use bitcoin_lib::header;
 use bitcoin_spv::light_client::{new_light_client, LightClient};
+use ika_dwallet_2pc_mpc::coordinator_inner::dwallet_cap_for_testing;
 use nbtc::nbtc::{Self, NbtcContract, EMintAmountIsZero, ETxAlreadyUsed, EAlreadyUpdated, NBTC};
-use std::unit_test::assert_eq;
+use std::unit_test::{assert_eq, destroy};
 use sui::address;
 use sui::coin::Coin;
 use sui::test_scenario::{Self, take_from_address, Scenario};
-use sui::test_utils::destroy;
 
 // The fallback Sui address to receive nBTC if OP_RETURN data is invalid or missing.
 // Use for test
@@ -47,13 +47,12 @@ fun mint_and_assert(
     ops_arg: u32,
 ) {
     let TestData { tx_bytes, proof, height, tx_index, expected_recipient, expected_amount } = data;
-
     ctr.mint(lc, tx_bytes, proof, height, tx_index, vector[], ops_arg, scenario.ctx());
     test_scenario::next_tx(scenario, sender);
 
     let coin = take_from_address<Coin<NBTC>>(scenario, expected_recipient);
     let amount = coin.value();
-    if (ops_arg == MINT_OP_APPLY_FEE) assert_eq!(amount, expected_amount - ctr.get_mint_fee())
+    if (ops_arg == MINT_OP_APPLY_FEE) assert_eq!(amount, expected_amount - ctr.config().mint_fee())
     else assert_eq!(amount, expected_amount);
     destroy(coin);
 }
@@ -85,9 +84,12 @@ fun get_fallback_mint_data(): TestData {
 }
 
 #[test_only]
-fun setup(nbtc_bitcoin_addr: vector<u8>, sender: address): (LightClient, NbtcContract, Scenario) {
+public fun setup(
+    nbtc_bitcoin_addr: vector<u8>,
+    sender: address,
+): (LightClient, NbtcContract, Scenario) {
     let mut scenario = test_scenario::begin(sender);
-
+    let dwallet_coordinator = @0x01.to_id(); // dummy dwallet coordinator
     let headers = vector[
         header::new(
             x"00000020a97594d6b5b9369535da225d464bde7e0ae3794e9b270a010000000000000000addcae45a90f73dc68e3225b2d0be1c155bf9b0864f187e31203079c0b6d42c5bb27e8585a330218b119eaee",
@@ -95,10 +97,18 @@ fun setup(nbtc_bitcoin_addr: vector<u8>, sender: address): (LightClient, NbtcCon
     ];
 
     let lc = new_light_client(bitcoin_spv::params::regtest(), 0, headers, 0, 1, scenario.ctx());
-    let ctr = nbtc::init_for_testing(
+    let mut ctr = nbtc::init_for_testing(
         lc.client_id().to_address(),
         FALLBACK_ADDR,
         nbtc_bitcoin_addr,
+        dwallet_coordinator,
+        scenario.ctx(),
+    );
+    ctr.set_dwallet_cap_for_test(
+        nbtc_bitcoin_addr,
+        nbtc_bitcoin_addr,
+        vector::empty(),
+        dwallet_cap_for_testing(object::id_from_address(@0x01), scenario.ctx()),
         scenario.ctx(),
     );
     (lc, ctr, scenario)
@@ -128,9 +138,9 @@ fun test_nbtc_mint() {
         0,
     );
 
-    let balances = ctr.balances();
+    let balance = ctr.active_balance();
     let total_amount_expected = 2 * get_valid_mint_data().expected_amount;
-    assert_eq!(*balances.get(ctr.bitcoin_spend_key()), total_amount_expected);
+    assert_eq!(balance, total_amount_expected);
     destroy(lc);
     destroy(ctr);
     scenario.end();
@@ -161,12 +171,12 @@ fun test_mint_with_fee() {
     );
 
     // mint with fallback should take fee as well.
-    assert_eq!(ctr.get_fees_collected(), 2*ctr.get_mint_fee());
-    let total_amount = ctr.balances();
+    assert_eq!(ctr.get_fees_collected(), 2*ctr.config().mint_fee());
+    let total_amount = ctr.active_balance();
     let total_amount_expected =
         get_fallback_mint_data().expected_amount +
     get_valid_mint_data().expected_amount;
-    assert_eq!(*total_amount.get(ctr.bitcoin_spend_key()), total_amount_expected);
+    assert_eq!(total_amount, total_amount_expected);
     destroy(lc);
     destroy(ctr);
     scenario.end();
