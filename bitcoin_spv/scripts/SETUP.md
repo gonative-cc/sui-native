@@ -15,13 +15,13 @@ This script initializes a Bitcoin SPV (Simplified Payment Verification) light cl
 bun install
 ```
 
-2. Publish the required Sui packages:
+1. Publish the required Sui packages:
 
    ```bash
    sui client publish
    ```
 
-3. Create a `.env` file with your configuration (see example below).
+1. Create a `.env` file with your configuration (see example below).
 
 ## Usage
 
