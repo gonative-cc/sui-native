@@ -3,7 +3,7 @@
 #[test_only]
 module bitcoin_lib::encoding_tests;
 
-use bitcoin_lib::encoding::{u32_to_le_bytes, u64_to_le_bytes, u64_to_varint_bytes};
+use bitcoin_lib::encoding::{u32_to_le_bytes, u64_to_le_bytes, u64_to_be_bytes, u64_to_varint_bytes};
 use std::unit_test::assert_eq;
 
 #[test]
@@ -16,6 +16,14 @@ fun test_u32_to_le_bytes() {
 fun test_u64_to_le_bytes() {
     assert_eq!(u64_to_le_bytes(0x123456789abcdef0), x"f0debc9a78563412");
     assert_eq!(u64_to_le_bytes(1), x"0100000000000000");
+}
+
+#[test]
+fun test_u64_to_be_bytes() {
+    assert_eq!(u64_to_be_bytes(0x123456789abcdef0), x"123456789abcdef0");
+    assert_eq!(u64_to_be_bytes(1), x"0000000000000001");
+    assert_eq!(u64_to_be_bytes(0), x"0000000000000000");
+    assert_eq!(u64_to_be_bytes(0xFFFFFFFFFFFFFFFF), x"FFFFFFFFFFFFFFFF");
 }
 
 #[test]

@@ -1,7 +1,7 @@
 // TODO: Refactor to bitcoinlib
 module nbtc::nbtc_utxo;
 
-use bitcoin_lib::encoding::u64_to_le_bytes;
+use bitcoin_lib::encoding::u64_to_be_bytes;
 use sui::table::{Self, Table};
 
 //
@@ -70,7 +70,7 @@ public(package) fun new_utxo_store(ctx: &mut TxContext): UtxoStore {
 }
 
 public(package) fun utxo_key(idx: u64, dwallet_id: ID): vector<u8> {
-    let mut ukey = u64_to_le_bytes(idx);
+    let mut ukey = u64_to_be_bytes(idx);
     ukey.append(dwallet_id.id_to_bytes());
     ukey
 }
