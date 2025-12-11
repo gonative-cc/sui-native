@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   esplora-regtest:
-    image: blockstream/esplora:4.0.0
+    image: blockstream/esplora:latest
     container_name: esplora-regtest
 
     # CRITICAL: This startup script is required to launch the full stack.

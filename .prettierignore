@@ -17,5 +17,5 @@ private*
 packages/*/docs
 
 # Data directories with permission issues
-bitcoin-regtest/**
-.devin/**
+bitcoin-regtest/
+.devin
