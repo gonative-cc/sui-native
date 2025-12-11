@@ -16,7 +16,7 @@ docker-compose up -d
 
 ```bash
 docker-compose down
-   ```
+```
 
 ## API Endpoints
 
