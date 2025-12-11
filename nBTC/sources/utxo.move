@@ -105,7 +105,7 @@ public fun next_utxo(utxo_map: &UtxoMap): u64 {
     utxo_map.next_utxo
 }
 
-///  Criterias:
+///  Criteria:
 ///  Prefer fewer inputs
 ///  Avoid creating dust change
 ///  Prefer spending from inactive keys
