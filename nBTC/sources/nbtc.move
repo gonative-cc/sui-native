@@ -793,6 +793,7 @@ public fun redeem_duration(contract: &NbtcContract): u64 {
 use nbtc::nbtc_utxo::Utxo;
 
 #[test_only]
+/// Adds UTXO to the active wallet
 public fun add_utxo_for_test(ctr: &mut NbtcContract, _idx: u64, utxo: Utxo) {
     let dwallet_id = *option::borrow(&ctr.active_dwallet_id);
     ctr.utxo_map.add(dwallet_id, utxo);
