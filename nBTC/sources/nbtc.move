@@ -18,10 +18,10 @@ use sui::address;
 use sui::balance::{Self, Balance};
 use sui::clock::Clock;
 use sui::coin::{Self, Coin, TreasuryCap};
+use sui::coin_registry;
 use sui::event;
 use sui::sui::SUI;
 use sui::table::{Self, Table};
-use sui::url;
 
 //
 // Constant
@@ -42,9 +42,6 @@ const ICON_URL: vector<u8> =
 
 /// ops_arg consts
 const MINT_OP_APPLY_FEE: u32 = 1;
-
-/// One Time Witness
-public struct NBTC has drop {}
 
 //
 // Errors
@@ -74,8 +71,7 @@ const EBalanceNotEmpty: vector<u8> = b"balance not empty";
 #[error]
 const ENotReadlyForSign: vector<u8> = b"redeem tx is not ready for signing";
 #[error]
-const EInputAlreadyUsed: vector<u8> =
-    b"this input has been already used in other signature request";
+const EInputAlreadyUsed: vector<u8> = b"input has been already used";
 #[error]
 const EActiveDwalletNotInStorage: vector<u8> = b"try active dwallet not exist in storage";
 #[error]
@@ -86,9 +82,13 @@ const ENoUTXOsProposed: vector<u8> = b"No UTXOs proposed";
 const ENotResolving: vector<u8> = b"redeem request is not in resolving status";
 #[error]
 const EInvalidDWalletCoordinator: vector<u8> = b"Invalid Dwallet coordinator";
+
 //
 // Structs
 //
+
+/// Coin type identifier (`Coin<package_object::nbtc::NBTC>`) and One Time Witness.
+public struct NBTC has drop {}
 
 /// Operator capability. Created only once in the `init` function.
 public struct OpCap has key, store { id: UID }
@@ -172,21 +172,46 @@ public struct RedeemRequestProposeEvent has copy, drop {
 // Functions
 //
 
+// NOTE: we create a currency using new_currency_with_otw. This is a two-step process.
+// We MUST call coin_registry::finalize_registration to place the coin into the registry.
+// https://docs.sui.io/standards/currency#coin-finalization
 fun init(witness: NBTC, ctx: &mut TxContext) {
-    let (treasury_cap, metadata) = coin::create_currency<NBTC>(
+    let mut contract = init__(witness, ctx);
+    contract
+        .config
+        .add(
+            VERSION,
+            config::new(
+                @bitcoin_lc.to_id(),
+                @fallback_addr,
+                10, // mint fee, TODO: increase it
+                @ika_coordinator.to_id(),
+                2*MINUTE,
+            ),
+        );
+
+    transfer::public_share_object(contract);
+}
+
+#[allow(lint(self_transfer))]
+fun init__(witness: NBTC, ctx: &mut TxContext): NbtcContract {
+    let (builder, treasury_cap) = coin_registry::new_currency_with_otw(
         witness,
         DECIMALS,
-        SYMBOL,
-        NAME,
-        DESCRIPTION,
-        option::some(url::new_unsafe_from_bytes(ICON_URL)),
+        SYMBOL.to_string(),
+        NAME.to_string(),
+        DESCRIPTION.to_string(),
+        ICON_URL.to_string(),
         ctx,
     );
 
-    // NOTE: we removed post deployment setup function and didn't want to implement PTB style
-    // initialization, so we require setting the address before publishing the package.
-    transfer::public_freeze_object(metadata);
-    let mut contract = NbtcContract {
+    let sender = ctx.sender();
+    let metadata_cap = builder.finalize(ctx);
+    transfer::public_transfer(metadata_cap, sender);
+    transfer::transfer(OpCap { id: object::new(ctx) }, sender);
+    transfer::transfer(AdminCap { id: object::new(ctx) }, sender);
+
+    NbtcContract {
         id: object::new(ctx),
         version: VERSION,
         cap: treasury_cap,
@@ -200,30 +225,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         storage: create_storage(ctx),
         active_dwallet_id: option::none(),
         next_redeem_req: 0,
-    };
-
-    contract
-        .config
-        .add(
-            VERSION,
-            config::new(
-                @bitcoin_lc.to_id(),
-                @fallback_addr,
-                10,
-                @ika_coordinator.to_id(),
-                2*MINUTE,
-            ),
-        );
-    transfer::public_share_object(contract);
-
-    transfer::transfer(
-        OpCap { id: object::new(ctx) },
-        ctx.sender(),
-    );
-    transfer::transfer(
-        AdminCap { id: object::new(ctx) },
-        ctx.sender(),
-    );
+    }
 }
 
 //
@@ -756,37 +758,10 @@ public fun package_version(): u32 {
 public(package) fun init_for_testing(
     bitcoin_lc: address,
     fallback_addr: address,
-    nbtc_bitcoin_spend_key: vector<u8>,
     ika_coordinator: ID,
     ctx: &mut TxContext,
 ): NbtcContract {
-    let witness = NBTC {};
-    let (contract_cap, metadata) = coin::create_currency<NBTC>(
-        witness,
-        DECIMALS,
-        SYMBOL,
-        NAME,
-        DESCRIPTION,
-        option::some(url::new_unsafe_from_bytes(ICON_URL)),
-        ctx,
-    );
-    transfer::public_freeze_object(metadata);
-    let mut contract = NbtcContract {
-        id: object::new(ctx),
-        version: VERSION,
-        cap: contract_cap,
-        tx_ids: table::new(ctx),
-        config: table::new(ctx),
-        utxos: table::new(ctx),
-        redeem_requests: table::new(ctx),
-        locked: table::new(ctx),
-        next_redeem_req: 0,
-        next_utxo: 0,
-        active_dwallet_id: option::none(),
-        fees_collected: balance::zero(),
-        storage: create_storage(ctx),
-    };
-
+    let mut contract = init__(NBTC {}, ctx);
     contract
         .config
         .add(
