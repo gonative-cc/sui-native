@@ -43,9 +43,6 @@ const ICON_URL: vector<u8> =
 /// ops_arg consts
 const MINT_OP_APPLY_FEE: u32 = 1;
 
-const ECDSA: u32 = 0;
-const SHA256: u32 = 1;
-
 //
 // Errors
 //
@@ -175,7 +172,9 @@ public struct RedeemRequestProposeEvent has copy, drop {
 // Functions
 //
 
-// NOTE: after contract creation, we need to
+// NOTE: we create a currency using new_currency_with_otw. This is a two-step process.
+// We MUST call coin_registry::finalize_registration to place the coin into the registry.
+// https://docs.sui.io/standards/currency#coin-finalization
 fun init(witness: NBTC, ctx: &mut TxContext) {
     let mut contract = init__(witness, ctx);
     contract
