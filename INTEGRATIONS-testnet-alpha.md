@@ -22,7 +22,7 @@ Permissionless SUI/NBTC pool on deepbook-v3.1 on testnet:
 
 ### Magma
 
-Magma SUI/NBTC pool on testnet. You can check it out [here](https://testnet.magmafinance.io/). For details check the information below on any Sui explorer:
+Magma SUI/NBTC pool on testnet. You can check it out [this link](https://testnet.magmafinance.io/). For details check the information below on any Sui explorer:
 
 - Tx Digest: `6aKs4KC3bN8nVmdrxuqD7r4SLqvukiduo88YGNUvphYE`
 - Pool Object ID: `0x7d965b3d3d50c3a0e59360c61dbcd5f4b7c4d7bf829c2478018fc805663dd4c1`
