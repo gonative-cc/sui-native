@@ -157,7 +157,7 @@ public struct RedeemRequestEvent has copy, drop {
     created_at: u64,
 }
 
-public struct SignatureConfirmedEvent has copy, drop {
+public struct RedeemSigCreatedEvent has copy, drop {
     redeem_id: u64,
     input_idx: u32,
     is_fully_signed: bool,
@@ -527,7 +527,7 @@ public fun validate_signature(
     r.validate_signature(dwallet_coordinator, &contract.storage, input_idx, sign_id);
 
     let is_fully_signed = r.status().is_signed();
-    event::emit(SignatureConfirmedEvent {
+    event::emit(RedeemSigCreatedEvent {
         redeem_id,
         input_idx,
         is_fully_signed,
@@ -535,7 +535,7 @@ public fun validate_signature(
 }
 
 //TODO: update event emmitted to include the data from the redeem request
-public fun finalize_redeem_request(contract: &mut NbtcContract, redeem_id: u64, clock: &Clock) {
+public fun solve_redeem_request(contract: &mut NbtcContract, redeem_id: u64, clock: &Clock) {
     assert!(contract.version == VERSION, EVersionMismatch);
     let r = &mut contract.redeem_requests[redeem_id];
 
