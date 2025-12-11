@@ -10,7 +10,7 @@ use ika_dwallet_2pc_mpc::coordinator::DWalletCoordinator;
 use ika_dwallet_2pc_mpc::coordinator_inner::{DWalletCap, VerifiedPartialUserSignatureCap};
 use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
 use nbtc::config::{Self, Config};
-use nbtc::nbtc_utxo::{Self, validate_utxos, UtxoMap, new_utxo_map};
+use nbtc::nbtc_utxo::{Self, validate_utxos, UtxoStore, new_utxo_store};
 use nbtc::redeem_request::{Self, RedeemRequest};
 use nbtc::storage::{Storage, create_storage, create_dwallet_metadata};
 use nbtc::verify_payment::verify_payment;
@@ -108,7 +108,7 @@ public struct NbtcContract has key, store {
     config: Table<u32, Config>,
     fees_collected: Balance<NBTC>,
     // TODO: probably we should have UTXOs / nbtc pubkey
-    utxo_map: UtxoMap,
+    utxo_store: UtxoStore,
     // redeem request token for nbtc
     redeem_requests: Table<u64, RedeemRequest>,
     // lock nbtc for redeem, this is a mapping from request id to nBTC redeem coin
@@ -192,7 +192,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         cap: treasury_cap,
         tx_ids: table::new(ctx),
         config: table::new(ctx),
-        utxo_map: new_utxo_map(ctx),
+        utxo_store: new_utxo_store(ctx),
         fees_collected: balance::zero(),
         redeem_requests: table::new<u64, RedeemRequest>(ctx),
         locked: table::new(ctx),
@@ -292,7 +292,7 @@ fun verify_deposit(
     while (i < vouts.length()) {
         let vout_idx = vouts[i];
         let o_amount = o[vout_idx as u64].amount();
-        utxo_idx.push_back(contract.utxo_map.next_utxo());
+        utxo_idx.push_back(contract.utxo_store.next_utxo());
         contract.add_utxo_to_contract(tx_id, vout_idx, o_amount, dwallet_id);
         i = i + 1;
     };
@@ -364,7 +364,7 @@ public fun mint(
     if (amount > 0) transfer::public_transfer(coin::from_balance(minted, ctx), recipient)
     else minted.destroy_zero();
 
-    let utxo = contract.utxo_map.get_utxo(utxo_ids[0], active_dwallet_id);
+    let utxo = contract.utxo_store.get_utxo(utxo_ids[0], active_dwallet_id);
     let btc_tx_id = utxo.tx_id();
     let btc_vout = utxo.vout();
     event::emit(MintEvent {
@@ -567,23 +567,23 @@ public fun propose_utxos(
     let requested_amount = r.amount();
 
     assert!(
-        contract.utxo_map.validate_utxos(&utxo_ids, dwallet_ids, requested_amount, redeem_id) >= requested_amount,
+        contract.utxo_store.validate_utxos(&utxo_ids, dwallet_ids, requested_amount, redeem_id) >= requested_amount,
         EInvalidUTXOSet,
     );
 
     let old_utxo_ids = r.utxo_ids();
     let old_dwallet_ids = r.dwallet_ids();
     old_utxo_ids.length().do!(|i| {
-        nbtc_utxo::unlock_utxo(&mut contract.utxo_map, old_utxo_ids[i], old_dwallet_ids[i]);
+        nbtc_utxo::unlock_utxo(&mut contract.utxo_store, old_utxo_ids[i], old_dwallet_ids[i]);
     });
 
     utxo_ids.length().do!(|i| {
-        nbtc_utxo::lock_utxo(&mut contract.utxo_map, utxo_ids[i], dwallet_ids[i], redeem_id);
+        nbtc_utxo::lock_utxo(&mut contract.utxo_store, utxo_ids[i], dwallet_ids[i], redeem_id);
     });
 
     let utxos = utxo_ids.zip_map!(
         dwallet_ids,
-        |idx, dwallet_id| contract.utxo_map.get_utxo_copy(idx, dwallet_id),
+        |idx, dwallet_id| contract.utxo_store.get_utxo_copy(idx, dwallet_id),
     );
     r.set_best_utxos(utxos, dwallet_ids, utxo_ids);
 
@@ -714,12 +714,12 @@ public(package) fun add_utxo_to_contract(
     dwallet_id: ID,
 ) {
     let utxo = nbtc_utxo::new_utxo(tx_id, vout, value);
-    contract.utxo_map.add(dwallet_id, utxo);
+    contract.utxo_store.add(dwallet_id, utxo);
 }
 
 /// Remove a UTXO from the contract
 public fun remove_utxo(_: &AdminCap, contract: &mut NbtcContract, utxo_idx: u64, dwallet_id: ID) {
-    contract.utxo_map.remove(utxo_idx, dwallet_id);
+    contract.utxo_store.remove(utxo_idx, dwallet_id);
 }
 
 //
@@ -774,7 +774,7 @@ public(package) fun init_for_testing(
         cap: contract_cap,
         tx_ids: table::new(ctx),
         config: table::new(ctx),
-        utxo_map: new_utxo_map(ctx),
+        utxo_store: new_utxo_store(ctx),
         redeem_requests: table::new(ctx),
         locked: table::new(ctx),
         next_redeem_req: 0,
@@ -803,14 +803,15 @@ public fun redeem_duration(contract: &NbtcContract): u64 {
 use nbtc::nbtc_utxo::Utxo;
 
 #[test_only]
+/// Adds UTXO to the active wallet
 public fun add_utxo_for_test(ctr: &mut NbtcContract, _idx: u64, utxo: Utxo) {
     let dwallet_id = *option::borrow(&ctr.active_dwallet_id);
-    ctr.utxo_map.add(dwallet_id, utxo);
+    ctr.utxo_store.add(dwallet_id, utxo);
 }
 
 #[test_only]
-public fun borrow_utxo_map_for_test(ctr: &NbtcContract): &UtxoMap {
-    &ctr.utxo_map
+public fun borrow_utxo_map_for_test(ctr: &NbtcContract): &UtxoStore {
+    &ctr.utxo_store
 }
 
 #[test_only]

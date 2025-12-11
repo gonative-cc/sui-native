@@ -1,7 +1,7 @@
 #[test_only]
 module nbtc::utxo_ranking_tests;
 
-use nbtc::nbtc_utxo::{new_utxo, utxo_ranking, new_utxo_map};
+use nbtc::nbtc_utxo::{new_utxo, utxo_ranking, new_utxo_store};
 use nbtc::test_constants::{MOCK_DWALLET_ID, MOCK_DWALLET_ID_2};
 use std::unit_test::{assert_eq, destroy};
 use sui::test_scenario;
@@ -15,7 +15,7 @@ fun exact_match_wins_over_change() {
     let mut scenario = test_scenario::begin(@0x1);
     let ctx = scenario.ctx();
 
-    let mut utxo_map = new_utxo_map(ctx);
+    let mut utxo_map = new_utxo_store(ctx);
     let active_dwallet_id = MOCK_DWALLET_ID!();
     let inactive_dwallet_id = MOCK_DWALLET_ID_2!();
 
@@ -60,7 +60,7 @@ fun exact_match_wins_over_change() {
     let score1 = utxo_ranking(&utxo_map, utxo_ids1, dwallet_ids1, withdraw, active_dwallet_id);
 
     // Create second set of UTXOs
-    let mut utxo_map2 = new_utxo_map(ctx);
+    let mut utxo_map2 = new_utxo_store(ctx);
 
     let utxo5 = new_utxo(
         x"e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5",
@@ -101,7 +101,7 @@ fun inactive_keys_with_exact_match_rank_above() {
     let mut scenario = test_scenario::begin(@0x1);
     let ctx = scenario.ctx();
 
-    let mut utxo_map = new_utxo_map(ctx);
+    let mut utxo_map = new_utxo_store(ctx);
     let active_dwallet_id = MOCK_DWALLET_ID!();
     let inactive_dwallet_id = MOCK_DWALLET_ID_2!();
 
@@ -154,7 +154,7 @@ fun inactive_keys_with_exact_match_rank_above() {
     let score1 = utxo_ranking(&utxo_map, utxo_ids1, dwallet_ids1, withdraw, active_dwallet_id);
 
     // Create second set of UTXOs
-    let mut utxo_map2 = new_utxo_map(ctx);
+    let mut utxo_map2 = new_utxo_store(ctx);
 
     let utxo6 = new_utxo(
         x"a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0",
@@ -207,7 +207,7 @@ fun minimize_inputs_priority() {
     let mut scenario = test_scenario::begin(@0x1);
     let ctx = scenario.ctx();
 
-    let mut utxo_map = new_utxo_map(ctx);
+    let mut utxo_map = new_utxo_store(ctx);
     let active_dwallet_id = MOCK_DWALLET_ID!();
 
     // Add UTXOs to the map
@@ -225,7 +225,7 @@ fun minimize_inputs_priority() {
     let score1 = utxo_ranking(&utxo_map, utxo_ids1, dwallet_ids1, withdraw, active_dwallet_id);
 
     // Create second set of UTXOs
-    let mut utxo_map2 = new_utxo_map(ctx);
+    let mut utxo_map2 = new_utxo_store(ctx);
 
     let utxo2 = new_utxo(
         x"2222222222222222222222222222222222222222222222222222222222222222",
@@ -286,7 +286,7 @@ fun dust_penalized() {
     let mut scenario = test_scenario::begin(@0x1);
     let ctx = scenario.ctx();
 
-    let mut utxo_map = new_utxo_map(ctx);
+    let mut utxo_map = new_utxo_store(ctx);
     let active_dwallet_id = MOCK_DWALLET_ID!();
 
     // Add dust UTXO
@@ -304,7 +304,7 @@ fun dust_penalized() {
     let score_dust = utxo_ranking(&utxo_map, utxo_ids1, dwallet_ids1, withdraw, active_dwallet_id);
 
     // Create clean UTXO
-    let mut utxo_map2 = new_utxo_map(ctx);
+    let mut utxo_map2 = new_utxo_store(ctx);
 
     let utxo2 = new_utxo(
         x"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",

@@ -11,7 +11,7 @@ fun validate_utxos_working_case() {
     let mut scenario = ts::begin(@0x1);
     let ctx = scenario.ctx();
 
-    let mut onchain_utxos = nbtc_utxo::new_utxo_map(ctx);
+    let mut onchain_utxos = nbtc_utxo::new_utxo_store(ctx);
 
     let tx_id_1 = x"1111111111111111111111111111111111111111111111111111111111111111";
     let spend_key = x"0014e8340a12dd2c95e5fedc8b088a81dcac42c106fb";
@@ -44,7 +44,7 @@ fun validate_utxos_empty_indices() {
     let mut scenario = ts::begin(@0x1);
     let ctx = scenario.ctx();
 
-    let mut onchain_utxos = nbtc_utxo::new_utxo_map(ctx);
+    let mut onchain_utxos = nbtc_utxo::new_utxo_store(ctx);
 
     let tx_id = x"1111111111111111111111111111111111111111111111111111111111111111";
     let utxo = nbtc_utxo::new_utxo(tx_id, 0, 50000);
@@ -68,7 +68,7 @@ fun validate_utxos_nonexistent_index() {
     let mut scenario = ts::begin(@0x1);
     let ctx = scenario.ctx();
 
-    let mut onchain_utxos = nbtc_utxo::new_utxo_map(ctx);
+    let mut onchain_utxos = nbtc_utxo::new_utxo_store(ctx);
     let proposed_indices = vector[0u64];
 
     nbtc_utxo::validate_utxos(
@@ -87,7 +87,7 @@ fun validate_utxos_insufficient_amount() {
     let mut scenario = ts::begin(@0x1);
     let ctx = scenario.ctx();
 
-    let mut onchain_utxos = nbtc_utxo::new_utxo_map(ctx);
+    let mut onchain_utxos = nbtc_utxo::new_utxo_store(ctx);
 
     let tx_id = x"1111111111111111111111111111111111111111111111111111111111111111";
     let utxo = nbtc_utxo::new_utxo(tx_id, 0, 50000);
@@ -111,7 +111,7 @@ fun validate_utxos_exact_match() {
     let mut scenario = ts::begin(@0x1);
     let ctx = scenario.ctx();
 
-    let mut onchain_utxos = nbtc_utxo::new_utxo_map(ctx);
+    let mut onchain_utxos = nbtc_utxo::new_utxo_store(ctx);
 
     let tx_id = x"1111111111111111111111111111111111111111111111111111111111111111";
     let utxo = nbtc_utxo::new_utxo(tx_id, 0, 50000);
@@ -138,15 +138,15 @@ fun test_locked_utxo_cannot_be_used_by_other_request() {
     let mut scenario = ts::begin(@0x1);
     let ctx = scenario.ctx();
 
-    let mut utxo_map = nbtc_utxo::new_utxo_map(ctx);
+    let mut utxo_store = nbtc_utxo::new_utxo_store(ctx);
 
     let tx_id = x"1111111111111111111111111111111111111111111111111111111111111111";
     let utxo = nbtc_utxo::new_utxo(tx_id, 0, 100000);
-    utxo_map.add(MOCK_DWALLET_ID!(), utxo);
-    nbtc_utxo::lock_utxo(&mut utxo_map, 0, MOCK_DWALLET_ID!(), 1);
+    utxo_store.add(MOCK_DWALLET_ID!(), utxo);
+    nbtc_utxo::lock_utxo(&mut utxo_store, 0, MOCK_DWALLET_ID!(), 1);
 
     nbtc_utxo::validate_utxos(
-        &utxo_map,
+        &utxo_store,
         &vector[0],
         vector[MOCK_DWALLET_ID!()],
         50000,
@@ -161,21 +161,21 @@ fun test_same_request_can_reuse_locked_utxos() {
     let mut scenario = ts::begin(@0x1);
     let ctx = scenario.ctx();
 
-    let mut utxo_map = nbtc_utxo::new_utxo_map(ctx);
+    let mut utxo_store = nbtc_utxo::new_utxo_store(ctx);
 
     let tx_id_1 = x"1111111111111111111111111111111111111111111111111111111111111111";
     let utxo_1 = nbtc_utxo::new_utxo(tx_id_1, 0, 60000);
-    utxo_map.add(MOCK_DWALLET_ID!(), utxo_1);
+    utxo_store.add(MOCK_DWALLET_ID!(), utxo_1);
 
     let tx_id_2 = x"2222222222222222222222222222222222222222222222222222222222222222";
     let utxo_2 = nbtc_utxo::new_utxo(tx_id_2, 1, 40000);
-    utxo_map.add(MOCK_DWALLET_ID!(), utxo_2);
+    utxo_store.add(MOCK_DWALLET_ID!(), utxo_2);
 
-    nbtc_utxo::lock_utxo(&mut utxo_map, 0, MOCK_DWALLET_ID!(), 5);
-    nbtc_utxo::lock_utxo(&mut utxo_map, 1, MOCK_DWALLET_ID!(), 5);
+    nbtc_utxo::lock_utxo(&mut utxo_store, 0, MOCK_DWALLET_ID!(), 5);
+    nbtc_utxo::lock_utxo(&mut utxo_store, 1, MOCK_DWALLET_ID!(), 5);
 
     let total_value = nbtc_utxo::validate_utxos(
-        &utxo_map,
+        &utxo_store,
         &vector[0, 1],
         vector[MOCK_DWALLET_ID!(), MOCK_DWALLET_ID!()],
         90000,
@@ -184,6 +184,6 @@ fun test_same_request_can_reuse_locked_utxos() {
 
     assert_eq!(total_value, 100000);
 
-    destroy(utxo_map);
+    destroy(utxo_store);
     scenario.end();
 }
