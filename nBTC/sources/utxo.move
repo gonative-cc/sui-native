@@ -36,7 +36,7 @@ public struct Utxo has copy, drop, store {
 
 public struct UtxoStore has key, store {
     id: UID,
-    // Mapping (dwallet_id + utxo_idxs) => Utxo
+    // Mapping (utxo_idx + dwallet_id) => Utxo
     utxos: Table<vector<u8>, Utxo>,
     next_utxo: u64,
 }
