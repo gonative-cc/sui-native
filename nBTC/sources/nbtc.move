@@ -163,7 +163,8 @@ public struct RedeemSigCreatedEvent has copy, drop {
     is_fully_signed: bool,
 }
 
-public struct ProposeUtxoEvent has copy, drop {
+// TODO: consider moving it to redeem_request.move
+public struct RedeemRequestProposeEvent has copy, drop {
     redeem_id: u64,
     dwallet_ids: vector<ID>,
     utxo_ids: vector<u64>,
@@ -562,10 +563,10 @@ public fun propose_utxos(
     let r = &mut contract.redeem_requests[redeem_id];
     assert!(r.status().is_resolving(), ENotResolving);
 
-    let current_time = clock.timestamp_ms();
+    let now = clock.timestamp_ms();
     let redeem_created_at = r.redeem_created_at();
     let deadline = redeem_created_at + contract.redeem_duration;
-    assert!(current_time <= deadline, ERedeemWindowExpired);
+    assert!(now <= deadline, ERedeemWindowExpired);
     let requested_amount = r.amount();
 
     assert!(
@@ -575,8 +576,7 @@ public fun propose_utxos(
 
     let utxos = utxo_ids.map!(|idx| contract.utxos[idx]);
     r.set_best_utxos(utxos, dwallet_ids);
-
-    event::emit(ProposeUtxoEvent {
+    event::emit(RedeemRequestProposeEvent {
         redeem_id,
         dwallet_ids,
         utxo_ids,

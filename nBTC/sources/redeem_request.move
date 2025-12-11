@@ -59,7 +59,7 @@ public struct RedeemRequest has store {
 //TODO: Add logic to extract data from redeem inputs for:
 /// Event emitted when a proposal for redeem request is selected (solved) and we are ready
 /// for creating MPC signatures.
-public struct RedeemRequestSolvedEvent has copy, drop {
+public struct SolvedEvent has copy, drop {
     id: u64,
     inputs: vector<Utxo>,
 }
@@ -122,7 +122,7 @@ public fun amount(r: &RedeemRequest): u64 { r.amount }
 
 public fun move_to_signing_status(r: &mut RedeemRequest, redeem_id: u64) {
     r.status = RedeemStatus::Signing;
-    event::emit(RedeemRequestSolvedEvent {
+    event::emit(SolvedEvent {
         id: redeem_id,
         inputs: r.inputs,
     });
