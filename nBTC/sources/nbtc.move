@@ -567,15 +567,25 @@ public fun propose_utxos(
     let requested_amount = r.amount();
 
     assert!(
-        contract.utxo_store.validate_utxos(&utxo_ids, dwallet_ids, requested_amount) >= requested_amount,
+        contract.utxo_store.validate_utxos(&utxo_ids, dwallet_ids, requested_amount, redeem_id) >= requested_amount,
         EInvalidUTXOSet,
     );
+
+    let old_utxo_ids = r.utxo_ids();
+    let old_dwallet_ids = r.dwallet_ids();
+    old_utxo_ids.length().do!(|i| {
+        nbtc_utxo::unlock_utxo(&mut contract.utxo_store, old_utxo_ids[i], old_dwallet_ids[i]);
+    });
+
+    utxo_ids.length().do!(|i| {
+        nbtc_utxo::lock_utxo(&mut contract.utxo_store, utxo_ids[i], dwallet_ids[i], redeem_id);
+    });
 
     let utxos = utxo_ids.zip_map!(
         dwallet_ids,
         |idx, dwallet_id| contract.utxo_store.get_utxo_copy(idx, dwallet_id),
     );
-    r.set_best_utxos(utxos, dwallet_ids);
+    r.set_best_utxos(utxos, dwallet_ids, utxo_ids);
 
     event::emit(ProposeUtxoEvent {
         redeem_id,

@@ -20,6 +20,9 @@ const EInsufficientAmount: vector<u8> = b"Total UTXO value is insufficient for w
 #[error]
 const EDwalletIdMismatch: vector<u8> = b"UTXO dwallet_id mismatch";
 
+#[error]
+const EUtxoLockedByAnotherRequest: vector<u8> = b"UTXO is locked by another redeem request";
+
 // UTXO ranking constants
 const DUST_THRESHOLD: u64 = 10_000; // satoshis
 const BASE_SCORE: u64 = 4_000_000_000_000_000; // 4e15
@@ -38,6 +41,8 @@ public struct UtxoStore has key, store {
     id: UID,
     // Mapping (utxo_idx + dwallet_id) => Utxo
     utxos: Table<vector<u8>, Utxo>,
+    // mapping ukey (dwallet_id + utxo_idx) => redeem_request_id
+    locked_utxos: Table<vector<u8>, u64>,
     next_utxo: u64,
 }
 
@@ -66,7 +71,23 @@ public(package) fun new_utxo_store(ctx: &mut TxContext): UtxoStore {
         id: object::new(ctx),
         utxos: table::new(ctx),
         next_utxo: 0,
+        locked_utxos: table::new(ctx),
     }
+}
+
+public(package) fun lock_utxo(
+    utxo_store: &mut UtxoStore,
+    idx: u64,
+    dwallet_id: ID,
+    redeem_request_id: u64,
+) {
+    let ukey = utxo_key(idx, dwallet_id);
+    utxo_store.locked_utxos.add(ukey, redeem_request_id);
+}
+
+public(package) fun unlock_utxo(utxo_store: &mut UtxoStore, idx: u64, dwallet_id: ID) {
+    let ukey = utxo_key(idx, dwallet_id);
+    utxo_store.locked_utxos.remove(ukey);
 }
 
 public(package) fun utxo_key(idx: u64, dwallet_id: ID): vector<u8> {
@@ -149,12 +170,14 @@ public fun utxo_ranking(
 /// 2. Validates each UTXO's structure
 /// 3. Validates that total value is sufficient for withdrawal amount
 /// 4. Validates that all UTXOs exist in the onchain UTXO set
+/// 5. Validates that UTXOs are not locked by another redeem request
 ///
 public fun validate_utxos(
     utxo_store: &UtxoStore,
     utxo_ids: &vector<u64>,
     dwallet_ids: vector<ID>,
     withdrawal_amount: u64,
+    redeem_request_id: u64,
 ): u64 {
     assert!(!utxo_ids.is_empty(), EEmptyUtxoSet);
     assert!(utxo_ids.length() == dwallet_ids.length(), EDwalletIdMismatch);
@@ -168,11 +191,14 @@ public fun validate_utxos(
         let idx = utxo_ids[i];
         let dwallet_id = dwallet_ids[i];
         let ukey = utxo_key(idx, dwallet_id);
-        // Check UTXO exists in onchain set
-        // TODO: Check if UTXOs are locked by other redeem request (we can use locked utxos from the
-        // same redeem request)
-        // or unlock and abort!
         assert!(utxo_store.contains(ukey), EInvalidUtxo);
+
+        if (utxo_store.locked_utxos.contains(ukey)) {
+            assert!(
+                utxo_store.locked_utxos[ukey] == redeem_request_id,
+                EUtxoLockedByAnotherRequest,
+            );
+        };
 
         let utxo = utxo_store.get_utxo_by_ukey(ukey);
 

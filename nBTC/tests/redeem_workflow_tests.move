@@ -135,3 +135,46 @@ fun test_propose_fails_when_not_resolving() {
     destroy(ctr);
     scenario.end();
 }
+
+#[test]
+fun test_propose_utxos_unlocks_old_and_locks_new() {
+    let (lc, mut ctr, redeem_id, dwallet_id, scenario, clock) = setup_redeem_test(1000, 1500);
+
+    let utxo_1 = new_utxo(x"02", 1, 1000);
+    ctr.add_utxo_for_test(1, utxo_1);
+
+    let utxo_2 = new_utxo(x"03", 0, 1000);
+    ctr.add_utxo_for_test(2, utxo_2);
+
+    let utxo_3 = new_utxo(x"04", 1, 1000);
+    ctr.add_utxo_for_test(3, utxo_3);
+
+    let sol1 = vector[0, 1];
+    let sol1_dwallets = vector[dwallet_id, dwallet_id];
+    ctr.propose_utxos(redeem_id, sol1, sol1_dwallets, &clock);
+
+    let request = ctr.redeem_request(redeem_id);
+    assert_eq!(request.utxo_ids(), sol1);
+
+    let sol2 = vector[2, 3];
+    let sol2_dwallets = vector[dwallet_id, dwallet_id];
+    ctr.propose_utxos(redeem_id, sol2, sol2_dwallets, &clock);
+
+    let request = ctr.redeem_request(redeem_id);
+    assert_eq!(request.utxo_ids(), sol2);
+
+    let utxo_map = ctr.borrow_utxo_map_for_test();
+    let total = nbtc::nbtc_utxo::validate_utxos(
+        utxo_map,
+        &sol1,
+        sol1_dwallets,
+        1500,
+        999,
+    );
+    assert_eq!(total, 2000);
+
+    clock.destroy_for_testing();
+    destroy(lc);
+    destroy(ctr);
+    scenario.end();
+}
