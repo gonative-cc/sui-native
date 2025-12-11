@@ -192,7 +192,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         cap: treasury_cap,
         tx_ids: table::new(ctx),
         config: table::new(ctx),
-        utxo_map: new_utxo_map(ctx),
+        utxo_store: new_utxo_store(ctx),
         fees_collected: balance::zero(),
         redeem_requests: table::new<u64, RedeemRequest>(ctx),
         locked: table::new(ctx),
