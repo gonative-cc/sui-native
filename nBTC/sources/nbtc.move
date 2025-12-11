@@ -202,7 +202,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         storage: create_storage(ctx),
         active_dwallet_id: option::none(),
         next_redeem_req: 0,
-        redeem_duration: 2*60_000, // 5min
+        redeem_duration: 2*60_000, // 2min
     };
 
     contract
