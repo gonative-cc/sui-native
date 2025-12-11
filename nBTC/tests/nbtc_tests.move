@@ -100,7 +100,6 @@ public fun setup(
     let mut ctr = nbtc::init_for_testing(
         lc.client_id().to_address(),
         FALLBACK_ADDR,
-        nbtc_bitcoin_addr,
         dwallet_coordinator,
         scenario.ctx(),
     );

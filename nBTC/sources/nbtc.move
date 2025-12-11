@@ -177,7 +177,7 @@ public struct RedeemRequestProposeEvent has copy, drop {
 
 // NOTE: after contract creation, we need to
 fun init(witness: NBTC, ctx: &mut TxContext) {
-    let contract = init__(witness, ctx);
+    let mut contract = init__(witness, ctx);
     contract
         .config
         .add(
@@ -194,6 +194,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
     transfer::public_share_object(contract);
 }
 
+#[allow(lint(self_transfer))]
 fun init__(witness: NBTC, ctx: &mut TxContext): NbtcContract {
     let (builder, treasury_cap) = coin_registry::new_currency_with_otw(
         witness,
@@ -758,11 +759,10 @@ public fun package_version(): u32 {
 public(package) fun init_for_testing(
     bitcoin_lc: address,
     fallback_addr: address,
-    nbtc_bitcoin_spend_key: vector<u8>,
     ika_coordinator: ID,
     ctx: &mut TxContext,
 ): NbtcContract {
-    let contract = init__(NBTC {}, ctx);
+    let mut contract = init__(NBTC {}, ctx);
     contract
         .config
         .add(
