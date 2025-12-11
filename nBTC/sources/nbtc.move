@@ -22,7 +22,6 @@ use sui::coin_registry;
 use sui::event;
 use sui::sui::SUI;
 use sui::table::{Self, Table};
-use sui::url;
 
 //
 // Constant
@@ -177,6 +176,7 @@ public struct ProposeUtxoEvent has copy, drop {
 // Functions
 //
 
+// NOTE: after contract creation, we need to
 fun init(witness: NBTC, ctx: &mut TxContext) {
     let (builder, treasury_cap) = coin_registry::new_currency_with_otw(
         witness,
@@ -217,17 +217,12 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
             VERSION,
             config::new(@bitcoin_lc.to_id(), @fallback_addr, 10, @ika_coordinator.to_id(), ctx),
         );
+    let sender = ctx.sender();
     transfer::public_share_object(contract);
-    transfer::public_transfer(metadata_cap, ctx.sender());
+    transfer::public_transfer(metadata_cap, sender);
 
-    transfer::transfer(
-        OpCap { id: object::new(ctx) },
-        ctx.sender(),
-    );
-    transfer::transfer(
-        AdminCap { id: object::new(ctx) },
-        ctx.sender(),
-    );
+    transfer::transfer(OpCap { id: object::new(ctx) }, sender);
+    transfer::transfer(AdminCap { id: object::new(ctx) }, sender);
 }
 
 //
