@@ -36,7 +36,7 @@ From the command's output, you can find your new **Package ID** and other create
 
 We use `init` with OTW for initialization. We must call finalize_registration to promote the currency to the registry. [Details](https://docs.sui.io/standards/currency#coin-finalization).
 
-```
+```bash
 sui client ptb \
   --move-call 0x2::coin_registry::finalize_registration @0xc <NBTC_ID>
 ```
