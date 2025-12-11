@@ -140,46 +140,34 @@ fun test_propose_fails_when_not_resolving() {
 fun test_propose_utxos_unlocks_old_and_locks_new() {
     let (lc, mut ctr, redeem_id, dwallet_id, scenario, clock) = setup_redeem_test(1000, 1500);
 
-    let utxo_1 = new_utxo(
-        x"2222222222222222222222222222222222222222222222222222222222222222",
-        1,
-        1000,
-    );
+    let utxo_1 = new_utxo(x"02", 1, 1000);
     ctr.add_utxo_for_test(1, utxo_1);
 
-    let utxo_2 = new_utxo(
-        x"3333333333333333333333333333333333333333333333333333333333333333",
-        0,
-        1000,
-    );
+    let utxo_2 = new_utxo(x"03", 0, 1000);
     ctr.add_utxo_for_test(2, utxo_2);
 
-    let utxo_3 = new_utxo(
-        x"4444444444444444444444444444444444444444444444444444444444444444",
-        1,
-        1000,
-    );
+    let utxo_3 = new_utxo(x"04", 1, 1000);
     ctr.add_utxo_for_test(3, utxo_3);
 
-    let first_utxo_ids = vector[0, 1];
-    let first_dwallet_ids = vector[dwallet_id, dwallet_id];
-    ctr.propose_utxos(redeem_id, first_utxo_ids, first_dwallet_ids, &clock);
+    let sol1 = vector[0, 1];
+    let sol1_dwallets = vector[dwallet_id, dwallet_id];
+    ctr.propose_utxos(redeem_id, sol1, sol1_dwallets, &clock);
 
     let request = ctr.redeem_request(redeem_id);
-    assert_eq!(request.utxo_ids(), vector[0, 1]);
+    assert_eq!(request.utxo_ids(), sol1);
 
-    let second_utxo_ids = vector[2, 3];
-    let second_dwallet_ids = vector[dwallet_id, dwallet_id];
-    ctr.propose_utxos(redeem_id, second_utxo_ids, second_dwallet_ids, &clock);
+    let sol2 = vector[2, 3];
+    let sol2_dwallets = vector[dwallet_id, dwallet_id];
+    ctr.propose_utxos(redeem_id, sol2, sol2_dwallets, &clock);
 
     let request = ctr.redeem_request(redeem_id);
-    assert_eq!(request.utxo_ids(), vector[2, 3]);
+    assert_eq!(request.utxo_ids(), sol2);
 
     let utxo_map = ctr.borrow_utxo_map_for_test();
     let total = nbtc::nbtc_utxo::validate_utxos(
         utxo_map,
-        &vector[0, 1],
-        vector[dwallet_id, dwallet_id],
+        &sol1,
+        sol1_dwallets,
         1500,
         999,
     );
