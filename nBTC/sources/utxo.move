@@ -117,6 +117,7 @@ public fun utxo_ranking(
 }
 
 /// Validates a set of proposed UTXOs for withdrawal request.
+/// Returns the sum of input amounts.
 ///
 /// Checks performed:
 /// 1. Ensures UTXO on chain set is not empty

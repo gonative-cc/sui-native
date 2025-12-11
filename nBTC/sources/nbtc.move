@@ -202,7 +202,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         storage: create_storage(ctx),
         active_dwallet_id: option::none(),
         next_redeem_req: 0,
-        redeem_duration: 5*60_000, // 5min
+        redeem_duration: 2*60_000, // 5min
     };
 
     contract
@@ -569,10 +569,7 @@ public fun propose_utxos(
     assert!(now <= deadline, ERedeemWindowExpired);
     let requested_amount = r.amount();
 
-    assert!(
-        validate_utxos(&contract.utxos, &utxo_ids, dwallet_ids, requested_amount) >= requested_amount,
-        EInvalidUTXOSet,
-    );
+    validate_utxos(&contract.utxos, &utxo_ids, dwallet_ids, requested_amount);
 
     let utxos = utxo_ids.map!(|idx| contract.utxos[idx]);
     r.set_best_utxos(utxos, dwallet_ids);
