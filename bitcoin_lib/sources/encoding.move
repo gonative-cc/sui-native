@@ -354,6 +354,8 @@ public fun der_encode_signature(signature: vector<u8>, signature_hash_type: u8):
     };
 
     s = sig_low_s(s);
+    // in DER, if the first byte is >= 0x80 then the number is negative.
+    // so we need to add one more byte (0x00) for proper encoding.
     if (s[0] >= 0x80) {
         s.insert(0x00, 0);
     };
