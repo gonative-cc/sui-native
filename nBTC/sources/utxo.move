@@ -80,8 +80,8 @@ public(package) fun add(utxo_store: &mut UtxoStore, dwallet_id: ID, utxo: Utxo) 
     utxo_store.next_utxo = utxo_store.next_utxo + 1;
 }
 
-public(package) fun remove(utxo_store: &mut UtxoStore, idx: u64, dwallet_id: ID) {
-    utxo_store.utxos.remove(utxo_key(idx, dwallet_id));
+public(package) fun remove(utxo_store: &mut UtxoStore, idx: u64, dwallet_id: ID): Utxo {
+    utxo_store.utxos.remove(utxo_key(idx, dwallet_id))
 }
 
 public(package) fun contains(utxo_store: &UtxoStore, ukey: vector<u8>): bool {
