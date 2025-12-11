@@ -202,7 +202,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         storage: create_storage(ctx),
         active_dwallet_id: option::none(),
         next_redeem_req: 0,
-        redeem_duration: 5*60_000, // 5min
+        redeem_duration: 2*60_000, // 2min
     };
 
     contract
@@ -563,16 +563,15 @@ public fun propose_utxos(
     let r = &mut contract.redeem_requests[redeem_id];
     assert!(r.status().is_resolving(), ENotResolving);
 
-    let now = clock.timestamp_ms();
-    let redeem_created_at = r.redeem_created_at();
-    let deadline = redeem_created_at + contract.redeem_duration;
-    assert!(now <= deadline, ERedeemWindowExpired);
-    let requested_amount = r.amount();
+    // we check the deadline only if we have proposed solution
+    if (r.inputs_length() > 0) {
+        let now = clock.timestamp_ms();
+        let deadline = r.redeem_created_at() + contract.redeem_duration;
+        assert!(now <= deadline, ERedeemWindowExpired);
+    };
 
-    assert!(
-        validate_utxos(&contract.utxos, &utxo_ids, dwallet_ids, requested_amount) >= requested_amount,
-        EInvalidUTXOSet,
-    );
+    let requested_amount = r.amount();
+    validate_utxos(&contract.utxos, &utxo_ids, dwallet_ids, requested_amount);
 
     let utxos = utxo_ids.map!(|idx| contract.utxos[idx]);
     r.set_best_utxos(utxos, dwallet_ids);
