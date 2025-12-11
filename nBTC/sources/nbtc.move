@@ -535,7 +535,7 @@ public fun validate_signature(
     });
 }
 
-//TODO: update event emmitted to include the data from the redeem request
+//TODO: update event emitted to include the data from the redeem request
 public fun solve_redeem_request(contract: &mut NbtcContract, redeem_id: u64, clock: &Clock) {
     assert!(contract.version == VERSION, EVersionMismatch);
     let r = &mut contract.redeem_requests[redeem_id];
