@@ -50,6 +50,20 @@ public fun u64_to_le_bytes(val: u64): vector<u8> {
     bytes
 }
 
+/// Converts a u64 integer to an 8-byte big-endian vector<u8>.
+public fun u64_to_be_bytes(val: u64): vector<u8> {
+    let mut bytes = vector::empty<u8>();
+    bytes.push_back(((val >> 56) & 0xFF) as u8);
+    bytes.push_back(((val >> 48) & 0xFF) as u8);
+    bytes.push_back(((val >> 40) & 0xFF) as u8);
+    bytes.push_back(((val >> 32) & 0xFF) as u8);
+    bytes.push_back(((val >> 24) & 0xFF) as u8);
+    bytes.push_back(((val >> 16) & 0xFF) as u8);
+    bytes.push_back(((val >> 8) & 0xFF) as u8);
+    bytes.push_back(((val >> 0) & 0xFF) as u8);
+    bytes
+}
+
 /// Converts u64 into the CScriptNum byte vector format.
 /// This is the format expected to be pushed onto the stack.
 /// https://github.com/bitcoin/bitcoin/blob/87ec923d3a7af7b30613174b41c6fb11671df466/src/script/script.h#L349
