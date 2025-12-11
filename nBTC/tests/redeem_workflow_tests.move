@@ -58,7 +58,7 @@ fun test_redeem_workflow_happy_case() {
     let redeem_duration = ctr.redeem_duration();
     clock.increment_for_testing(redeem_duration + 1);
 
-    ctr.finalize_redeem_request(redeem_id, &clock);
+    ctr.solve_redeem_request(redeem_id, &clock);
 
     let request = ctr.redeem_request(redeem_id);
     assert_eq!(request.status().is_signing(), true);
@@ -75,7 +75,7 @@ fun test_finalize_fails_with_no_utxos_proposed() {
 
     let redeem_duration = ctr.redeem_duration();
     clock.increment_for_testing(redeem_duration + 1);
-    ctr.finalize_redeem_request(redeem_id, &clock);
+    ctr.solve_redeem_request(redeem_id, &clock);
 
     clock.destroy_for_testing();
     destroy(lc);
@@ -105,7 +105,7 @@ fun test_finalize_fails_before_deadline() {
     let dwallet_ids = vector[dwallet_id];
     ctr.propose_utxos(redeem_id, utxo_ids, dwallet_ids, &clock);
 
-    ctr.finalize_redeem_request(redeem_id, &clock);
+    ctr.solve_redeem_request(redeem_id, &clock);
 
     clock.destroy_for_testing();
     destroy(lc);
@@ -123,7 +123,7 @@ fun test_propose_fails_when_not_resolving() {
 
     let redeem_duration = ctr.redeem_duration();
     clock.increment_for_testing(redeem_duration + 1);
-    ctr.finalize_redeem_request(redeem_id, &clock);
+    ctr.solve_redeem_request(redeem_id, &clock);
 
     ctr.propose_utxos(redeem_id, utxo_ids, dwallet_ids, &clock);
 
