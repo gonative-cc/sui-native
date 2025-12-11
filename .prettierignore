@@ -15,3 +15,7 @@ private*
 
 # generated docs
 packages/*/docs
+
+# Data directories with permission issues
+bitcoin-regtest/
+.devin
