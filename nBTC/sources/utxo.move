@@ -134,12 +134,8 @@ public fun validate_utxos(
     assert!(!utxo_ids.is_empty(), EEmptyUtxoSet);
     assert!(utxo_ids.length() == dwallet_ids.length(), EDwalletIdMismatch);
 
-    let len = utxo_ids.length();
-
     let mut total_value: u64 = 0;
-    let mut i = 0;
-
-    len.do!(|i| {
+    utxo_ids.length().do!(|i| {
         let idx = utxo_ids[i];
         // Check UTXO exists in onchain set
         // TODO: Check if UTXOs is lock by other redeem request (we can use locked utxos from the
