@@ -3,7 +3,6 @@ module nbtc::config;
 /// Metadata for nBTC hold the information about btc light client object, fee
 /// and default fallback address
 public struct Config has copy, drop, store {
-    id: UID,
     /// Bitcoin light client
     light_client_id: ID,
     mint_fee: u64,
@@ -21,10 +20,8 @@ public fun new(
     mint_fee: u64,
     dwallet_coordinator: ID,
     redeem_duration: u64,
-    ctx: &mut TxContext,
 ): Config {
     Config {
-        id: object::new(ctx),
         light_client_id,
         mint_fee,
         fallback_addr,

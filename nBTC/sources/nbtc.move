@@ -212,7 +212,6 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
                 10,
                 @ika_coordinator.to_id(),
                 2*MINUTE,
-                ctx,
             ),
         );
     transfer::public_share_object(contract);
@@ -546,6 +545,7 @@ public fun validate_signature(
 //TODO: update event emitted to include the data from the redeem request
 public fun solve_redeem_request(contract: &mut NbtcContract, redeem_id: u64, clock: &Clock) {
     assert!(contract.version == VERSION, EVersionMismatch);
+    let config = contract.config();
     let r = &mut contract.redeem_requests[redeem_id];
 
     // 1. Make sure there is a utxo proposed and we are past the finalization time
@@ -553,7 +553,6 @@ public fun solve_redeem_request(contract: &mut NbtcContract, redeem_id: u64, clo
     assert!(r.status().is_resolving(), ENotResolving);
 
     let now = clock.timestamp_ms();
-    let config = contract.config();
     let deadline = r.redeem_created_at() + config.redeem_duration();
     assert!(now > deadline, ERedeemWindowExpired);
 
@@ -569,13 +568,13 @@ public fun propose_utxos(
 ) {
     assert!(contract.version == VERSION, EVersionMismatch);
 
+    let config = contract.config();
     let r = &mut contract.redeem_requests[redeem_id];
     assert!(r.status().is_resolving(), ENotResolving);
 
     // we check the deadline only if we have proposed solution
     if (r.inputs_length() > 0) {
         let now = clock.timestamp_ms();
-        let config = contract.config();
         let deadline = r.redeem_created_at() + config.redeem_duration();
         assert!(now <= deadline, ERedeemWindowExpired);
     };
@@ -793,7 +792,7 @@ public(package) fun init_for_testing(
         .config
         .add(
             VERSION,
-            config::new(bitcoin_lc.to_id(), fallback_addr, 10, ika_coordinator, 5*MINUTE, ctx),
+            config::new(bitcoin_lc.to_id(), fallback_addr, 10, ika_coordinator, 5*MINUTE),
         );
     contract
 }
