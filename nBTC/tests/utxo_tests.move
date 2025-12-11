@@ -11,7 +11,7 @@ fun validate_utxos_working_case() {
     let mut scenario = ts::begin(@0x1);
     let ctx = scenario.ctx();
 
-    let mut onchain_utxos = nbtc_utxo::new_utxo_map(ctx);
+    let mut onchain_utxos = nbtc_utxo::new_utxo_store(ctx);
 
     let tx_id_1 = x"1111111111111111111111111111111111111111111111111111111111111111";
     let spend_key = x"0014e8340a12dd2c95e5fedc8b088a81dcac42c106fb";
@@ -43,7 +43,7 @@ fun validate_utxos_empty_indices() {
     let mut scenario = ts::begin(@0x1);
     let ctx = scenario.ctx();
 
-    let mut onchain_utxos = nbtc_utxo::new_utxo_map(ctx);
+    let mut onchain_utxos = nbtc_utxo::new_utxo_store(ctx);
 
     let tx_id = x"1111111111111111111111111111111111111111111111111111111111111111";
     let utxo = nbtc_utxo::new_utxo(tx_id, 0, 50000);
@@ -66,7 +66,7 @@ fun validate_utxos_nonexistent_index() {
     let mut scenario = ts::begin(@0x1);
     let ctx = scenario.ctx();
 
-    let mut onchain_utxos = nbtc_utxo::new_utxo_map(ctx);
+    let mut onchain_utxos = nbtc_utxo::new_utxo_store(ctx);
     let proposed_indices = vector[0u64];
 
     nbtc_utxo::validate_utxos(
@@ -84,7 +84,7 @@ fun validate_utxos_insufficient_amount() {
     let mut scenario = ts::begin(@0x1);
     let ctx = scenario.ctx();
 
-    let mut onchain_utxos = nbtc_utxo::new_utxo_map(ctx);
+    let mut onchain_utxos = nbtc_utxo::new_utxo_store(ctx);
 
     let tx_id = x"1111111111111111111111111111111111111111111111111111111111111111";
     let utxo = nbtc_utxo::new_utxo(tx_id, 0, 50000);
@@ -107,7 +107,7 @@ fun validate_utxos_exact_match() {
     let mut scenario = ts::begin(@0x1);
     let ctx = scenario.ctx();
 
-    let mut onchain_utxos = nbtc_utxo::new_utxo_map(ctx);
+    let mut onchain_utxos = nbtc_utxo::new_utxo_store(ctx);
 
     let tx_id = x"1111111111111111111111111111111111111111111111111111111111111111";
     let utxo = nbtc_utxo::new_utxo(tx_id, 0, 50000);
