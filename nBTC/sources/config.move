@@ -14,7 +14,7 @@ public struct Config has copy, drop, store {
     redeem_duration: u64,
 }
 
-public fun new(
+public(package) fun new(
     light_client_id: ID,
     fallback_addr: address,
     mint_fee: u64,
