@@ -51,5 +51,9 @@ public fun redeem_duration(config: &Config): u64 {
 }
 
 public(package) fun set_mint_fee(config: &mut Config, fee: u64) {
-    config.mint_fee = fee
+    config.mint_fee = fee;
+}
+
+public(package) fun set_redeem_duration(config: &mut Config, redeem_duration: u64) {
+    config.redeem_duration = redeem_duration;
 }
