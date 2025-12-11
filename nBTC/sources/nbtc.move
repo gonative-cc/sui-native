@@ -179,6 +179,23 @@ public struct RedeemRequestProposeEvent has copy, drop {
 
 // NOTE: after contract creation, we need to
 fun init(witness: NBTC, ctx: &mut TxContext) {
+    // NOTE: we removed post deployment setup function and didn't want to implement PTB style
+    // initialization, so we require setting the address before publishing the package.
+    let nbtc_bitcoin_spend_key = b""; // TODO: valid bitcoin address
+    assert!(nbtc_bitcoin_spend_key.length() >= 22);
+
+    let contract = init__(witness, 2*60_000, ctx);
+    contract
+        .config
+        .add(
+            VERSION,
+            config::new(@bitcoin_lc.to_id(), @fallback_addr, 10, @ika_coordinator.to_id(), ctx),
+        );
+
+    transfer::public_share_object(contract);
+}
+
+fun init__(witness: NBTC, redeem_duration: u64, ctx: &mut TxContext): NbtcContract {
     let (builder, treasury_cap) = coin_registry::new_currency_with_otw(
         witness,
         DECIMALS,
@@ -189,13 +206,13 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         ctx,
     );
 
+    let sender = ctx.sender();
     let metadata_cap = builder.finalize(ctx);
+    transfer::public_transfer(metadata_cap, sender);
+    transfer::transfer(OpCap { id: object::new(ctx) }, sender);
+    transfer::transfer(AdminCap { id: object::new(ctx) }, sender);
 
-    // NOTE: we removed post deployment setup function and didn't want to implement PTB style
-    // initialization, so we require setting the address before publishing the package.
-    let nbtc_bitcoin_spend_key = b""; // TODO: valid bitcoin address
-    assert!(nbtc_bitcoin_spend_key.length() >= 22);
-    let mut contract = NbtcContract {
+    NbtcContract {
         id: object::new(ctx),
         version: VERSION,
         cap: treasury_cap,
@@ -209,21 +226,8 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         storage: create_storage(ctx),
         active_dwallet_id: option::none(),
         next_redeem_req: 0,
-        redeem_duration: 2*60_000, // 2min
-    };
-
-    contract
-        .config
-        .add(
-            VERSION,
-            config::new(@bitcoin_lc.to_id(), @fallback_addr, 10, @ika_coordinator.to_id(), ctx),
-        );
-    let sender = ctx.sender();
-    transfer::public_share_object(contract);
-    transfer::public_transfer(metadata_cap, sender);
-
-    transfer::transfer(OpCap { id: object::new(ctx) }, sender);
-    transfer::transfer(AdminCap { id: object::new(ctx) }, sender);
+        redeem_duration,
+    }
 }
 
 //
@@ -739,6 +743,7 @@ public fun config(contract: &NbtcContract): &Config {
 public fun package_version(): u32 {
     VERSION
 }
+
 //
 // Testing
 //
@@ -751,34 +756,7 @@ public(package) fun init_for_testing(
     ika_coordinator: ID,
     ctx: &mut TxContext,
 ): NbtcContract {
-    let witness = NBTC {};
-    let (contract_cap, metadata) = coin::create_currency<NBTC>(
-        witness,
-        DECIMALS,
-        SYMBOL,
-        NAME,
-        DESCRIPTION,
-        option::some(url::new_unsafe_from_bytes(ICON_URL)),
-        ctx,
-    );
-    transfer::public_freeze_object(metadata);
-    let mut contract = NbtcContract {
-        id: object::new(ctx),
-        version: VERSION,
-        cap: contract_cap,
-        tx_ids: table::new(ctx),
-        config: table::new(ctx),
-        utxos: table::new(ctx),
-        redeem_requests: table::new(ctx),
-        locked: table::new(ctx),
-        next_redeem_req: 0,
-        next_utxo: 0,
-        active_dwallet_id: option::none(),
-        fees_collected: balance::zero(),
-        redeem_duration: 5*60_000, // 5min
-        storage: create_storage(ctx),
-    };
-
+    let contract = init__(NBTC {}, 5*60_000, ctx);
     contract
         .config
         .add(VERSION, config::new(bitcoin_lc.to_id(), fallback_addr, 10, ika_coordinator, ctx));
