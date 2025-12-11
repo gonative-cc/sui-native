@@ -36,7 +36,7 @@ public struct Utxo has copy, drop, store {
 
 public struct UtxoStore has key, store {
     id: UID,
-    // mapping (dwallet_id + utxo_idxs) => Utxo
+    // Mapping (dwallet_id + utxo_idxs) => Utxo
     utxos: Table<vector<u8>, Utxo>,
     next_utxo: u64,
 }
@@ -105,7 +105,7 @@ public fun next_utxo(utxo_store: &UtxoStore): u64 {
     utxo_store.next_utxo
 }
 
-///  Criteria:
+/// Criteria:
 ///  Prefer fewer inputs
 ///  Avoid creating dust change
 ///  Prefer spending from inactive keys
@@ -169,7 +169,7 @@ public fun validate_utxos(
         let dwallet_id = dwallet_ids[i];
         let ukey = utxo_key(idx, dwallet_id);
         // Check UTXO exists in onchain set
-        // TODO: Check if UTXOs is lock by other redeem request (we can use locked utxos from the
+        // TODO: Check if UTXOs are locked by other redeem request (we can use locked utxos from the
         // same redeem request)
         // or unlock and abort!
         assert!(utxo_store.contains(ukey), EInvalidUtxo);
