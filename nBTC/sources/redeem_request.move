@@ -256,7 +256,7 @@ public fun sig_hash(r: &RedeemRequest, input_idx: u32, storage: &Storage): vecto
     })
 }
 
-public(package) fun set_best_utxos(
+public(package) fun set_utxos(
     r: &mut RedeemRequest,
     utxos: vector<Utxo>,
     dwallet_ids: vector<ID>,
@@ -335,21 +335,18 @@ public fun get_signature(
 }
 
 #[test_only]
-public fun update(
+public fun update_to_signing_for_test(
     r: &mut RedeemRequest,
     inputs: vector<Utxo>,
     dwallet_ids: vector<ID>,
     utxo_ids: vector<u64>,
-    status: RedeemStatus,
 ) {
-r.inputs = inputs;
-    r.dwallet_ids = dwallet_ids;
-    r.utxo_ids = utxo_ids;
-    r.status = status;
+    r.set_utxos(inputs, dwallet_ids, utxo_ids);
+    r.status = RedeemStatus::Signing;
 }
 
 #[test_only]
-public fun move_to_signed(r: &mut RedeemRequest, signatures: vector<vector<u8>>) {
+public fun update_to_signed_for_test(r: &mut RedeemRequest, signatures: vector<vector<u8>>) {
     r.signatures_map =
         vec_map::from_keys_values(
             vector::tabulate!(signatures.length(), |i| i as u32),

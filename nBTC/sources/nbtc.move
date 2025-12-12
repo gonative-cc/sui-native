@@ -597,7 +597,7 @@ public fun propose_utxos(
         dwallet_ids,
         |idx, dwallet_id| contract.utxo_store.get_utxo_copy(idx, dwallet_id),
     );
-    r.set_best_utxos(utxos, dwallet_ids, utxo_ids);
+    r.set_utxos(utxos, dwallet_ids, utxo_ids);
 
     event::emit(RedeemRequestProposeEvent {
         redeem_id,

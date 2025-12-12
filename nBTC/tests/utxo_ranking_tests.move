@@ -6,7 +6,6 @@ use nbtc::test_constants::{MOCK_DWALLET_ID, MOCK_DWALLET_ID_2};
 use std::unit_test::{assert_eq, destroy};
 use sui::test_scenario;
 
-const ACTIVE_KEY: vector<u8> = x"0014e8340a12dd2c95e5fedc8b088a81dcac42c106fb";
 const INACTIVE_KEY_1: vector<u8> = x"00149b622481f0407714dd3ef4850a02ffbdc19dfa96";
 
 // Multiple UTXOs with exact match vs fewer UTXOs with change

@@ -43,8 +43,8 @@ fun raw_withdraw_tx_signed_tests() {
         scenario.ctx(),
     );
 
-    r.move_to_signing(utxos, vector[MOCK_DWALLET_ID!()], vector[0]);
-    r.move_to_signed(signatures);
+    r.update_to_signing_for_test(utxos, vector[MOCK_DWALLET_ID!()], vector[0]);
+    r.update_to_signed_for_test(signatures);
     let mut btc_store = storage::create_storage(scenario.ctx());
     btc_store.add_metadata(
         MOCK_DWALLET_ID!(),
