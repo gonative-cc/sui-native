@@ -37,20 +37,14 @@ public fun new(amount: u64, script_pubkey: vector<u8>): Output {
     }
 }
 
-/// Returns the 8-byte little-endian representation of the output amount.
-/// This is the format used in raw Bitcoin transactions.
 public fun amount_bytes(output: &Output): vector<u8> {
     output.amount_bytes
 }
 
-/// Returns the amount value in satoshis.
-/// This is the human-readable numeric value of the output.
 public fun amount(output: &Output): u64 {
     output.amount
 }
 
-/// Returns the script_pubkey (locking script) of the output.
-/// This script defines the conditions that must be met to spend this output.
 public fun script_pubkey(output: &Output): vector<u8> {
     output.script_pubkey
 }
