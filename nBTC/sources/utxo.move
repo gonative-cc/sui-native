@@ -41,7 +41,7 @@ public struct UtxoStore has key, store {
     id: UID,
     // Mapping (utxo_idx + dwallet_id) => Utxo
     utxos: Table<vector<u8>, Utxo>,
-    // mapping ukey (dwallet_id + utxo_idx) => redeem_request_id
+    // mapping ukey (utxo_idx + dwallet_id) => redeem_request_id
     locked_utxos: Table<vector<u8>, u64>,
     next_utxo: u64,
 }
