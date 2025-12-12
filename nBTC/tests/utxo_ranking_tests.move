@@ -6,8 +6,6 @@ use nbtc::test_constants::{MOCK_DWALLET_ID, MOCK_DWALLET_ID_2};
 use std::unit_test::{assert_eq, destroy};
 use sui::test_scenario;
 
-const INACTIVE_KEY_1: vector<u8> = x"00149b622481f0407714dd3ef4850a02ffbdc19dfa96";
-
 // Multiple UTXOs with exact match vs fewer UTXOs with change
 #[test]
 fun exact_match_wins_over_change() {
@@ -16,7 +14,6 @@ fun exact_match_wins_over_change() {
 
     let mut utxo_map = new_utxo_store(ctx);
     let active_dwallet_id = MOCK_DWALLET_ID!();
-    let inactive_dwallet_id = MOCK_DWALLET_ID_2!();
 
     // Add UTXOs to the map
     let utxo1 = new_utxo(

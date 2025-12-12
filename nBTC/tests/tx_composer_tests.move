@@ -11,7 +11,6 @@ use std::unit_test::assert_eq;
 fun create_unsign_reedem_tx_happy_case() {
     let nbtc_spend_script = x"0014e8340a12dd2c95e5fedc8b088a81dcac42c106fb";
 
-    let spend_key = x"0014e8340a12dd2c95e5fedc8b088a81dcac42c106fb";
     let utxos = vector[
         new_utxo(
             x"c22646a7af0b3862c27dadab84cfb4a58dd9e1e4a417e7517bff7f05ae4c575e",

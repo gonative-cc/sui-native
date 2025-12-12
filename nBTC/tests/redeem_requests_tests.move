@@ -14,13 +14,12 @@ fun raw_withdraw_tx_signed_tests() {
     let nbtc_spend_key = x"00145c2dc82f606be66506b7403f9b304f5e0908b652";
     let nbtc_pk = x"0329cdb63380e0a7109773703534659df6be41c48b4e80e5da77eb384ff7d41be2";
     let sender = @0x1;
-    let (lc, mut ctr, mut scenario) = setup(nbtc_spend_key, sender, MOCK_DWALLET_ID!());
+    let (lc, ctr, mut scenario) = setup(nbtc_spend_key, sender, MOCK_DWALLET_ID!());
 
     scenario.next_tx(sender);
 
     let amount = 72561;
     let btc_receiver = x"001464f9139a4a853b3d5ad1315ceb707386ed343c2c";
-    let spend_key = x"0014e8340a12dd2c95e5fedc8b088a81dcac42c106fb";
     let utxos = vector[
         new_utxo(
             x"9dafd815a150414d02047a22ab806dbd2f43d0e1ea5922dadd5396f6d6776920",

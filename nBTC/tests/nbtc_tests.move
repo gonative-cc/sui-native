@@ -11,7 +11,6 @@ use nbtc::test_constants::MOCK_DWALLET_ID;
 use std::unit_test::{assert_eq, destroy};
 use sui::address;
 use sui::coin::Coin;
-use sui::object;
 use sui::test_scenario::{Self, take_from_address, Scenario};
 
 // The fallback Sui address to receive nBTC if OP_RETURN data is invalid or missing.

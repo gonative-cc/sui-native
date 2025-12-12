@@ -64,11 +64,10 @@ fun validate_utxos_nonexistent_index() {
     let mut scenario = ts::begin(@0x1);
     let ctx = scenario.ctx();
 
-    let mut onchain_utxos = nbtc_utxo::new_utxo_store(ctx);
+    let onchain_utxos = nbtc_utxo::new_utxo_store(ctx);
     let proposed_indices = vector[0u64];
 
-    nbtc_utxo::validate_utxos(
-        &onchain_utxos,
+    onchain_utxos.validate_utxos(
         &proposed_indices,
         vector[MOCK_DWALLET_ID!()],
         10000,
