@@ -5,31 +5,26 @@ use nbtc::nbtc_tests::setup;
 use nbtc::nbtc_utxo::new_utxo;
 use nbtc::redeem_request;
 use nbtc::storage;
+use nbtc::test_constants::MOCK_DWALLET_ID;
 use std::unit_test::{assert_eq, destroy};
 use sui::clock;
 
-macro fun MOCK_DWALLET_ID(): ID {
-    object::id_from_address(@0x01)
-}
 #[test]
 fun raw_withdraw_tx_signed_tests() {
     let nbtc_spend_key = x"00145c2dc82f606be66506b7403f9b304f5e0908b652";
     let nbtc_pk = x"0329cdb63380e0a7109773703534659df6be41c48b4e80e5da77eb384ff7d41be2";
     let sender = @0x1;
-    let (lc, ctr, mut scenario) = setup(nbtc_spend_key, sender);
+    let (lc, ctr, mut scenario) = setup(nbtc_spend_key, sender, MOCK_DWALLET_ID!());
 
     scenario.next_tx(sender);
 
     let amount = 72561;
     let btc_receiver = x"001464f9139a4a853b3d5ad1315ceb707386ed343c2c";
-    let spend_key = x"0014e8340a12dd2c95e5fedc8b088a81dcac42c106fb";
     let utxos = vector[
         new_utxo(
             x"9dafd815a150414d02047a22ab806dbd2f43d0e1ea5922dadd5396f6d6776920",
             41,
             amount,
-            spend_key,
-            MOCK_DWALLET_ID!(),
         ),
     ];
     let signatures = vector[
@@ -47,8 +42,8 @@ fun raw_withdraw_tx_signed_tests() {
         scenario.ctx(),
     );
 
-    r.move_to_signing(utxos);
-    r.move_to_signed(signatures);
+    r.update_to_signing_for_test(utxos, vector[MOCK_DWALLET_ID!()], vector[0]);
+    r.update_to_signed_for_test(signatures);
     let mut btc_store = storage::create_storage(scenario.ctx());
     btc_store.add_metadata(
         MOCK_DWALLET_ID!(),
