@@ -55,6 +55,7 @@ public struct RedeemRequest has store {
     fee: u64,
     inputs: vector<Utxo>,
     dwallet_ids: vector<ID>,
+    utxo_ids: vector<u64>,
     sig_hashes: VecMap<u32, vector<u8>>,
     sign_ids: Table<ID, bool>,
     signatures_map: VecMap<u32, vector<u8>>,
@@ -62,11 +63,14 @@ public struct RedeemRequest has store {
 }
 
 //TODO: Add logic to extract data from redeem inputs for:
-public struct RedeemRequestReadyForSigningEvent has copy, drop {
+/// Event emitted when a proposal for redeem request is selected (solved) and we are ready
+/// for creating MPC signatures.
+public struct SolvedEvent has copy, drop {
     id: u64,
     inputs: vector<Utxo>,
 }
 
+/// Event emitted when Ika sign request for a given redeem request input is sent.
 public struct RequestSignatureEvent has copy, drop {
     redeem_id: u64,
     sign_id: ID, // IKA sign session ID
@@ -116,6 +120,8 @@ public fun recipient_script(r: &RedeemRequest): vector<u8> { r.recipient_script 
 
 public fun dwallet_ids(r: &RedeemRequest): vector<ID> { r.dwallet_ids }
 
+public fun utxo_ids(r: &RedeemRequest): vector<u64> { r.utxo_ids }
+
 public fun redeem_created_at(r: &RedeemRequest): u64 { r.created_at }
 
 public fun inputs_length(r: &RedeemRequest): u64 { r.inputs.length() }
@@ -124,7 +130,7 @@ public fun amount(r: &RedeemRequest): u64 { r.amount }
 
 public fun move_to_signing_status(r: &mut RedeemRequest, redeem_id: u64) {
     r.status = RedeemStatus::Signing;
-    event::emit(RedeemRequestReadyForSigningEvent {
+    event::emit(SolvedEvent {
         id: redeem_id,
         inputs: r.inputs,
     });
@@ -145,7 +151,7 @@ public(package) fun request_signature_for_input(
     // This should include other information for create sign hash
     let sig_hash = r.sig_hash(input_idx, storage);
 
-    let dwallet_id = r.utxo_at(input_idx).dwallet_id();
+    let dwallet_id = r.dwallet_ids[input_idx as u64];
     let dwallet_cap = storage.dwallet_cap(dwallet_id);
     let message_approval = dwallet_coordinator.approve_message(
         dwallet_cap,
@@ -264,13 +270,15 @@ public fun sig_hash(r: &RedeemRequest, input_idx: u32, storage: &Storage): vecto
     })
 }
 
-public(package) fun set_best_utxos(
+public(package) fun set_utxos(
     r: &mut RedeemRequest,
     utxos: vector<Utxo>,
     dwallet_ids: vector<ID>,
+    utxo_ids: vector<u64>,
 ) {
     r.inputs = utxos;
     r.dwallet_ids = dwallet_ids;
+    r.utxo_ids = utxo_ids;
 }
 
 public fun new(
@@ -294,6 +302,7 @@ public fun new(
         signatures_map: vec_map::empty(),
         status: RedeemStatus::Resolving,
         dwallet_ids: vector::empty(),
+        utxo_ids: vector::empty(),
         created_at,
     }
 }
@@ -340,13 +349,18 @@ public fun get_signature(
 }
 
 #[test_only]
-public fun move_to_signing(r: &mut RedeemRequest, inputs: vector<Utxo>) {
-    r.inputs = inputs;
-    r.status = RedeemStatus::Signing
+public fun update_to_signing_for_test(
+    r: &mut RedeemRequest,
+    inputs: vector<Utxo>,
+    dwallet_ids: vector<ID>,
+    utxo_ids: vector<u64>,
+) {
+    r.set_utxos(inputs, dwallet_ids, utxo_ids);
+    r.status = RedeemStatus::Signing;
 }
 
 #[test_only]
-public fun move_to_signed(r: &mut RedeemRequest, signatures: vector<vector<u8>>) {
+public fun update_to_signed_for_test(r: &mut RedeemRequest, signatures: vector<vector<u8>>) {
     r.signatures_map =
         vec_map::from_keys_values(
             vector::tabulate!(signatures.length(), |i| i as u32),

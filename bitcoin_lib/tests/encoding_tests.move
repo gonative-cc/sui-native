@@ -25,6 +25,14 @@ fun test_u64_to_le_bytes() {
 }
 
 #[test]
+fun test_u64_to_be_bytes() {
+    assert_eq!(u64_to_be_bytes(0x123456789abcdef0), x"123456789abcdef0");
+    assert_eq!(u64_to_be_bytes(1), x"0000000000000001");
+    assert_eq!(u64_to_be_bytes(0), x"0000000000000000");
+    assert_eq!(u64_to_be_bytes(0xFFFFFFFFFFFFFFFF), x"FFFFFFFFFFFFFFFF");
+}
+
+#[test]
 fun test_u64_to_varint_bytes() {
     assert_eq!(u64_to_varint_bytes(0), x"00");
     assert_eq!(u64_to_varint_bytes(10), x"0a");
