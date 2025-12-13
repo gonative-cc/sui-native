@@ -204,7 +204,7 @@ public fun raw_signed_tx(r: &RedeemRequest, storage: &Storage): vector<u8> {
 
     let mut witnesses = vector[];
     r.inputs.length().do!(|i| {
-        let dwallet_id = r.inputs[i].dwallet_id();
+        let dwallet_id = r.dwallet_ids[i];
         let dwallet_metadata = storage.dwallet_metadata(dwallet_id);
         let lockscript = dwallet_metadata.lockscript();
         let ika_signature = *r.signatures_map.get(&(i as u32));

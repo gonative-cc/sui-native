@@ -50,14 +50,6 @@ public fun u64_to_le_bytes(val: u64): vector<u8> {
     bytes
 }
 
-/// Converts a u64 integer to the CScriptNum byte vector format.
-/// This is the format expected to be pushed onto the stack in Bitcoin scripts.
-/// CScriptNum represents signed integers in Bitcoin script, with the following rules:
-/// - Numbers are encoded in little-endian format
-/// - The most significant bit of the last byte indicates the sign (1 = negative, 0 = positive)
-/// - If the MSB would be 1 for a positive number, a padding byte 0x00 is added
-/// - Zero is represented by an empty vector
-/// Reference: https://github.com/bitcoin/bitcoin/blob/87ec923d3a7af7b30613174b41c6fb11671df466/src/script/script.h#L349
 /// Converts a u64 integer to an 8-byte big-endian vector<u8>.
 public fun u64_to_be_bytes(val: u64): vector<u8> {
     let mut bytes = vector::empty<u8>();
@@ -72,9 +64,14 @@ public fun u64_to_be_bytes(val: u64): vector<u8> {
     bytes
 }
 
-/// Converts u64 into the CScriptNum byte vector format.
-/// This is the format expected to be pushed onto the stack.
-/// https://github.com/bitcoin/bitcoin/blob/87ec923d3a7af7b30613174b41c6fb11671df466/src/script/script.h#L349
+/// Converts a u64 integer to the CScriptNum byte vector format.
+/// This is the format expected to be pushed onto the stack in Bitcoin scripts.
+/// CScriptNum represents signed integers in Bitcoin script, with the following rules:
+/// - Numbers are encoded in little-endian format
+/// - The most significant bit of the last byte indicates the sign (1 = negative, 0 = positive)
+/// - If the MSB would be 1 for a positive number, a padding byte 0x00 is added
+/// - Zero is represented by an empty vector
+/// Reference: https://github.com/bitcoin/bitcoin/blob/87ec923d3a7af7b30613174b41c6fb11671df466/src/script/script.h#L349
 public fun u64_to_cscriptnum(n: u64): vector<u8> {
     let mut result_bytes = vector::empty<u8>();
     if (n == 0) {
