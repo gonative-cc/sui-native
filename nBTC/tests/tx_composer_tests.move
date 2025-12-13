@@ -8,7 +8,7 @@ use nbtc::tx_composer::compose_withdraw_tx;
 use std::unit_test::assert_eq;
 
 #[test]
-fun create_unsign_reedem_tx_happy_case() {
+fun create_unsign_redeem_tx_happy_case() {
     let nbtc_spend_script = x"0014e8340a12dd2c95e5fedc8b088a81dcac42c106fb";
 
     let utxos = vector[
