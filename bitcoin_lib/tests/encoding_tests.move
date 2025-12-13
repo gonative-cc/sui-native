@@ -6,6 +6,7 @@ module bitcoin_lib::encoding_tests;
 use bitcoin_lib::encoding::{
     u32_to_le_bytes,
     u64_to_le_bytes,
+    u64_to_be_bytes,
     u64_to_varint_bytes,
     big_endian_to_u256,
     big_endian_from_u256

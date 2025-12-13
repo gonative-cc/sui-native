@@ -297,11 +297,10 @@ public fun parse_btc_sig(full_sig_from_stack: &mut vector<u8>): (vector<u8>, u8)
 public fun big_endian_to_u256(bytes: vector<u8>): u256 {
     let mut number: u256 = 0;
     let mut b = bytes;
-    let mut i = b.length();
-    while (i > 0) {
-        i = i - 1;
+    b.reverse();
+    b.length().do!(|i| {
         number = number + ((b[i] as u256) << ((i * 8) as u8));
-    };
+    });
     number
 }
 
