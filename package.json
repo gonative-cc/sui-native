@@ -9,9 +9,9 @@
 	"scripts": {
 		"lint": "echo \"Error: no linter specified\"",
 		"typecheck": "tsc --noEmit",
-		"format:all": "prettier -w .",
-		"format:move": "prettier-move --config .prettier-move.json -w",
-		"format:move-all": "prettier-move --config .prettier-move.json -w **/*.move",
+		"format:all": "prettier -w --ignore-unknown . '!bitcoin-regtest/**'",
+		"format:move": "prettier-move --config .prettier-move.json -w **/*.move '!bitcoin-regtest/**'",
+		"format:move-all": "prettier-move --config .prettier-move.json -w **/*.move '!bitcoin-regtest/**'",
 		"test": "bun test"
 	},
 	"dependencies": {

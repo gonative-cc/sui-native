@@ -32,6 +32,15 @@ sui client publish --gas-budget 500000000
 
 From the command's output, you can find your new **Package ID** and other created objects.
 
+### 3. Register NBTC Currencty
+
+We use `init` with OTW for initialization. We must call finalize_registration to promote the currency to the registry. [Details](https://docs.sui.io/standards/currency#coin-finalization).
+
+```bash
+sui client ptb \
+  --move-call 0x2::coin_registry::finalize_registration @0xc <NBTC_ID>
+```
+
 ### 3. Post-Deployment Administration
 
 After deployment, the `AdminCap` holder can change the active Bitcoin deposit script at any time by calling the `add_script_pubkey` function.
