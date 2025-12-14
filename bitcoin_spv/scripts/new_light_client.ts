@@ -2,25 +2,14 @@
 // This script initializes a Simplified Payment Verification (SPV) light client on Sui
 // by submitting Bitcoin block headers to the light client Move contract.
 
-import { fromHex, fromBase64 } from "@mysten/sui/utils";
+import { fromBase64, fromHex } from "@mysten/sui/utils";
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
 import { Transaction } from "@mysten/sui/transactions";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 
 import "dotenv/config";
-
-// Configuration interface for light client initialization
-interface AppConfig {
-	spvPackageId: string;
-	bitcoinLibPackageId: string;
-	network: string;
-	headers: string[];
-	btcNetwork: number;
-	btcHeight: number;
-	parentChainWork: string;
-	confirmationDepth: number;
-	signer: Ed25519Keypair;
-}
+import type { AppConfig } from "./config";
+import { getLightClientConfig } from "./config";
 
 // Load signer from environment variables (MNEMONIC or ENCODE_SK)
 function loadSigner(): Ed25519Keypair {
@@ -57,82 +46,12 @@ function loadSigner(): Ed25519Keypair {
 
 // Load and validate configuration from environment variables
 function getEnvConfig(): AppConfig {
-	const env = process.env;
+	// Get non-secret configuration
+	const config = getLightClientConfig();
 
-	// Validate all required environment variables exist
-	const requiredVars = [
-		"SPV_PACKAGE_ID",
-		"BITCOIN_LIB_PACKAGE_ID",
-		"HEADERS",
-		"BTC_HEIGHT",
-		"PARENT_CHAIN_WORK",
-		"CONFIRMATION_DEPTH",
-	];
-
-	for (const varName of requiredVars) {
-		if (!env[varName]) {
-			throw new Error(`${varName} is required`);
-		}
-	}
-
-	// Validate network type (defaults to testnet)
-	const network = env.NETWORK || "testnet";
-	const validNetworks = ["mainnet", "testnet", "devnet", "localnet"];
-	if (!validNetworks.includes(network)) {
-		throw new Error(`Invalid NETWORK: ${network}. Must be one of: ${validNetworks.join(", ")}`);
-	}
-
-	// Validate Bitcoin block headers format
-	// - Must be comma-separated hex-encoded headers starting with 0x
-	// - Each header must be exactly 80 bytes (160 hex characters)
-	const validateHeaders = (headers: string): string[] => {
-		const headerList = headers.split(",").map((h) => h.trim());
-
-		// Ensure at least one header is provided
-		if (headerList.length === 0) {
-			throw new Error("At least one header is required");
-		}
-
-		for (const header of headerList) {
-			if (!header.startsWith("0x")) {
-				throw new Error(`Each header must start with 0x, found: ${header}`);
-			}
-
-			const hexData = header.slice(2); // Remove 0x prefix
-			if (hexData.length !== 160) {
-				// 80 bytes = 160 hex characters
-				throw new Error(
-					`Each header must be exactly 80 bytes (160 hex chars), found ${hexData.length} chars for: ${header}`,
-				);
-			}
-
-			// Verify valid hexadecimal characters
-			if (!/^[0-9a-fA-F]+$/.test(hexData)) {
-				throw new Error(`Header contains invalid hex characters: ${header}`);
-			}
-		}
-
-		return headerList;
-	};
-
-	// Validate Bitcoin network ID
-	const btcNetwork = Number(env.BTC_NETWORK || 2); // Default to regtest (2) if not provided
-	const validBtcNetworks = [0, 1, 2]; // 0=mainnet, 1=testnet, 2=regtest
-	if (!validBtcNetworks.includes(btcNetwork)) {
-		throw new Error(
-			`Invalid BTC_NETWORK: ${btcNetwork}. Must be 0 (mainnet), 1 (testnet), or 2 (regtest)`,
-		);
-	}
-
+	// Add signer to create complete app config
 	return {
-		spvPackageId: env.SPV_PACKAGE_ID!,
-		bitcoinLibPackageId: env.BITCOIN_LIB_PACKAGE_ID!,
-		network: network,
-		headers: validateHeaders(env.HEADERS!),
-		btcNetwork: btcNetwork,
-		btcHeight: Number(env.BTC_HEIGHT),
-		parentChainWork: env.PARENT_CHAIN_WORK!,
-		confirmationDepth: Number(env.CONFIRMATION_DEPTH),
+		...config,
 		signer: loadSigner(),
 	};
 }

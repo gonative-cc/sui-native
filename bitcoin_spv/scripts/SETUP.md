@@ -1,11 +1,6 @@
 # Light Client Initializer
 
-This script initializes a Bitcoin SPV (Simplified Payment Verification) light client on the Sui network using parameters from a `.env` file.
-
-## Prerequisites
-
-- **Bun** (JavaScript/TypeScript runtime)
-- **Sui CLI** (for publishing packages)
+This script initializes a Bitcoin SPV light client on Sui network.
 
 ## Setup
 
@@ -15,73 +10,48 @@ This script initializes a Bitcoin SPV (Simplified Payment Verification) light cl
 bun install
 ```
 
-1. Publish the required Sui packages:
+1. Publish packages:
 
-   ```bash
-   sui client publish
-   ```
+```bash
+sui client publish
+```
 
-1. Create a `.env` file with your configuration (see example below).
+1. Edit `config.ts`:
+   - Replace package IDs with your deployed package IDs
+   - Update network settings
+   - Replace headers with your trusted Bitcoin block headers
 
-## Usage
+1. Create `.env` with your wallet credentials:
 
-Run the script to initialize the light client on-chain:
+```env
+MNEMONIC='your mnemonic here'
+# or
+ENCODE_SK='base64-encoded private key'
+```
+
+1. Run the script:
 
 ```bash
 bun run new_light_client.ts
 ```
 
-Note: The script uses TypeScript, so run it with `bun run` or compile it first.
+## Configuration
 
-## Environment Variables
+Edit the `getLightClientConfig()` function in `config.ts`:
 
-### Required Variables
-
-| Variable                 | Description                                                               | Example       |
-| ------------------------ | ------------------------------------------------------------------------- | ------------- |
-| `SPV_PACKAGE_ID`         | ID of the deployed light client package                                   | `0x123...`    |
-| `BITCOIN_LIB_PACKAGE_ID` | ID of the deployed bitcoin_lib package                                    | `0x456...`    |
-| `HEADERS`                | Comma-separated list of hex-encoded Bitcoin block headers (80 bytes each) | `0x...,0x...` |
-| `BTC_NETWORK`            | Bitcoin network identifier (0=mainnet, 1=testnet, 2=regtest)              | `2`           |
-| `BTC_HEIGHT`             | Starting block height                                                     | `0`           |
-| `PARENT_CHAIN_WORK`      | Initial parent chain work (hex string)                                    | `0`           |
-| `CONFIRMATION_DEPTH`     | Confirmation depth requirement (inclusive)                                | `3`           |
-
-### Optional Variables
-
-| Variable    | Description                                              | Default   |
-| ----------- | -------------------------------------------------------- | --------- |
-| `NETWORK`   | Sui network ('mainnet', 'testnet', 'devnet', 'localnet') | `testnet` |
-| `MNEMONIC`  | Sui wallet mnemonic phrase (alternative to ENCODE_SK)    | -         |
-| `ENCODE_SK` | Base64-encoded private key (alternative to MNEMONIC)     | -         |
-
-## `.env` Example
-
-```dotenv
-# Sui wallet credentials (one of these is required)
-MNEMONIC='word1 word2 word3 ...'
-# ENCODE_SK='...'
-
-# Package IDs from publish output
-SPV_PACKAGE_ID='0x...'
-BITCOIN_LIB_PACKAGE_ID='0x...'
-
-# Sui network (defaults to testnet if not specified)
-NETWORK='testnet'
-
-# Bitcoin block headers (comma-separated, 80 bytes each, hex-encoded)
-HEADERS='0x000000208ec39e00922e223962f32626847a49df4ef2875ec9c4dd5b680000000000000000003bba30156888c06e5126a6e4ca28cc8a8178283f938416138d50ee0db30bf2e80c0b8265a01a5445babe2c8e105201e75a56b047ec5e70d948b5365950fe510852b00100000000'
-
-# Bitcoin network settings
-BTC_NETWORK=2
-BTC_HEIGHT=0
-PARENT_CHAIN_WORK=0
-CONFIRMATION_DEPTH=3
-```
+| Field                   | Description                                                 | Example            |
+| ----------------------- | ----------------------------------------------------------- | ------------------ |
+| **spvPackageId**        | Deployed package ID for Bitcoin SPV contract                | "0x123..."         |
+| **bitcoinLibPackageId** | Deployed package ID for Bitcoin library                     | "0x456..."         |
+| **network**             | Sui network to deploy to                                    | "testnet"          |
+| **headers**             | Array of trusted Bitcoin block headers (at least 11 blocks) | ["0x...", "0x..."] |
+| **btcNetwork**          | Bitcoin network (0=mainnet, 1=testnet, 2=regtest)           | 2                  |
+| **btcHeight**           | Starting block height                                       | 0                  |
+| **parentChainWork**     | Parent chain work (hex)                                     | "0"                |
+| **confirmationDepth**   | Required confirmations                                      | 3                  |
 
 ## Notes
 
-- The script validates that each Bitcoin header is exactly 80 bytes (160 hex characters)
-- Headers must be hex-encoded and start with `0x`
-- Confirmation depth is inclusive - the block containing the transaction counts as the first confirmation
-- You need either `MNEMONIC` or `ENCODE_SK` for wallet access
+- Only MNEMONIC or ENCODE_SK need to be in .env file
+- All other configuration is in config.ts for better type safety
+- Configuration is validated before deployment
