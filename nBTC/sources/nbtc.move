@@ -82,6 +82,10 @@ const ENoUTXOsProposed: vector<u8> = b"No UTXOs proposed";
 const ENotResolving: vector<u8> = b"redeem request is not in resolving status";
 #[error]
 const EInvalidDWalletCoordinator: vector<u8> = b"Invalid Dwallet coordinator";
+#[error]
+const ENotSigned: vector<u8> = b"redeem request is not signed";
+#[error]
+const ERedeemTxNotConfirmed: vector<u8> = b"Bitcoin redeem tx not confirmed via SPV";
 
 //
 // Structs
@@ -519,6 +523,56 @@ public fun redeem(
     contract.next_redeem_req = redeem_id + 1;
 
     redeem_id
+}
+
+public fun confirm_redeem(
+    contract: &mut NbtcContract,
+    light_client: &LightClient,
+    redeem_id: u64,
+    tx_bytes: vector<u8>,
+    proof: vector<vector<u8>>,
+    height: u64,
+    tx_index: u64,
+) {
+    assert!(contract.version == VERSION, EVersionMismatch);
+    let cfg = contract.config();
+    let provided_lc_id = object::id(light_client);
+    assert!(provided_lc_id == cfg.light_client_id(), EUntrustedLightClient);
+
+    let r = &mut contract.redeem_requests[redeem_id];
+    assert!(r.status().is_signed(), ENotSigned);
+
+    let tx = tx::decode(tx_bytes);
+    let tx_id = tx.tx_id();
+
+    // TODO: Validate tx inputs match the UTXOs in redeem request so that we don't
+    // confirm wrong tx for wrong redeem_id.
+    assert!(light_client.verify_tx(height, tx_id, proof, tx_index), ERedeemTxNotConfirmed);
+
+    contract.update_redeem_utxo_and_burn(redeem_id, tx_id);
+}
+
+public(package) fun update_redeem_utxo_and_burn(
+    contract: &mut NbtcContract,
+    redeem_id: u64,
+    tx_id: vector<u8>,
+) {
+    let r = &mut contract.redeem_requests[redeem_id];
+
+    let spent_utxos_ids = r.utxo_ids();
+    let dwallet_ids = r.dwallet_ids();
+
+    spent_utxos_ids.length().do!(|i| {
+        nbtc_utxo::unlock_utxo(&mut contract.utxo_store, spent_utxos_ids[i], dwallet_ids[i]);
+        contract.utxo_store.remove(spent_utxos_ids[i], dwallet_ids[i]);
+    });
+
+    //TODO: I am not sure but should we add a change UTXO if there is some change?
+
+    let coin_to_burn = contract.locked.remove(redeem_id);
+    contract.cap.burn(coin_to_burn);
+
+    r.move_to_confirmed_status(redeem_id, tx_id);
 }
 
 public fun validate_signature(

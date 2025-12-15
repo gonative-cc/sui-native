@@ -77,6 +77,13 @@ public struct RequestSignatureEvent has copy, drop {
     input_idx: u32,
 }
 
+/// Event emitted when a redeem request is confirmed on Bitcoin network.
+public struct ConfirmedEvent has copy, drop {
+    id: u64,
+    inputs: vector<Utxo>,
+    tx_id: vector<u8>,
+}
+
 // ========== RedeemStatus methods ================
 
 public fun is_resolving(status: &RedeemStatus): bool {
@@ -133,6 +140,20 @@ public(package) fun move_to_signing_status(r: &mut RedeemRequest, redeem_id: u64
     event::emit(SolvedEvent {
         id: redeem_id,
         inputs: r.inputs,
+    });
+}
+
+public(package) fun move_to_confirmed_status(
+    r: &mut RedeemRequest,
+    redeem_id: u64,
+    tx_id: vector<u8>,
+) {
+    r.status = RedeemStatus::Confirmed;
+    //TODO: Review what to emit for this event
+    event::emit(ConfirmedEvent {
+        id: redeem_id,
+        inputs: r.inputs,
+        tx_id: tx_id,
     });
 }
 
