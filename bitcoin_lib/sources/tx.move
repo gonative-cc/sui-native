@@ -187,7 +187,9 @@ public(package) fun parse_tx(r: &mut Reader): Transaction {
 
 public fun decode(tx_bytes: vector<u8>): Transaction {
     let mut r = reader::new(tx_bytes);
-    parse_tx(&mut r)
+    let tx = parse_tx(&mut r);
+    assert!(r.end_stream(), ETxReaderHasRemainingData);
+    tx
 }
 
 public fun is_coinbase(tx: &Transaction): bool {

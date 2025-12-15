@@ -4,7 +4,6 @@
 module nbtc::verify_payment_tests;
 
 use bitcoin_lib::header;
-use bitcoin_lib::reader;
 use bitcoin_lib::tx;
 use bitcoin_spv::light_client::new_light_client;
 use nbtc::verify_payment::{verify_payment, ETxNotInBlock};
@@ -51,11 +50,9 @@ fun verify_payment_happy_cases() {
     ];
 
     let tx_index = 604;
-    let mut r = reader::new(
+    let transaction = tx::decode(
         x"01000000018c0bfefccb5755874ea0872a17b0d682c84981eed93fccd3ef86556f51f21522010000006a47304402204bbbefdc49e7289b0f36fe8c7623e93ff7ff751664d63caf49c1d9d8a4cbefd402200582f12a9490bdf8e6980025c08f83c43c50bc472706e3a38e7f1a972404bc4d0121035533036f3a7e9dc4c76e9d3697eb9d573aa76844baaadda347893a793797b639ffffffff0410270000000000001976a914303962c3ad29f08d13d98218ceeb7057e9bc184888ac10270000000000001976a914c6a3b95415d3fe9a9161c4b5100c1b6f2ad1e90c88ac00000000000000000d6a0b68656c6c6f20776f726c64e5490600000000001976a914e6228f7a5ee6b15c7cccfd9f9cb7e8699261084588ac00000000",
     );
-    let transaction = tx::deserialize(&mut r);
-
     let tx_id = transaction.tx_id();
     // Tx: 6dfb16dd580698242bcfd8e433d557ed8c642272a368894de27292a8844a4e75 (Height 303,699)
     // from mainnet
@@ -104,10 +101,9 @@ fun verify_payment_with_P2WPHK_output_happy_cases() {
 
     let tx_index = 0;
 
-    let mut r = reader::new(
+    let transaction = tx::decode(
         x"01000000018c0bfefccb5755874ea0872a17b0d682c84981eed93fccd3ef86556f51f21522010000006a47304402204bbbefdc49e7289b0f36fe8c7623e93ff7ff751664d63caf49c1d9d8a4cbefd402200582f12a9490bdf8e6980025c08f83c43c50bc472706e3a38e7f1a972404bc4d0121035533036f3a7e9dc4c76e9d3697eb9d573aa76844baaadda347893a793797b639ffffffff0410270000000000001976a914303962c3ad29f08d13d98218ceeb7057e9bc184888ac10270000000000001976a914c6a3b95415d3fe9a9161c4b5100c1b6f2ad1e90c88ac00000000000000000d6a0b68656c6c6f20776f726c64e549060000000000160014e6228f7a5ee6b15c7cccfd9f9cb7e8699261084500000000",
     );
-    let transaction = tx::deserialize(&mut r);
     let tx_id = transaction.tx_id();
     let (amount, mut message, _vout) = verify_payment(
         &lc,
@@ -154,11 +150,10 @@ fun verify_payment_with_mutiple_op_return_happy_cases() {
 
     let tx_index = 0;
 
-    let mut r = reader::new(
+    let transaction = tx::decode(
         // we have 2 op return one end with 64, one end with 65.
         x"01000000018c0bfefccb5755874ea0872a17b0d682c84981eed93fccd3ef86556f51f21522010000006a47304402204bbbefdc49e7289b0f36fe8c7623e93ff7ff751664d63caf49c1d9d8a4cbefd402200582f12a9490bdf8e6980025c08f83c43c50bc472706e3a38e7f1a972404bc4d0121035533036f3a7e9dc4c76e9d3697eb9d573aa76844baaadda347893a793797b639ffffffff0200000000000000000d6a0b68656c6c6f20776f726c6400000000000000000d6a0b68656c6c6f20776f726c6500000000",
     );
-    let transaction = tx::deserialize(&mut r);
     let tx_id = transaction.tx_id();
     let (amount, mut message, _vout) = verify_payment(
         &lc,
@@ -214,10 +209,9 @@ fun verify_payment_for_tx_not_in_block_shoul_fail() {
 
     let tx_index = 604;
 
-    let mut r = reader::new(
+    let transaction = tx::decode(
         x"0100000001c08ce0edcedc47becf03f923479bec4c184cda060452959f59d47ae8923da032010000006b483045022100cfdcc3fc354c8d2bbf22d708723e1c3836629c0ed6ef9485004d674ca06e0c6102204dee8d1180a309d22aa66e83554d992b751298208bc1b1e0d60f74fe834634330121036b4468fc9f4dc283365c70f7989b944586a260fca5358a91dfc50bf13c071b1effffffff0220a10700000000001976a9140fef69f3ac0d9d0473a318ae508875ad0eae3dcc88acc8ec7100000000001976a91451e6b602f387b4c5bb8a4d8cdf1b059c826374e388ac00000000",
     );
-    let transaction = tx::deserialize(&mut r);
     // Tx: dc7ed74b93823c33544436cda1ea66761d708aafe08b80cd69c4f42d049a703c (Height 303,699)
     // from mainnet
     // should return error
@@ -269,10 +263,9 @@ fun verify_payment_on_block_not_finalize_should_fail() {
     ];
 
     let tx_index = 604;
-    let mut r = reader::new(
+    let transaction = tx::decode(
         x"0100000001c08ce0edcedc47becf03f923479bec4c184cda060452959f59d47ae8923da032010000006b483045022100cfdcc3fc354c8d2bbf22d708723e1c3836629c0ed6ef9485004d674ca06e0c6102204dee8d1180a309d22aa66e83554d992b751298208bc1b1e0d60f74fe834634330121036b4468fc9f4dc283365c70f7989b944586a260fca5358a91dfc50bf13c071b1effffffff0220a10700000000001976a9140fef69f3ac0d9d0473a318ae508875ad0eae3dcc88acc8ec7100000000001976a91451e6b602f387b4c5bb8a4d8cdf1b059c826374e388ac00000000",
     );
-    let transaction = tx::deserialize(&mut r);
 
     // Tx: dc7ed74b93823c33544436cda1ea66761d708aafe08b80cd69c4f42d049a703c (Height 303,699)
     // from mainnet

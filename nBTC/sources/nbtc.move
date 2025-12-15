@@ -252,9 +252,7 @@ fun verify_deposit(
     let config = contract.config();
     assert!(provided_lc_id == config.light_client_id(), EUntrustedLightClient);
 
-    let mut r = reader::new(tx_bytes);
-    let tx = tx::deserialize(&mut r);
-
+    let tx = tx::decode(tx_bytes);
     let tx_id = tx.tx_id();
 
     // Double spend prevent
