@@ -128,7 +128,7 @@ public fun inputs_length(r: &RedeemRequest): u64 { r.inputs.length() }
 
 public fun amount(r: &RedeemRequest): u64 { r.amount }
 
-public fun move_to_signing_status(r: &mut RedeemRequest, redeem_id: u64) {
+public(package) fun move_to_signing_status(r: &mut RedeemRequest, redeem_id: u64) {
     r.status = RedeemStatus::Signing;
     event::emit(SolvedEvent {
         id: redeem_id,
