@@ -307,7 +307,8 @@ fun verify_deposit(
     (amount, recipient, utxo_idx)
 }
 
-/// Return active dwallet id, abort if dwallet id not setup yet.
+/// Returns the ID of the currently active dwallet.
+/// Aborts if no dwallet has been set as active.
 public fun active_dwallet_id(contract: &NbtcContract): ID {
     *contract.active_dwallet_id.borrow()
 }
