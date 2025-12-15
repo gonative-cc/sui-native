@@ -295,7 +295,7 @@ fun verify_deposit(
     let o = tx.outputs();
     let mut utxo_idx = vector[];
     let mut i = 0;
-    let dwallet_id = *contract.active_dwallet_id.borrow();
+    let dwallet_id = contract.active_dwallet_id();
     while (i < vouts.length()) {
         let vout_idx = vouts[i];
         let o_amount = o[vout_idx as u64].amount();
@@ -307,13 +307,18 @@ fun verify_deposit(
     (amount, recipient, utxo_idx)
 }
 
+/// Return active dwallet id, abort if dwallet id not setup yet.
+public fun active_dwallet_id(contract: &NbtcContract): ID {
+    *contract.active_dwallet_id.borrow()
+}
+
 public fun active_lockscript(contract: &NbtcContract): vector<u8> {
-    let dwallet_id = *contract.active_dwallet_id.borrow();
+    let dwallet_id = contract.active_dwallet_id();
     contract.storage.dwallet_metadata(dwallet_id).lockscript()
 }
 
 public fun active_balance(contract: &NbtcContract): u64 {
-    let dwallet_id = *contract.active_dwallet_id.borrow();
+    let dwallet_id = contract.active_dwallet_id();
     contract.storage.dwallet_metadata(dwallet_id).total_deposit()
 }
 //
@@ -344,7 +349,7 @@ public fun mint(
     ops_arg: u32,
     ctx: &mut TxContext,
 ) {
-    let active_dwallet_id = *contract.active_dwallet_id.borrow();
+    let active_dwallet_id = contract.active_dwallet_id();
     let (mut amount, recipient, utxo_ids) = contract.verify_deposit(
         light_client,
         active_dwallet_id,
@@ -514,7 +519,7 @@ public fun redeem(
     contract.locked.add(redeem_id, coin);
     contract.next_redeem_req = redeem_id + 1;
 
-    return redeem_id
+    redeem_id
 }
 
 public fun validate_signature(
@@ -797,7 +802,7 @@ use nbtc::nbtc_utxo::Utxo;
 #[test_only]
 /// Adds UTXO to the active wallet
 public fun add_utxo_for_test(ctr: &mut NbtcContract, _idx: u64, utxo: Utxo) {
-    let dwallet_id = *option::borrow(&ctr.active_dwallet_id);
+    let dwallet_id = ctr.active_dwallet_id();
     ctr.utxo_store.add(dwallet_id, utxo);
 }
 
