@@ -178,3 +178,57 @@ fun test_propose_utxos_unlocks_old_and_locks_new() {
     destroy(ctr);
     scenario.end();
 }
+
+#[test, expected_failure(abort_code = nbtc::nbtc_utxo::EUtxoLockedByAnotherRequest)]
+fun test_two_requests_cannot_share_utxos() {
+    let (_lc, mut ctr, mut scenario) = setup(NBTC_SCRIPT_PUBKEY, ADMIN, MOCK_DWALLET_ID!());
+
+    let dwallet_id = MOCK_DWALLET_ID!();
+    let utxo_1 = new_utxo(TX_HASH, 0, 2000);
+    ctr.add_utxo_for_test(0, utxo_1);
+
+    let utxo_2 = new_utxo(x"01", 1, 2000);
+    ctr.add_utxo_for_test(1, utxo_2);
+
+    let nbtc_coin_1 = mint_for_testing<NBTC>(1000, scenario.ctx());
+    let clock = clock::create_for_testing(scenario.ctx());
+    let redeem_id_1 = ctr.redeem(nbtc_coin_1, RECEIVER_SCRIPT, &clock, scenario.ctx());
+
+    ctr.propose_utxos(redeem_id_1, vector[0], vector[dwallet_id], &clock);
+
+    let nbtc_coin_2 = mint_for_testing<NBTC>(1000, scenario.ctx());
+    let redeem_id_2 = ctr.redeem(nbtc_coin_2, RECEIVER_SCRIPT, &clock, scenario.ctx());
+
+    ctr.propose_utxos(redeem_id_2, vector[0], vector[dwallet_id], &clock);
+
+    abort
+}
+
+#[test, expected_failure(abort_code = nbtc::nbtc_utxo::EUtxoLockedByAnotherRequest)]
+fun test_cannot_propose_overlapping_locked_utxos() {
+    let (_lc, mut ctr, mut scenario) = setup(NBTC_SCRIPT_PUBKEY, ADMIN, MOCK_DWALLET_ID!());
+
+    let dwallet_id = MOCK_DWALLET_ID!();
+
+    let utxo_1 = new_utxo(TX_HASH, 0, 2000);
+    ctr.add_utxo_for_test(0, utxo_1);
+
+    let utxo_2 = new_utxo(x"01", 1, 2000);
+    ctr.add_utxo_for_test(1, utxo_2);
+
+    let utxo_3 = new_utxo(x"02", 2, 2000);
+    ctr.add_utxo_for_test(2, utxo_3);
+
+    let clock = clock::create_for_testing(scenario.ctx());
+
+    let nbtc_coin_1 = mint_for_testing<NBTC>(1500, scenario.ctx());
+    let redeem_id_1 = ctr.redeem(nbtc_coin_1, RECEIVER_SCRIPT, &clock, scenario.ctx());
+    ctr.propose_utxos(redeem_id_1, vector[0, 1], vector[dwallet_id, dwallet_id], &clock);
+
+    let nbtc_coin_2 = mint_for_testing<NBTC>(1500, scenario.ctx());
+    let redeem_id_2 = ctr.redeem(nbtc_coin_2, RECEIVER_SCRIPT, &clock, scenario.ctx());
+
+    ctr.propose_utxos(redeem_id_2, vector[1, 2], vector[dwallet_id, dwallet_id], &clock);
+
+    abort
+}
