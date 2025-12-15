@@ -593,11 +593,7 @@ public fun propose_utxos(
         nbtc_utxo::lock_utxo(&mut contract.utxo_store, utxo_ids[i], dwallet_ids[i], redeem_id);
     });
 
-    let utxos = utxo_ids.zip_map!(
-        dwallet_ids,
-        |idx, dwallet_id| contract.utxo_store.get_utxo_copy(idx, dwallet_id),
-    );
-    r.set_utxos(utxos, dwallet_ids, utxo_ids);
+    r.set_utxos(dwallet_ids, utxo_ids);
 
     event::emit(RedeemRequestProposeEvent {
         redeem_id,

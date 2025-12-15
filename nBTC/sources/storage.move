@@ -1,6 +1,7 @@
 module nbtc::storage;
 
 use ika_dwallet_2pc_mpc::coordinator_inner::DWalletCap;
+use nbtc::nbtc_utxo::{UtxoStore, new_utxo_store};
 use sui::table::{Self, Table};
 
 public struct DWalletMetadata has store {
@@ -24,6 +25,7 @@ public struct Storage has key, store {
     // TODO: consider vector or Table for store metadata
     dwallet_metadatas: Table<ID, DWalletMetadata>,
     dwallet_caps: Table<ID, DWalletCap>,
+    utxo_store: UtxoStore,
 }
 
 public(package) fun create_dwallet_metadata(
@@ -117,6 +119,7 @@ public(package) fun create_storage(ctx: &mut TxContext): Storage {
         id: object::new(ctx),
         dwallet_caps: table::new(ctx),
         dwallet_metadatas: table::new(ctx),
+        utxo_store: new_utxo_store(ctx),
     }
 }
 
@@ -148,4 +151,8 @@ public(package) fun remove(store: &mut Storage, dwallet_id: ID) {
         public_user_share: _,
     } = store.dwallet_metadatas.remove(dwallet_id);
     inactive_balances.destroy_empty();
+}
+
+public(package) fun utxo_store(self: &Storage): &UtxoStore {
+    &self.utxo_store
 }
