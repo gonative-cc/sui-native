@@ -3,7 +3,7 @@
 module nbtc::nbtc;
 
 use bitcoin_lib::reader;
-use bitcoin_lib::tx;
+use bitcoin_lib::tx::{Self, Transaction};
 use bitcoin_spv::light_client::LightClient;
 use ika::ika::IKA;
 use ika_dwallet_2pc_mpc::coordinator::DWalletCoordinator;
@@ -86,6 +86,8 @@ const EInvalidDWalletCoordinator: vector<u8> = b"Invalid Dwallet coordinator";
 const ENotSigned: vector<u8> = b"redeem request is not signed";
 #[error]
 const ERedeemTxNotConfirmed: vector<u8> = b"Bitcoin redeem tx not confirmed via SPV";
+#[error]
+const ERedeemTxMismatch: vector<u8> = b"Provided tx doesn't match signed redeem tx";
 
 //
 // Structs
@@ -542,21 +544,23 @@ public fun confirm_redeem(
     let r = &mut contract.redeem_requests[redeem_id];
     assert!(r.status().is_signed(), ENotSigned);
 
+    let expected_tx_bytes = r.raw_signed_tx(&contract.storage);
+    assert!(expected_tx_bytes == tx_bytes, ERedeemTxMismatch);
+
     let tx = tx::decode(tx_bytes);
     let tx_id = tx.tx_id();
-
-    // TODO: Validate tx inputs match the UTXOs in redeem request so that we don't
-    // confirm wrong tx for wrong redeem_id.
     assert!(light_client.verify_tx(height, tx_id, proof, tx_index), ERedeemTxNotConfirmed);
 
-    contract.update_redeem_utxo_and_burn(redeem_id, tx_id);
+    contract.update_redeem_utxo_and_burn(redeem_id, tx_id, &tx);
 }
 
 public(package) fun update_redeem_utxo_and_burn(
     contract: &mut NbtcContract,
     redeem_id: u64,
     tx_id: vector<u8>,
+    tx: &Transaction,
 ) {
+    let active_dwallet_id = contract.active_dwallet_id();
     let r = &mut contract.redeem_requests[redeem_id];
 
     let spent_utxos_ids = r.utxo_ids();
@@ -567,10 +571,15 @@ public(package) fun update_redeem_utxo_and_burn(
         contract.utxo_store.remove(spent_utxos_ids[i], dwallet_ids[i]);
     });
 
-    //TODO: I am not sure but should we add a change UTXO if there is some change?
-
     let coin_to_burn = contract.locked.remove(redeem_id);
     contract.cap.burn(coin_to_burn);
+
+    let outputs = tx.outputs();
+    if (outputs.length() > 1) {
+        let change_output = &outputs[1];
+        let change_utxo = nbtc_utxo::new_utxo(tx_id, 1, change_output.amount());
+        contract.utxo_store.add(active_dwallet_id, change_utxo);
+    };
 
     r.move_to_confirmed_status(redeem_id, tx_id);
 }
