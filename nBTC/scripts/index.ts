@@ -1,6 +1,5 @@
 import { Command } from "commander";
-import { createIkaClient, createSharedDwallet, createSuiClient, loadConfig } from "./common";
-import { broadcastBtcTx } from "./btc-helper";
+import { createIkaClient, createSharedDwallet, createSuiClient, loadConfig, type Config } from "./common";
 import {
 	globalPreSign,
 	getSigHash,
@@ -10,6 +9,7 @@ import {
 	getRedeemBtcTx,
 } from "./sign";
 import { initialization } from "./initialization";
+import { broadcastBtcTx } from "./btc-helper";
 
 const config = loadConfig();
 
@@ -62,5 +62,4 @@ program
 		console.log("Raw redeem tx = ", rawTx);
 		await broadcastBtcTx(rawTx);
 	});
-
 program.parse(process.argv);

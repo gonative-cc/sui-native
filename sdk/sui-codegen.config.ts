@@ -9,14 +9,15 @@ const config: SuiCodegenConfig = {
 			package: '@local-pkg/nbtc',
 			path: '../nBTC',
 		},
-		{
-			package: '@local-pkg/bitcoin_spv',
-			path: "../bitcoin_spv"
-		},
-		{
-			package: '@local-pkg/bitcoin_lib',
-			path: "../bitcoin_lib"
-		}
+		// Bug codegen can't run correct when contract constant a Transacion struct
+		// {
+		// 	package: '@local-pkg/bitcoin_spv',
+		// 	path: "../bitcoin_spv"
+		// },
+		// {
+		// 	package: '@local-pkg/bitcoin_lib',
+		// 	path: "../bitcoin_lib"
+		// }
 	],
 };
 
