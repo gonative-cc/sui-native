@@ -12,10 +12,12 @@
 		"format:all": "prettier -w --ignore-unknown . '!bitcoin-regtest/**'",
 		"format:move": "prettier-move --config .prettier-move.json -w **/*.move '!bitcoin-regtest/**'",
 		"format:move-all": "prettier-move --config .prettier-move.json -w **/*.move '!bitcoin-regtest/**'",
-		"test": "bun test"
+		"test": "bun test",
+		"gen": "cd sdk && bun run sui-ts-codegen generate"
 	},
 	"dependencies": {
 		"@ika.xyz/sdk": "^0.2.2",
+		"@mysten/codegen": "^0.5.13",
 		"@mysten/sui": "^1.45.0",
 		"bip32": "5.0.0-rc.0",
 		"bip39": "^3.1.0",
