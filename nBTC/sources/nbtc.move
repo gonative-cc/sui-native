@@ -955,3 +955,24 @@ public fun set_dwallet_cap_for_test(
     contract.storage.add_metadata(dwallet_id, dmeta);
     contract.storage.add_dwallet_cap(dwallet_id, dwallet_cap);
 }
+
+#[test_only]
+public fun mint_for_testing_with_cap(
+    contract: &mut NbtcContract,
+    amount: u64,
+    ctx: &mut TxContext,
+): Coin<NBTC> {
+    coin::mint(&mut contract.cap, amount, ctx)
+}
+
+#[test_only]
+public fun confirm_redeem_for_test(contract: &mut NbtcContract, redeem_id: u64) {
+    assert!(contract.version == VERSION, EVersionMismatch);
+    let r = &contract.redeem_requests[redeem_id];
+    assert!(r.status().is_signed(), ENotSigned);
+
+    let expected_tx_bytes = r.raw_signed_tx(&contract.storage);
+    let tx = tx::decode(expected_tx_bytes);
+
+    contract.update_redeem_utxo_and_burn(redeem_id, &tx);
+}
