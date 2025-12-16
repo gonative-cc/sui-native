@@ -1,5 +1,11 @@
 import { Command } from "commander";
-import { createIkaClient, createSharedDwallet, createSuiClient, loadConfig, type Config } from "./common";
+import {
+	createIkaClient,
+	createSharedDwallet,
+	createSuiClient,
+	loadConfig,
+	type Config,
+} from "./common";
 import {
 	globalPreSign,
 	getSigHash,

@@ -1,9 +1,7 @@
 {
 	"compilerOptions": {
 		// Environment setup & latest features
-		"lib": [
-			"ESNext"
-		],
+		"lib": ["ESNext"],
 		"target": "ESNext",
 		"module": "Preserve",
 		"moduleDetection": "force",
@@ -26,7 +24,7 @@
 		"noUnusedParameters": false,
 		"noPropertyAccessFromIndexSignature": false
 		// "types": [vitest/globals"],
-	},
+	}
 	// with bun we don't need to specify then include
 	// "include": ["scripts/**/*.ts", "scripts/**/*.js", "scripts/vitest.config.ts"]
 }

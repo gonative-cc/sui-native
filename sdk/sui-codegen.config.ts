@@ -1,13 +1,13 @@
-import type { SuiCodegenConfig } from '@mysten/codegen';
+import type { SuiCodegenConfig } from "@mysten/codegen";
 
 const config: SuiCodegenConfig = {
-	output: './src/generated',
+	output: "./src/generated",
 	generateSummaries: true,
 	prune: true,
 	packages: [
 		{
-			package: '@local-pkg/nbtc',
-			path: '../nBTC',
+			package: "@local-pkg/nbtc",
+			path: "../nBTC",
 		},
 		// Bug codegen can't run correct when contract constant a Transacion struct
 		// {

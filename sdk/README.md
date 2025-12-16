@@ -27,16 +27,16 @@ This command uses `@mysten/codegen` to parse the Move contracts and generate cor
 The code generation is configured in `sui-codegen.config.ts`:
 
 ```typescript
-import type { SuiCodegenConfig } from '@mysten/codegen';
+import type { SuiCodegenConfig } from "@mysten/codegen";
 
 const config: SuiCodegenConfig = {
-  output: './src/generated',
+  output: "./src/generated",
   generateSummaries: true,
   prune: true,
   packages: [
     {
-      package: '@local-pkg/nbtc',
-      path: '../nBTC',
+      package: "@local-pkg/nbtc",
+      path: "../nBTC",
     },
     // Other packages can be added here
   ],
@@ -50,7 +50,7 @@ export default config;
 Import the generated modules from your application:
 
 ```typescript
-import { nBTC, utils } from './sdk/src';
+import { nBTC, utils } from "./sdk/src";
 ```
 
 Each generated module provides functions to interact with the corresponding Move package, including:

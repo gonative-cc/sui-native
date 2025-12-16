@@ -53,7 +53,7 @@ export function createSuiClient() {
 		mvr: {
 			overrides: {
 				packages: {
-					'@local-pkg/nbtc': loadConfig().packageId,
+					"@local-pkg/nbtc": loadConfig().packageId,
 				},
 			},
 		},
@@ -191,7 +191,7 @@ export async function getDwalletMetadata(dWallet: DWalletWithState<"Active">): P
 		await publicKeyFromDWalletOutput(
 			Curve.SECP256K1,
 			Buffer.from(dWallet.state.Active?.public_output),
-		)
+		),
 	);
 
 	const payment = bitcoin.payments.p2wpkh({

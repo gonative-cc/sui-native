@@ -31,24 +31,28 @@ export async function initialization(dwalletId: string, config: Config) {
 	let tx = new Transaction();
 
 	// add dwallet to nbtc
-	tx.add(nBTCContractModule.addDwallet({
-		arguments: {
-			_: config.adminCap,
-			contract: config.nbtc,
-			dwalletCap: dwalletCap,
-			lockscript: Array.from(lockscript),
-			publicKey: Array.from(publicKey),
-			nbtcEndpointUserShare: Array.from(dWallet.public_user_secret_key_share!)
-		}
-	}));
+	tx.add(
+		nBTCContractModule.addDwallet({
+			arguments: {
+				_: config.adminCap,
+				contract: config.nbtc,
+				dwalletCap: dwalletCap,
+				lockscript: Array.from(lockscript),
+				publicKey: Array.from(publicKey),
+				nbtcEndpointUserShare: Array.from(dWallet.public_user_secret_key_share!),
+			},
+		}),
+	);
 
-	tx.add(nBTCContractModule.setActiveDwallet({
-		arguments: {
-			_: config.adminCap,
-			contract: config.nbtc,
-			dwalletId: dwalletId
-		}
-	}));
+	tx.add(
+		nBTCContractModule.setActiveDwallet({
+			arguments: {
+				_: config.adminCap,
+				contract: config.nbtc,
+				dwalletId: dwalletId,
+			},
+		}),
+	);
 
 	await executeTransaction(suiClient, tx);
 }
