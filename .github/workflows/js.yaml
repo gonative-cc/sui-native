@@ -2,7 +2,7 @@ name: JS
 
 permissions:
   contents: read
-  pull_requests: write
+  pull-requests: write
 
 on:
   merge_group:
@@ -14,7 +14,7 @@ on:
       - '**/package.json'
       - '**/bun.lock'
       - '**.move'
-      - '**Move.toml'
+      - '**/Move.toml'
 
 concurrency:
   group: ci-${{ github.ref }}-${{ github.workflow }}
