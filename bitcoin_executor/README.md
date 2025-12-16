@@ -43,7 +43,7 @@ This is **completely new paradigm**! The Zero Trust Architecture at it's best!
 3. [Walrus](https://www.walrus.xyz/): data availability for Bitcoin blocks.
 4. Bitcoin [SPV](https://github.com/gonative-cc/move-bitcoin-spv/): light client validating Bitcoin block headers, checking proof of work and managing the heaviest chain.
 
-### Bitcoin Executor Architecturex
+### Bitcoin Executor Architecture
 
 ```mermaid
 ---
