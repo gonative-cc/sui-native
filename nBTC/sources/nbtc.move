@@ -3,7 +3,7 @@
 module nbtc::nbtc;
 
 use bitcoin_lib::reader;
-use bitcoin_lib::tx;
+use bitcoin_lib::tx::{Self, Transaction};
 use bitcoin_spv::light_client::LightClient;
 use ika::ika::IKA;
 use ika_dwallet_2pc_mpc::coordinator::DWalletCoordinator;
@@ -82,6 +82,12 @@ const ENoUTXOsProposed: vector<u8> = b"No UTXOs proposed";
 const ENotResolving: vector<u8> = b"redeem request is not in resolving status";
 #[error]
 const EInvalidDWalletCoordinator: vector<u8> = b"Invalid Dwallet coordinator";
+#[error]
+const ENotSigned: vector<u8> = b"redeem request is not signed";
+#[error]
+const ERedeemTxNotConfirmed: vector<u8> = b"Bitcoin redeem tx not confirmed via SPV";
+#[error]
+const EInvalidChangeRecipient: vector<u8> = b"Invalid change recipient";
 
 //
 // Structs
@@ -164,6 +170,12 @@ public struct RedeemRequestProposeEvent has copy, drop {
     redeem_id: u64,
     dwallet_ids: vector<ID>,
     utxo_ids: vector<u64>,
+}
+
+/// Event emitted when nBTC is burned
+public struct BurnEvent has copy, drop {
+    redeem_id: u64,
+    amount: u64,
 }
 
 //
@@ -517,6 +529,71 @@ public fun redeem(
     contract.next_redeem_req = redeem_id + 1;
 
     redeem_id
+}
+
+public fun confirm_redeem(
+    contract: &mut NbtcContract,
+    light_client: &LightClient,
+    redeem_id: u64,
+    proof: vector<vector<u8>>,
+    height: u64,
+    tx_index: u64,
+) {
+    assert!(contract.version == VERSION, EVersionMismatch);
+    let cfg = contract.config();
+    let provided_lc_id = object::id(light_client);
+    assert!(provided_lc_id == cfg.light_client_id(), EUntrustedLightClient);
+
+    let r = &contract.redeem_requests[redeem_id];
+    assert!(r.status().is_signed(), ENotSigned);
+
+    let expected_tx_bytes = r.raw_signed_tx(&contract.storage);
+    let tx = tx::decode(expected_tx_bytes);
+    let tx_id = tx.tx_id();
+    assert!(light_client.verify_tx(height, tx_id, proof, tx_index), ERedeemTxNotConfirmed);
+
+    contract.update_redeem_utxo_and_burn(redeem_id, &tx);
+}
+
+public(package) fun update_redeem_utxo_and_burn(
+    contract: &mut NbtcContract,
+    redeem_id: u64,
+    tx: &Transaction,
+) {
+    let tx_id = tx.tx_id();
+    let active_dwallet_id = contract.active_dwallet_id();
+    let expected_nbtc_lockscript = contract.active_lockscript();
+    let r = &mut contract.redeem_requests[redeem_id];
+
+    let spent_utxos_ids = r.utxo_ids();
+    let dwallet_ids = r.dwallet_ids();
+
+    spent_utxos_ids.length().do!(|i| {
+        nbtc_utxo::unlock_utxo(
+            contract.storage.utxo_store_mut(),
+            spent_utxos_ids[i],
+            dwallet_ids[i],
+        );
+        contract.storage.utxo_store_mut().remove(spent_utxos_ids[i], dwallet_ids[i]);
+    });
+
+    let coin_to_burn = contract.locked.remove(redeem_id);
+    let burn_amount = coin_to_burn.value();
+    contract.cap.burn(coin_to_burn);
+    event::emit(BurnEvent {
+        redeem_id,
+        amount: burn_amount,
+    });
+
+    let outputs = tx.outputs();
+    if (outputs.length() > 1) {
+        let change_output = &outputs[1];
+        assert!(change_output.script_pubkey() == expected_nbtc_lockscript, EInvalidChangeRecipient);
+        let change_utxo = nbtc_utxo::new_utxo(tx_id, 1, change_output.amount());
+        contract.storage.utxo_store_mut().add(active_dwallet_id, change_utxo);
+    };
+
+    r.move_to_confirmed_status(redeem_id, tx_id);
 }
 
 public fun validate_signature(
