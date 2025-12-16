@@ -359,11 +359,10 @@ public fun get_signature(
 #[test_only]
 public fun update_to_signing_for_test(
     r: &mut RedeemRequest,
-    inputs: vector<Utxo>,
     dwallet_ids: vector<ID>,
     utxo_ids: vector<u64>,
 ) {
-    r.set_utxos(inputs, dwallet_ids, utxo_ids);
+    r.set_utxos(dwallet_ids, utxo_ids);
     r.status = RedeemStatus::Signing;
 }
 

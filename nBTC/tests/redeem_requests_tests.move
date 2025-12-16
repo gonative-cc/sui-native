@@ -27,6 +27,7 @@ fun raw_withdraw_tx_signed_tests() {
             amount,
         ),
     ];
+
     let signatures = vector[
         x"0063db5a24fec209152863fb251cc349a7030220bf4ca6e6296002d46d4c3651a55a0b4b5a520fc42b91b8a888351c1c42bd2864aba2c398007405e957dea77bb1",
     ];
@@ -42,8 +43,9 @@ fun raw_withdraw_tx_signed_tests() {
         scenario.ctx(),
     );
 
-    r.update_to_signing_for_test(utxos, vector[MOCK_DWALLET_ID!()], vector[0]);
+    r.update_to_signing_for_test(vector[MOCK_DWALLET_ID!()], vector[0]);
     r.update_to_signed_for_test(signatures);
+
     let mut btc_store = storage::create_storage(scenario.ctx());
     btc_store.add_metadata(
         MOCK_DWALLET_ID!(),
@@ -54,6 +56,10 @@ fun raw_withdraw_tx_signed_tests() {
             scenario.ctx(),
         ),
     );
+
+    let utxo_store = btc_store.utxo_store_mut();
+    utxo_store.add(MOCK_DWALLET_ID!(), utxos[0]);
+
     let raw_tx = r.raw_signed_tx(&btc_store);
     // one output, no remains token
     assert_eq!(

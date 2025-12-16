@@ -156,3 +156,8 @@ public(package) fun remove(store: &mut Storage, dwallet_id: ID) {
 public(package) fun utxo_store(self: &Storage): &UtxoStore {
     &self.utxo_store
 }
+
+#[test_only]
+public fun utxo_store_mut(self: &mut Storage): &mut UtxoStore {
+    &mut self.utxo_store
+}
