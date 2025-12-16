@@ -172,6 +172,12 @@ public struct RedeemRequestProposeEvent has copy, drop {
     utxo_ids: vector<u64>,
 }
 
+/// Event emitted when nBTC is burned
+public struct BurnEvent has copy, drop {
+    redeem_id: u64,
+    amount: u64,
+}
+
 //
 // Functions
 //
@@ -563,19 +569,28 @@ public(package) fun update_redeem_utxo_and_burn(
     let dwallet_ids = r.dwallet_ids();
 
     spent_utxos_ids.length().do!(|i| {
-        nbtc_utxo::unlock_utxo(&mut contract.utxo_store, spent_utxos_ids[i], dwallet_ids[i]);
-        contract.utxo_store.remove(spent_utxos_ids[i], dwallet_ids[i]);
+        nbtc_utxo::unlock_utxo(
+            contract.storage.utxo_store_mut(),
+            spent_utxos_ids[i],
+            dwallet_ids[i],
+        );
+        contract.storage.utxo_store_mut().remove(spent_utxos_ids[i], dwallet_ids[i]);
     });
 
     let coin_to_burn = contract.locked.remove(redeem_id);
+    let burn_amount = coin_to_burn.value();
     contract.cap.burn(coin_to_burn);
+    event::emit(BurnEvent {
+        redeem_id,
+        amount: burn_amount,
+    });
 
     let outputs = tx.outputs();
     if (outputs.length() > 1) {
         let change_output = &outputs[1];
         assert!(change_output.script_pubkey() == expected_nbtc_lockscript, EInvalidChangeRecipient);
         let change_utxo = nbtc_utxo::new_utxo(tx_id, 1, change_output.amount());
-        contract.utxo_store.add(active_dwallet_id, change_utxo);
+        contract.storage.utxo_store_mut().add(active_dwallet_id, change_utxo);
     };
 
     r.move_to_confirmed_status(redeem_id, tx_id);

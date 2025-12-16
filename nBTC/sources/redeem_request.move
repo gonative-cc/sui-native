@@ -77,10 +77,11 @@ public struct RequestSignatureEvent has copy, drop {
     input_idx: u32,
 }
 
+//TODO: Maybe we should refactor to have a generic RedeemReqStatusEvent
 /// Event emitted when a redeem request is confirmed on Bitcoin network.
 public struct ConfirmedEvent has copy, drop {
     id: u64,
-    tx_id: vector<u8>,
+    btc_tx_id: vector<u8>,
 }
 
 // ========== RedeemStatus methods ================
@@ -156,7 +157,7 @@ public(package) fun move_to_confirmed_status(
     //TODO: Review what to emit for this event
     event::emit(ConfirmedEvent {
         id: redeem_id,
-        tx_id: tx_id,
+        btc_tx_id: tx_id,
     });
 }
 
