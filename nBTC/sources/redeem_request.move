@@ -132,7 +132,7 @@ public fun utxos(r: &RedeemRequest, utxo_store: &UtxoStore): vector<Utxo> {
     r.utxo_ids.zip_map!(r.dwallet_ids, |id, dwallet_id| utxo_store.get_utxo_copy(id, dwallet_id))
 }
 
-public fun move_to_signing_status(r: &mut RedeemRequest, redeem_id: u64) {
+public(package) fun move_to_signing_status(r: &mut RedeemRequest, redeem_id: u64) {
     r.status = RedeemStatus::Signing;
     event::emit(SolvedEvent {
         id: redeem_id,

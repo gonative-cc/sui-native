@@ -6,7 +6,7 @@ use bitcoin_lib::crypto::hash256;
 use bitcoin_lib::encoding::u64_to_varint_bytes;
 use bitcoin_lib::input::{Self, Input};
 use bitcoin_lib::output::{Self, Output};
-use bitcoin_lib::reader::Reader;
+use bitcoin_lib::reader::{Self, Reader};
 
 #[error]
 const ETxReaderHasRemainingData: vector<u8> = b"Reader has remaining data";
@@ -183,6 +183,13 @@ public(package) fun parse_tx(r: &mut Reader): Transaction {
         locktime,
         tx_id,
     )
+}
+
+public fun decode(tx_bytes: vector<u8>): Transaction {
+    let mut r = reader::new(tx_bytes);
+    let tx = parse_tx(&mut r);
+    assert!(r.end_stream(), ETxReaderHasRemainingData);
+    tx
 }
 
 public fun is_coinbase(tx: &Transaction): bool {
