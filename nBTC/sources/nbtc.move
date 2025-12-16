@@ -86,6 +86,8 @@ const EInvalidDWalletCoordinator: vector<u8> = b"Invalid Dwallet coordinator";
 const ENotSigned: vector<u8> = b"redeem request is not signed";
 #[error]
 const ERedeemTxNotConfirmed: vector<u8> = b"Bitcoin redeem tx not confirmed via SPV";
+#[error]
+const EInvalidChangeRecipient: vector<u8> = b"Invalid change recipient";
 
 //
 // Structs
@@ -546,16 +548,17 @@ public fun confirm_redeem(
     let tx_id = tx.tx_id();
     assert!(light_client.verify_tx(height, tx_id, proof, tx_index), ERedeemTxNotConfirmed);
 
-    contract.update_redeem_utxo_and_burn(redeem_id, tx_id, &tx);
+    contract.update_redeem_utxo_and_burn(redeem_id, &tx);
 }
 
 public(package) fun update_redeem_utxo_and_burn(
     contract: &mut NbtcContract,
     redeem_id: u64,
-    tx_id: vector<u8>,
     tx: &Transaction,
 ) {
+    let tx_id = tx.tx_id();
     let active_dwallet_id = contract.active_dwallet_id();
+    let expected_nbtc_lockscript = contract.active_lockscript();
     let r = &mut contract.redeem_requests[redeem_id];
 
     let spent_utxos_ids = r.utxo_ids();
@@ -572,6 +575,7 @@ public(package) fun update_redeem_utxo_and_burn(
     let outputs = tx.outputs();
     if (outputs.length() > 1) {
         let change_output = &outputs[1];
+        assert!(change_output.script_pubkey() == expected_nbtc_lockscript, EInvalidChangeRecipient);
         let change_utxo = nbtc_utxo::new_utxo(tx_id, 1, change_output.amount());
         contract.utxo_store.add(active_dwallet_id, change_utxo);
     };
