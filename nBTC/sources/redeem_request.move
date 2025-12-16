@@ -80,7 +80,6 @@ public struct RequestSignatureEvent has copy, drop {
 /// Event emitted when a redeem request is confirmed on Bitcoin network.
 public struct ConfirmedEvent has copy, drop {
     id: u64,
-    inputs: vector<Utxo>,
     tx_id: vector<u8>,
 }
 
@@ -152,7 +151,6 @@ public(package) fun move_to_confirmed_status(
     //TODO: Review what to emit for this event
     event::emit(ConfirmedEvent {
         id: redeem_id,
-        inputs: r.inputs,
         tx_id: tx_id,
     });
 }
