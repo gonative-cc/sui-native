@@ -2,7 +2,7 @@ name: JS
 
 permissions:
   contents: read
-  pull-requests: write
+  pull_requests: write
 
 on:
   merge_group:
@@ -13,6 +13,8 @@ on:
       - '**.ts'
       - '**/package.json'
       - '**/bun.lock'
+      - '**.move'
+      - '**Move.toml'
 
 concurrency:
   group: ci-${{ github.ref }}-${{ github.workflow }}
@@ -26,6 +28,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      # Install unzip for Bun setup
+      - name: Install system dependencies
+        run: apt-get update && apt-get install -y unzip
 
       # @v2
       - uses: oven-sh/setup-bun@635640504f6d7197d3bb29876a652f671028dc97
