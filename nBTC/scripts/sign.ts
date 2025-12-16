@@ -23,8 +23,6 @@ import { toHex } from "@mysten/sui/utils";
 import {
 	nBTCContractModule,
 	RedeemRequestModule,
-	type RedeemRequest,
-	type RedeemStatus
 } from "../../sdk/src/index";
 /**
  * Initiates a global presign object and return presign id
@@ -193,7 +191,7 @@ export async function createUserSigCap(
  * @param config The configuration object containing IDs like `packageId` and `nbtc` object ID.
  * @returns A promise that resolves to the unique Sign ID (`sign_id`) as a string.
  */
-export async function request_signature_for_input(
+export async function requestSignatureForInput(
 	r: number,
 	input_idx: number,
 	capid: string,

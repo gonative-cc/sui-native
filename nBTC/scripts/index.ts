@@ -4,7 +4,7 @@ import {
 	globalPreSign,
 	getSigHash,
 	createUserSigCap,
-	request_signature_for_input,
+	requestSignatureForInput,
 	verifySignature,
 	getRedeemBtcTx,
 } from "./sign";
@@ -38,7 +38,7 @@ program
 		let dwalletID = loadConfig().dwalletId;
 		let userSigCap = await createUserSigCap(ikaClient, suiClient, dwalletID, gPreSign, message);
 		// we use signID to query the signature after ika response
-		let signID = await request_signature_for_input(
+		let signID = await requestSignatureForInput(
 			redeem_id,
 			input_idx,
 			userSigCap.cap_id,
