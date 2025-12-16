@@ -86,8 +86,6 @@ const EInvalidDWalletCoordinator: vector<u8> = b"Invalid Dwallet coordinator";
 const ENotSigned: vector<u8> = b"redeem request is not signed";
 #[error]
 const ERedeemTxNotConfirmed: vector<u8> = b"Bitcoin redeem tx not confirmed via SPV";
-#[error]
-const ERedeemTxMismatch: vector<u8> = b"Provided tx doesn't match signed redeem tx";
 
 //
 // Structs
@@ -531,7 +529,6 @@ public fun confirm_redeem(
     contract: &mut NbtcContract,
     light_client: &LightClient,
     redeem_id: u64,
-    tx_bytes: vector<u8>,
     proof: vector<vector<u8>>,
     height: u64,
     tx_index: u64,
@@ -541,13 +538,11 @@ public fun confirm_redeem(
     let provided_lc_id = object::id(light_client);
     assert!(provided_lc_id == cfg.light_client_id(), EUntrustedLightClient);
 
-    let r = &mut contract.redeem_requests[redeem_id];
+    let r = &contract.redeem_requests[redeem_id];
     assert!(r.status().is_signed(), ENotSigned);
 
     let expected_tx_bytes = r.raw_signed_tx(&contract.storage);
-    assert!(expected_tx_bytes == tx_bytes, ERedeemTxMismatch);
-
-    let tx = tx::decode(tx_bytes);
+    let tx = tx::decode(expected_tx_bytes);
     let tx_id = tx.tx_id();
     assert!(light_client.verify_tx(height, tx_id, proof, tx_index), ERedeemTxNotConfirmed);
 
