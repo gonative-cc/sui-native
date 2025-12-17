@@ -20,6 +20,7 @@ import {
 } from "./common";
 import { bcs } from "@mysten/sui/bcs";
 import { toHex } from "@mysten/sui/utils";
+import { nBTCContractModule, RedeemRequestModule } from "../../sdk/nBTC/src";
 /**
  * Initiates a global presign object and return presign id
  *
@@ -74,25 +75,37 @@ export async function globalPreSign() {
 export async function getSigHash(
 	suiClient: SuiClient,
 	r: number,
-	input_idx: number,
+	inputIdx: number,
 	config: Config,
 ) {
 	let tx = new Transaction();
 
-	let redeem = tx.moveCall({
-		target: `${config.packageId}::nbtc::redeem_request`,
-		arguments: [tx.object(config.nbtc), tx.pure.u64(r)],
-	});
+	let redeem = tx.add(
+		nBTCContractModule.redeemRequest({
+			arguments: {
+				contract: config.nbtc,
+				requestId: r,
+			},
+		}),
+	);
 
-	let storage = tx.moveCall({
-		target: `${config.packageId}::nbtc::storage`,
-		arguments: [tx.object(config.nbtc)],
-	});
+	let storage = tx.add(
+		nBTCContractModule.storage({
+			arguments: {
+				contract: config.nbtc,
+			},
+		}),
+	);
 
-	tx.moveCall({
-		target: `${config.packageId}::redeem_request::sig_hash`,
-		arguments: [redeem, tx.pure.u32(input_idx), storage],
-	});
+	tx.add(
+		RedeemRequestModule.sigHash({
+			arguments: {
+				r: redeem,
+				inputIdx,
+				storage,
+			},
+		}),
+	);
 
 	let ans = await suiClient.devInspectTransactionBlock({
 		transactionBlock: tx,
@@ -180,7 +193,7 @@ export async function createUserSigCap(
  * @param config The configuration object containing IDs like `packageId` and `nbtc` object ID.
  * @returns A promise that resolves to the unique Sign ID (`sign_id`) as a string.
  */
-export async function request_signature_for_input(
+export async function requestSignatureForInput(
 	r: number,
 	input_idx: number,
 	capid: string,
@@ -206,19 +219,21 @@ export async function request_signature_for_input(
 			tx.object(capid),
 		],
 	});
-	tx.moveCall({
-		target: `${config.packageId}::nbtc::request_signature_for_input`,
-		arguments: [
-			tx.object(config.nbtc),
-			tx.object("0x4d157b7415a298c56ec2cb1dcab449525fa74aec17ddba376a83a7600f2062fc"),
-			tx.pure.u64(r),
-			tx.pure.u32(input_idx),
-			verifiedCap,
-			ikaTx.createSessionIdentifier(),
-			tx.object(ikaCoin),
-			tx.gas,
-		],
-	});
+	tx.add(
+		nBTCContractModule.requestSignatureForInput({
+			arguments: {
+				contract: config.nbtc,
+				dwalletCoordinator:
+					"0x4d157b7415a298c56ec2cb1dcab449525fa74aec17ddba376a83a7600f2062fc",
+				requestId: r,
+				inputIdx: input_idx,
+				userSigCap: verifiedCap,
+				sessionIdentifier: ikaTx.createSessionIdentifier(),
+				paymentIka: ikaCoin,
+				paymentSui: tx.gas,
+			},
+		}),
+	);
 	let result = await executeTransaction(suiClient, tx);
 
 	const event = result.events?.find((event) => {
@@ -248,16 +263,18 @@ export async function verifySignature(
 	config: Config,
 ) {
 	const tx = new Transaction();
-	tx.moveCall({
-		target: `${config.packageId}::nbtc::validate_signature`,
-		arguments: [
-			tx.object(config.nbtc),
-			tx.object("0x4d157b7415a298c56ec2cb1dcab449525fa74aec17ddba376a83a7600f2062fc"),
-			tx.pure.u64(r),
-			tx.pure.u32(input_idx),
-			tx.pure.id(signId),
-		],
-	});
+	tx.add(
+		nBTCContractModule.validateSignature({
+			arguments: {
+				contract: config.nbtc,
+				dwalletCoordinator:
+					"0x4d157b7415a298c56ec2cb1dcab449525fa74aec17ddba376a83a7600f2062fc",
+				redeemId: r,
+				inputIdx: input_idx,
+				signId: signId,
+			},
+		}),
+	);
 
 	await executeTransaction(suiClient, tx);
 }
@@ -272,18 +289,32 @@ export async function verifySignature(
  */
 export async function getRedeemBtcTx(suiClient: SuiClient, r: number, config: Config) {
 	let tx = new Transaction();
-	let redeem = tx.moveCall({
-		target: `${config.packageId}::nbtc::redeem_request`,
-		arguments: [tx.object(config.nbtc), tx.pure.u64(r)],
-	});
-	let storage = tx.moveCall({
-		target: `${config.packageId}::nbtc::storage`,
-		arguments: [tx.object(config.nbtc)],
-	});
-	tx.moveCall({
-		target: `${config.packageId}::redeem_request::raw_signed_tx`,
-		arguments: [redeem, storage],
-	});
+
+	let redeem = tx.add(
+		nBTCContractModule.redeemRequest({
+			arguments: {
+				contract: config.nbtc,
+				requestId: r,
+			},
+		}),
+	);
+
+	let storage = tx.add(
+		nBTCContractModule.storage({
+			arguments: {
+				contract: config.nbtc,
+			},
+		}),
+	);
+
+	tx.add(
+		RedeemRequestModule.rawSignedTx({
+			arguments: {
+				r: redeem,
+				storage: storage,
+			},
+		}),
+	);
 
 	let result = await suiClient.devInspectTransactionBlock({
 		transactionBlock: tx,
