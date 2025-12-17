@@ -2,7 +2,7 @@
 
 module bitcoin_lib::reader;
 
-use bitcoin_lib::encoding::le_bytes_to_u64;
+use bitcoin_lib::encoding::{le_bytes_to_u64, le_bytes_to_u32};
 
 // TODO: Follow error in btc implemetation
 #[error]
@@ -55,7 +55,7 @@ public fun peek(r: &Reader, len: u64): vector<u8> {
 
 public fun read_u32(r: &mut Reader): u32 {
     let v = r.read(4);
-    le_bytes_to_u64(v) as u32
+    le_bytes_to_u32(v)
 }
 
 public fun read_compact_size(r: &mut Reader): u64 {

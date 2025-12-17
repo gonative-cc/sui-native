@@ -71,3 +71,18 @@ fun read_endstream_script() {
     // read more to ensure this must be return error
     r.read(10);
 }
+
+#[test]
+fun read_u32() {
+    let mut r = reader::new(vector[0x78, 0x56, 0x34, 0x12]);
+    let value = r.read_u32();
+    assert_eq!(value, 0x12345678);
+
+    let mut r2 = reader::new(vector[0x00, 0x00, 0x00, 0x00]);
+    let value2 = r2.read_u32();
+    assert_eq!(value2, 0);
+
+    let mut r3 = reader::new(vector[0xff, 0xff, 0xff, 0xff]);
+    let value3 = r3.read_u32();
+    assert_eq!(value3, 0xffffffff);
+}
