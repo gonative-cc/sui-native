@@ -9,7 +9,8 @@ use bitcoin_lib::encoding::{
     u64_to_be_bytes,
     u64_to_varint_bytes,
     big_endian_to_u256,
-    big_endian_from_u256
+    big_endian_from_u256,
+    le_bytes_to_u32
 };
 use std::unit_test::assert_eq;
 
@@ -17,6 +18,44 @@ use std::unit_test::assert_eq;
 fun test_u32_to_le_bytes() {
     assert_eq!(u32_to_le_bytes(0x12345678), x"78563412");
     assert_eq!(u32_to_le_bytes(1), x"01000000");
+}
+
+#[test]
+fun test_le_bytes_to_u32() {
+    let test_values = vector[
+        x"00000000",
+        x"01000000",
+        x"78563412",
+        x"FFFFFFFF",
+        x"00000080",
+        x"FFFFFF7F",
+        x"04030201",
+    ];
+
+    let results = vector[
+        0x00000000,
+        0x00000001,
+        0x12345678,
+        0xFFFFFFFF,
+        0x80000000,
+        0x7FFFFFFF,
+        0x01020304,
+    ];
+
+    test_values.length().do!(|i| {
+        assert_eq!(u32_to_le_bytes(results[i]), test_values[i]);
+        assert_eq!(le_bytes_to_u32(test_values[i]), results[i]);
+    });
+}
+
+#[test, expected_failure(abort_code = bitcoin_lib::encoding::EOverflowVector)]
+fun test_le_bytes_to_u32_wrong_length() {
+    le_bytes_to_u32(x"123456"); // Only 3 bytes
+}
+
+#[test, expected_failure(abort_code = bitcoin_lib::encoding::EOverflowVector)]
+fun test_le_bytes_to_u32_too_many_bytes() {
+    le_bytes_to_u32(x"1234567890"); // 5 bytes (10 hex chars = 5 bytes)
 }
 
 #[test]
