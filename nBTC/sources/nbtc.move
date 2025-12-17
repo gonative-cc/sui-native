@@ -159,12 +159,6 @@ public struct RedeemRequestEvent has copy, drop {
     created_at: u64,
 }
 
-public struct RedeemSigCreatedEvent has copy, drop {
-    redeem_id: u64,
-    input_idx: u32,
-    is_fully_signed: bool,
-}
-
 // TODO: consider moving it to redeem_request.move
 public struct RedeemRequestProposeEvent has copy, drop {
     redeem_id: u64,
@@ -614,11 +608,7 @@ public fun validate_signature(
     r.validate_signature(dwallet_coordinator, &contract.storage, input_idx, sign_id);
 
     let is_fully_signed = r.status().is_signed();
-    event::emit(RedeemSigCreatedEvent {
-        redeem_id,
-        input_idx,
-        is_fully_signed,
-    });
+    redeem_request::emit_signature_validated_event(redeem_id, input_idx, is_fully_signed);
 }
 
 //TODO: update event emitted to include the data from the redeem request

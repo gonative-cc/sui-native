@@ -61,13 +61,16 @@ public struct RedeemRequest has store {
     created_at: u64,
 }
 
-//TODO: Add logic to extract data from redeem inputs for:
-/// Event emitted when a proposal for redeem request is selected (solved) and we are ready
-/// for creating MPC signatures.
-public struct SolvedEvent has copy, drop {
+/// Generic event emitted when redeem req changes status.
+/// Status: 0 = Resolving, 1 = Signing, 2 = Signed, 3 = Confirmed
+public struct RedeemReqStatusEvent has copy, drop {
     id: u64,
-    utxo_ids: vector<u64>,
-    dwallet_ids: vector<ID>,
+    status: u8,
+    utxo_ids: Option<vector<u64>>, // when moving to Signing
+    dwallet_ids: Option<vector<ID>>, // when moving to Signing
+    input_idx: Option<u32>, // during signature validation
+    is_fully_signed: Option<bool>, // during signature validation
+    btc_tx_id: Option<vector<u8>>, // when Confirmed
 }
 
 /// Event emitted when Ika sign request for a given redeem request input is sent.
@@ -75,13 +78,6 @@ public struct RequestSignatureEvent has copy, drop {
     redeem_id: u64,
     sign_id: ID, // IKA sign session ID
     input_idx: u32,
-}
-
-//TODO: Maybe we should refactor to have a generic RedeemReqStatusEvent
-/// Event emitted when a redeem request is confirmed on Bitcoin network.
-public struct ConfirmedEvent has copy, drop {
-    id: u64,
-    btc_tx_id: vector<u8>,
 }
 
 // ========== RedeemStatus methods ================
@@ -114,6 +110,15 @@ public fun is_confirmed(status: &RedeemStatus): bool {
     }
 }
 
+fun status_to_u8(status: &RedeemStatus): u8 {
+    match (status) {
+        RedeemStatus::Resolving => 0,
+        RedeemStatus::Signing => 1,
+        RedeemStatus::Signed => 2,
+        RedeemStatus::Confirmed => 3,
+    }
+}
+
 // ========== RedeemRequest methods ===============
 public fun has_signature(r: &RedeemRequest, input_idx: u32): bool {
     r.signatures_map.contains(&input_idx)
@@ -141,23 +146,47 @@ public fun utxos(r: &RedeemRequest, utxo_store: &UtxoStore): vector<Utxo> {
 
 public(package) fun move_to_signing_status(r: &mut RedeemRequest, redeem_id: u64) {
     r.status = RedeemStatus::Signing;
-    event::emit(SolvedEvent {
+    event::emit(RedeemReqStatusEvent {
         id: redeem_id,
-        utxo_ids: r.utxo_ids,
-        dwallet_ids: r.dwallet_ids,
+        status: status_to_u8(&r.status),
+        utxo_ids: std::option::some(r.utxo_ids),
+        dwallet_ids: std::option::some(r.dwallet_ids),
+        input_idx: std::option::none(),
+        is_fully_signed: std::option::none(),
+        btc_tx_id: std::option::none(),
     });
 }
 
 public(package) fun move_to_confirmed_status(
     r: &mut RedeemRequest,
     redeem_id: u64,
-    tx_id: vector<u8>,
+    btc_tx_id: vector<u8>,
 ) {
     r.status = RedeemStatus::Confirmed;
-    //TODO: Review what to emit for this event
-    event::emit(ConfirmedEvent {
+    event::emit(RedeemReqStatusEvent {
         id: redeem_id,
-        btc_tx_id: tx_id,
+        status: status_to_u8(&r.status),
+        utxo_ids: std::option::none(),
+        dwallet_ids: std::option::none(),
+        input_idx: std::option::none(),
+        is_fully_signed: std::option::none(),
+        btc_tx_id: std::option::some(btc_tx_id),
+    });
+}
+
+public(package) fun emit_signature_validated_event(
+    redeem_id: u64,
+    input_idx: u32,
+    is_fully_signed: bool,
+) {
+    event::emit(RedeemReqStatusEvent {
+        id: redeem_id,
+        status: if (is_fully_signed) 2 else 1, // 2 = Signed || 1 = Signing
+        utxo_ids: std::option::none(),
+        dwallet_ids: std::option::none(),
+        input_idx: std::option::some(input_idx),
+        is_fully_signed: std::option::some(is_fully_signed),
+        btc_tx_id: std::option::none(),
     });
 }
 
