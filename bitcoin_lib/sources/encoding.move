@@ -4,6 +4,7 @@ module bitcoin_lib::encoding;
 
 use bitcoin_lib::vector_utils;
 use std::u64::do;
+use sui::bcs;
 
 #[test_only]
 use std::unit_test::assert_eq;
@@ -28,26 +29,12 @@ public fun le_bytes_to_u64(v: vector<u8>): u64 {
 
 /// Converts a u32 integer to a 4-byte little-endian vector<u8>.
 public fun u32_to_le_bytes(val: u32): vector<u8> {
-    let mut bytes = vector::empty<u8>();
-    bytes.push_back(((val >> 0) & 0xFF) as u8);
-    bytes.push_back(((val >> 8) & 0xFF) as u8);
-    bytes.push_back(((val >> 16) & 0xFF) as u8);
-    bytes.push_back(((val >> 24) & 0xFF) as u8);
-    bytes
+    bcs::to_bytes(&val)
 }
 
 /// Converts a u64 integer to an 8-byte little-endian vector<u8>.
 public fun u64_to_le_bytes(val: u64): vector<u8> {
-    let mut bytes = vector::empty<u8>();
-    bytes.push_back(((val >> 0) & 0xFF) as u8);
-    bytes.push_back(((val >> 8) & 0xFF) as u8);
-    bytes.push_back(((val >> 16) & 0xFF) as u8);
-    bytes.push_back(((val >> 24) & 0xFF) as u8);
-    bytes.push_back(((val >> 32) & 0xFF) as u8);
-    bytes.push_back(((val >> 40) & 0xFF) as u8);
-    bytes.push_back(((val >> 48) & 0xFF) as u8);
-    bytes.push_back(((val >> 56) & 0xFF) as u8);
-    bytes
+    bcs::to_bytes(&val)
 }
 
 /// Converts a u64 integer to an 8-byte big-endian vector<u8>.
@@ -115,27 +102,20 @@ public fun vector_false(): vector<u8> { vector[] }
 /// Returns the VarInt encoding as a byte vector.
 public fun u64_to_varint_bytes(n: u64): vector<u8> {
     let mut ans = vector::empty<u8>();
-    let mut n = n;
     if (n <= 252) {
         ans.push_back(n as u8);
     } else if (n <= 65535) {
         ans.push_back(0xfd);
-        do!(2, |_i| {
-            ans.push_back((n & 0xff) as u8);
-            n = n >> 8;
-        });
+        let bytes = bcs::to_bytes(&(n as u16));
+        ans.append(bytes);
     } else if (n <= 4294967295) {
         ans.push_back(0xfe);
-        do!(4, |_i| {
-            ans.push_back((n & 0xff) as u8);
-            n = n >> 8;
-        });
+        let bytes = bcs::to_bytes(&(n as u32));
+        ans.append(bytes);
     } else {
         ans.push_back(0xff);
-        do!(8, |_i| {
-            ans.push_back((n & 0xff) as u8);
-            n = n >> 8;
-        });
+        let bytes = bcs::to_bytes(&n);
+        ans.append(bytes);
     };
     ans
 }
