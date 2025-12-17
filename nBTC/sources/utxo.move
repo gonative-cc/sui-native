@@ -31,7 +31,8 @@ const INACTIVE_BONUS: u64 = 200;
 const NO_CHANGE_BONUS: u64 = 1_000;
 const DUST_PENALTY: u64 = 200;
 
-public struct Utxo has copy, drop, store {
+public struct Utxo has key, store {
+    id: UID,
     tx_id: vector<u8>,
     vout: u32,
     value: u64,
@@ -46,8 +47,9 @@ public struct UtxoStore has key, store {
     next_utxo: u64,
 }
 
-public fun new_utxo(tx_id: vector<u8>, vout: u32, value: u64): Utxo {
+public fun new_utxo(tx_id: vector<u8>, vout: u32, value: u64, ctx: &mut TxContext): Utxo {
     Utxo {
+        id: object::new(ctx),
         tx_id,
         vout,
         value,
@@ -205,4 +207,9 @@ public fun validate_utxos(
     assert!(total_value >= withdrawal_amount, EInsufficientAmount);
 
     total_value
+}
+
+public(package) fun burn(self: Utxo) {
+    let Utxo { id, tx_id: _, vout: _, value: _ } = self;
+    id.delete();
 }

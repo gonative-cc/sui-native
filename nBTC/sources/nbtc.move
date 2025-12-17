@@ -10,7 +10,7 @@ use ika_dwallet_2pc_mpc::coordinator::DWalletCoordinator;
 use ika_dwallet_2pc_mpc::coordinator_inner::{DWalletCap, VerifiedPartialUserSignatureCap};
 use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
 use nbtc::config::{Self, Config};
-use nbtc::nbtc_utxo::{Self, validate_utxos, UtxoStore};
+use nbtc::nbtc_utxo::{Self, validate_utxos, UtxoStore, Utxo};
 use nbtc::redeem_request::{Self, RedeemRequest};
 use nbtc::storage::{Storage, create_storage, create_dwallet_metadata};
 use nbtc::verify_payment::verify_payment;
@@ -255,6 +255,7 @@ fun verify_deposit(
     // see mint function for information about payload argument.
     _payload: vector<u8>,
     ops_arg: u32,
+    ctx: &mut TxContext,
 ): (u64, address, vector<u64>) {
     assert!(contract.version == VERSION, EVersionMismatch);
     assert!(ops_arg == 0 || ops_arg == MINT_OP_APPLY_FEE, EInvalidOpsArg);
@@ -308,7 +309,7 @@ fun verify_deposit(
         let vout_idx = vouts[i];
         let o_amount = o[vout_idx as u64].amount();
         utxo_idx.push_back(contract.storage.utxo_store().next_utxo());
-        contract.add_utxo_to_contract(tx_id, vout_idx, o_amount, dwallet_id);
+        contract.add_utxo_to_contract(tx_id, vout_idx, o_amount, dwallet_id, ctx);
         i = i + 1;
     };
 
@@ -388,6 +389,7 @@ public fun mint(
     let utxo = contract.storage.utxo_store().get_utxo(utxo_ids[0], active_dwallet_id);
     let btc_tx_id = utxo.tx_id();
     let btc_vout = utxo.vout();
+
     event::emit(MintEvent {
         recipient,
         fee: fee_amount,
@@ -538,6 +540,7 @@ public fun confirm_redeem(
     proof: vector<vector<u8>>,
     height: u64,
     tx_index: u64,
+    ctx: &mut TxContext,
 ) {
     assert!(contract.version == VERSION, EVersionMismatch);
     let cfg = contract.config();
@@ -552,13 +555,14 @@ public fun confirm_redeem(
     let tx_id = tx.tx_id();
     assert!(light_client.verify_tx(height, tx_id, proof, tx_index), ERedeemTxNotConfirmed);
 
-    contract.update_redeem_utxo_and_burn(redeem_id, &tx);
+    contract.update_redeem_utxo_and_burn(redeem_id, &tx, ctx);
 }
 
 public(package) fun update_redeem_utxo_and_burn(
     contract: &mut NbtcContract,
     redeem_id: u64,
     tx: &Transaction,
+    ctx: &mut TxContext,
 ) {
     let tx_id = tx.tx_id();
     let active_dwallet_id = contract.active_dwallet_id();
@@ -574,7 +578,11 @@ public(package) fun update_redeem_utxo_and_burn(
             spent_utxos_ids[i],
             dwallet_ids[i],
         );
-        contract.storage.utxo_store_mut().remove(spent_utxos_ids[i], dwallet_ids[i]);
+        let burned_utxo = contract
+            .storage
+            .utxo_store_mut()
+            .remove(spent_utxos_ids[i], dwallet_ids[i]);
+        burned_utxo.burn();
     });
 
     let coin_to_burn = contract.locked.remove(redeem_id);
@@ -589,7 +597,7 @@ public(package) fun update_redeem_utxo_and_burn(
     if (outputs.length() > 1) {
         let change_output = &outputs[1];
         assert!(change_output.script_pubkey() == expected_nbtc_lockscript, EInvalidChangeRecipient);
-        let change_utxo = nbtc_utxo::new_utxo(tx_id, 1, change_output.amount());
+        let change_utxo = nbtc_utxo::new_utxo(tx_id, 1, change_output.amount(), ctx);
         contract.storage.utxo_store_mut().add(active_dwallet_id, change_utxo);
     };
 
@@ -813,8 +821,9 @@ public(package) fun add_utxo_to_contract(
     vout: u32,
     value: u64,
     dwallet_id: ID,
+    ctx: &TxContext,
 ) {
-    let utxo = nbtc_utxo::new_utxo(tx_id, vout, value);
+    let utxo = nbtc_utxo::new_utxo(tx_id, vout, value, ctx);
     contract.storage.utxo_store_mut().add(dwallet_id, utxo);
 }
 
