@@ -26,7 +26,7 @@ public fun le_bytes_to_u64(v: vector<u8>): u64 {
     number
 }
 
-/// Converts exactly 4 bytes in little-endian form to a u32 integer
+/// Converts a 4-byte little-endian vector<u8> to a u32 integer
 public fun le_bytes_to_u32(v: vector<u8>): u32 {
     assert!(v.length() == 4, EOverflowVector);
     let mut bcs = bcs::new(v);
