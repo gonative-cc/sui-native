@@ -54,7 +54,7 @@ fun test_le_bytes_to_u32_wrong_length() {
 }
 
 #[test, expected_failure(abort_code = bitcoin_lib::encoding::EOverflowVector)]
-fun test_le_bytes_to_u32_too_many_bytes() {
+fun test_le_bytes_to_u32_too_long() {
     le_bytes_to_u32(x"1234567890"); // 5 bytes (10 hex chars = 5 bytes)
 }
 
