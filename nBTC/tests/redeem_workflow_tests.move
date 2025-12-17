@@ -92,7 +92,7 @@ fun setup_redeem_test_for_confirmation(
     let utxo = new_utxo(TX_HASH, 0, utxo_amount);
     ctr.add_utxo_for_test(0, utxo);
     let mut clock = clock::create_for_testing(scenario.ctx());
-    let nbtc_coin = ctr.mint_for_testing_with_cap(redeem_amount, scenario.ctx());
+    let nbtc_coin = ctr.testing_mint(redeem_amount, scenario.ctx());
     let redeem_id = ctr.redeem(nbtc_coin, RECEIVER_SCRIPT, &clock, scenario.ctx());
 
     ctr.propose_utxos(redeem_id, vector[0], vector[dwallet_id], &clock);
@@ -314,7 +314,7 @@ fun test_confirm_redeem_burns_nbtc_and_removes_utxos() {
     );
 
     let supply_before = ctr.total_supply();
-    ctr.confirm_redeem_for_test(redeem_id);
+    ctr.testing_confirm_redeem(redeem_id);
     let supply_after = ctr.total_supply();
     assert_eq!(supply_after, supply_before - 1000);
 
@@ -343,7 +343,7 @@ fun test_confirm_redeem_no_change() {
     );
 
     let supply_before = ctr.total_supply();
-    ctr.confirm_redeem_for_test(redeem_id);
+    ctr.testing_confirm_redeem(redeem_id);
     let supply_after = ctr.total_supply();
     assert_eq!(supply_after, supply_before - 1000);
 
