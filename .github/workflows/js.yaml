@@ -13,6 +13,8 @@ on:
       - '**.ts'
       - '**/package.json'
       - '**/bun.lock'
+      - '**.move'
+      - '**/Move.toml'
 
 concurrency:
   group: ci-${{ github.ref }}-${{ github.workflow }}
@@ -21,9 +23,15 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    container:
+      image: mysten/sui-tools:testnet
 
     steps:
       - uses: actions/checkout@v4
+
+      # Install unzip for Bun setup
+      - name: Install system dependencies
+        run: apt-get update && apt-get install -y unzip
 
       # @v2
       - uses: oven-sh/setup-bun@635640504f6d7197d3bb29876a652f671028dc97
@@ -33,8 +41,12 @@ jobs:
       - name: eslint
         run: "bun run lint"
 
+      - name: gents
+        run: "bun run generate-ts"
+
       - name: typecheck
         run: "bun run typecheck"
 
       - name: test
         run: "bun run test"
+

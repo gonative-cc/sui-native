@@ -12,7 +12,8 @@
 		"format:all": "prettier -w --ignore-unknown . '!bitcoin-regtest/**'",
 		"format:move": "prettier-move --config .prettier-move.json -w **/*.move '!bitcoin-regtest/**'",
 		"format:move-all": "prettier-move --config .prettier-move.json -w **/*.move '!bitcoin-regtest/**'",
-		"test": "bun test"
+		"test": "bun test",
+		"generate-ts": "cd sdk && bun run sui-ts-codegen generate"
 	},
 	"dependencies": {
 		"@ika.xyz/sdk": "^0.2.2",
@@ -25,6 +26,7 @@
 		"tiny-secp256k1": "^2.2.4"
 	},
 	"devDependencies": {
+		"@mysten/codegen": "^0.5.13",
 		"@types/bun": "latest",
 		"@types/node": "^24.10.1",
 		"typescript": "^5.9.3"
