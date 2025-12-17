@@ -13,7 +13,6 @@ use std::unit_test::assert_eq;
 const EDerIntParsing: vector<u8> = b"Error parsing DER to Int";
 #[error]
 const EBtcSigParsing: vector<u8> = b"Error parsing bitcoin signature";
-
 #[error]
 const EOverflowVector: vector<u8> = b"Can't convert vector to u64 b/c overflow";
 
@@ -49,15 +48,8 @@ public fun u64_to_le_bytes(val: u64): vector<u8> {
 
 /// Converts a u64 integer to an 8-byte big-endian vector<u8>.
 public fun u64_to_be_bytes(val: u64): vector<u8> {
-    let mut bytes = vector::empty<u8>();
-    bytes.push_back(((val >> 56) & 0xFF) as u8);
-    bytes.push_back(((val >> 48) & 0xFF) as u8);
-    bytes.push_back(((val >> 40) & 0xFF) as u8);
-    bytes.push_back(((val >> 32) & 0xFF) as u8);
-    bytes.push_back(((val >> 24) & 0xFF) as u8);
-    bytes.push_back(((val >> 16) & 0xFF) as u8);
-    bytes.push_back(((val >> 8) & 0xFF) as u8);
-    bytes.push_back(((val >> 0) & 0xFF) as u8);
+    let mut bytes = bcs::to_bytes(&val);
+    bytes.reverse();
     bytes
 }
 
