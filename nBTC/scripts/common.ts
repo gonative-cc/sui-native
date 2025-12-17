@@ -19,7 +19,7 @@ import { Transaction } from "@mysten/sui/transactions";
 import "dotenv/config";
 
 import * as bitcoin from "bitcoinjs-lib";
-import { type DWalletMetadata } from "../../sdk/src/index";
+import { type DWalletMetadata } from "../../sdk/nBTC/src";
 
 const REGTEST = bitcoin.networks.regtest;
 

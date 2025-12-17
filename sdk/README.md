@@ -4,9 +4,10 @@ This directory contains the TypeScript SDK generated from the Move contracts in 
 
 ## Structure
 
-- `src/` - Source directory for the SDK
-  - `index.ts` - Main entry point that exports all generated modules
-  - `types.ts` - Common TypeScript types used across the SDK
+- `nBTC/` - nBTC package directory
+  - `src/` - Source directory for the nBTC SDK
+    - `index.ts` - Main entry point that exports all generated modules
+    - `types.ts` - Common TypeScript types used across the SDK
   - `generated/` - Auto-generated TypeScript bindings from Move contracts
     - `utils/` - Utility functions for interacting with Sui
     - `nbtc/` - TypeScript bindings for the nBTC Move package
@@ -20,7 +21,7 @@ To regenerate the TypeScript bindings after making changes to the Move contracts
 bun run generate-ts
 ```
 
-This command uses `@mysten/codegen` to parse the Move contracts and generate corresponding TypeScript code. The generated files are placed in `src/generated/`.
+This command uses `@mysten/codegen` to parse the Move contracts and generate corresponding TypeScript code. The generated files are placed in `nBTC/generated/`.
 
 ## Configuration
 
@@ -30,7 +31,7 @@ The code generation is configured in `sui-codegen.config.ts`:
 import type { SuiCodegenConfig } from "@mysten/codegen";
 
 const config: SuiCodegenConfig = {
-  output: "./src/generated",
+  output: "./nBTC/generated",
   generateSummaries: true,
   prune: true,
   packages: [
@@ -50,7 +51,7 @@ export default config;
 Import the generated modules from your application:
 
 ```typescript
-import { nBTC, utils } from "./sdk/src";
+import { nBTCContractModule, UtilsModule } from "./sdk/nBTC/src";
 ```
 
 Each generated module provides functions to interact with the corresponding Move package, including:
@@ -63,8 +64,8 @@ Each generated module provides functions to interact with the corresponding Move
 ## Important Notes
 
 - The generated TypeScript code requires `verbatimModuleSyntax` to be disabled in the TypeScript configuration (see the root `tsconfig.json`)
-- Regenerated code will overwrite existing files in `src/generated/`
-- Only edit files in `src/` that are not in the `generated/` directory
+- Regenerated code will overwrite existing files in `nBTC/generated/`
+- Only edit files in `nBTC/src/` that are not in the `generated/` directory
 
 ## Dependencies
 

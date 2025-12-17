@@ -20,7 +20,7 @@ import {
 } from "./common";
 import { bcs } from "@mysten/sui/bcs";
 import { toHex } from "@mysten/sui/utils";
-import { nBTCContractModule, RedeemRequestModule } from "../../sdk/src/index";
+import { nBTCContractModule, RedeemRequestModule } from "../../sdk/nBTC/src";
 /**
  * Initiates a global presign object and return presign id
  *

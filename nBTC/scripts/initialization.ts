@@ -6,7 +6,7 @@ import {
 	getDwalletMetadata,
 	type Config,
 } from "./common";
-import { nBTCContractModule } from "../../sdk/src/index";
+import { nBTCContractModule } from "../../sdk/nBTC/src";
 
 /**
  * Initializes the nBTC smart contract by registering an existing active dWallet and
