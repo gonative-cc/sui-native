@@ -574,7 +574,7 @@ public(package) fun update_redeem_utxo_and_burn(
             spent_utxos_ids[i],
             dwallet_ids[i],
         );
-        contract.storage.utxo_store_mut().remove(spent_utxos_ids[i], dwallet_ids[i]);
+        contract.storage.utxo_store_mut().remove(spent_utxos_ids[i], dwallet_ids[i]).burn();
     });
 
     let coin_to_burn = contract.locked.remove(redeem_id);
@@ -635,7 +635,7 @@ public fun solve_redeem_request(contract: &mut NbtcContract, redeem_id: u64, clo
     let deadline = r.redeem_created_at() + config.redeem_duration();
     assert!(now > deadline, ERedeemWindowExpired);
 
-    r.move_to_signing_status(redeem_id);
+    r.move_to_signing_status(redeem_id, &mut contract.storage);
 }
 
 public fun propose_utxos(
@@ -820,7 +820,7 @@ public(package) fun add_utxo_to_contract(
 
 /// Remove a UTXO from the contract
 public fun remove_utxo(_: &AdminCap, contract: &mut NbtcContract, utxo_idx: u64, dwallet_id: ID) {
-    contract.storage.utxo_store_mut().remove(utxo_idx, dwallet_id);
+    contract.storage.utxo_store_mut().remove(utxo_idx, dwallet_id).burn();
 }
 
 //

@@ -5,7 +5,7 @@ use bitcoin_lib::encoding::u64_to_le_bytes;
 use bitcoin_lib::sighash::{create_segwit_preimage, create_p2wpkh_scriptcode};
 use nbtc::nbtc_utxo::new_utxo;
 use nbtc::tx_composer::compose_withdraw_tx;
-use std::unit_test::assert_eq;
+use std::unit_test::{assert_eq, destroy};
 
 #[test]
 fun create_unsign_redeem_tx_happy_case() {
@@ -28,7 +28,7 @@ fun create_unsign_redeem_tx_happy_case() {
     let fee = 150;
     let tx = compose_withdraw_tx(
         nbtc_spend_script,
-        utxos,
+        &utxos,
         x"00149b622481f0407714dd3ef4850a02ffbdc19dfa96",
         amount,
         fee,
@@ -51,4 +51,6 @@ fun create_unsign_redeem_tx_happy_case() {
         );
         assert_eq!(std::hash::sha2_256(sign_hash), sign_hashes[i]);
     });
+
+    destroy(utxos);
 }
