@@ -308,6 +308,14 @@ public fun sig_hash(r: &RedeemRequest, input_idx: u32, storage: &Storage): vecto
     })
 }
 
+public(package) fun burn_utxos(r: &mut RedeemRequest) {
+    let len = r.utxos.length();
+    len.do!(|i| {
+        let v = r.utxos.pop_back();
+        v.burn();
+    });
+}
+
 public(package) fun set_utxos(
     r: &mut RedeemRequest,
     dwallet_ids: vector<ID>,

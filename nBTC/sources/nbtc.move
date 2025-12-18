@@ -574,8 +574,9 @@ public(package) fun update_redeem_utxo_and_burn(
             spent_utxos_ids[i],
             dwallet_ids[i],
         );
-        contract.storage.utxo_store_mut().remove(spent_utxos_ids[i], dwallet_ids[i]).burn();
     });
+
+    r.burn_utxos();
 
     let coin_to_burn = contract.locked.remove(redeem_id);
     let burn_amount = coin_to_burn.value();
