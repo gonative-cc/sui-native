@@ -960,11 +960,3 @@ public fun set_dwallet_cap_for_test(
 public fun testing_mint(contract: &mut NbtcContract, amount: u64, ctx: &mut TxContext): Coin<NBTC> {
     coin::mint(&mut contract.cap, amount, ctx)
 }
-
-#[test_only]
-public fun testing_confirm_redeem(contract: &mut NbtcContract, redeem_id: u64) {
-    let r = &contract.redeem_requests[redeem_id];
-    let expected_tx_bytes = r.raw_signed_tx(&contract.storage);
-    let tx = tx::decode(expected_tx_bytes);
-    contract.update_redeem_utxo_and_burn(redeem_id, &tx);
-}

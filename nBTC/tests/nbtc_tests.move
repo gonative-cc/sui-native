@@ -85,8 +85,9 @@ fun get_fallback_mint_data(): TestData {
 }
 
 #[test_only]
-public fun setup(
-    nbtc_bitcoin_addr: vector<u8>,
+public fun setup_with_pubkey(
+    nbtc_lockscript: vector<u8>,
+    nbtc_public_key: vector<u8>,
     sender: address,
     dwallet_id: ID,
 ): (LightClient, NbtcContract, Scenario) {
@@ -108,13 +109,22 @@ public fun setup(
         scenario.ctx(),
     );
     ctr.set_dwallet_cap_for_test(
-        nbtc_bitcoin_addr,
-        nbtc_bitcoin_addr,
+        nbtc_lockscript,
+        nbtc_public_key,
         vector::empty(),
         dwallet_cap_for_testing(dwallet_id, scenario.ctx()),
         scenario.ctx(),
     );
     (lc, ctr, scenario)
+}
+
+#[test_only]
+public fun setup(
+    nbtc_bitcoin_addr: vector<u8>,
+    sender: address,
+    dwallet_id: ID,
+): (LightClient, NbtcContract, Scenario) {
+    setup_with_pubkey(nbtc_bitcoin_addr, nbtc_bitcoin_addr, sender, dwallet_id)
 }
 
 #[test]
