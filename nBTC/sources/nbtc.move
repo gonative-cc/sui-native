@@ -12,7 +12,7 @@ use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
 use nbtc::config::{Self, Config};
 use nbtc::nbtc_utxo::{Self, validate_utxos, UtxoStore};
 use nbtc::redeem_request::{Self, RedeemRequest};
-use nbtc::storage::{Storage, create_storage, create_dwallet_metadata};
+use nbtc::storage::{Storage, DWalletMetadata, create_storage, create_dwallet_metadata};
 use nbtc::verify_payment::verify_payment;
 use sui::address;
 use sui::balance::{Self, Balance};
@@ -953,5 +953,22 @@ public fun set_dwallet_cap_for_test(
     let dwallet_id = dwallet_cap.dwallet_id();
     contract.active_dwallet_id = option::some(dwallet_id);
     contract.storage.add_metadata(dwallet_id, dmeta);
+    contract.storage.add_dwallet_cap(dwallet_id, dwallet_cap);
+}
+
+#[test_only]
+public fun testing_mint(contract: &mut NbtcContract, amount: u64, ctx: &mut TxContext): Coin<NBTC> {
+    coin::mint(&mut contract.cap, amount, ctx)
+}
+
+#[test_only]
+public fun set_dwallet_metadata_for_test(
+    contract: &mut NbtcContract,
+    dwallet_id: ID,
+    dwallet_metadata: DWalletMetadata,
+    dwallet_cap: DWalletCap,
+) {
+    contract.active_dwallet_id = option::some(dwallet_id);
+    contract.storage.add_metadata(dwallet_id, dwallet_metadata);
     contract.storage.add_dwallet_cap(dwallet_id, dwallet_cap);
 }
