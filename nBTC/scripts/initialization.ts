@@ -6,6 +6,7 @@ import {
 	getDwalletMetadata,
 	type Config,
 } from "./common";
+import { nBTCContractModule } from "../../sdk/nBTC/src";
 
 /**
  * Initializes the nBTC smart contract by registering an existing active dWallet and
@@ -30,22 +31,28 @@ export async function initialization(dwalletId: string, config: Config) {
 	let tx = new Transaction();
 
 	// add dwallet to nbtc
-	tx.moveCall({
-		target: `${config.packageId}::nbtc::add_dwallet`,
-		arguments: [
-			tx.object(config.adminCap),
-			tx.object(config.nbtc),
-			tx.object(dwalletCap),
-			tx.pure.vector("u8", lockscript as Uint8Array),
-			tx.pure.vector("u8", publicKey),
-			tx.pure.vector("u8", dWallet.public_user_secret_key_share!),
-		],
-	});
+	tx.add(
+		nBTCContractModule.addDwallet({
+			arguments: {
+				_: config.adminCap,
+				contract: config.nbtc,
+				dwalletCap: dwalletCap,
+				lockscript: Array.from(lockscript),
+				publicKey: Array.from(publicKey),
+				nbtcEndpointUserShare: Array.from(dWallet.public_user_secret_key_share!),
+			},
+		}),
+	);
 
-	tx.moveCall({
-		target: `${config.packageId}::nbtc::set_active_dwallet`,
-		arguments: [tx.object(config.adminCap), tx.object(config.nbtc), tx.pure.id(dwalletId)],
-	});
+	tx.add(
+		nBTCContractModule.setActiveDwallet({
+			arguments: {
+				_: config.adminCap,
+				contract: config.nbtc,
+				dwalletId: dwalletId,
+			},
+		}),
+	);
 
 	await executeTransaction(suiClient, tx);
 }

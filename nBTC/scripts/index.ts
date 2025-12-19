@@ -1,15 +1,21 @@
 import { Command } from "commander";
-import { createIkaClient, createSharedDwallet, createSuiClient, loadConfig } from "./common";
-import { broadcastBtcTx } from "./btc-helper";
+import {
+	createIkaClient,
+	createSharedDwallet,
+	createSuiClient,
+	loadConfig,
+	type Config,
+} from "./common";
 import {
 	globalPreSign,
 	getSigHash,
 	createUserSigCap,
-	request_signature_for_input,
+	requestSignatureForInput,
 	verifySignature,
 	getRedeemBtcTx,
 } from "./sign";
 import { initialization } from "./initialization";
+import { broadcastBtcTx } from "./btc-helper";
 
 const config = loadConfig();
 
@@ -38,7 +44,7 @@ program
 		let dwalletID = loadConfig().dwalletId;
 		let userSigCap = await createUserSigCap(ikaClient, suiClient, dwalletID, gPreSign, message);
 		// we use signID to query the signature after ika response
-		let signID = await request_signature_for_input(
+		let signID = await requestSignatureForInput(
 			redeem_id,
 			input_idx,
 			userSigCap.cap_id,
@@ -62,5 +68,4 @@ program
 		console.log("Raw redeem tx = ", rawTx);
 		await broadcastBtcTx(rawTx);
 	});
-
 program.parse(process.argv);

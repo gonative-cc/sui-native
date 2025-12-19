@@ -19,6 +19,7 @@ import { Transaction } from "@mysten/sui/transactions";
 import "dotenv/config";
 
 import * as bitcoin from "bitcoinjs-lib";
+import { type DWalletMetadata } from "../../sdk/nBTC/src";
 
 const REGTEST = bitcoin.networks.regtest;
 
@@ -49,6 +50,13 @@ export async function generateKeypair() {
 export function createSuiClient() {
 	return new SuiClient({
 		url: getFullnodeUrl("testnet"),
+		mvr: {
+			overrides: {
+				packages: {
+					"@local-pkg/nbtc": loadConfig().packageId,
+				},
+			},
+		},
 	});
 }
 
@@ -174,10 +182,16 @@ export async function createSharedDwallet(ikaClient: IkaClient, suiClient: SuiCl
  * @param dWallet The active shared dWallet
  * @returns An object containing the derived `publicKey` (Buffer), P2WPKH `addr` (string), and `lockscript` (Buffer).
  */
-export async function getDwalletMetadata(dWallet: DWalletWithState<"Active">) {
-	const publicKey = await publicKeyFromDWalletOutput(
-		Curve.SECP256K1,
-		Buffer.from(dWallet.state.Active?.public_output),
+export async function getDwalletMetadata(dWallet: DWalletWithState<"Active">): Promise<{
+	publicKey: Buffer;
+	addr: string;
+	lockscript: Buffer;
+}> {
+	const publicKey = Buffer.from(
+		await publicKeyFromDWalletOutput(
+			Curve.SECP256K1,
+			Buffer.from(dWallet.state.Active?.public_output),
+		),
 	);
 
 	const payment = bitcoin.payments.p2wpkh({
@@ -185,7 +199,7 @@ export async function getDwalletMetadata(dWallet: DWalletWithState<"Active">) {
 		network: REGTEST,
 	});
 	const addr = payment.address!;
-	const lockscript = payment.output!;
+	const lockscript = Buffer.from(payment.output!);
 	return {
 		publicKey,
 		addr,
