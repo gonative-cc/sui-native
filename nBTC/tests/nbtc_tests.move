@@ -127,7 +127,7 @@ public fun setup(
     let mut temp_scenario = test_scenario::begin(sender);
     let dwallet_metadata = storage::create_dwallet_metadata(
         nbtc_bitcoin_addr,
-        nbtc_bitcoin_addr,
+        vector::empty(),
         vector::empty(),
         temp_scenario.ctx(),
     );
