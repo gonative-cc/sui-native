@@ -5,6 +5,7 @@ use bitcoin_lib::tx;
 use nbtc::nbtc::NBTC;
 use nbtc::nbtc_tests::{setup, setup_with_pubkey};
 use nbtc::nbtc_utxo::{new_utxo, utxo_key};
+use nbtc::storage;
 use nbtc::test_constants::MOCK_DWALLET_ID;
 use std::unit_test::{assert_eq, destroy};
 use sui::clock;
@@ -35,11 +36,19 @@ fun setup_redeem_test(
 ) {
     let dwallet_id = MOCK_DWALLET_ID!();
 
-    let (lc, mut ctr, mut scenario) = setup_with_pubkey(
+    let mut temp_scenario = sui::test_scenario::begin(ADMIN);
+    let dwallet_metadata = storage::create_dwallet_metadata(
         lockscript,
         public_key,
+        vector::empty(),
+        temp_scenario.ctx(),
+    );
+    temp_scenario.end();
+
+    let (lc, mut ctr, mut scenario) = setup_with_pubkey(
         ADMIN,
         dwallet_id,
+        dwallet_metadata,
     );
 
     let utxo = new_utxo(TX_HASH, 0, utxo_amount);
@@ -305,15 +314,14 @@ fun test_confirm_redeem_burns_nbtc_and_removes_utxos() {
     let tx = tx::decode(tx_bytes);
     let tx_id = tx.tx_id();
     let parent_hash = lc.head_hash();
-    let mut header_bytes = vector[];
-    header_bytes.append(x"00000020");
-    header_bytes.append(parent_hash);
-    header_bytes.append(tx_id);
-    header_bytes.append(x"132ae858");
-    header_bytes.append(x"ffff7f20");
-    header_bytes.append(x"01000000");
-
-    let header = bitcoin_lib::header::new(header_bytes);
+    let header = bitcoin_lib::header::create_header_for_test(
+        x"00000020",
+        parent_hash,
+        tx_id,
+        x"132ae858",
+        x"ffff7f20",
+        x"01000000",
+    );
     lc.insert_headers(vector[header]);
 
     let supply_before = ctr.total_supply();
@@ -354,15 +362,14 @@ fun test_confirm_redeem_no_change() {
     let tx_id = tx.tx_id();
 
     let parent_hash = lc.head_hash();
-    let mut header_bytes = vector[];
-    header_bytes.append(x"00000020");
-    header_bytes.append(parent_hash);
-    header_bytes.append(tx_id);
-    header_bytes.append(x"132ae858");
-    header_bytes.append(x"ffff7f20");
-    header_bytes.append(x"03000000");
-
-    let header = bitcoin_lib::header::new(header_bytes);
+    let header = bitcoin_lib::header::create_header_for_test(
+        x"00000020",
+        parent_hash,
+        tx_id,
+        x"132ae858",
+        x"ffff7f20",
+        x"03000000",
+    );
     lc.insert_headers(vector[header]);
 
     let supply_before = ctr.total_supply();
