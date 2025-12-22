@@ -44,7 +44,12 @@ program
 		let dwalletID = loadConfig().dwalletId;
 
 		// Create nbtc_public_signature using the new approach
-		let nbtcPublicSignature = await createUserSigMessage(ikaClient, dwalletID, presignId, sigHash);
+		let nbtcPublicSignature = await createUserSigMessage(
+			ikaClient,
+			dwalletID,
+			presignId,
+			sigHash,
+		);
 
 		// we use signID to query the signature after ika response
 		let signID = await requestSignatureForInput(

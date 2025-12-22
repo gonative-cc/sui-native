@@ -80,7 +80,7 @@ export async function createUserSigMessage(
 
 	const protocolPublicParameters = await ikaClient.getProtocolPublicParameters(
 		dWallet,
-		Curve.SECP256K1
+		Curve.SECP256K1,
 	);
 
 	const centralizedDkgOutput = Buffer.from(dWallet.state.Active.public_output) as Uint8Array;
@@ -97,7 +97,7 @@ export async function createUserSigMessage(
 		message,
 		Hash.SHA256,
 		SignatureAlgorithm.ECDSASecp256k1,
-		Curve.SECP256K1
+		Curve.SECP256K1,
 	);
 
 	return nbtcPublicSignature;
@@ -146,8 +146,6 @@ export async function getSigHash(
 	return bcs.byteVector().parse(Uint8Array.from(encoded));
 }
 
-
-
 /**
  * Executes a Move call on Sui to request the final partial signature for a specific
  * Bitcoin input index of a redeem transaction.
@@ -180,7 +178,9 @@ export async function requestSignatureForInput(
 	});
 
 	const ikaCoin = await getIkaCoin(suiClient, signer.toSuiAddress());
-	const unverifiedPresignCap = (await ikaClient.getPresignInParticularState(presignId, 'Completed')).cap_id;
+	const unverifiedPresignCap = (
+		await ikaClient.getPresignInParticularState(presignId, "Completed")
+	).cap_id;
 
 	tx.add(
 		nBTCContractModule.requestSignatureForInput({
