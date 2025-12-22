@@ -7,9 +7,9 @@ use bitcoin_lib::tx;
 use bitcoin_lib::vector_utils::vector_slice;
 use ika::ika::IKA;
 use ika_dwallet_2pc_mpc::coordinator::DWalletCoordinator;
-use ika_dwallet_2pc_mpc::coordinator_inner::VerifiedPartialUserSignatureCap;
+use ika_dwallet_2pc_mpc::coordinator_inner::UnverifiedPresignCap;
 use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
-use nbtc::nbtc_utxo::{Utxo, UtxoStore};
+use nbtc::nbtc_utxo::Utxo;
 use nbtc::storage::Storage;
 use nbtc::tx_composer::compose_withdraw_tx;
 use sui::coin::Coin;
@@ -178,12 +178,14 @@ public(package) fun request_signature_for_input(
     storage: &Storage,
     redeem_id: u64,
     input_idx: u32,
-    user_sig_cap: VerifiedPartialUserSignatureCap,
+    nbtc_public_signature: vector<u8>,
+    unverified_presign: UnverifiedPresignCap,
     session_identifier: SessionIdentifier,
     payment_ika: &mut Coin<IKA>,
     payment_sui: &mut Coin<SUI>,
     ctx: &mut TxContext,
 ) {
+    let verified_presigned = dwallet_coordinator.verify_presign_cap(unverified_presign, ctx);
     // This should include other information for create sign hash
     let sig_hash = r.sig_hash(input_idx, storage);
 
@@ -196,9 +198,10 @@ public(package) fun request_signature_for_input(
         sig_hash,
     );
 
-    let sign_id = dwallet_coordinator.request_sign_with_partial_user_signature_and_return_id(
-        user_sig_cap,
+    let sign_id = dwallet_coordinator.request_sign_and_return_id(
+        verified_presigned,
         message_approval,
+        nbtc_public_signature,
         session_identifier,
         payment_ika,
         payment_sui,
@@ -310,7 +313,7 @@ public fun sig_hash(r: &RedeemRequest, input_idx: u32, storage: &Storage): vecto
 
 public(package) fun burn_utxos(r: &mut RedeemRequest) {
     let len = r.utxos.length();
-    len.do!(|i| {
+    len.do!(|_i| {
         let v = r.utxos.pop_back();
         v.burn();
     });

@@ -7,12 +7,12 @@ use bitcoin_lib::tx::{Self, Transaction};
 use bitcoin_spv::light_client::LightClient;
 use ika::ika::IKA;
 use ika_dwallet_2pc_mpc::coordinator::DWalletCoordinator;
-use ika_dwallet_2pc_mpc::coordinator_inner::{DWalletCap, VerifiedPartialUserSignatureCap};
+use ika_dwallet_2pc_mpc::coordinator_inner::{DWalletCap, UnverifiedPresignCap};
 use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
 use nbtc::config::{Self, Config};
-use nbtc::nbtc_utxo::{Self, validate_utxos, UtxoStore};
+use nbtc::nbtc_utxo::{Self, validate_utxos};
 use nbtc::redeem_request::{Self, RedeemRequest};
-use nbtc::storage::{Storage, DWalletMetadata, create_storage, create_dwallet_metadata};
+use nbtc::storage::{Storage, create_storage, create_dwallet_metadata};
 use nbtc::verify_payment::verify_payment;
 use sui::address;
 use sui::balance::{Self, Balance};
@@ -463,7 +463,8 @@ public fun request_signature_for_input(
     dwallet_coordinator: &mut DWalletCoordinator,
     request_id: u64,
     input_idx: u32,
-    user_sig_cap: VerifiedPartialUserSignatureCap,
+    nbtc_public_signature: vector<u8>,
+    unverified_presign: UnverifiedPresignCap,
     session_identifier: SessionIdentifier,
     payment_ika: &mut Coin<IKA>,
     payment_sui: &mut Coin<SUI>,
@@ -482,7 +483,8 @@ public fun request_signature_for_input(
         &contract.storage,
         request_id,
         input_idx,
-        user_sig_cap,
+        nbtc_public_signature,
+        unverified_presign,
         session_identifier,
         payment_ika,
         payment_sui,
