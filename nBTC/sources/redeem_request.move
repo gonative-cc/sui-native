@@ -178,7 +178,7 @@ public(package) fun request_signature_for_input(
     storage: &Storage,
     redeem_id: u64,
     input_idx: u32,
-    nbtc_public_signature: vector<u8>,
+    nbtc_public_sign: vector<u8>,
     unverified_presign: UnverifiedPresignCap,
     session_identifier: SessionIdentifier,
     payment_ika: &mut Coin<IKA>,
@@ -199,9 +199,9 @@ public(package) fun request_signature_for_input(
     );
 
     let sign_id = dwallet_coordinator.request_sign_and_return_id(
-        verified_presigned,
+        verified_presign,
         message_approval,
-        nbtc_public_signature,
+        nbtc_public_sign,
         session_identifier,
         payment_ika,
         payment_sui,

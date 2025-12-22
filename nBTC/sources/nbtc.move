@@ -10,9 +10,9 @@ use ika_dwallet_2pc_mpc::coordinator::DWalletCoordinator;
 use ika_dwallet_2pc_mpc::coordinator_inner::{DWalletCap, UnverifiedPresignCap};
 use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
 use nbtc::config::{Self, Config};
-use nbtc::nbtc_utxo::{Self, validate_utxos};
+use nbtc::nbtc_utxo::{Self, Utxo, validate_utxos};
 use nbtc::redeem_request::{Self, RedeemRequest};
-use nbtc::storage::{Storage, create_storage, create_dwallet_metadata};
+use nbtc::storage::{Storage, create_storage, create_dwallet_metadata, DWalletMetadata};
 use nbtc::verify_payment::verify_payment;
 use sui::address;
 use sui::balance::{Self, Balance};
@@ -449,15 +449,12 @@ public fun record_inactive_deposit(
     });
 }
 
-/// Request signing for specific input in redeem transaction,
-/// partial_user_signature_cap: Created by future sign request
-/// Because we use shared dwallet this is already public and we don't need to send "user share's"
-/// signature. The Ika also auto checks if the message we want to sign is identical between messages
-/// signed by nbtc user share and message we request here.
+/// Request signing for specific input in redeem transaction.
 /// We will:
 ///  - compute the sign hash for specific input
 ///  - Request signature from Ika
-///  - Record sing_id and other recomputeable data
+///  - Record sign_id
+/// nbtc_public_sign: A partial signature created by nBTC public share for the input of the redeem transaction
 public fun request_signature_for_input(
     contract: &mut NbtcContract,
     dwallet_coordinator: &mut DWalletCoordinator,
@@ -483,7 +480,7 @@ public fun request_signature_for_input(
         &contract.storage,
         request_id,
         input_idx,
-        nbtc_public_signature,
+        nbtc_public_sign,
         unverified_presign,
         session_identifier,
         payment_ika,
@@ -882,7 +879,7 @@ public fun redeem_duration(contract: &NbtcContract): u64 {
 }
 
 #[test_only]
-use nbtc::nbtc_utxo::Utxo;
+use nbtc::nbtc_utxo::UtxoStore;
 
 #[test_only]
 /// Adds UTXO to the active wallet
