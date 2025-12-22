@@ -463,7 +463,7 @@ public fun request_signature_for_input(
     dwallet_coordinator: &mut DWalletCoordinator,
     request_id: u64,
     input_idx: u32,
-    nbtc_public_signature: vector<u8>,
+    nbtc_public_sign: vector<u8>,
     unverified_presign: UnverifiedPresignCap,
     session_identifier: SessionIdentifier,
     payment_ika: &mut Coin<IKA>,
