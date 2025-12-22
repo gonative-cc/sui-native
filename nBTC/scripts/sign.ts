@@ -5,6 +5,7 @@ import {
 	IkaTransaction,
 	SessionsManagerModule,
 	SignatureAlgorithm,
+	createUserSignMessageWithCentralizedOutput,
 	type IkaClient,
 	type SharedDWallet,
 } from "@ika.xyz/sdk";
@@ -61,17 +62,47 @@ export async function globalPreSign() {
 }
 
 /**
- * Computes the Bitcoin Signature Hash (SigHash) required for signing a transaction.
+ * Creates the nbtc_public_signature using createUserSignMessageWithCentralizedOutput
  *
- * This function utilizes Sui client data and transaction configuration to determine
- * the final hash that needs to be signed by the dWallet network.
- *
- * @param suiClient The initialized Sui client instance for network interaction.
- * @param r A nonce or session identifier related to the transaction.
- * @param input_idx The index of the input being signed in the raw Bitcoin transaction.
- * @param config The sui package config
- * @returns A promise that resolves to the computed BTC SigHash as a hexadecimal string.
+ * @param ikaClient The initialized Ika client for protocol-specific calls
+ * @param dwalletId The ID of the active dWallet to be used
+ * @param presignId The PreSign ID get from globalPreSign
+ * @param message The hash or message data (Uint8Array) to be signed
+ * @returns A promise that resolves to the nbtc_public_signature as Uint8Array
  */
+export async function createUserSigMessage(
+	ikaClient: IkaClient,
+	dwalletId: string,
+	presignId: string,
+	message: Uint8Array,
+): Promise<Uint8Array> {
+	const dWallet = await ikaClient.getDWalletInParticularState(dwalletId, "Active");
+
+	const protocolPublicParameters = await ikaClient.getProtocolPublicParameters(
+		dWallet,
+		Curve.SECP256K1
+	);
+
+	const centralizedDkgOutput = Buffer.from(dWallet.state.Active.public_output) as Uint8Array;
+
+	const userSecretKeyShare = new Uint8Array(dWallet.public_user_secret_key_share as number[]);
+
+	const presign = await ikaClient.getPresign(presignId);
+	// Create the nbtc_public_signature using the centralized DKG output function
+	const nbtcPublicSignature = await createUserSignMessageWithCentralizedOutput(
+		protocolPublicParameters,
+		centralizedDkgOutput,
+		userSecretKeyShare,
+		new Uint8Array(presign.state.Completed?.presign as number[]),
+		message,
+		Hash.SHA256,
+		SignatureAlgorithm.ECDSASecp256k1,
+		Curve.SECP256K1
+	);
+
+	return nbtcPublicSignature;
+}
+
 export async function getSigHash(
 	suiClient: SuiClient,
 	r: number,
@@ -115,88 +146,26 @@ export async function getSigHash(
 	return bcs.byteVector().parse(Uint8Array.from(encoded));
 }
 
-/**
- * Creates the  UnverifiedPartialUserSignatureCap object by requesting a future signature on Sui.
- *
- * This process involves verifying a completed presignature and authorizing the signing
- * of a specific message (`message`, usually a transaction hash) by the dWallet.
- *
- * @param ikaClient The initialized Ika client for protocol-specific calls.
- * @param suiClient The initialized Sui client instance.
- * @param dwalletId The ID of the active dWallet to be used.
- * @param presignId The ID of the completed presign request.
- * @param message The hash or message data (Uint8Array) to be signed.
- * @returns A promise that resolves to the completed UnverifiedPartialUserSignatureCap object.
- */
-export async function createUserSigCap(
-	ikaClient: IkaClient,
-	suiClient: SuiClient,
-	dwalletId: string,
-	presignId: string,
-	message: Uint8Array,
-) {
-	let transaction = new Transaction();
-	let ikaTransaction = new IkaTransaction({
-		ikaClient,
-		transaction,
-	});
-	const signer = mkSigner();
-	const dWallet = await ikaClient.getDWalletInParticularState(dwalletId, "Active");
-	const ikaCoin = await getIkaCoin(suiClient, signer.toSuiAddress());
-	const presign = await ikaClient.getPresignInParticularState(presignId, "Completed");
-	const partialUserSignatureCap = await ikaTransaction.requestFutureSign({
-		dWallet: dWallet as SharedDWallet,
-		hashScheme: Hash.SHA256,
-		ikaCoin: transaction.object(ikaCoin),
-		message,
-		presign,
-		signatureScheme: SignatureAlgorithm.ECDSASecp256k1,
-		suiCoin: transaction.gas,
-		verifiedPresignCap: ikaTransaction.verifyPresignCap({
-			presign,
-		}),
-		// Note: No encryptedUserSecretKeyShare parameter for shared dWallets
-	});
 
-	transaction.transferObjects([partialUserSignatureCap], signer.toSuiAddress());
-
-	let result = await executeTransaction(suiClient, transaction);
-
-	const event = result.events?.find((event) => {
-		return event.type.includes("FutureSignRequestEvent");
-	});
-
-	let eventDecoded = SessionsManagerModule.DWalletSessionEvent(
-		CoordinatorInnerModule.FutureSignRequestEvent,
-	).fromBase64(event?.bcs as string);
-
-	const partialCentralizedSignedMessageID =
-		eventDecoded.event_data.partial_centralized_signed_message_id;
-
-	return await ikaClient.getPartialUserSignatureInParticularState(
-		partialCentralizedSignedMessageID,
-		"NetworkVerificationCompleted",
-		{ timeout: 60000, interval: 1000 },
-	);
-}
 
 /**
  * Executes a Move call on Sui to request the final partial signature for a specific
  * Bitcoin input index of a redeem transaction.
  *
- * This function consumes the `UnverifiedPartialUserSignatureCap`
+ * This function consumes the `UnverifiedPresignCap`
  * (`capid`) to request the dWallet network to sign the transaction input.
  *
  * @param r The nonce or session identifier related to the redeem request.
  * @param input_idx The index of the Bitcoin input being signed (0-indexed).
- * @param capid The object ID of the `UnverifiedPartialUserSignatureCap` created earlier.
+ * @param presignId The presignId we use to get the unverifiedPresignCap ID
+ * @param nbtcPublicSignature The public signature vector for nbtc.
  * @param config The configuration object containing IDs like `packageId` and `nbtc` object ID.
- * @returns A promise that resolves to the unique Sign ID (`sign_id`) as a string.
  */
 export async function requestSignatureForInput(
 	r: number,
 	input_idx: number,
-	capid: string,
+	presignId: string,
+	nbtcPublicSignature: Uint8Array,
 	config: Config,
 ) {
 	let suiClient = createSuiClient();
@@ -211,14 +180,8 @@ export async function requestSignatureForInput(
 	});
 
 	const ikaCoin = await getIkaCoin(suiClient, signer.toSuiAddress());
+	const unverifiedPresignCap = (await ikaClient.getPresignInParticularState(presignId, 'Completed')).cap_id;
 
-	let verifiedCap = tx.moveCall({
-		target: "0x6573a6c13daf26a64eb8a37d3c7a4391b353031e223072ca45b1ff9366f59293::coordinator::verify_partial_user_signature_cap",
-		arguments: [
-			tx.object("0x4d157b7415a298c56ec2cb1dcab449525fa74aec17ddba376a83a7600f2062fc"),
-			tx.object(capid),
-		],
-	});
 	tx.add(
 		nBTCContractModule.requestSignatureForInput({
 			arguments: {
@@ -227,7 +190,8 @@ export async function requestSignatureForInput(
 					"0x4d157b7415a298c56ec2cb1dcab449525fa74aec17ddba376a83a7600f2062fc",
 				requestId: r,
 				inputIdx: input_idx,
-				userSigCap: verifiedCap,
+				nbtcPublicSignature: Array.from(nbtcPublicSignature),
+				unverifiedPresign: unverifiedPresignCap,
 				sessionIdentifier: ikaTx.createSessionIdentifier(),
 				paymentIka: ikaCoin,
 				paymentSui: tx.gas,

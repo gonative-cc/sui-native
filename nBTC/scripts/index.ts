@@ -9,7 +9,7 @@ import {
 import {
 	globalPreSign,
 	getSigHash,
-	createUserSigCap,
+	createUserSigMessage,
 	requestSignatureForInput,
 	verifySignature,
 	getRedeemBtcTx,
@@ -39,15 +39,19 @@ program
 		"Requests a signature for a specific input_idx of the given redeem transaction (redeem_id)",
 	)
 	.action(async (redeem_id: number, input_idx: number) => {
-		let gPreSign = await globalPreSign();
-		let message = await getSigHash(suiClient, redeem_id, input_idx, config);
+		let presignId = await globalPreSign();
+		let sigHash = await getSigHash(suiClient, redeem_id, input_idx, config);
 		let dwalletID = loadConfig().dwalletId;
-		let userSigCap = await createUserSigCap(ikaClient, suiClient, dwalletID, gPreSign, message);
+
+		// Create nbtc_public_signature using the new approach
+		let nbtcPublicSignature = await createUserSigMessage(ikaClient, dwalletID, presignId, sigHash);
+
 		// we use signID to query the signature after ika response
 		let signID = await requestSignatureForInput(
 			redeem_id,
 			input_idx,
-			userSigCap.cap_id,
+			presignId,
+			nbtcPublicSignature,
 			config,
 		);
 		console.log("Ika sign id =", signID);
