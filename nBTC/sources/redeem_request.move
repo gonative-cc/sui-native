@@ -185,7 +185,7 @@ public(package) fun request_signature_for_input(
     payment_sui: &mut Coin<SUI>,
     ctx: &mut TxContext,
 ) {
-    let verified_presigned = dwallet_coordinator.verify_presign_cap(unverified_presign, ctx);
+    let verified_presign = dwallet_coordinator.verify_presign_cap(unverified_presign, ctx);
     // This should include other information for create sign hash
     let sig_hash = r.sig_hash(input_idx, storage);
 
