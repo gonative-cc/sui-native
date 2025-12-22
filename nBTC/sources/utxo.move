@@ -31,7 +31,7 @@ const INACTIVE_BONUS: u64 = 200;
 const NO_CHANGE_BONUS: u64 = 1_000;
 const DUST_PENALTY: u64 = 200;
 
-public struct Utxo has copy, drop, store {
+public struct Utxo has store {
     tx_id: vector<u8>,
     vout: u32,
     value: u64,
@@ -64,6 +64,10 @@ public fun vout(utxo: &Utxo): u32 {
 
 public fun value(utxo: &Utxo): u64 {
     utxo.value
+}
+
+public(package) fun burn(utxo: Utxo) {
+    let Utxo { tx_id: _, vout: _, value: _ } = utxo;
 }
 
 public(package) fun new_utxo_store(ctx: &mut TxContext): UtxoStore {
@@ -115,11 +119,6 @@ public(package) fun get_utxo(utxo_store: &UtxoStore, idx: u64, dwallet_id: ID): 
 
 public(package) fun get_utxo_by_ukey(utxo_store: &UtxoStore, ukey: vector<u8>): &Utxo {
     &utxo_store.utxos[ukey]
-}
-
-public(package) fun get_utxo_copy(utxo_store: &UtxoStore, idx: u64, dwallet_id: ID): Utxo {
-    let ref = get_utxo(utxo_store, idx, dwallet_id);
-    *ref
 }
 
 public fun next_utxo(utxo_store: &UtxoStore): u64 {
