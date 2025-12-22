@@ -215,7 +215,7 @@ export async function requestSignatureForInput(
  * @param suiClient The initialized Sui client instance.
  * @param r redeem request ID
  * @param input_idx The index of the Bitcoin input being signed (0-indexed).
- * @param signId The object ID of the sign session we request before
+ * @param signId The object ID of the sign session returned from requestSignatureForInput
  * @param config The configuration object containing IDs like `packageId` and `nbtc` object ID.
  * @returns A promise that resolves when the verification transaction is executed successfully (no explicit return value).
  */
