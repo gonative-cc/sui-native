@@ -449,12 +449,29 @@ public fun record_inactive_deposit(
     });
 }
 
-/// Request signing for specific input in redeem transaction.
-/// We will:
-///  - compute the sign hash for specific input
-///  - Request signature from Ika
-///  - Record sign_id
-/// nbtc_public_sign: A partial signature created by nBTC public share for the input of the redeem transaction
+/// Request signing for specific input in a redeem transaction.
+///
+/// This function will:
+/// - Compute the signature hash for the specified input
+/// - Request signature from Ika Network
+/// - Record the sign_id for later verification
+///
+/// # Arguments
+/// * `contract` - Mutable reference to the nBTC contract
+/// * `dwallet_coordinator` - The coordinator for dWallet operations
+/// * `redeem_id` - Unique identifier for the redeem request
+/// * `input_id` - Index of the Bitcoin input to be signed (0-indexed)
+/// * `nbtc_public_sign` - Partial signature created by nBTC public share
+/// * `unverified_presign` - Capability for unverified presigning operation
+/// * `session_identifier` - Session identifier for the signing request
+/// * `payment_ika` - IKA coin for payment
+/// * `payment_sui` - SUI coin for gas fees
+/// * `ctx` - Transaction context
+///
+/// # Aborts
+/// * `EInvalidDWalletCoordinator` - If the provided coordinator doesn't match the contract's configured coordinator
+/// * `ENotReadlyForSign` - If the redeem request is not in signing state
+/// * `EInputAlreadyUsed` - If the input has already been signed
 public fun request_signature_for_input(
     contract: &mut NbtcContract,
     dwallet_coordinator: &mut DWalletCoordinator,

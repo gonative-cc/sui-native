@@ -172,6 +172,27 @@ public(package) fun move_to_confirmed_status(
     });
 }
 
+/// Internal function to request signature for specific input in a redeem request.
+///
+/// This function:
+/// - Verifies the presign capability
+/// - Calculates signature hash for the input
+/// - Approves the message with the dWallet
+/// - Requests signature from the Ika Network
+/// - Stores the signature metadata and emits an event
+///
+/// # Arguments
+/// * `r` - Mutable reference to the redeem request
+/// * `dwallet_coordinator` - Coordinator for dWallet operations
+/// * `storage` - Storage containing dWallet capabilities
+/// * `redeem_id` - Unique identifier for the redeem request
+/// * `input_id` - Index of the Bitcoin input to be signed (0-indexed)
+/// * `nbtc_public_sign` - Partial signature from nBTC public share
+/// * `unverified_presign` - Unverified presign capability
+/// * `session_identifier` - Session identifier for the request
+/// * `payment_ika` - IKA coin for payment
+/// * `payment_sui` - SUI coin for gas fees
+/// * `ctx` - Transaction context
 public(package) fun request_signature_for_input(
     r: &mut RedeemRequest,
     dwallet_coordinator: &mut DWalletCoordinator,
