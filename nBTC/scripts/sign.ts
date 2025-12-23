@@ -264,7 +264,7 @@ export async function getRedeemBtcTx(suiClient: SuiClient, redeemId: number, con
 		nBTCContractModule.redeemRequest({
 			arguments: {
 				contract: config.nbtc,
-				redeemId
+				redeemId,
 			},
 		}),
 	);
