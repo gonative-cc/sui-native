@@ -40,7 +40,7 @@ program
 	)
 	.action(async (redeem_id: number, input_idx: number) => {
 		let presignId = await globalPreSign();
-		let sigHash = await getSigHash(suiClient, redeem_id, input_idx, config);
+		let signHash = await getSignHash(suiClient, redeem_id, input_idx, config);
 		let dwalletID = loadConfig().dwalletId;
 
 		// Create nbtc_public_signature using the new approach
