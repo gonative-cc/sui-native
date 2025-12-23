@@ -77,17 +77,14 @@ export async function createUserSigMessage(
 	message: Uint8Array,
 ): Promise<Uint8Array> {
 	const dWallet = await ikaClient.getDWalletInParticularState(dwalletId, "Active");
-
 	const protocolPublicParameters = await ikaClient.getProtocolPublicParameters(
 		dWallet,
 		Curve.SECP256K1,
 	);
-
 	const centralizedDkgOutput = Buffer.from(dWallet.state.Active.public_output) as Uint8Array;
-
 	const userSecretKeyShare = new Uint8Array(dWallet.public_user_secret_key_share as number[]);
-
 	const presign = await ikaClient.getPresign(presignId);
+
 	// Create the nbtc_public_signature using the centralized DKG output function
 	const nbtcPublicSignature = await createUserSignMessageWithCentralizedOutput(
 		protocolPublicParameters,
@@ -103,10 +100,19 @@ export async function createUserSigMessage(
 	return nbtcPublicSignature;
 }
 
-export async function getSigHash(
+/**
+ * Calculates the signature hash for a specific input of a redeem transaction.
+ *
+ * @param suiClient The Sui client instance.
+ * @param redeemId The ID of the redeem request.
+ * @param inputId The index of the Bitcoin input (0-indexed).
+ * @param config The configuration object containing IDs like `packageId` and `nbtc` object ID.
+ * @returns A promise that resolves to the signature hash as a Uint8Array.
+ */
+export async function getSignHash(
 	suiClient: SuiClient,
-	r: number,
-	inputIdx: number,
+	redeemId: number,
+	inputId: number,
 	config: Config,
 ) {
 	let tx = new Transaction();
@@ -115,7 +121,7 @@ export async function getSigHash(
 		nBTCContractModule.redeemRequest({
 			arguments: {
 				contract: config.nbtc,
-				requestId: r,
+				redeemId: redeemId,
 			},
 		}),
 	);
@@ -132,7 +138,7 @@ export async function getSigHash(
 		RedeemRequestModule.sigHash({
 			arguments: {
 				r: redeem,
-				inputIdx,
+				inputId,
 				storage,
 			},
 		}),
@@ -153,15 +159,15 @@ export async function getSigHash(
  * This function consumes the `UnverifiedPresignCap`
  * (`capid`) to request the dWallet network to sign the transaction input.
  *
- * @param r The nonce or session identifier related to the redeem request.
- * @param input_idx The index of the Bitcoin input being signed (0-indexed).
+ * @param redeemId The ID of the redeem request.
+ * @param inputId The index of the Bitcoin input being signed (0-indexed).
  * @param presignId The presignId we use to get the unverifiedPresignCap ID
  * @param nbtcPublicSignature The public signature vector for nbtc.
  * @param config The configuration object containing IDs like `packageId` and `nbtc` object ID.
  */
 export async function requestSignatureForInput(
-	r: number,
-	input_idx: number,
+	redeemId: number,
+	inputId: number,
 	presignId: string,
 	nbtcPublicSignature: Uint8Array,
 	config: Config,
@@ -188,8 +194,8 @@ export async function requestSignatureForInput(
 				contract: config.nbtc,
 				dwalletCoordinator:
 					"0x4d157b7415a298c56ec2cb1dcab449525fa74aec17ddba376a83a7600f2062fc",
-				requestId: r,
-				inputIdx: input_idx,
+				redeemId,
+				inputId,
 				nbtcPublicSign: Array.from(nbtcPublicSignature),
 				unverifiedPresign: unverifiedPresignCap,
 				sessionIdentifier: ikaTx.createSessionIdentifier(),
@@ -213,16 +219,16 @@ export async function requestSignatureForInput(
  * a Bitcoin transaction input details.
  *
  * @param suiClient The initialized Sui client instance.
- * @param r redeem request ID
- * @param input_idx The index of the Bitcoin input being signed (0-indexed).
+ * @param redeemId The ID of the redeem request.
+ * @param inputId The index of the Bitcoin input being signed (0-indexed).
  * @param signId The object ID of the sign session returned from requestSignatureForInput
  * @param config The configuration object containing IDs like `packageId` and `nbtc` object ID.
  * @returns A promise that resolves when the verification transaction is executed successfully (no explicit return value).
  */
 export async function verifySignature(
 	suiClient: SuiClient,
-	r: number,
-	input_idx: number,
+	redeemId: number,
+	inputId: number,
 	signId: string,
 	config: Config,
 ) {
@@ -233,9 +239,9 @@ export async function verifySignature(
 				contract: config.nbtc,
 				dwalletCoordinator:
 					"0x4d157b7415a298c56ec2cb1dcab449525fa74aec17ddba376a83a7600f2062fc",
-				redeemId: r,
-				inputIdx: input_idx,
-				signId: signId,
+				redeemId,
+				inputId,
+				signId,
 			},
 		}),
 	);
@@ -247,18 +253,18 @@ export async function verifySignature(
  * Return a raw signed BTC redeem transaction
  *
  * @param suiClient The initialized Sui client instance.
- * @param r redeem request ID
+ * @param redeemId The ID of the redeem request.
  * @param config The configuration object containing IDs like `packageId` and `nbtc` object ID.
  * @returns A redeem tx in Hex format
  */
-export async function getRedeemBtcTx(suiClient: SuiClient, r: number, config: Config) {
+export async function getRedeemBtcTx(suiClient: SuiClient, redeemId: number, config: Config) {
 	let tx = new Transaction();
 
 	let redeem = tx.add(
 		nBTCContractModule.redeemRequest({
 			arguments: {
 				contract: config.nbtc,
-				requestId: r,
+				redeemId
 			},
 		}),
 	);

@@ -8,7 +8,7 @@ import {
 } from "./common";
 import {
 	globalPreSign,
-	getSigHash,
+	getSignHash,
 	createUserSigMessage,
 	requestSignatureForInput,
 	verifySignature,
@@ -48,10 +48,9 @@ program
 			ikaClient,
 			dwalletID,
 			presignId,
-			sigHash,
+			signHash,
 		);
 
-		// we use signID to query the signature after ika response
 		let signID = await requestSignatureForInput(
 			redeem_id,
 			input_idx,

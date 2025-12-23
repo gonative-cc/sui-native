@@ -161,7 +161,7 @@ public struct RedeemRequestEvent has copy, drop {
 
 public struct RedeemSigCreatedEvent has copy, drop {
     redeem_id: u64,
-    input_idx: u32,
+    input_id: u32,
     is_fully_signed: bool,
 }
 
@@ -458,7 +458,7 @@ public fun record_inactive_deposit(
 public fun request_signature_for_input(
     contract: &mut NbtcContract,
     dwallet_coordinator: &mut DWalletCoordinator,
-    request_id: u64,
+    redeem_id: u64,
     input_id: u32,
     nbtc_public_sign: vector<u8>,
     unverified_presign: UnverifiedPresignCap,
@@ -472,14 +472,14 @@ public fun request_signature_for_input(
         object::id(dwallet_coordinator) == config.dwallet_coordinator(),
         EInvalidDWalletCoordinator,
     );
-    let request = &mut contract.redeem_requests[request_id];
+    let request = &mut contract.redeem_requests[redeem_id];
     assert!(request.status().is_signing(), ENotReadlyForSign);
-    assert!(!request.has_signature(input_idx), EInputAlreadyUsed);
+    assert!(!request.has_signature(input_id), EInputAlreadyUsed);
     request.request_signature_for_input(
         dwallet_coordinator,
         &contract.storage,
-        request_id,
-        input_idx,
+        redeem_id,
+        input_id,
         nbtc_public_sign,
         unverified_presign,
         session_identifier,
@@ -600,7 +600,7 @@ public fun validate_signature(
     contract: &mut NbtcContract,
     dwallet_coordinator: &DWalletCoordinator,
     redeem_id: u64,
-    input_idx: u32,
+    input_id: u32,
     sign_id: ID,
 ) {
     let config = contract.config();
@@ -609,14 +609,14 @@ public fun validate_signature(
         EInvalidDWalletCoordinator,
     );
     let r = &mut contract.redeem_requests[redeem_id];
-    assert!(!r.has_signature(input_idx), EInputAlreadyUsed);
+    assert!(!r.has_signature(input_id), EInputAlreadyUsed);
 
-    r.validate_signature(dwallet_coordinator, &contract.storage, input_idx, sign_id);
+    r.validate_signature(dwallet_coordinator, &contract.storage, input_id, sign_id);
 
     let is_fully_signed = r.status().is_signed();
     event::emit(RedeemSigCreatedEvent {
         redeem_id,
-        input_idx,
+        input_id,
         is_fully_signed,
     });
 }
@@ -831,8 +831,8 @@ public fun total_supply(contract: &NbtcContract): u64 {
     coin::total_supply(&contract.cap)
 }
 
-public fun redeem_request(contract: &NbtcContract, request_id: u64): &RedeemRequest {
-    &contract.redeem_requests[request_id]
+public fun redeem_request(contract: &NbtcContract, redeem_id: u64): &RedeemRequest {
+    &contract.redeem_requests[redeem_id]
 }
 
 public fun storage(contract: &NbtcContract): &Storage {
@@ -896,7 +896,7 @@ public fun borrow_utxo_map_for_test(ctr: &NbtcContract): &UtxoStore {
 #[test_only]
 public fun create_redeem_request_for_testing(
     contract: &mut NbtcContract,
-    request_id: u64,
+    redeem_id: u64,
     redeemer: address,
     recipient_script: vector<u8>,
     amount: u64,
@@ -918,7 +918,7 @@ public fun create_redeem_request_for_testing(
     contract
         .redeem_requests
         .add(
-            request_id,
+            redeem_id,
             r,
         )
 }
@@ -931,8 +931,8 @@ public fun admin_cap_for_testing(ctx: &mut TxContext): AdminCap {
 }
 
 #[test_only]
-public fun redeem_request_mut(contract: &mut NbtcContract, request_id: u64): &mut RedeemRequest {
-    &mut contract.redeem_requests[request_id]
+public fun redeem_request_mut(contract: &mut NbtcContract, redeem_id: u64): &mut RedeemRequest {
+    &mut contract.redeem_requests[redeem_id]
 }
 
 #[test_only]
