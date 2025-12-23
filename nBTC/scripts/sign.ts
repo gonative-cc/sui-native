@@ -190,7 +190,7 @@ export async function requestSignatureForInput(
 					"0x4d157b7415a298c56ec2cb1dcab449525fa74aec17ddba376a83a7600f2062fc",
 				requestId: r,
 				inputIdx: input_idx,
-				nbtcPublicSignature: Array.from(nbtcPublicSignature),
+				nbtcPublicSign: Array.from(nbtcPublicSignature),
 				unverifiedPresign: unverifiedPresignCap,
 				sessionIdentifier: ikaTx.createSessionIdentifier(),
 				paymentIka: ikaCoin,
