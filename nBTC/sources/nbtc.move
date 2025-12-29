@@ -613,7 +613,9 @@ public(package) fun update_redeem_utxo_and_burn(
     r.move_to_confirmed_status(redeem_id, tx_id);
 }
 
-public fun validate_signature(
+/// Try to read sig from dwallet and save it in the inputs store.
+/// Fails if the sig is not available. Validation is left on the Ika side.
+public fun record_signature(
     contract: &mut NbtcContract,
     dwallet_coordinator: &DWalletCoordinator,
     redeem_id: u64,
@@ -628,7 +630,7 @@ public fun validate_signature(
     let r = &mut contract.redeem_requests[redeem_id];
     assert!(!r.has_signature(input_id), EInputAlreadyUsed);
 
-    r.validate_signature(dwallet_coordinator, &contract.storage, input_id, sign_id);
+    r.record_signature(dwallet_coordinator, &contract.storage, input_id, sign_id);
 
     let is_fully_signed = r.status().is_signed();
     event::emit(RedeemSigCreatedEvent {
