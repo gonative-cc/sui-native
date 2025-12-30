@@ -43,7 +43,7 @@ For information on deployed packages and object IDs on testnet/mainnet, please s
 classDiagram
     class NbtcContract {
         +confirm_redeem(light_client: LightClient, redeem_id: u64, tx_bytes: vector_u8, proof: vector_vector_u8, height: u64, tx_index: u64)
-        +validate_signature(dwallet_coordinator: DWalletCoordinator, redeem_id: u64)
+        +record_signature(dwallet_coordinator: DWalletCoordinator, redeem_id: u64)
         +redeem(redeem_id: u64): u64
         +update_redeem_utxo_and_burn(redeem_id: u64, tx_id: vector_u8, tx: Transaction)
         +config(): NbtcConfig
