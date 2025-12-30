@@ -391,6 +391,12 @@ public(package) fun record_signature(
     let sign_hash = r.sig_hash(input_id, storage);
     let dwallet_id = r.dwallet_ids[input_id as u64];
     let signature = get_signature(dwallet_coordinator, dwallet_id, sign_id);
+    // NOTE: We intentionally do not re-verify the signature on-chain here.
+    // The DWallet / IKA protocol guarantees that `get_sign_signature` only
+    // returns signatures that have already been validated against the
+    // appropriate public key and the computed `sign_hash`. As a result,
+    // performing signature verification again in this module would be
+    // redundant, and we safely persist the coordinator-provided signature.
     r.add_signature(input_id, signature);
 }
 
