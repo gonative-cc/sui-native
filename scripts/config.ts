@@ -2,7 +2,7 @@ import "dotenv/config";
 import { readFileSync } from "fs";
 import { join } from "path";
 import * as toml from "smol-toml";
-import { $ } from "zx";
+import { getActiveNetwork } from "./utils";
 
 const INDEXER_URL = process.env.INDEXER_URL || "http://localhost:8080/regtest";
 
@@ -69,11 +69,6 @@ export async function fetchHeadersByHeight(startHeight: number, count: number): 
 	}
 
 	return headers;
-}
-
-export async function getActiveNetwork(): Promise<"mainnet" | "testnet" | "devnet" | "localnet"> {
-	const output = await $`sui client active-env`.quiet();
-	return output.stdout.trim() as "mainnet" | "testnet" | "devnet" | "localnet";
 }
 
 export async function generateConfig(startHeight: number = 0, count: number = 11): Promise<LightClientConfig> {
