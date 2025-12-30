@@ -40,12 +40,12 @@ The deployment process saves state to `deploy-information.json` in the project r
 }
 ```
 
-### Reset Deployment
+### Clean Deployment
 
 To start with a fresh deployment:
 
 ```bash
-bun run deploy:reset
+bun run deploy:clean
 bun run deploy-nbtc
 ```
 
