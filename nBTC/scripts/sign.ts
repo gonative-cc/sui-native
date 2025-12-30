@@ -234,7 +234,7 @@ export async function verifySignature(
 ) {
 	const tx = new Transaction();
 	tx.add(
-		nBTCContractModule.validateSignature({
+		nBTCContractModule.recordSignature({
 			arguments: {
 				contract: config.nbtc,
 				dwalletCoordinator:
