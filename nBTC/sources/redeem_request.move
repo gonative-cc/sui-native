@@ -379,7 +379,7 @@ public fun utxo_at(r: &RedeemRequest, i: u32, storage: &Storage): &Utxo {
 
 public fun fee(r: &RedeemRequest): u64 { r.fee }
 
-public(package) fun validate_signature(
+public(package) fun record_signature(
     r: &mut RedeemRequest,
     dwallet_coordinator: &DWalletCoordinator,
     storage: &Storage,

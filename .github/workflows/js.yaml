@@ -41,7 +41,7 @@ jobs:
       - name: eslint
         run: "bun run lint"
 
-      - name: gents
+      - name: generate-ts
         run: "bun run generate-ts"
 
       - name: typecheck
@@ -49,4 +49,3 @@ jobs:
 
       - name: test
         run: "bun run test"
-

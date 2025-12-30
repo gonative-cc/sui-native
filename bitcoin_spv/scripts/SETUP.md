@@ -1,60 +1,57 @@
 # Light Client Initializer
 
-This script initializes a Bitcoin SPV light client on the Sui network using parameters from a `.env` file.
+This script initializes a Bitcoin SPV light client on Sui network.
 
 ## Setup
 
-**Requirements:** Node.js, Sui CLI.
+1. Install dependencies:
 
 ```bash
-npm install
+bun install
 ```
 
-## Usage
+1. Publish packages:
 
-1.  **Publish the Sui package** to your target network and copy the resulting `Package ID`.
-
-    ```bash
-    sui client publish
-    ```
-
-2.  **Configure your environment.** Create a `.env` file (see the example below) and populate it. Ensure the `SPV_PACKAGE_ID`, `PARSER_PACKAGE_ID` and `NETWORK` match the publish output.
-
-3.  **Run the script** to create the light client object on-chain.
-
-    ```bash
-    bun new_light_client.js
-    ```
-
----
-
-## `.env` example
-
-```dotenv
-# Sui wallet mnemonic
-MNEMONIC='word1 word2 word3 ...'
-
-# ID of the deployed light client package
-SPV_PACKAGE_ID='0x...'
-
-# ID of the deployed bitcoin parser package
-PARSER_PACKAGE_ID='0x...'
-
-# Sui network alias ('mainnet', 'testnet', 'devnet', 'localnet')
-NETWORK='testnet'
-
-# Comma-separated list of hex-encoded Bitcoin block headers
-HEADERS='0xheader1,0xheader2,...'
-
-# Bitcoin network identifier (0:mainnet, 1:testnet, 2:regtest)
-BTC_NETWORK=2
-
-# Starting block height
-BTC_HEIGHT=0
-
-# Initial parent chain work
-PARENT_CHAIN_WORK=0
-
-# Confirmation depth requirement. Confirmation depth is inclusive. Meaning the block that the transaction is included in is already the first confirmation.
-CONFIRMATION_DEPTH=3
+```bash
+sui client publish
 ```
+
+1. Edit `config.ts`:
+   - Replace package IDs with your deployed package IDs
+   - Update network settings
+   - Replace headers with your trusted Bitcoin block headers
+
+1. Create `.env` with your wallet credentials:
+
+```env
+MNEMONIC='your mnemonic here'
+# or
+ENCODE_SK='base64-encoded private key'
+```
+
+1. Run the script:
+
+```bash
+bun run new_light_client.ts
+```
+
+## Configuration
+
+Edit the `getLightClientConfig()` function in `config.ts`:
+
+| Field                   | Description                                                 | Example            |
+| ----------------------- | ----------------------------------------------------------- | ------------------ |
+| **spvPackageId**        | Deployed package ID for Bitcoin SPV contract                | "0x123..."         |
+| **bitcoinLibPackageId** | Deployed package ID for Bitcoin library                     | "0x456..."         |
+| **network**             | Sui network to deploy to                                    | "testnet"          |
+| **headers**             | Array of trusted Bitcoin block headers (at least 11 blocks) | ["0x...", "0x..."] |
+| **btcNetwork**          | Bitcoin network (0=mainnet, 1=testnet, 2=regtest)           | 2                  |
+| **btcHeight**           | Starting block height                                       | 0                  |
+| **parentChainWork**     | Parent chain work (hex)                                     | "0"                |
+| **confirmationDepth**   | Required confirmations                                      | 3                  |
+
+## Notes
+
+- Only MNEMONIC or ENCODE_SK need to be in .env file
+- All other configuration is in config.ts for better type safety
+- Configuration is validated before deployment
