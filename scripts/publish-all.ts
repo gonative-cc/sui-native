@@ -9,6 +9,7 @@ import * as toml from "smol-toml";
 const SCRIPT_DIR = fileURLToPath(new URL(".", import.meta.url));
 const PROJECT_ROOT = join(SCRIPT_DIR, "..");
 
+import "dotenv/config";
 import { getPublishedPackageId } from "./config";
 
 async function getActiveNetwork(): Promise<Network> {
@@ -44,17 +45,30 @@ function formatDependenciesInline(parsed: any): string {
   return tomlLines.join("\n").trim();
 }
 
-function updateIkaCoordinator(network: Network): void {
+function updateNBTCToml(network: Network): void {
   const nbtctomlPath = join(PROJECT_ROOT, "nBTC", "Move.toml");
   const config = getNetworkConfig(network);
   const coordinatorId = config.objects.ikaDWalletCoordinator.objectID;
 
   const parsed = toml.parse(readFileSync(nbtctomlPath, "utf-8")) as any;
+
+  // Update addresses from .env
+  if (process.env.BITCOIN_LC) {
+    parsed.addresses.bitcoin_lc = process.env.BITCOIN_LC;
+  }
+  if (process.env.FALLBACK_ADDR) {
+    parsed.addresses.fallback_addr = process.env.FALLBACK_ADDR;
+  }
+
+  // Update ika_coordinator from SDK
   parsed.addresses.ika_coordinator = coordinatorId;
 
   const tomlString = formatDependenciesInline(parsed);
   writeFileSync(nbtctomlPath, tomlString);
-  console.log(`Updated ika_coordinator from SDK: ${coordinatorId}`);
+  console.log(`Updated nBTC addresses:`);
+  console.log(`  bitcoin_lc: ${parsed.addresses.bitcoin_lc}`);
+  console.log(`  fallback_addr: ${parsed.addresses.fallback_addr}`);
+  console.log(`  ika_coordinator: ${parsed.addresses.ika_coordinator}`);
 }
 
 async function publishPackage(packageName: string, network: string, force: boolean): Promise<void> {
@@ -70,7 +84,7 @@ async function publishPackage(packageName: string, network: string, force: boole
   console.log(`Publishing ${packageName}${force ? " (forced)" : ""}...`);
 
   if (packageName === "nBTC") {
-    updateIkaCoordinator(network as Network);
+    updateNBTCToml(network as Network);
   }
 
   $.cwd = packagePath;
