@@ -7,11 +7,7 @@ import { getPublishedPackageId } from "./config";
 import { PROJECT_ROOT, getActiveNetwork, updateNBTCToml } from "./utils";
 import type { SuiTransactionBlockResponse } from "@mysten/sui/client";
 
-const Packages = [
-	"bitcoin_lib",
-	"bitcoin_spv",
-	"nBTC",
-];
+const Packages = ["bitcoin_lib", "bitcoin_spv", "nBTC"];
 
 export async function publishPackage(
 	packageName: string,
@@ -48,7 +44,9 @@ async function publishWithDependencies(
 ): Promise<void> {
 	const packageIndex = Packages.indexOf(packageName);
 	if (packageIndex === -1) {
-		throw new Error(`Unknown package: ${packageName}. Available packages: ${Packages.join(", ")}`);
+		throw new Error(
+			`Unknown package: ${packageName}. Available packages: ${Packages.join(", ")}`,
+		);
 	}
 
 	for (let i = 0; i < packageIndex; i++) {
@@ -79,9 +77,10 @@ async function main(): Promise<void> {
 
 	try {
 		for (const pkg of packagesToPublish) {
-			const prePublish = pkg === "nBTC" && !process.env.BITCOIN_LC && !process.env.FALLBACK_ADDR
-				? () => updateNBTCToml(network)
-				: undefined;
+			const prePublish =
+				pkg === "nBTC" && !process.env.BITCOIN_LC && !process.env.FALLBACK_ADDR
+					? () => updateNBTCToml(network)
+					: undefined;
 
 			await publishWithDependencies(pkg, network, force, forceAll, prePublish);
 		}

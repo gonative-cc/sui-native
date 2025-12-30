@@ -38,11 +38,7 @@ export function updateNBTCToml(network: Network): void {
 	const config = getNetworkConfig(network);
 	const coordinatorId = config.objects.ikaDWalletCoordinator.objectID;
 
-	updateNBTCTomlWithValues(
-		process.env.BITCOIN_LC,
-		process.env.FALLBACK_ADDR,
-		coordinatorId
-	);
+	updateNBTCTomlWithValues(process.env.BITCOIN_LC, process.env.FALLBACK_ADDR, coordinatorId);
 }
 
 export function updateNBTCTomlWithValues(
@@ -55,20 +51,23 @@ export function updateNBTCTomlWithValues(
 	let tomlContent = readFileSync(nbtctomlPath, "utf-8");
 
 	if (bitcoin_lc) {
-		tomlContent = tomlContent.replace(/bitcoin_lc\s*=\s*"([^"]*)"/, `bitcoin_lc = "${bitcoin_lc}"`);
+		tomlContent = tomlContent.replace(
+			/bitcoin_lc\s*=\s*"([^"]*)"/,
+			`bitcoin_lc = "${bitcoin_lc}"`,
+		);
 	}
 	if (fallback_addr) {
-		tomlContent = tomlContent.replace(/fallback_addr\s*=\s*"([^"]*)"/, `fallback_addr = "${fallback_addr}"`);
+		tomlContent = tomlContent.replace(
+			/fallback_addr\s*=\s*"([^"]*)"/,
+			`fallback_addr = "${fallback_addr}"`,
+		);
 	}
 	if (ika_coordinator) {
-		tomlContent = tomlContent.replace(/ika_coordinator\s*=\s*"([^"]*)"/, `ika_coordinator = "${ika_coordinator}"`);
+		tomlContent = tomlContent.replace(
+			/ika_coordinator\s*=\s*"([^"]*)"/,
+			`ika_coordinator = "${ika_coordinator}"`,
+		);
 	}
 
 	writeFileSync(nbtctomlPath, tomlContent);
-
-	const parsed = toml.parse(tomlContent) as any;
-	console.error(`Updated nBTC addresses:`);
-	console.error(`  bitcoin_lc: ${parsed.addresses.bitcoin_lc}`);
-	console.error(`  fallback_addr: ${parsed.addresses.fallback_addr}`);
-	console.error(`  ika_coordinator: ${parsed.addresses.ika_coordinator}`);
 }

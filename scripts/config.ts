@@ -59,19 +59,24 @@ export async function fetchHeadersByHeight(startHeight: number, count: number): 
 	for (let i = 0; i < count; i++) {
 		const height = startHeight + i;
 		if (height > tipHeight) {
-			console.error(`Cannot fetch block at height ${height} (beyond tip ${tipHeight})`);
+			console.log(`Cannot fetch block at height ${height} (beyond tip ${tipHeight})`);
 			break;
 		}
 		const blockHash = await getBlockByHeight(height);
 		const header = await fetchBlockHeader(blockHash);
 		headers.push(header);
-		console.error(`Fetched block ${height}: ${header}`);
+		if (i === 0 || i === count - 1 || (i + 1) % 5 === 0) {
+			console.log(`Fetched block ${height}/${tipHeight}`);
+		}
 	}
 
 	return headers;
 }
 
-export async function generateConfig(startHeight: number = 0, count: number = 11): Promise<LightClientConfig> {
+export async function generateConfig(
+	startHeight: number = 0,
+	count: number = 11,
+): Promise<LightClientConfig> {
 	const network = await getActiveNetwork();
 	const bitcoinLibId = getPublishedPackageId("bitcoin_lib", network);
 	const bitcoinSpvId = getPublishedPackageId("bitcoin_spv", network);
@@ -80,10 +85,10 @@ export async function generateConfig(startHeight: number = 0, count: number = 11
 		throw new Error(`Could not find published package IDs for network ${network}`);
 	}
 
-	console.error(`Network: ${network}`);
-	console.error(`bitcoin_lib: ${bitcoinLibId}`);
-	console.error(`bitcoin_spv: ${bitcoinSpvId}`);
-	console.error(`\nFetching ${count} blocks starting from height ${startHeight}...`);
+	console.log(`Network: ${network}`);
+	console.log(`bitcoin_lib: ${bitcoinLibId}`);
+	console.log(`bitcoin_spv: ${bitcoinSpvId}`);
+	console.log(`\nFetching ${count} blocks starting from height ${startHeight}...`);
 
 	const headers = await fetchHeadersByHeight(startHeight, count);
 

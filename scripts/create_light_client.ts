@@ -36,6 +36,7 @@ export function createLightClient(config: LightClientConfig, tx: Transaction): T
 export async function createLightClientAndGetId(
 	config: LightClientConfig,
 	signer: Ed25519Keypair,
+	verbose: boolean = true,
 ): Promise<{ lightClientId: string; digest: string }> {
 	const network = config.network as "mainnet" | "testnet" | "devnet" | "localnet";
 	const client = new SuiClient({ url: getFullnodeUrl(network) });
@@ -43,51 +44,53 @@ export async function createLightClientAndGetId(
 	const tx = new Transaction();
 	createLightClient(config, tx);
 
-	console.error("Submitting light client transaction...");
+	if (verbose) console.log("Submitting light client transaction...");
 	const lcResult = await client.signAndExecuteTransaction({
 		transaction: tx,
 		signer,
 		options: { showEffects: true, showEvents: true, showObjectChanges: true },
 	});
 
-	console.error("Waiting for confirmation...");
+	if (verbose) console.log("Waiting for confirmation...");
 	await client.waitForTransaction({ digest: lcResult.digest });
 
 	if (lcResult.effects?.status?.status !== "success") {
 		throw new Error(`Light client creation failed: ${lcResult.effects?.status}`);
 	}
 
-	const lightClientEvent = lcResult.events?.find((event: any) =>
-		event.type.includes("LightClientCreated") || event.type.includes("LightClient")
+	const lightClientEvent = lcResult.events?.find(
+		(event: any) =>
+			event.type.includes("LightClientCreated") || event.type.includes("LightClient"),
 	);
 
 	if (!lightClientEvent) {
 		throw new Error("LightClient event not found");
 	}
 
-	const lightClientId = (lightClientEvent as any).parsedJson?.light_client_id || (lightClientEvent as any).parsedJson?.id;
+	const lightClientId =
+		(lightClientEvent as any).parsedJson?.light_client_id ||
+		(lightClientEvent as any).parsedJson?.id;
 
 	return { lightClientId, digest: lcResult.digest };
 }
 
 async function main(): Promise<void> {
-	console.error(`Using indexer: ${process.env.INDEXER_URL || "http://localhost:8080/regtest"}\n`);
+	console.log(`Using indexer: ${process.env.INDEXER_URL || "http://localhost:8080/regtest"}\n`);
 	const config = await generateConfig();
 	const network = config.network as "mainnet" | "testnet" | "devnet" | "localnet";
 
-	console.error(`Network: ${network}`);
-	console.error(`SPV Package: ${config.spvPackageId}`);
-	console.error(`Bitcoin Lib Package: ${config.bitcoinLibPackageId}`);
-	console.error(`Headers: ${config.headers.length} blocks`);
-	console.error(`Starting Height: ${config.btcHeight}`);
+	console.log(`Network: ${network}`);
+	console.log(`SPV Package: ${config.spvPackageId}`);
+	console.log(`Bitcoin Lib Package: ${config.bitcoinLibPackageId}`);
+	console.log(`Headers: ${config.headers.length} blocks`);
+	console.log(`Starting Height: ${config.btcHeight}`);
 
 	const signer = loadSigner();
 
-	console.error("\nSubmitting transaction...");
+	console.log("\nSubmitting transaction...");
 	const result = await createLightClientAndGetId(config, signer);
 
-	console.log(`\n✅ Transaction executed: ${result.digest}`);
-	console.log(`LightClient Event:`, JSON.stringify(result.lightClientId, null, 2));
+	console.log(`Transaction executed: ${result.digest}`);
 }
 
 if (import.meta.main) {
