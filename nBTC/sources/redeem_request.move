@@ -23,8 +23,6 @@ use fun vector_slice as vector.slice;
 const ERedeemTxSigningNotCompleted: vector<u8> =
     b"The signature for the redeem has not been completed";
 #[error]
-const ESignatureInValid: vector<u8> = b"signature invalid for this input";
-#[error]
 const EInvalidSignatureId: vector<u8> = b"invalid signature id for redeem request";
 #[error]
 const EInvalidIkaECDSALength: vector<u8> = b"invalid ecdsa signature length from ika format";
@@ -382,13 +380,11 @@ public fun fee(r: &RedeemRequest): u64 { r.fee }
 public(package) fun record_signature(
     r: &mut RedeemRequest,
     dwallet_coordinator: &DWalletCoordinator,
-    storage: &Storage,
     input_id: u32,
     sign_id: ID,
 ) {
     // TODO: ensure we get right spend key, because this spend key can also inactive_spend_key
     assert!(r.sign_ids.contains(sign_id), EInvalidSignatureId);
-    let sign_hash = r.sig_hash(input_id, storage);
     let dwallet_id = r.dwallet_ids[input_id as u64];
     let signature = get_signature(dwallet_coordinator, dwallet_id, sign_id);
     // NOTE: We intentionally do not re-verify the signature on-chain here.
