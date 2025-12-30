@@ -633,7 +633,7 @@ public fun record_signature(
     let r = &mut contract.redeem_requests[redeem_id];
     assert!(!r.has_signature(input_id), EInputAlreadyUsed);
 
-    r.record_signature(dwallet_coordinator, &contract.storage, input_id, sign_id);
+    r.record_signature(dwallet_coordinator, input_id, sign_id);
 
     let is_fully_signed = r.status().is_signed();
     event::emit(RedeemSigCreatedEvent {
