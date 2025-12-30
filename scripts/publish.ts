@@ -12,7 +12,12 @@ const Packages = [
 	"nBTC",
 ];
 
-async function publishPackage(packageName: string, network: Network, force: boolean): Promise<void> {
+export async function publishPackage(
+	packageName: string,
+	network: Network,
+	force: boolean,
+	prePublish?: () => void | Promise<void>,
+): Promise<void> {
 	if (!force) {
 		const publishedId = getPublishedPackageId(packageName, network);
 		if (publishedId) {
@@ -24,8 +29,8 @@ async function publishPackage(packageName: string, network: Network, force: bool
 	const packagePath = join(PROJECT_ROOT, packageName);
 	console.log(`Publishing ${packageName}${force ? " (republish)" : ""}...`);
 
-	if (packageName === "nBTC") {
-		updateNBTCToml(network);
+	if (prePublish) {
+		await prePublish();
 	}
 
 	$.cwd = packagePath;
@@ -36,7 +41,8 @@ async function publishWithDependencies(
 	packageName: string,
 	network: Network,
 	force: boolean,
-	forceAll: boolean
+	forceAll: boolean,
+	prePublish?: () => void | Promise<void>,
 ): Promise<void> {
 	const packageIndex = Packages.indexOf(packageName);
 	if (packageIndex === -1) {
@@ -54,7 +60,7 @@ async function publishWithDependencies(
 		}
 	}
 
-	await publishPackage(packageName, network, force);
+	await publishPackage(packageName, network, force, prePublish);
 }
 
 async function main(): Promise<void> {
@@ -71,7 +77,11 @@ async function main(): Promise<void> {
 
 	try {
 		for (const pkg of packagesToPublish) {
-			await publishWithDependencies(pkg, network, force, forceAll);
+			const prePublish = pkg === "nBTC" && !process.env.BITCOIN_LC && !process.env.FALLBACK_ADDR
+				? () => updateNBTCToml(network)
+				: undefined;
+
+			await publishWithDependencies(pkg, network, force, forceAll, prePublish);
 		}
 		console.log("Publishing completed");
 	} catch (error) {
@@ -80,4 +90,6 @@ async function main(): Promise<void> {
 	}
 }
 
-main();
+if (import.meta.main) {
+	main();
+}
