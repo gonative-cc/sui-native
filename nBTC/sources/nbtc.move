@@ -85,6 +85,8 @@ const EInvalidDWalletCoordinator: vector<u8> = b"Invalid Dwallet coordinator";
 #[error]
 const ENotSigned: vector<u8> = b"redeem request is not signed";
 #[error]
+const EAlreadyConfirmed: vector<u8> = b"redeem request already confirmed";
+#[error]
 const ERedeemTxNotConfirmed: vector<u8> = b"Bitcoin redeem tx not confirmed via SPV";
 #[error]
 const EInvalidChangeRecipient: vector<u8> = b"Invalid change recipient";
@@ -561,6 +563,7 @@ public fun confirm_redeem(
     assert!(provided_lc_id == cfg.light_client_id(), EUntrustedLightClient);
 
     let r = &contract.redeem_requests[redeem_id];
+    assert!(!r.status().is_confirmed(), EAlreadyConfirmed);
     assert!(r.status().is_signed(), ENotSigned);
 
     let expected_tx_bytes = r.raw_signed_tx(&contract.storage);

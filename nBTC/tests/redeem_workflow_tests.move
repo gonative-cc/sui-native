@@ -392,7 +392,7 @@ fun test_confirm_redeem_no_change() {
     scenario.end();
 }
 
-#[test, expected_failure(abort_code = nbtc::nbtc::ENotSigned)]
+#[test, expected_failure(abort_code = nbtc::nbtc::EAlreadyConfirmed)]
 fun test_confirm_redeem_fails_when_already_confirmed() {
     let (mut lc, mut ctr, redeem_id, dwallet_id, mut scenario, clock) = setup_redeem_test(
         2500,
