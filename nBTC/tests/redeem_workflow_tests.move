@@ -391,3 +391,99 @@ fun test_confirm_redeem_no_change() {
     destroy(ctr);
     scenario.end();
 }
+
+#[test, expected_failure(abort_code = nbtc::nbtc::EAlreadyConfirmed)]
+fun test_confirm_redeem_fails_when_already_confirmed() {
+    let (mut lc, mut ctr, redeem_id, dwallet_id, mut scenario, clock) = setup_redeem_test(
+        2500,
+        1000,
+        NBTC_P2WPKH_SCRIPT,
+        NBTC_PUBLIC_KEY,
+        true,
+    );
+
+    let r = ctr.redeem_request(redeem_id);
+    let tx_bytes = r.raw_signed_tx(ctr.storage());
+    let tx = tx::decode(tx_bytes);
+    let tx_id = tx.tx_id();
+
+    let parent_hash = lc.head_hash();
+    let header = bitcoin_lib::header::create_header_for_test(
+        x"00000020",
+        parent_hash,
+        tx_id,
+        x"132ae858",
+        x"ffff7f20",
+        x"01000000",
+    );
+    lc.insert_headers(vector[header]);
+
+    ctr.confirm_redeem(&lc, redeem_id, vector[], 1, 0);
+    ctr.confirm_redeem(&lc, redeem_id, vector[], 1, 0);
+    abort
+}
+
+#[test]
+fun test_confirm_redeem_with_multiple_utxos() {
+    let (mut lc, mut ctr, redeem_id, dwallet_id, mut scenario, mut clock) = setup_redeem_test(
+        1000,
+        1000,
+        NBTC_P2WPKH_SCRIPT,
+        NBTC_PUBLIC_KEY,
+        false,
+    );
+
+    let utxo_2 = new_utxo(
+        x"02ce677fd511851bb6cdacebed863d12dfd231d810e8e9fcba6e791001adf3a6",
+        1,
+        800,
+    );
+    ctr.add_utxo_for_test(1, utxo_2);
+
+    ctr.propose_utxos(redeem_id, vector[0, 1], vector[dwallet_id, dwallet_id], &clock);
+    clock.increment_for_testing(ctr.redeem_duration() + 1);
+    ctr.solve_redeem_request(redeem_id, &clock);
+
+    let request_mut = ctr.redeem_request_mut(redeem_id);
+    let mock_sig =
+        x"0063db5a24fec209152863fb251cc349a7030220bf4ca6e6296002d46d4c3651a55a0b4b5a520fc42b91b8a888351c1c42bd2864aba2c398007405e957dea77bb1";
+    request_mut.update_to_signed_for_test(vector[mock_sig, mock_sig]);
+
+    let r = ctr.redeem_request(redeem_id);
+    let tx_bytes = r.raw_signed_tx(ctr.storage());
+    let tx = tx::decode(tx_bytes);
+    let tx_id = tx.tx_id();
+
+    let parent_hash = lc.head_hash();
+    let header = bitcoin_lib::header::create_header_for_test(
+        x"00000020",
+        parent_hash,
+        tx_id,
+        x"132ae858",
+        x"ffff7f20",
+        x"00010000",
+    );
+    lc.insert_headers(vector[header]);
+
+    let supply_before = ctr.total_supply();
+    ctr.confirm_redeem(&lc, redeem_id, vector[], 1, 0);
+    let supply_after = ctr.total_supply();
+    assert_eq!(supply_after, supply_before - 1000);
+
+    let utxo_store = ctr.borrow_utxo_map_for_test();
+    assert_eq!(utxo_store.contains(utxo_key(0, dwallet_id)), false);
+    assert_eq!(utxo_store.contains(utxo_key(1, dwallet_id)), false);
+
+    let active_dwallet = ctr.active_dwallet_id();
+    assert_eq!(utxo_store.contains(utxo_key(2, active_dwallet)), true);
+    let change_utxo = utxo_store.get_utxo(2, active_dwallet);
+    assert_eq!(change_utxo.value(), 800);
+
+    let request = ctr.redeem_request(redeem_id);
+    assert_eq!(request.status().is_confirmed(), true);
+
+    clock.destroy_for_testing();
+    destroy(lc);
+    destroy(ctr);
+    scenario.end();
+}
