@@ -419,9 +419,7 @@ fun test_confirm_redeem_fails_when_already_confirmed() {
     lc.insert_headers(vector[header]);
 
     ctr.confirm_redeem(&lc, redeem_id, vector[], 1, 0);
-
     ctr.confirm_redeem(&lc, redeem_id, vector[], 1, 0);
-
     abort
 }
 
