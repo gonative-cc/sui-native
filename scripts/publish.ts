@@ -5,6 +5,7 @@ import { Network } from "@ika.xyz/sdk";
 import "dotenv/config";
 import { getPublishedPackageId } from "./config";
 import { PROJECT_ROOT, getActiveNetwork, updateNBTCToml } from "./utils";
+import type { SuiTransactionBlockResponse } from "@mysten/sui/client";
 
 const Packages = [
 	"bitcoin_lib",
@@ -17,12 +18,12 @@ export async function publishPackage(
 	network: Network,
 	force: boolean,
 	prePublish?: () => void | Promise<void>,
-): Promise<void> {
+): Promise<SuiTransactionBlockResponse | null> {
 	if (!force) {
 		const publishedId = getPublishedPackageId(packageName, network);
 		if (publishedId) {
 			console.log(`${packageName} already published at ${publishedId}`);
-			return;
+			return null;
 		}
 	}
 
@@ -34,7 +35,8 @@ export async function publishPackage(
 	}
 
 	$.cwd = packagePath;
-	await $`sui client publish --gas-budget 1000000000`;
+	const result = await $`sui client publish --gas-budget 1000000000 --json`;
+	return JSON.parse(result.stdout) as SuiTransactionBlockResponse;
 }
 
 async function publishWithDependencies(
