@@ -14,7 +14,7 @@
 		"format:move-all": "prettier-move --config .prettier-move.json -w **/*.move '!bitcoin-regtest/**'",
 		"test": "bun test",
 		"generate-ts": "cd sdk && bun run sui-ts-codegen generate",
-		"publish": "bun run scripts/publish-all.ts"
+		"publish": "bun run scripts/publish.ts"
 	},
 	"dependencies": {
 		"@ika.xyz/sdk": "^0.2.7",
