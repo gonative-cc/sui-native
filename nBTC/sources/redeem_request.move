@@ -391,15 +391,6 @@ public(package) fun record_signature(
     let sign_hash = r.sig_hash(input_id, storage);
     let dwallet_id = r.dwallet_ids[input_id as u64];
     let signature = get_signature(dwallet_coordinator, dwallet_id, sign_id);
-    let pk = storage.dwallet_metadata(dwallet_id).public_key();
-    let is_valid = sui::ecdsa_k1::secp256k1_verify(
-        &vector_slice(&signature, 1, 65),
-        &pk,
-        &sign_hash,
-        SHA256 as u8,
-    );
-
-    assert!(is_valid, ESignatureInValid);
     r.add_signature(input_id, signature);
 }
 
