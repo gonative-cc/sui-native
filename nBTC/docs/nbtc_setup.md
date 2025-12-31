@@ -61,7 +61,7 @@ For manual nBTC deployment only:
 - `BITCOIN_LC` - Light client object ID
 - `FALLBACK_ADDR` - Fallback Sui address
 
-Note: IKA coordinator is automatically retrieved from SDK.
+Note: IKA coordinator is automatically retrieved from the SDK.
 
 ---
 
