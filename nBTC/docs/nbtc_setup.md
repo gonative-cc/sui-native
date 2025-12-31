@@ -51,7 +51,7 @@ bun run deploy-nbtc
 
 ## Environment Variables
 
-Copy `.env.example` to `.env` in project root:
+Copy `.env.example` to `.env` in the project root:
 
 - `MNEMONIC` or `ENCODE_SK` - Sui wallet credentials (one required)
 - `INDEXER_URL` - Bitcoin indexer URL
