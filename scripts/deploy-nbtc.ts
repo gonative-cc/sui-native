@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 import "dotenv/config";
-import { generateConfig } from "./config";
+import { generateConfig, getPublishedPackageId } from "./config";
 import { loadSigner, updateNBTCTomlWithValues, getActiveNetwork, PROJECT_ROOT } from "./utils";
 import { createLightClientAndGetId } from "./create_light_client";
 import { publishPackage } from "./publish";
@@ -39,7 +39,6 @@ interface DeployInformation {
 async function main(): Promise<void> {
 	console.log("Starting nBTC deployment...\n");
 
-	const config = await generateConfig();
 	const network = await getActiveNetwork();
 
 	let deployInfo: DeployInformation = {};
@@ -49,6 +48,24 @@ async function main(): Promise<void> {
 	} catch (error) {
 		// File doesn't exist, start fresh
 	}
+
+	// Check and publish bitcoin_lib if needed
+	if (!deployInfo.bitcoin_lib_pkg) {
+		console.log("bitcoin_lib not in deploy-info, deploying...");
+		await publishPackage("bitcoin_lib", network, false);
+	} else {
+		console.log(`Using existing bitcoin_lib from deploy-info: ${deployInfo.bitcoin_lib_pkg}`);
+	}
+
+	// Check and publish bitcoin_spv if needed
+	if (!deployInfo.lc_pkg) {
+		console.log("bitcoin_spv not in deploy-info, deploying...");
+		await publishPackage("bitcoin_spv", network, false);
+	} else {
+		console.log(`Using existing bitcoin_spv from deploy-info: ${deployInfo.lc_pkg}`);
+	}
+
+	const config = await generateConfig();
 
 	if (deployInfo.sui_network && deployInfo.sui_network !== network) {
 		throw new Error(
@@ -97,12 +114,10 @@ async function main(): Promise<void> {
 		}
 
 		const objectChanges: SuiObjectChange[] = publishResult.objectChanges ?? [];
-
 		const publishedPackage = objectChanges.find(
 			(c): c is SuiObjectChangePublished => c.type === "published",
 		);
 		nbtcPkg = publishedPackage?.packageId;
-
 		const createdChanges = objectChanges.filter(
 			(c): c is SuiObjectChangeCreated => c.type === "created",
 		);
@@ -131,14 +146,12 @@ async function main(): Promise<void> {
 		dwalletId = dWallet.id.id;
 
 		const { addr: btcAddress } = await getDwalletMetadata(dWallet);
-
 		const nbtcConfig: NbtcConfig = {
 			nbtc: nbtcContract!,
 			dwalletId,
 			adminCap: nbtcAdminCap!,
 			packageId: nbtcPkg!,
 		};
-
 		await initialization(dwalletId, nbtcConfig);
 
 		deployInfo.dwallet_id = dwalletId;

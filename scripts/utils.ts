@@ -9,8 +9,13 @@ import * as toml from "smol-toml";
 export const SCRIPT_DIR = new URL(".", import.meta.url).pathname;
 export const PROJECT_ROOT = join(SCRIPT_DIR, "..");
 
+export function getSuiCommand(): string {
+	return process.env.SUI_PATH || "sui";
+}
+
 export async function getActiveNetwork(): Promise<Network> {
-	const output = await $`sui client active-env`.quiet();
+	const suiCommand = getSuiCommand();
+	const output = await $`${suiCommand} client active-env`.quiet();
 	return output.stdout.trim() as Network;
 }
 

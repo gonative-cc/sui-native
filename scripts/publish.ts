@@ -4,7 +4,7 @@ import { join } from "path";
 import { Network } from "@ika.xyz/sdk";
 import "dotenv/config";
 import { getPublishedPackageId } from "./config";
-import { PROJECT_ROOT, getActiveNetwork, updateNBTCToml } from "./utils";
+import { PROJECT_ROOT, getActiveNetwork, updateNBTCToml, getSuiCommand } from "./utils";
 import type { SuiTransactionBlockResponse } from "@mysten/sui/client";
 
 const Packages = ["bitcoin_lib", "bitcoin_spv", "nBTC"];
@@ -31,7 +31,8 @@ export async function publishPackage(
 	}
 
 	$.cwd = packagePath;
-	const result = await $`sui client publish --gas-budget 1000000000 --json`;
+	const suiCommand = getSuiCommand();
+	const result = await $`${suiCommand} client publish --gas-budget 1000000000 --json`;
 	return JSON.parse(result.stdout) as SuiTransactionBlockResponse;
 }
 
