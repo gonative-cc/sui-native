@@ -20,7 +20,7 @@ import { nBTCContractModule } from "../../sdk/nBTC/src";
  * @returns A promise that resolves when the initialization transaction is executed successfully (no explicit return value).
  */
 export async function initialization(dwalletId: string, config: Config) {
-	const suiClient = createSuiClient();
+	const suiClient = createSuiClient(config.packageId);
 	const ikaClient = createIkaClient(suiClient);
 	await ikaClient.initialize();
 	const dWallet = await ikaClient.getDWalletInParticularState(dwalletId, "Active");

@@ -145,3 +145,4 @@ build
 esplora-regtest-data
 package_summaries
 generated
+deploy-information.json
