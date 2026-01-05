@@ -91,6 +91,7 @@ async function main(): Promise<void> {
 		bitcoinLibPkg = deployInfo.bitcoin_lib_pkg;
 	} else {
 		console.log("\nUsing existing light client");
+		bitcoinLibPkg = deployInfo.bitcoin_lib_pkg;
 	}
 
 	let nbtcContract: string | undefined;

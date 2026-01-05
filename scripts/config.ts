@@ -40,7 +40,7 @@ export async function getBlockByHeight(height: number): Promise<string> {
 	if (!response.ok) {
 		throw new Error(`Failed to fetch block at height ${height}: ${response.statusText}`);
 	}
-	return await response.text();
+	return response.text();
 }
 
 export async function getTipHeight(): Promise<number> {
