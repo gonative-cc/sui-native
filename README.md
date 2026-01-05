@@ -8,9 +8,11 @@
 Move packages for Native Bitcoin Chain Abstraction on Sui.
 Packages:
 
+- [Bitcoin Verifier, SPV](./bitcoin_spv/) - enhanced Bitcoin Light Client implementation.
 - [nBTC](./nBTC) - the synthetic 1-1 Bitcoin, fully permissionless, custodyless, and rightmost trust minimized.
 - [nBTC OTC](./nbtc_swap) - simple marketplace to buy nBTC with SUI.
 - [Bitcoin Executor](./bitcoin_executor) - trustless Bitcoin execution node on Sui (part of the Trustless Sui Bitcoin Node).
+- [nBTC Swap](./nbtc_swap/) - nBTC - SUI swap contract for testnet.
 
 ## Deployed objects & packages
 
