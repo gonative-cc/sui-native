@@ -549,7 +549,7 @@ public fun redeem(
     redeem_id
 }
 
-public fun confirm_redeem(
+public fun finalize_redeem(
     contract: &mut NbtcContract,
     light_client: &LightClient,
     redeem_id: u64,
@@ -571,14 +571,10 @@ public fun confirm_redeem(
     let tx_id = tx.tx_id();
     assert!(light_client.verify_tx(height, tx_id, proof, tx_index), ERedeemTxNotConfirmed);
 
-    contract.update_redeem_utxo_and_burn(redeem_id, &tx);
+    contract.burn_redeem_utxos(redeem_id, &tx);
 }
 
-public(package) fun update_redeem_utxo_and_burn(
-    contract: &mut NbtcContract,
-    redeem_id: u64,
-    tx: &Transaction,
-) {
+fun burn_redeem_utxos(contract: &mut NbtcContract, redeem_id: u64, tx: &Transaction) {
     let tx_id = tx.tx_id();
     let active_dwallet_id = contract.active_dwallet_id();
     let expected_nbtc_lockscript = contract.active_lockscript();

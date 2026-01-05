@@ -300,7 +300,7 @@ fun test_cannot_propose_overlapping_locked_utxos() {
 }
 
 #[test]
-fun test_confirm_redeem_burns_nbtc_and_removes_utxos() {
+fun test_finalize_redeem_burns_nbtc_and_removes_utxos() {
     let (mut lc, mut ctr, redeem_id, dwallet_id, scenario, clock) = setup_redeem_test(
         2500,
         1000,
@@ -325,7 +325,7 @@ fun test_confirm_redeem_burns_nbtc_and_removes_utxos() {
     lc.insert_headers(vector[header]);
 
     let supply_before = ctr.total_supply();
-    ctr.confirm_redeem(&lc, redeem_id, vector[], 1, 0);
+    ctr.finalize_redeem(&lc, redeem_id, vector[], 1, 0);
     let supply_after = ctr.total_supply();
     assert_eq!(supply_after, supply_before - 1000);
 
@@ -347,7 +347,7 @@ fun test_confirm_redeem_burns_nbtc_and_removes_utxos() {
 }
 
 #[test]
-fun test_confirm_redeem_no_change() {
+fun test_finalize_redeem_no_change() {
     let (mut lc, mut ctr, redeem_id, dwallet_id, scenario, clock) = setup_redeem_test(
         1000,
         1000,
@@ -373,7 +373,7 @@ fun test_confirm_redeem_no_change() {
     lc.insert_headers(vector[header]);
 
     let supply_before = ctr.total_supply();
-    ctr.confirm_redeem(&lc, redeem_id, vector[], 1, 0);
+    ctr.finalize_redeem(&lc, redeem_id, vector[], 1, 0);
     let supply_after = ctr.total_supply();
     assert_eq!(supply_after, supply_before - 1000);
 
@@ -393,8 +393,8 @@ fun test_confirm_redeem_no_change() {
 }
 
 #[test, expected_failure(abort_code = nbtc::nbtc::EAlreadyConfirmed)]
-fun test_confirm_redeem_fails_when_already_confirmed() {
-    let (mut lc, mut ctr, redeem_id, dwallet_id, mut scenario, clock) = setup_redeem_test(
+fun test_finalize_redeem_fails_when_already_confirmed() {
+    let (mut lc, mut ctr, redeem_id, _dwallet_id, _scenario, _clock) = setup_redeem_test(
         2500,
         1000,
         NBTC_P2WPKH_SCRIPT,
@@ -418,14 +418,14 @@ fun test_confirm_redeem_fails_when_already_confirmed() {
     );
     lc.insert_headers(vector[header]);
 
-    ctr.confirm_redeem(&lc, redeem_id, vector[], 1, 0);
-    ctr.confirm_redeem(&lc, redeem_id, vector[], 1, 0);
+    ctr.finalize_redeem(&lc, redeem_id, vector[], 1, 0);
+    ctr.finalize_redeem(&lc, redeem_id, vector[], 1, 0);
     abort
 }
 
 #[test]
-fun test_confirm_redeem_with_multiple_utxos() {
-    let (mut lc, mut ctr, redeem_id, dwallet_id, mut scenario, mut clock) = setup_redeem_test(
+fun test_finalize_redeem_with_multiple_utxos() {
+    let (mut lc, mut ctr, redeem_id, dwallet_id, scenario, mut clock) = setup_redeem_test(
         1000,
         1000,
         NBTC_P2WPKH_SCRIPT,
@@ -466,7 +466,7 @@ fun test_confirm_redeem_with_multiple_utxos() {
     lc.insert_headers(vector[header]);
 
     let supply_before = ctr.total_supply();
-    ctr.confirm_redeem(&lc, redeem_id, vector[], 1, 0);
+    ctr.finalize_redeem(&lc, redeem_id, vector[], 1, 0);
     let supply_after = ctr.total_supply();
     assert_eq!(supply_after, supply_before - 1000);
 
