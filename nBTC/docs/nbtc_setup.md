@@ -24,19 +24,19 @@ This script:
 
 The deployment process saves state to `deploy-information.json` in the project root:
 
-```json
+```typescript
 {
-  "btc_network": "regtest",
-  "sui_network": "testnet",
-  "bitcoin_lib_pkg": "0x...bitcoin_lib_package_id",
-  "lc_pkg": "0x...light_client_package_id",
-  "lc_contract": "0x...light_client_object_id",
-  "nbtc_pkg": "0x...nbtc_package_id",
-  "nbtc_contract": "0x...nbtc_contract_object_id",
-  "nbtc_admin_cap": "0x...admin_cap_object_id",
-  "sui_fallback_address": "0x...fallback_sui_address",
-  "btc_address": "bcrt1q...dwallet_btc_address",
-  "dwallet_id": "0x...dwallet_object_id"
+  "btc_network": "regtest", // Bitcoin network (e.g., "regtest", "mainnet", "testnet")
+  "sui_network": "testnet", // Sui network (e.g., "testnet", "mainnet", "devnet")
+  "bitcoin_lib_pkg": "0x...bitcoin_lib_package_id", // Bitcoin library package ID for utilities
+  "lc_pkg": "0x...light_client_package_id", // Light Client (bitcoin_spv) package ID
+  "lc_contract": "0x...light_client_object_id", // Light Client shared object ID
+  "nbtc_pkg": "0x...nbtc_package_id", // nBTC Move package ID
+  "nbtc_contract": "0x...nbtc_contract_object_id", // nBTC shared contract object ID
+  "nbtc_admin_cap": "0x...admin_cap_object_id", // Admin capability for managing nBTC
+  "sui_fallback_address": "0x...fallback_sui_address", // Fallback Sui address for invalid mint OP_RETURN
+  "btc_address": "bcrt1q...dwallet_btc_address", // dWallet Bitcoin deposit address
+  "dwallet_id": "0x...dwallet_object_id" // dWallet object ID for Bitcoin operations
 }
 ```
 
