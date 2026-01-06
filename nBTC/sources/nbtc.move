@@ -85,6 +85,8 @@ const EInvalidDWalletCoordinator: vector<u8> = b"Invalid Dwallet coordinator";
 #[error]
 const ENotSigned: vector<u8> = b"redeem request is not signed";
 #[error]
+const EAlreadyConfirmed: vector<u8> = b"redeem request already confirmed";
+#[error]
 const ERedeemTxNotConfirmed: vector<u8> = b"Bitcoin redeem tx not confirmed via SPV";
 #[error]
 const EInvalidChangeRecipient: vector<u8> = b"Invalid change recipient";
@@ -547,7 +549,7 @@ public fun redeem(
     redeem_id
 }
 
-public fun confirm_redeem(
+public fun finalize_redeem(
     contract: &mut NbtcContract,
     light_client: &LightClient,
     redeem_id: u64,
@@ -561,6 +563,7 @@ public fun confirm_redeem(
     assert!(provided_lc_id == cfg.light_client_id(), EUntrustedLightClient);
 
     let r = &contract.redeem_requests[redeem_id];
+    assert!(!r.status().is_confirmed(), EAlreadyConfirmed);
     assert!(r.status().is_signed(), ENotSigned);
 
     let expected_tx_bytes = r.raw_signed_tx(&contract.storage);
@@ -568,14 +571,10 @@ public fun confirm_redeem(
     let tx_id = tx.tx_id();
     assert!(light_client.verify_tx(height, tx_id, proof, tx_index), ERedeemTxNotConfirmed);
 
-    contract.update_redeem_utxo_and_burn(redeem_id, &tx);
+    contract.burn_redeem_utxos(redeem_id, &tx);
 }
 
-public(package) fun update_redeem_utxo_and_burn(
-    contract: &mut NbtcContract,
-    redeem_id: u64,
-    tx: &Transaction,
-) {
+fun burn_redeem_utxos(contract: &mut NbtcContract, redeem_id: u64, tx: &Transaction) {
     let tx_id = tx.tx_id();
     let active_dwallet_id = contract.active_dwallet_id();
     let expected_nbtc_lockscript = contract.active_lockscript();
@@ -630,7 +629,7 @@ public fun record_signature(
     let r = &mut contract.redeem_requests[redeem_id];
     assert!(!r.has_signature(input_id), EInputAlreadyUsed);
 
-    r.record_signature(dwallet_coordinator, &contract.storage, input_id, sign_id);
+    r.record_signature(dwallet_coordinator, input_id, sign_id);
 
     let is_fully_signed = r.status().is_signed();
     event::emit(RedeemSigCreatedEvent {
