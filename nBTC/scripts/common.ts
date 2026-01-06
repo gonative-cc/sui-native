@@ -47,16 +47,18 @@ export async function generateKeypair() {
 	};
 }
 
-export function createSuiClient() {
+export function createSuiClient(packageId?: string) {
 	return new SuiClient({
 		url: getFullnodeUrl("testnet"),
-		mvr: {
-			overrides: {
-				packages: {
-					"@local-pkg/nbtc": loadConfig().packageId,
-				},
-			},
-		},
+		mvr: packageId
+			? {
+					overrides: {
+						packages: {
+							"@local-pkg/nbtc": packageId,
+						},
+					},
+				}
+			: undefined,
 	});
 }
 

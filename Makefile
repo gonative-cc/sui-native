@@ -42,4 +42,7 @@ test-move-all:
 build-move-all:
 	bash ./contrib/run-move-tests.sh build
 
-.PHONY: print-packages format-move build-all test-all
+publish-all:
+	@bun run scripts/publish.ts
+
+.PHONY: print-packages format-move build-all test-all publish-all

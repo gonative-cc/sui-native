@@ -19,7 +19,7 @@ import { broadcastBtcTx } from "./btc-helper";
 
 const config = loadConfig();
 
-let suiClient = createSuiClient();
+let suiClient = createSuiClient(config.packageId);
 let ikaClient = createIkaClient(suiClient);
 await ikaClient.initialize();
 
