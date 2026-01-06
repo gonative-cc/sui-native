@@ -2,7 +2,7 @@ import "dotenv/config";
 import { readFileSync } from "fs";
 import { join } from "path";
 import * as toml from "smol-toml";
-import { getActiveNetwork } from "./utils";
+import { getActiveNetwork, PROJECT_ROOT } from "./utils";
 
 const INDEXER_URL = process.env.INDEXER_URL || "http://localhost:8080/regtest";
 
@@ -19,20 +19,26 @@ export interface LightClientConfig {
 
 /**
  * Retrieves the published package ID from Move.lock for a specific package and network.
+ * Uses PROJECT_ROOT to ensure consistent path resolution regardless of execution directory.
  *
  * @param packagePath - The directory path of the Move package (e.g., "bitcoin_lib", "bitcoin_spv")
  * @param network - The network name (e.g., "testnet", "mainnet", "devnet")
  * @returns The package ID string if found, null otherwise
+ * @throws {Error} If Move.lock file doesn't exist or cannot be parsed
  *
  * @example
  * const pkgId = getPublishedPackageId("bitcoin_lib", "testnet");
  * // Returns: "0x123..." or null
  */
 export function getPublishedPackageId(packagePath: string, network: string): string | null {
-	const moveLock = join(process.cwd(), packagePath, "Move.lock");
-	const parsed = toml.parse(readFileSync(moveLock, "utf-8")) as any;
-	const envSection = parsed.env?.[network];
-	return envSection?.["latest-published-id"] || null;
+	try {
+		const moveLock = join(PROJECT_ROOT, packagePath, "Move.lock");
+		const parsed = toml.parse(readFileSync(moveLock, "utf-8")) as any;
+		const envSection = parsed.env?.[network];
+		return envSection?.["latest-published-id"] || null;
+	} catch (error) {
+		throw new Error(`Failed to read Move.lock for package "${packagePath}": ${(error as Error).message}`);
+	}
 }
 
 export async function fetchBlockHeader(blockHash: string): Promise<string> {
