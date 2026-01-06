@@ -37,7 +37,9 @@ export function getPublishedPackageId(packagePath: string, network: string): str
 		const envSection = parsed.env?.[network];
 		return envSection?.["latest-published-id"] || null;
 	} catch (error) {
-		throw new Error(`Failed to read Move.lock for package "${packagePath}": ${(error as Error).message}`);
+		throw new Error(
+			`Failed to read Move.lock for package "${packagePath}": ${(error as Error).message}`,
+		);
 	}
 }
 
