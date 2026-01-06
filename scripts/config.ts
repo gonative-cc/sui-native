@@ -17,6 +17,17 @@ export interface LightClientConfig {
 	confirmationDepth: number;
 }
 
+/**
+ * Retrieves the published package ID from Move.lock for a specific package and network.
+ *
+ * @param packagePath - The directory path of the Move package (e.g., "bitcoin_lib", "bitcoin_spv")
+ * @param network - The network name (e.g., "testnet", "mainnet", "devnet")
+ * @returns The package ID string if found, null otherwise
+ *
+ * @example
+ * const pkgId = getPublishedPackageId("bitcoin_lib", "testnet");
+ * // Returns: "0x123..." or null
+ */
 export function getPublishedPackageId(packagePath: string, network: string): string | null {
 	const moveLock = join(process.cwd(), packagePath, "Move.lock");
 	const parsed = toml.parse(readFileSync(moveLock, "utf-8")) as any;
