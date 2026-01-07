@@ -464,8 +464,8 @@ public fun record_inactive_deposit(
 /// * `redeem_id` - Unique identifier for the redeem request
 /// * `input_id` - Index of the Bitcoin input to be signed (0-indexed)
 /// * `nbtc_public_sign` - Partial signature created by nBTC public share
-/// * `unverified_presign` - Capability for unverified presigning operation
-/// * `session_identifier` - Session identifier for the signing request
+/// * `presign` - Capability for unverified presigning operation
+/// * `ika_session` - Session identifier for the signing request
 /// * `payment_ika` - IKA coin for payment
 /// * `payment_sui` - SUI coin for gas fees
 /// * `ctx` - Transaction context
@@ -480,8 +480,8 @@ public fun request_signature_for_input(
     redeem_id: u64,
     input_id: u32,
     nbtc_public_sign: vector<u8>,
-    unverified_presign: UnverifiedPresignCap,
-    session_identifier: SessionIdentifier,
+    presign: UnverifiedPresignCap,
+    ika_session: SessionIdentifier,
     payment_ika: &mut Coin<IKA>,
     payment_sui: &mut Coin<SUI>,
     ctx: &mut TxContext,
@@ -500,8 +500,8 @@ public fun request_signature_for_input(
         redeem_id,
         input_id,
         nbtc_public_sign,
-        unverified_presign,
-        session_identifier,
+        presign,
+        ika_session,
         payment_ika,
         payment_sui,
         ctx,
@@ -566,6 +566,8 @@ public fun finalize_redeem(
     assert!(!r.status().is_confirmed(), EAlreadyConfirmed);
     assert!(r.status().is_signed(), ENotSigned);
 
+    // TODO: we don't need to store the whole tx.
+    // We only need to remember tx_id and the reminder output
     let expected_tx_bytes = r.raw_signed_tx(&contract.storage);
     let tx = tx::decode(expected_tx_bytes);
     let tx_id = tx.tx_id();
@@ -578,6 +580,7 @@ fun burn_redeem_utxos(contract: &mut NbtcContract, redeem_id: u64, tx: &Transact
     let tx_id = tx.tx_id();
     let active_dwallet_id = contract.active_dwallet_id();
     let expected_nbtc_lockscript = contract.active_lockscript();
+    // TODO we should remove it.
     let r = &mut contract.redeem_requests[redeem_id];
 
     let spent_utxos_ids = r.utxo_ids();
@@ -612,6 +615,7 @@ fun burn_redeem_utxos(contract: &mut NbtcContract, redeem_id: u64, tx: &Transact
     r.move_to_confirmed_status(redeem_id, tx_id);
 }
 
+// TODO: we should be able to record many signatures in a single tx
 /// Try to read sig from dwallet and save it in the inputs store.
 /// Fails if the sig is not available. Validation is left on the Ika side.
 public fun record_signature(
@@ -639,7 +643,9 @@ public fun record_signature(
     });
 }
 
-//TODO: update event emitted to include the data from the redeem request
+// TODO: update event emitted to include the data from the redeem request
+// TODO: this is not needed - we decided to merge solved stage with signing stage
+//       https://github.com/gonative-cc/workers/issues/266
 public fun solve_redeem_request(contract: &mut NbtcContract, redeem_id: u64, clock: &Clock) {
     assert!(contract.version == VERSION, EVersionMismatch);
     let config = contract.config();

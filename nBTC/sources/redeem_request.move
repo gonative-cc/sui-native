@@ -54,6 +54,9 @@ public struct RedeemRequest has store {
     utxos: vector<Utxo>,
     dwallet_ids: vector<ID>,
     utxo_ids: vector<u64>,
+    // TODO we don't need vecmap - we can use a simple vector with the same order as UTXOs
+    // so we can have only one vector to contain hashes, ids and signatures
+    // and we need to know the mapping between sign_id and utxo idx
     sig_hashes: VecMap<u32, vector<u8>>,
     sign_ids: Table<ID, bool>,
     signatures_map: VecMap<u32, vector<u8>>,
@@ -186,8 +189,8 @@ public(package) fun move_to_confirmed_status(
 /// * `redeem_id` - Unique identifier for the redeem request
 /// * `input_id` - Index of the Bitcoin input to be signed (0-indexed)
 /// * `nbtc_public_sign` - Partial signature from nBTC public share
-/// * `unverified_presign` - Unverified presign capability
-/// * `session_identifier` - Session identifier for the request
+/// * `presign` - Unverified presign capability
+/// * `ika_session` - Session identifier for the request
 /// * `payment_ika` - IKA coin for payment
 /// * `payment_sui` - SUI coin for gas fees
 /// * `ctx` - Transaction context
@@ -198,13 +201,13 @@ public(package) fun request_signature_for_input(
     redeem_id: u64,
     input_id: u32,
     nbtc_public_sign: vector<u8>,
-    unverified_presign: UnverifiedPresignCap,
-    session_identifier: SessionIdentifier,
+    presign: UnverifiedPresignCap,
+    ika_session: SessionIdentifier,
     payment_ika: &mut Coin<IKA>,
     payment_sui: &mut Coin<SUI>,
     ctx: &mut TxContext,
 ) {
-    let verified_presign = dwallet_coordinator.verify_presign_cap(unverified_presign, ctx);
+    let verified_presign = dwallet_coordinator.verify_presign_cap(presign, ctx);
     // This should include other information for create sign hash
     let sig_hash = r.sig_hash(input_id, storage);
 
@@ -221,7 +224,7 @@ public(package) fun request_signature_for_input(
         verified_presign,
         message_approval,
         nbtc_public_sign,
-        session_identifier,
+        ika_session,
         payment_ika,
         payment_sui,
         ctx,
