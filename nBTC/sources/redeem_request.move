@@ -2,7 +2,11 @@ module nbtc::redeem_request;
 
 use bitcoin_lib::encoding::{u64_to_le_bytes, der_encode_signature};
 use bitcoin_lib::script;
-use bitcoin_lib::sighash::{create_segwit_preimage, create_p2wpkh_scriptcode};
+use bitcoin_lib::sighash::{
+    create_segwit_preimage,
+    create_p2wpkh_scriptcode,
+    taproot_sighash_preimage
+};
 use bitcoin_lib::tx;
 use bitcoin_lib::vector_utils::vector_slice;
 use ika::ika::IKA;
@@ -32,7 +36,7 @@ const EUnsupportedLockscript: vector<u8> = b"unsupported lockscript";
 
 // signature algorithm
 const ECDSA: u32 = 0;
-const Taproot: u32 = 1;
+const TAPROOT: u32 = 1;
 // hash function
 const SHA256: u32 = 1;
 const SIGNHASH_ALL: u8 = 0x01;
@@ -208,15 +212,22 @@ public(package) fun request_signature_for_input(
     ctx: &mut TxContext,
 ) {
     let verified_presign = dwallet_coordinator.verify_presign_cap(presign, ctx);
+
     // This should include other information for create sign hash
     let sig_hash = r.sig_hash(input_id, storage);
 
     let dwallet_id = r.dwallet_ids[input_id as u64];
     let dwallet_cap = storage.dwallet_cap(dwallet_id);
+    let lockscript = storage.dwallet_metadata(dwallet_id).lockscript();
 
+    let signature_algo = if (script::is_taproot(lockscript)) {
+        TAPROOT
+    } else {
+        ECDSA
+    };
     let message_approval = dwallet_coordinator.approve_message(
         dwallet_cap,
-        ECDSA,
+        signature_algo,
         SHA256,
         sig_hash,
     );
@@ -320,13 +331,13 @@ public fun sig_hash(r: &RedeemRequest, input_id: u32, storage: &Storage): vector
             let previous_pubscripts = r
                 .dwallet_ids
                 .map!(|dwallet_id| storage.dwallet_metadata(dwallet_id).lockscript());
-            let previous_values = r.inputs.map!(|inp| inp.value());
+            let previous_values = vector::tabulate!(inputs.length(), |i| inputs[i].value());
 
             taproot_sighash_preimage(
                 &tx,
-                input_id as u64, // input index
-                &script_code, // segwit nbtc spend key
-                u64_to_le_bytes(inputs[input_id as u64].value()), // amount
+                input_id, // input index
+                previous_pubscripts,
+                previous_values,
                 SIGNHASH_ALL,
                 option::none(),
                 option::none(),
@@ -338,9 +349,9 @@ public fun sig_hash(r: &RedeemRequest, input_id: u32, storage: &Storage): vector
             std::hash::sha2_256(
                 create_segwit_preimage(
                     &tx,
-                    input_idx, // input index
+                    input_id, // input index
                     &script_code, // segwit nbtc spend key
-                    u64_to_le_bytes(r.inputs[input_idx as u64].value()), // amount
+                    u64_to_le_bytes(inputs[input_id as u64].value()), // amount
                     SIGNHASH_ALL,
                 ),
             )
