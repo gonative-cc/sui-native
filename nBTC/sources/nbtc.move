@@ -3,15 +3,15 @@
 module nbtc::nbtc;
 
 use bitcoin_lib::reader;
-use bitcoin_lib::tx::{Self, Transaction};
+use bitcoin_lib::tx;
 use bitcoin_spv::light_client::LightClient;
 use ika::ika::IKA;
 use ika_dwallet_2pc_mpc::coordinator::DWalletCoordinator;
 use ika_dwallet_2pc_mpc::coordinator_inner::{DWalletCap, UnverifiedPresignCap};
 use nbtc::config::{Self, Config};
-use nbtc::nbtc_utxo::{Self, Utxo, validate_utxos};
+use nbtc::nbtc_utxo::{Self, validate_utxos};
 use nbtc::redeem_request::{Self, RedeemRequest};
-use nbtc::storage::{Storage, create_storage, create_dwallet_metadata, DWalletMetadata};
+use nbtc::storage::{Storage, create_storage, create_dwallet_metadata};
 use nbtc::verify_payment::verify_payment;
 use sui::address;
 use sui::balance::{Self, Balance};
@@ -558,7 +558,10 @@ public fun finalize_redeem(
     let provided_lc_id = object::id(light_client);
     assert!(provided_lc_id == cfg.light_client_id(), EUntrustedLightClient);
 
-    let r = &contract.redeem_requests[redeem_id];
+    let active_dwallet_id = contract.active_dwallet_id();
+    let expected_nbtc_lockscript = contract.active_lockscript();
+
+    let r = &mut contract.redeem_requests[redeem_id];
     assert!(!r.status().is_confirmed(), EAlreadyConfirmed);
     assert!(r.status().is_signed(), ENotSigned);
 
@@ -567,13 +570,7 @@ public fun finalize_redeem(
     let tx_id = tx.tx_id();
     assert!(light_client.verify_tx(height, tx_id, proof, tx_index), ERedeemTxNotConfirmed);
 
-    contract.burn_utxos(redeem_id, &tx);
-}
-
-fun burn_utxos(contract: &mut NbtcContract, redeem_id: u64, tx_id: vector<u8>, tx: &Transaction) {
-    let active_dwallet_id = contract.active_dwallet_id();
-    let expected_nbtc_lockscript = contract.active_lockscript();
-    let r = &mut contract.redeem_requests[redeem_id];
+    // Burn UTXOs and add a new reminder UTXO
 
     let spent_utxos_ids = r.utxo_ids();
     let dwallet_ids = r.dwallet_ids();
@@ -604,8 +601,8 @@ fun burn_utxos(contract: &mut NbtcContract, redeem_id: u64, tx_id: vector<u8>, t
         contract.storage.utxo_store_mut().add(active_dwallet_id, change_utxo);
     };
 
-    r.move_to_confirmed_status(redeem_id, tx_id);
     // TODO we should remove request ID (once we solve the cleaning)
+    r.move_to_confirmed_status(redeem_id, tx_id);
 }
 
 // TODO: we should be able to record many signatures in a single tx
