@@ -249,9 +249,8 @@ public(package) fun set_sign_request_metadata(
     r.sign_ids.add(sign_id, true);
 }
 
-// return segwit transaction
-// TODO: probably we can remove this
-public fun raw_signed_tx(r: &RedeemRequest, storage: &Storage): vector<u8> {
+// returns Bitcoin withdraw segwit transaction
+public fun compose_tx(r: &RedeemRequest, storage: &Storage): tx::Transaction {
     assert!(r.status == RedeemStatus::Signed, ERedeemTxSigningNotCompleted);
 
     let inputs = r.utxos();
@@ -287,7 +286,7 @@ public fun raw_signed_tx(r: &RedeemRequest, storage: &Storage): vector<u8> {
         );
     });
     tx.set_witness(witnesses);
-    tx.serialize_segwit()
+    tx
 }
 
 // add valid signature to redeem request for specific input index

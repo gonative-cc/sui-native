@@ -565,8 +565,7 @@ public fun finalize_redeem(
     assert!(!r.status().is_confirmed(), EAlreadyConfirmed);
     assert!(r.status().is_signed(), ENotSigned);
 
-    let expected_tx_bytes = r.raw_signed_tx(&contract.storage);
-    let tx = tx::decode(expected_tx_bytes);
+    let tx = r.compose_tx(&contract.storage);
     let tx_id = tx.tx_id();
     assert!(light_client.verify_tx(height, tx_id, proof, tx_index), ERedeemTxNotConfirmed);
 
