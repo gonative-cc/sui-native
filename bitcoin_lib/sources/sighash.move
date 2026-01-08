@@ -374,6 +374,8 @@ fun test_taproot_sighash_preimage() {
             &txn,
             input_idx_to_sign,
             previous_output_pubscripts,
+            values,
+            hash_type,
             option::none(),
             option::none(),
         );
