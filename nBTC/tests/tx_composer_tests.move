@@ -44,7 +44,7 @@ fun create_unsign_redeem_tx_happy_case() {
     tx.inputs().length().do!(|i| {
         let sign_hash = create_segwit_preimage(
             &tx,
-            i, // input index
+            i as u32, // input index
             &script_code, // segwit nbtc spend key
             u64_to_le_bytes(utxos[i].value()), // amount
             0x01, // SIGNHASH_ALL

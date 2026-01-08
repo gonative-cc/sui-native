@@ -49,7 +49,7 @@ public fun create_p2wpkh_scriptcode(pkh: vector<u8>): vector<u8> {
 /// https://learnmeabitcoin.com/technical/keys/signature/ -> Segwit Algorithm
 public fun create_segwit_preimage(
     transaction: &Transaction,
-    input_idx_to_sign: u64,
+    input_idx_to_sign: u32,
     input_script: &vector<u8>, // For P2WPKH: 0x1976a914{PKH}88ac. For P2WSH: the witnessScript.
     amount_spent_by_this_input: vector<u8>,
     sighash_type: u8,
@@ -90,7 +90,7 @@ public fun create_segwit_preimage(
     preimage.append(hash_sequence);
 
     // Serialize the TXID and VOUT for the input were signing
-    let current_input = transaction.input_at(input_idx_to_sign);
+    let current_input = transaction.input_at(input_idx_to_sign as u64);
     preimage.append(current_input.tx_id());
     preimage.append(current_input.vout());
 
@@ -112,9 +112,9 @@ public fun create_segwit_preimage(
         });
         hash256(all_outputs_concat)
     } else if (
-        base_sighash_type == SIGHASH_SINGLE && input_idx_to_sign < transaction.outputs().length()
+        base_sighash_type == SIGHASH_SINGLE && (input_idx_to_sign as u64) < transaction.outputs().length()
     ) {
-        let output_to_sign = transaction.output_at(input_idx_to_sign);
+        let output_to_sign = transaction.output_at(input_idx_to_sign as u64);
         let mut single_output_concatenated = vector[];
         single_output_concatenated.append(output_to_sign.amount_bytes());
         single_output_concatenated.append(
@@ -137,7 +137,7 @@ public fun create_segwit_preimage(
 /// values: the values in utxos we want to spend
 /// leaf_hash: leaf hash of script we want to spend,  for spend utxo by key path this is none
 /// annex: a reserved space for future upgrades. BTC doesn't use this yet
-public fun taproot_sighash(
+public fun taproot_sighash_preimage(
     tx: &Transaction,
     input_idx_to_sign: u32,
     previous_pubscripts: vector<vector<u8>>,
@@ -248,7 +248,7 @@ public fun taproot_sighash(
     // https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#cite_note-20
     hash_data.push_back(0x00);
     hash_data.append(preimage);
-    sha256(hash_data)
+    hash_data
 }
 
 #[test_only]
@@ -288,7 +288,7 @@ fun test_create_segwit_preimage_lmb_example() {
         vector[],
     );
 
-    let input_idx_to_sign = 0u64;
+    let input_idx_to_sign = 0u32;
     let input_script = x"76a914aa966f56de599b4094b61aa68a2b3df9e97e9c4888ac";
     let amount_spent_by_this_input = x"3075000000000000";
     let sighash_type = SIGHASH_ALL; // 0x01
@@ -313,7 +313,7 @@ fun test_create_p2wpkh_scriptcode() {
 }
 
 #[test]
-fun test_taproot_sighash() {
+fun test_taproot_sighash_preimage() {
     // data from https://github.com/bitcoinjs/bitcoinjs-lib/blob/13aea8c84236fe14d7260a9ffaaf0a0489ef70b1/test/fixtures/transaction.json#L812
     let mut r = bitcoin_lib::reader::new(
         x"02000000097de20cbff686da83a54981d2b9bab3586f4ca7e48f57f5b55963115f3b334e9c010000000000000000d7b7cab57b1393ace2d064f4d4a2cb8af6def61273e127517d44759b6dafdd990000000000fffffffff8e1f583384333689228c5d28eac13366be082dc57441760d957275419a418420000000000fffffffff0689180aa63b30cb162a73c6d2a38b7eeda2a83ece74310fda0843ad604853b0100000000feffffff0c638ca38362001f5e128a01ae2b379288eb22cfaf903652b2ec1c88588f487a0000000000feffffff956149bdc66faa968eb2be2d2faa29718acbfe3941215893a2a3446d32acd05000000000000000000081efa267f1f0e46e054ecec01773de7c844721e010c2db5d5864a6a6b53e013a010000000000000000a690669c3c4a62507d93609810c6de3f99d1a6e311fe39dd23683d695c07bdee0000000000ffffffff727ab5f877438496f8613ca84002ff38e8292f7bd11f0a9b9b83ebd16779669e0100000000ffffffff0200ca9a3b000000001976a91406afd46bcdfd22ef94ac122aa11f241244a37ecc88ac807840cb0000000020ac9a87f5594be208f8532db38cff670c450ed2fea8fcdefcc9a663f78bab962b0065cd1d",
@@ -368,7 +368,7 @@ fun test_taproot_sighash() {
     test_case_inputs.length().do!(|i| {
         let input_idx_to_sign = test_case_inputs[i][0] as u32;
         let hash_type = test_case_inputs[i][1] as u8;
-        let sighash = taproot_sighash(
+        let sighash_preimage = taproot_sighash_preimage(
             &txn,
             input_idx_to_sign,
             previous_output_pubscripts,
@@ -377,7 +377,7 @@ fun test_taproot_sighash() {
             option::none(),
             option::none(),
         );
-        assert_eq!(sighash, test_case_outputs[i]);
+        assert_eq!(sha256(sighash_preimage), test_case_outputs[i]);
     });
 }
 // TODO: add a test case where user spends two UTXOs
