@@ -237,7 +237,6 @@ public fun taproot_sighash_preimage(
         preimage.append(x"ffffffff");
     };
 
-    let mut taproot_preimage = vector::empty();
     // sha256("TapSighash") = f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a031
     // hash_tag(x) = SHA256(SHA256(tag) || SHA256(tag) || x)
     // in our case tag is "TapSighash"
@@ -247,9 +246,9 @@ public fun taproot_sighash_preimage(
         x"f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a031f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a031";
     // Extra zero byte because:
     // https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#cite_note-20
-    taproot_preimage.push_back(0x00);
-    taproot_preimage.append(preimage);
-    taproot_preimage
+    hash_data.push_back(0x00);
+    hash_data.append(preimage);
+    hash_data
 }
 
 #[test_only]
