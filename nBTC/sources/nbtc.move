@@ -587,10 +587,6 @@ public fun finalize_redeem(
     let coin_to_burn = contract.locked.remove(redeem_id);
     let burn_amount = coin_to_burn.value();
     contract.cap.burn(coin_to_burn);
-    event::emit(BurnEvent {
-        redeem_id,
-        amount: burn_amount,
-    });
 
     let outputs = tx.outputs();
     if (outputs.length() > 1) {
@@ -602,6 +598,11 @@ public fun finalize_redeem(
 
     // TODO we should remove request ID (once we solve the cleaning)
     r.move_to_confirmed_status(redeem_id, tx_id);
+
+    event::emit(BurnEvent {
+        redeem_id,
+        amount: burn_amount,
+    });
 }
 
 // TODO: we should be able to record many signatures in a single tx

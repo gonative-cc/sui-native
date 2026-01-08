@@ -249,7 +249,7 @@ public(package) fun set_sign_request_metadata(
     r.sign_ids.add(sign_id, true);
 }
 
-// returns Bitcoin withdraw segwit transaction
+// returns Bitcoin withdraw transaction
 public fun compose_tx(r: &RedeemRequest, storage: &Storage): tx::Transaction {
     assert!(r.status == RedeemStatus::Signed, ERedeemTxSigningNotCompleted);
 
