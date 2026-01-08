@@ -19,7 +19,6 @@ import { Transaction } from "@mysten/sui/transactions";
 import "dotenv/config";
 
 import * as bitcoin from "bitcoinjs-lib";
-import { type DWalletMetadata } from "../../sdk/nBTC/src";
 
 const REGTEST = bitcoin.networks.regtest;
 
@@ -52,12 +51,12 @@ export function createSuiClient(packageId?: string) {
 		url: getFullnodeUrl("testnet"),
 		mvr: packageId
 			? {
-					overrides: {
-						packages: {
-							"@local-pkg/nbtc": packageId,
-						},
+				overrides: {
+					packages: {
+						"@local-pkg/nbtc": packageId,
 					},
-				}
+				},
+			}
 			: undefined,
 	});
 }
@@ -120,7 +119,7 @@ export async function getIkaCoin(suiClient: SuiClient, addr: string): Promise<st
  *
  * @param ikaClient The initialized Ika client for protocol-specific calls.
  * @param suiClient The initialized Sui client instance.
- * @returns A promise that resolves to the fully initialized and "Active" shared dWallet object.
+ * @returns A promise that resolves to fully initialized and "Active" shared dWallet object.
  */
 export async function createSharedDwallet(ikaClient: IkaClient, suiClient: SuiClient) {
 	const curve = Curve.SECP256K1;
@@ -178,14 +177,13 @@ export async function createSharedDwallet(ikaClient: IkaClient, suiClient: SuiCl
 }
 
 /**
- * Extracts essential Bitcoin metadata (public key, P2WPKH address, and lockscript)
- * from a activated shared dWallet object.
+ * Extracts essential Bitcoin metadata (public key, P2TR address, and lockscript)
+ * from a activated shared dWallet object. Uses key path spending (no script paths).
  *
  * @param dWallet The active shared dWallet
- * @returns An object containing the derived `publicKey` (Buffer), P2WPKH `addr` (string), and `lockscript` (Buffer).
+ * @returns An object containing derived P2TR `addr` (string) and `lockscript` (Buffer).
  */
 export async function getDwalletMetadata(dWallet: DWalletWithState<"Active">): Promise<{
-	publicKey: Buffer;
 	addr: string;
 	lockscript: Buffer;
 }> {
@@ -196,14 +194,17 @@ export async function getDwalletMetadata(dWallet: DWalletWithState<"Active">): P
 		),
 	);
 
-	const payment = bitcoin.payments.p2wpkh({
-		pubkey: publicKey,
+	// Taproot key path spending (no script paths)
+	// Extract the 32-byte x-coordinate from the compressed public key (skip first byte 0x02/0x03)
+	const internalPubkey = publicKey.subarray(1, 33);
+
+	const payment = bitcoin.payments.p2tr({
+		internalPubkey,
 		network: REGTEST,
 	});
 	const addr = payment.address!;
 	const lockscript = Buffer.from(payment.output!);
 	return {
-		publicKey,
 		addr,
 		lockscript,
 	};
