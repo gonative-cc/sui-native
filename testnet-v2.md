@@ -6,7 +6,7 @@ The Testnet V2 setup is designed to provide a simplified testing environment for
 
 For this setup we use our own Bitcoin devnet because the public Bitcoin testnets have several issues that make them unsuitable for reliable testing:
 
-- Bitcoin Testnet3 tokens acutally have value, which makes them unusable for testing
+- Bitcoin Testnet3 tokens actually have value, which makes them unusable for testing
 - Frequent reorganizations sometimes exceeding 30 blocks
 - Unreliable faucets
 
