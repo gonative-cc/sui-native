@@ -165,7 +165,6 @@ public(package) fun move_to_confirmed_status(
     tx_id: vector<u8>,
 ) {
     r.status = RedeemStatus::Confirmed;
-    //TODO: Review what to emit for this event
     event::emit(ConfirmedEvent {
         id: redeem_id,
         btc_tx_id: tx_id,
@@ -251,6 +250,7 @@ public(package) fun set_sign_request_metadata(
 }
 
 // return segwit transaction
+// TODO: probably we can remove this
 public fun raw_signed_tx(r: &RedeemRequest, storage: &Storage): vector<u8> {
     assert!(r.status == RedeemStatus::Signed, ERedeemTxSigningNotCompleted);
 

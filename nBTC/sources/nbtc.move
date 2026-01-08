@@ -562,21 +562,17 @@ public fun finalize_redeem(
     assert!(!r.status().is_confirmed(), EAlreadyConfirmed);
     assert!(r.status().is_signed(), ENotSigned);
 
-    // TODO: we don't need to store the whole tx.
-    // We only need to remember tx_id and the reminder output
     let expected_tx_bytes = r.raw_signed_tx(&contract.storage);
     let tx = tx::decode(expected_tx_bytes);
     let tx_id = tx.tx_id();
     assert!(light_client.verify_tx(height, tx_id, proof, tx_index), ERedeemTxNotConfirmed);
 
-    contract.burn_redeem_utxos(redeem_id, &tx);
+    contract.burn_utxos(redeem_id, &tx);
 }
 
-fun burn_redeem_utxos(contract: &mut NbtcContract, redeem_id: u64, tx: &Transaction) {
-    let tx_id = tx.tx_id();
+fun burn_utxos(contract: &mut NbtcContract, redeem_id: u64, tx_id: vector<u8>, tx: &Transaction) {
     let active_dwallet_id = contract.active_dwallet_id();
     let expected_nbtc_lockscript = contract.active_lockscript();
-    // TODO we should remove it.
     let r = &mut contract.redeem_requests[redeem_id];
 
     let spent_utxos_ids = r.utxo_ids();
@@ -609,6 +605,7 @@ fun burn_redeem_utxos(contract: &mut NbtcContract, redeem_id: u64, tx: &Transact
     };
 
     r.move_to_confirmed_status(redeem_id, tx_id);
+    // TODO we should remove request ID (once we solve the cleaning)
 }
 
 // TODO: we should be able to record many signatures in a single tx
