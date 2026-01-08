@@ -128,7 +128,6 @@ public fun setup(
     let dwallet_metadata = storage::create_dwallet_metadata(
         nbtc_bitcoin_addr,
         vector::empty(),
-        vector::empty(),
         temp_scenario.ctx(),
     );
     temp_scenario.end();

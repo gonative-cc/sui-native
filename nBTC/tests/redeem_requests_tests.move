@@ -47,7 +47,6 @@ fun raw_withdraw_tx_signed_tests() {
         MOCK_DWALLET_ID!(),
         storage::create_dwallet_metadata(
             nbtc_spend_key,
-            nbtc_pk,
             vector::empty(),
             scenario.ctx(),
         ),
