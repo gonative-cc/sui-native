@@ -141,3 +141,8 @@ build
 
 .trace
 .coverage_map.mvcov
+
+esplora-regtest-data
+package_summaries
+generated
+deploy-information.json

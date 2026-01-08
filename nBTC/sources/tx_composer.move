@@ -12,14 +12,16 @@ const DEFAULT_SEQUENCE: vector<u8> = x"ffffffff";
 
 public fun compose_withdraw_tx(
     nbtc_spend_script: vector<u8>,
-    utxos: vector<Utxo>,
+    utxos: &vector<Utxo>,
     recipient_script: vector<u8>,
     withdraw_amount: u64,
     fee: u64,
 ): Transaction {
     let mut total_spend = 0;
     let mut inps = vector[];
-    utxos.do!(|utxo| {
+    let input_len = utxos.length();
+    input_len.do!(|i| {
+        let utxo = &utxos[i];
         total_spend = total_spend + utxo.value();
         let inp = input::new(
             utxo.tx_id(),

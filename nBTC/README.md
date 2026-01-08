@@ -33,76 +33,105 @@ For information on deployed packages and object IDs on testnet/mainnet, please s
 ## Documentation
 
 - [nBTC Setup](./docs/nbtc_setup.md)
+- [UTXO Management](./docs/utxo_management.md)
 - [nBTC Minting Process](./docs/nbtc_minting.md)
+- [nBTC Redeem Process](./docs/nbtc_redeem.md)
 
-## UTXO Management
+### Model
 
-When users deposit Bitcoin to mint nBTC, those funds create UTXOs on the Bitcoin blockchain. The nBTC smart contract tracks these UTXOs so it can later spend them when users want to redeem their nBTC back to BTC on the Bitcoin chain.
+```mermaid
+classDiagram
+    class NbtcContract {
+        +confirm_redeem(light_client: LightClient, redeem_id: u64, tx_bytes: vector_u8, proof: vector_vector_u8, height: u64, tx_index: u64)
+        +record_signature(dwallet_coordinator: DWalletCoordinator, redeem_id: u64)
+        +redeem(redeem_id: u64): u64
+        +update_redeem_utxo_and_burn(redeem_id: u64, tx_id: vector_u8, tx: Transaction)
+        +config(): NbtcConfig
+        +active_dwallet_id(): address
+        locked: map_u64_to_coin
+        redeem_requests: map_u64_to_RedeemRequest
+        utxo_store: UtxoStore
+        cap: NbtcCap
+        version: u64
+    }
 
-### UTXO Structure
+    class RedeemRequest {
+        status: RedeemStatus
+        inputs: vector_Utxo
+        +status(): RedeemStatus
+        +raw_signed_tx(storage: NbtcStorage): vector_u8
+        +utxo_ids(): vector_u64
+        +dwallet_ids(): vector_address
+        +move_to_signing_status(redeem_id: u64)
+        +move_to_confirmed_status(redeem_id: u64, tx_id: vector_u8)
+        +request_signature_for_input(dwallet_coordinator: DWalletCoordinator, input_idx: u32)
+    }
 
-Each UTXO tracked by the system contains:
+    class RedeemStatus {
+        <<enum>>
+        +Pending
+        +Signing
+        +Resolving
+        +Confirmed
+        +is_signed(): bool
+        +is_resolving(): bool
+    }
 
-- `tx_id`: The Bitcoin transaction ID that created this output
-- `vout`: The output index within the transaction
-- `value`: The amount in satoshis
-- `spend_key`: The scriptPubKey controlling this UTXO
+    class ConfirmedEvent {
+        <<event>>
+        +id: u64
+        +inputs: vector_Utxo
+        +tx_id: vector_u8
+    }
 
-### Redeem Flow
+    class LightClient {
+        +verify_tx(height: u64, tx_id: vector_u8, proof: vector_vector_u8, tx_index: u64): bool
+        +id(): address
+    }
 
-1. User sends `nBTC` to the `NbtcContract` smart contract and creates `RedeemRequest`.
-1. UTXO selection phase starts: for the next `NbtcContract.redeem_duration` milliseconds everyone can propose a UTXO set to redeem.
-   - `RedeemRequest` should remember the best selection and corresponding UTXOs should be temporarily locked by `NbtcContract`.
-   - If no valid UTXO set is proposed during `redeem_duration`, the UTXO selection phase continues until a valid UTXO set is proposed.
-   - New, better UTXO set can use UTXOs from the former ("current") `RedeemRequest` best UTXO set, but it can't use UTXOs from another `RedeemRequest`.
-   - When a new, better UTXO set is proposed, UTXOs from the previous set should be unlocked.
-1. After the UTXO selection phase, anyone can trigger Ika SignRequest phase. `NbtcContract` will create Ika SignRequest for every UTXO.
-1. System should observe completion of Ika SignRequests and validate it.
-1. Once all UTXOs are signed, the `NbtcContract` will compose the final BTC withdraw transaction and emit it in an event. Broadcasting Phase begins.
-1. Now, anyone can broadcast the transaction.
-1. Once the withdraw transaction is minted and has sufficient confirmations, anyone can send a proof of confirmation of the transaction, to finalize the SignRequest and delete UTXOs.
+    class Transaction {
+        +tx_id(): vector_u8
+        +outputs(): vector_TxOutput
+    }
 
-### Redeem UTXO Selection Rating Algorithm
+    class TxOutput {
+        +amount(): u64
+    }
 
-For withdrawal requests, the system selects optimal UTXOs to minimize transaction fees, avoid dust outputs, and maintain efficient key rotation. The ranking algorithm evaluates UTXO combinations based on the following criteria:
+    class UtxoStore {
+        +unlock_utxo(utxo_id: u64, dwallet_id: address)
+        +remove(utxo_id: u64, dwallet_id: address)
+        +add(dwallet_id: address, utxo: Utxo)
+    }
 
-1. **Exact matches** (+1,000 points): Combinations that produce zero change output
-2. **Dust avoidance** (-200 points): Penalizes change outputs below 10,000 satoshis
-3. **Key rotation** (+200 points per UTXO): Prioritizes spending from inactive keys
-4. **Input minimization** (-100 points per input): Reduces transaction size and fees
+    class Utxo {
+        +tx_id: vector_u8
+        +index: u32
+        +amount: u64
+    }
 
-```text
-score = BASE_SCORE
-      - (number_of_inputs × 100)
-      + (inactive_key_count × 200)
-      + 1,000 (if change = 0)
-      - 200 (if 0 < change < 10,000)
+    class NbtcCap {
+        +burn(amount: coin)
+    }
+
+    class NbtcConfig {
+        +light_client_id(): address
+    }
+
+    class DWalletCoordinator
+    class NbtcStorage
+
+    NbtcContract --> RedeemRequest : manages
+    NbtcContract --> UtxoStore : owns
+    NbtcContract --> NbtcCap : controls
+    NbtcContract --> NbtcConfig : reads
+    NbtcContract --> LightClient : verifies_tx
+    NbtcContract --> Transaction : decodes
+    RedeemRequest --> RedeemStatus : uses
+    RedeemRequest --> ConfirmedEvent : emits
+    Transaction --> TxOutput : contains
+    UtxoStore --> Utxo : stores
+    RedeemRequest --> Utxo : inputs
+    RedeemRequest --> DWalletCoordinator : requests_signatures
+    RedeemRequest --> NbtcStorage : reads_raw_signed_tx
 ```
-
-The algorithm selects the combination with the highest score. A score of 0 indicates insufficient funds.
-
-**Constants:**
-
-- `DUST_THRESHOLD`: 10,000 satoshis
-- `BASE_SCORE`: 4,000,000,000,000,000
-- `INPUTS_PENALTY`: 100
-- `INACTIVE_BONUS`: 200
-- `NO_CHANGE_BONUS`: 1,000
-- `DUST_PENALTY`: 200
-
-### UTXO Validation
-
-Before executing a withdrawal, the system validates:
-
-1. **Non-empty set**: The UTXO set must contain at least one element
-2. **Existence verification**: All proposed UTXOs must exist in the on-chain UTXO table
-3. **Sufficient value**: Total UTXO value must be at least equal to the withdrawal amount. When the total exceeds the withdrawal amount, the difference becomes a change output sent back to the nBTC contract's Bitcoin address, creating a new UTXO that can be used for future withdrawals.
-
-If validation fails, the transaction is aborted with an appropriate error code.
-
-### Implementation
-
-The UTXO management implementation is in [nBTC/sources/utxo.move](./sources/utxo.move):
-
-- `utxo_ranking()`: Calculates the ranking score for a UTXO set given a withdrawal amount and active key
-- `validate_utxos()`: Validates proposed UTXOs against the on-chain UTXO table

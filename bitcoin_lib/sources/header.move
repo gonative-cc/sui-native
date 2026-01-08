@@ -66,3 +66,22 @@ public fun bits(header: &BlockHeader): u32 {
 public fun nonce(header: &BlockHeader): u32 {
     header.nonce
 }
+
+#[test_only]
+public fun create_header_for_test(
+    version: vector<u8>,
+    parent: vector<u8>,
+    merkle_root: vector<u8>,
+    timestamp: vector<u8>,
+    bits: vector<u8>,
+    nonce: vector<u8>,
+): BlockHeader {
+    let mut raw_block_header = vector[];
+    raw_block_header.append(version);
+    raw_block_header.append(parent);
+    raw_block_header.append(merkle_root);
+    raw_block_header.append(timestamp);
+    raw_block_header.append(bits);
+    raw_block_header.append(nonce);
+    new(raw_block_header)
+}

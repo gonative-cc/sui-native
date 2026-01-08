@@ -7,6 +7,8 @@ use bitcoin_lib::header;
 use bitcoin_spv::light_client::{new_light_client, LightClient};
 use ika_dwallet_2pc_mpc::coordinator_inner::dwallet_cap_for_testing;
 use nbtc::nbtc::{Self, NbtcContract, EMintAmountIsZero, ETxAlreadyUsed, EAlreadyUpdated, NBTC};
+use nbtc::storage::{Self, DWalletMetadata};
+use nbtc::test_constants::MOCK_DWALLET_ID;
 use std::unit_test::{assert_eq, destroy};
 use sui::address;
 use sui::coin::Coin;
@@ -84,12 +86,15 @@ fun get_fallback_mint_data(): TestData {
 }
 
 #[test_only]
-public fun setup(
-    nbtc_bitcoin_addr: vector<u8>,
+public fun setup_with_pubkey(
     sender: address,
+    dwallet_id: ID,
+    dwallet_metadata: DWalletMetadata,
 ): (LightClient, NbtcContract, Scenario) {
     let mut scenario = test_scenario::begin(sender);
-    let dwallet_coordinator = @0x01.to_id(); // dummy dwallet coordinator
+    // TODO: we should use a dummy or create parameter for function setup
+    // for dwallet_coordinator
+    let dwallet_coordinator = dwallet_id;
     let headers = vector[
         header::new(
             x"00000020a97594d6b5b9369535da225d464bde7e0ae3794e9b270a010000000000000000addcae45a90f73dc68e3225b2d0be1c155bf9b0864f187e31203079c0b6d42c5bb27e8585a330218b119eaee",
@@ -100,24 +105,44 @@ public fun setup(
     let mut ctr = nbtc::init_for_testing(
         lc.client_id().to_address(),
         FALLBACK_ADDR,
-        nbtc_bitcoin_addr,
         dwallet_coordinator,
         scenario.ctx(),
     );
-    ctr.set_dwallet_cap_for_test(
-        nbtc_bitcoin_addr,
+
+    ctr.set_dwallet_metadata_for_test(
+        dwallet_id,
+        dwallet_metadata,
+        dwallet_cap_for_testing(dwallet_id, scenario.ctx()),
+    );
+
+    (lc, ctr, scenario)
+}
+
+#[test_only]
+public fun setup(
+    nbtc_bitcoin_addr: vector<u8>,
+    sender: address,
+    dwallet_id: ID,
+): (LightClient, NbtcContract, Scenario) {
+    let mut temp_scenario = test_scenario::begin(sender);
+    let dwallet_metadata = storage::create_dwallet_metadata(
         nbtc_bitcoin_addr,
         vector::empty(),
-        dwallet_cap_for_testing(object::id_from_address(@0x01), scenario.ctx()),
-        scenario.ctx(),
+        vector::empty(),
+        temp_scenario.ctx(),
     );
-    (lc, ctr, scenario)
+    temp_scenario.end();
+    setup_with_pubkey(sender, dwallet_id, dwallet_metadata)
 }
 
 #[test]
 fun test_nbtc_mint() {
     let sender = @0x1;
-    let (lc, mut ctr, mut scenario) = setup(NBTC_SCRIPT_PUBKEY, sender);
+    let (lc, mut ctr, mut scenario) = setup(
+        NBTC_SCRIPT_PUBKEY,
+        sender,
+        MOCK_DWALLET_ID!(),
+    );
 
     mint_and_assert(
         &mut scenario,
@@ -149,7 +174,11 @@ fun test_nbtc_mint() {
 #[test]
 fun test_mint_with_fee() {
     let sender = @0x1;
-    let (lc, mut ctr, mut scenario) = setup(NBTC_SCRIPT_PUBKEY, sender);
+    let (lc, mut ctr, mut scenario) = setup(
+        NBTC_SCRIPT_PUBKEY,
+        sender,
+        MOCK_DWALLET_ID!(),
+    );
 
     mint_and_assert(
         &mut scenario,
@@ -190,6 +219,7 @@ fun test_nbtc_mint_fail_amount_is_zero() {
     let (lc, mut ctr, mut scenario) = setup(
         x"76a914509a651dd392e1bc125323f629b67d65cca3d4ff88ac",
         sender,
+        MOCK_DWALLET_ID!(),
     );
     let data = get_valid_mint_data();
 
@@ -213,7 +243,11 @@ fun test_nbtc_mint_fail_amount_is_zero() {
 #[expected_failure(abort_code = ETxAlreadyUsed)]
 fun test_nbtc_mint_fail_tx_already_used() {
     let sender = @0x1;
-    let (lc, mut ctr, mut scenario) = setup(NBTC_SCRIPT_PUBKEY, sender);
+    let (lc, mut ctr, mut scenario) = setup(
+        NBTC_SCRIPT_PUBKEY,
+        sender,
+        object::id_from_address(@0x01),
+    );
     let data = get_valid_mint_data();
 
     // First mint, should succeed
@@ -248,7 +282,11 @@ fun test_nbtc_mint_fail_tx_already_used() {
 #[test, expected_failure(abort_code = EAlreadyUpdated)]
 fun test_update_version_fail() {
     let sender = @0x01;
-    let (_lc, mut ctr, _scenario) = setup(NBTC_SCRIPT_PUBKEY, sender);
+    let (_lc, mut ctr, _scenario) = setup(
+        NBTC_SCRIPT_PUBKEY,
+        sender,
+        object::id_from_address(@0x01),
+    );
     nbtc::update_version(&mut ctr);
     abort
 }

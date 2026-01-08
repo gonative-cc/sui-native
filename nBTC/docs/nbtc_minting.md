@@ -1,5 +1,9 @@
 # nBTC Minting
 
+Prerequisites:
+
+- [UTXO Management](./docs/utxo_management.md)
+
 ## Definitions
 
 - dwallet: Ika dwallet. In the context of nBTC, this is the `contract` that holds the Bitcoin. [see more](https://github.com/dwallet-labs/ika/blob/main/docs/docs/core-concepts/dwallets.md)

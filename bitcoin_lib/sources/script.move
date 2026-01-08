@@ -1,45 +1,16 @@
 module bitcoin_lib::script;
 
+use bitcoin_lib::opcode;
 use bitcoin_lib::vector_utils::vector_slice;
-
-// === BTC script opcodes ===
-/// An empty array of bytes is pushed onto the stack. (This is not a no-op: an item is added to the stack.)
-const OP_0: u8 = 0x00;
-/// Push the number 1 onto the stack
-const OP_1: u8 = 0x51;
-/// Duplicates the top stack item
-const OP_DUP: u8 = 0x76;
-/// Pop the top stack item and push its RIPEMD(SHA256(top item)) hash
-const OP_HASH160: u8 = 0xa9;
-/// Push the next 20 bytes as an array onto the stack
-const OP_DATA_20: u8 = 0x14;
-/// Push the next 32 bytes as an array onto the stack
-const OP_DATA_32: u8 = 0x20;
-/// Returns 1 if the inputs are exactly equal, 0 otherwise
-const OP_EQUAL: u8 = 0x87;
-/// Returns success if the inputs are exactly equal, failure otherwise
-const OP_EQUALVERIFY: u8 = 0x88;
-/// https://en.bitcoin.it/wiki/OP_CHECKSIG pushing 1/0 for success/failure
-const OP_CHECKSIG: u8 = 0xac;
-/// nulldata script - marks transaction output as unspendable
-const OP_RETURN: u8 = 0x6a;
-/// Read the next 4 bytes as N. Push the next N bytes as an array onto the stack.
-const OP_PUSHDATA4: u8 = 0x4e;
-/// Read the next 2 bytes as N. Push the next N bytes as an array onto the stack.
-const OP_PUSHDATA2: u8 = 0x4d;
-/// Read the next byte as N. Push the next N bytes as an array onto the stack.
-const OP_PUSHDATA1: u8 = 0x4c;
-/// Push the next 75 bytes onto the stack.
-const OP_DATA_75: u8 = 0x4b;
 
 /// Checks if the script is a Pay-to-Script-Hash (P2SH) output.
 /// P2SH format: OP_HASH160 OP_DATA_20 <20-byte-hash> OP_EQUAL
 /// Returns true if the script matches the P2SH pattern, false otherwise.
 public fun is_P2SH(script: vector<u8>): bool {
     script.length() == 23 &&
-	script[0] == OP_HASH160 &&
-	script[1] == OP_DATA_20 &&
-	script[22] == OP_EQUAL
+	script[0] == opcode::OP_HASH160!() &&
+	script[1] == opcode::OP_PUSHBYTES_20!() &&
+	script[22] == opcode::OP_EQUAL!()
 }
 
 /// Checks if the script is a Pay-to-Witness-Script-Hash (P2WSH) output.
@@ -47,8 +18,8 @@ public fun is_P2SH(script: vector<u8>): bool {
 /// Returns true if the script matches the P2WSH pattern, false otherwise.
 public fun is_P2WSH(script: vector<u8>): bool {
     script.length() == 34 &&
-	script[0] == OP_0 &&
-	script[1] == OP_DATA_32
+	script[0] == opcode::OP_0!() &&
+	script[1] == opcode::OP_PUSHBYTES_32!()
 }
 
 /// Checks if the script is a Pay-to-Public-Key-Hash (P2PKH) output.
@@ -56,18 +27,18 @@ public fun is_P2WSH(script: vector<u8>): bool {
 /// Returns true if the script matches the P2PKH pattern, false otherwise.
 public fun is_P2PKH(script: vector<u8>): bool {
     script.length() == 25 &&
-		script[0] == OP_DUP &&
-		script[1] == OP_HASH160 &&
-		script[2] == OP_DATA_20 &&
-		script[23] == OP_EQUALVERIFY &&
-		script[24] == OP_CHECKSIG
+		script[0] == opcode::OP_DUP!() &&
+		script[1] == opcode::OP_HASH160!() &&
+		script[2] == opcode::OP_PUSHBYTES_20!() &&
+		script[23] == opcode::OP_EQUALVERIFY!() &&
+		script[24] == opcode::OP_CHECKSIG!()
 }
 
 /// Checks if the script is an OP_RETURN output.
 /// OP_RETURN outputs are used to store arbitrary data on the blockchain and are unspendable.
 /// Returns true if the script starts with OP_RETURN, false otherwise.
 public fun is_op_return(script: vector<u8>): bool {
-    script.length() > 0 && script[0] == OP_RETURN
+    script.length() > 0 && script[0] == opcode::OP_RETURN!()
 }
 
 /// Checks if the script is a Pay-to-Witness-Public-Key-Hash (P2WPKH) output.
@@ -75,8 +46,8 @@ public fun is_op_return(script: vector<u8>): bool {
 /// Returns true if the script matches the P2WPKH pattern, false otherwise.
 public fun is_P2WPKH(script: vector<u8>): bool {
     script.length() == 22 &&
-        script[0] == OP_0 &&
-        script[1] == OP_DATA_20
+        script[0] == opcode::OP_0!() &&
+        script[1] == opcode::OP_PUSHBYTES_20!()
 }
 
 /// Checks if the script is a Taproot (P2TR) output.
@@ -84,8 +55,8 @@ public fun is_P2WPKH(script: vector<u8>): bool {
 /// Returns true if the script matches the Taproot pattern, false otherwise.
 public fun is_taproot(script: vector<u8>): bool {
     script.length() == 34 &&
-	script[0] == OP_1 &&
-	script[1] == OP_DATA_32
+	script[0] == opcode::OP_1!() &&
+	script[1] == opcode::OP_PUSHBYTES_32!()
 }
 
 // TODO: add support script addresses.
@@ -156,19 +127,19 @@ public fun op_return(script: vector<u8>): Option<vector<u8>> {
         return option::none()
     };
 
-    if (script[1] <= OP_DATA_75) {
+    if (script[1] <= opcode::OP_PUSHBYTES_75!()) {
         // Format: OP_RETURN OP_DATA_<len> DATA
         // Pos:     0        1           2+
         // Bytes:   1        1           len
         return option::some(vector_slice(&script, 2, script.length()))
     };
-    if (script[1] == OP_PUSHDATA1) {
+    if (script[1] == opcode::OP_PUSHDATA1!()) {
         // Format: OP_RETURN OP_PUSHDATA1 <len> DATA
         // Pos:     0        1            2    3+
         // Bytes:   1        1            1    len
         return option::some(vector_slice(&script, 3, script.length()))
     };
-    if (script[1] == OP_PUSHDATA2) {
+    if (script[1] == opcode::OP_PUSHDATA2!()) {
         // Format: OP_RETURN OP_PUSHDATA2 <len-len> DATA
         // Pos:     0        1            2-3   4+
         // Bytes:   1        1            2     len

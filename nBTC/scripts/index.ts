@@ -1,19 +1,25 @@
 import { Command } from "commander";
-import { createIkaClient, createSharedDwallet, createSuiClient, loadConfig } from "./common";
-import { broadcastBtcTx } from "./btc-helper";
+import {
+	createIkaClient,
+	createSharedDwallet,
+	createSuiClient,
+	loadConfig,
+	type Config,
+} from "./common";
 import {
 	globalPreSign,
-	getSigHash,
-	createUserSigCap,
-	request_signature_for_input,
+	getSignHash,
+	createUserSigMessage,
+	requestSignatureForInput,
 	verifySignature,
 	getRedeemBtcTx,
 } from "./sign";
 import { initialization } from "./initialization";
+import { broadcastBtcTx } from "./btc-helper";
 
 const config = loadConfig();
 
-let suiClient = createSuiClient();
+let suiClient = createSuiClient(config.packageId);
 let ikaClient = createIkaClient(suiClient);
 await ikaClient.initialize();
 
@@ -33,15 +39,23 @@ program
 		"Requests a signature for a specific input_idx of the given redeem transaction (redeem_id)",
 	)
 	.action(async (redeem_id: number, input_idx: number) => {
-		let gPreSign = await globalPreSign();
-		let message = await getSigHash(suiClient, redeem_id, input_idx, config);
+		let presignId = await globalPreSign();
+		let signHash = await getSignHash(suiClient, redeem_id, input_idx, config);
 		let dwalletID = loadConfig().dwalletId;
-		let userSigCap = await createUserSigCap(ikaClient, suiClient, dwalletID, gPreSign, message);
-		// we use signID to query the signature after ika response
-		let signID = await request_signature_for_input(
+
+		// Create nbtc_public_signature using the new approach
+		let nbtcPublicSignature = await createUserSigMessage(
+			ikaClient,
+			dwalletID,
+			presignId,
+			signHash,
+		);
+
+		let signID = await requestSignatureForInput(
 			redeem_id,
 			input_idx,
-			userSigCap.cap_id,
+			presignId,
+			nbtcPublicSignature,
 			config,
 		);
 		console.log("Ika sign id =", signID);
@@ -62,5 +76,4 @@ program
 		console.log("Raw redeem tx = ", rawTx);
 		await broadcastBtcTx(rawTx);
 	});
-
 program.parse(process.argv);

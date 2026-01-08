@@ -9,24 +9,31 @@
 	"scripts": {
 		"lint": "echo \"Error: no linter specified\"",
 		"typecheck": "tsc --noEmit",
-		"format:all": "prettier -w .",
-		"format:move": "prettier-move --config .prettier-move.json -w",
-		"format:move-all": "prettier-move --config .prettier-move.json -w **/*.move",
-		"test": "bun test"
+		"format:all": "prettier -w --ignore-unknown . '!bitcoin-regtest/**'",
+		"format:move": "prettier-move --config .prettier-move.json -w **/*.move '!bitcoin-regtest/**'",
+		"format:move-all": "prettier-move --config .prettier-move.json -w **/*.move '!bitcoin-regtest/**'",
+		"test": "bun test",
+		"generate-ts": "cd sdk && bun run sui-ts-codegen generate",
+		"publish": "bun run scripts/publish.ts",
+		"deploy-nbtc": "bun run scripts/deploy-nbtc.ts",
+		"deploy:clean": "rm -f deploy-information.json && echo 'Deployment information cleared'"
 	},
 	"dependencies": {
-		"@ika.xyz/sdk": "^0.2.2",
-		"@mysten/sui": "^1.45.0",
+		"@ika.xyz/sdk": "^0.2.7",
+		"@mysten/sui": "^1.45.2",
 		"bip32": "5.0.0-rc.0",
 		"bip39": "^3.1.0",
 		"bitcoinjs-lib": "^7.0.0",
 		"commander": "^14.0.2",
 		"dotenv": "^17.2.3",
-		"tiny-secp256k1": "^2.2.4"
+		"smol-toml": "^1.6.0",
+		"tiny-secp256k1": "^2.2.4",
+		"zx": "^8.8.5"
 	},
 	"devDependencies": {
+		"@mysten/codegen": "^0.5.13",
 		"@types/bun": "latest",
-		"@types/node": "^24.10.1",
+		"@types/node": "^24.10.4",
 		"typescript": "^5.9.3"
 	},
 	"peerDependencies": {

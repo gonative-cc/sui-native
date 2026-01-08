@@ -3,25 +3,25 @@
 module nbtc::nbtc;
 
 use bitcoin_lib::reader;
-use bitcoin_lib::tx;
+use bitcoin_lib::tx::{Self, Transaction};
 use bitcoin_spv::light_client::LightClient;
 use ika::ika::IKA;
 use ika_dwallet_2pc_mpc::coordinator::DWalletCoordinator;
-use ika_dwallet_2pc_mpc::coordinator_inner::{DWalletCap, VerifiedPartialUserSignatureCap};
+use ika_dwallet_2pc_mpc::coordinator_inner::{DWalletCap, UnverifiedPresignCap};
 use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
 use nbtc::config::{Self, Config};
 use nbtc::nbtc_utxo::{Self, Utxo, validate_utxos};
 use nbtc::redeem_request::{Self, RedeemRequest};
-use nbtc::storage::{Storage, create_storage, create_dwallet_metadata};
+use nbtc::storage::{Storage, create_storage, create_dwallet_metadata, DWalletMetadata};
 use nbtc::verify_payment::verify_payment;
 use sui::address;
 use sui::balance::{Self, Balance};
 use sui::clock::Clock;
 use sui::coin::{Self, Coin, TreasuryCap};
+use sui::coin_registry;
 use sui::event;
 use sui::sui::SUI;
 use sui::table::{Self, Table};
-use sui::url;
 
 //
 // Constant
@@ -29,6 +29,8 @@ use sui::url;
 
 /// Package version
 const VERSION: u32 = 1;
+
+const MINUTE: u64 = 60_000;
 
 /// Coin Metadata
 const DECIMALS: u8 = 8;
@@ -40,9 +42,6 @@ const ICON_URL: vector<u8> =
 
 /// ops_arg consts
 const MINT_OP_APPLY_FEE: u32 = 1;
-
-/// One Time Witness
-public struct NBTC has drop {}
 
 //
 // Errors
@@ -72,23 +71,32 @@ const EBalanceNotEmpty: vector<u8> = b"balance not empty";
 #[error]
 const ENotReadlyForSign: vector<u8> = b"redeem tx is not ready for signing";
 #[error]
-const EInputAlreadyUsed: vector<u8> =
-    b"this input has been already used in other signature request";
+const EInputAlreadyUsed: vector<u8> = b"input has been already used";
 #[error]
 const EActiveDwalletNotInStorage: vector<u8> = b"try active dwallet not exist in storage";
 #[error]
 const ERedeemWindowExpired: vector<u8> = b"resolving window has expired";
-#[error]
-const EInvalidUTXOSet: vector<u8> = b"Invalid utxo set";
 #[error]
 const ENoUTXOsProposed: vector<u8> = b"No UTXOs proposed";
 #[error]
 const ENotResolving: vector<u8> = b"redeem request is not in resolving status";
 #[error]
 const EInvalidDWalletCoordinator: vector<u8> = b"Invalid Dwallet coordinator";
+#[error]
+const ENotSigned: vector<u8> = b"redeem request is not signed";
+#[error]
+const EAlreadyConfirmed: vector<u8> = b"redeem request already confirmed";
+#[error]
+const ERedeemTxNotConfirmed: vector<u8> = b"Bitcoin redeem tx not confirmed via SPV";
+#[error]
+const EInvalidChangeRecipient: vector<u8> = b"Invalid change recipient";
+
 //
 // Structs
 //
+
+/// Coin type identifier (`Coin<package_object::nbtc::NBTC>`) and One Time Witness.
+public struct NBTC has drop {}
 
 /// Operator capability. Created only once in the `init` function.
 public struct OpCap has key, store { id: UID }
@@ -108,8 +116,6 @@ public struct NbtcContract has key, store {
     config: Table<u32, Config>,
     fees_collected: Balance<NBTC>,
     // TODO: probably we should have UTXOs / nbtc pubkey
-    utxos: Table<u64, Utxo>, // Table<dwallet_id + utxo_idx, Utxo>
-    next_utxo: u64,
     // redeem request token for nbtc
     redeem_requests: Table<u64, RedeemRequest>,
     // lock nbtc for redeem, this is a mapping from request id to nBTC redeem coin
@@ -118,8 +124,6 @@ public struct NbtcContract has key, store {
     // should have one active_dwallet_id
     active_dwallet_id: Option<ID>,
     next_redeem_req: u64,
-    /// minimum amount of time in milliseconds the redeem resolution should take.
-    redeem_duration: u64,
 }
 
 /// MintEvent is emitted when nBTC is successfully minted.
@@ -157,69 +161,81 @@ public struct RedeemRequestEvent has copy, drop {
     created_at: u64,
 }
 
-public struct SignatureConfirmedEvent has copy, drop {
+public struct RedeemSigCreatedEvent has copy, drop {
     redeem_id: u64,
-    input_idx: u32,
+    input_id: u32,
     is_fully_signed: bool,
 }
 
-public struct ProposeUtxoEvent has copy, drop {
+// TODO: consider moving it to redeem_request.move
+public struct RedeemRequestProposeEvent has copy, drop {
     redeem_id: u64,
     dwallet_ids: vector<ID>,
     utxo_ids: vector<u64>,
+}
+
+/// Event emitted when nBTC is burned
+public struct BurnEvent has copy, drop {
+    redeem_id: u64,
+    amount: u64,
 }
 
 //
 // Functions
 //
 
+// NOTE: we create a currency using new_currency_with_otw. This is a two-step process.
+// We MUST call coin_registry::finalize_registration to place the coin into the registry.
+// https://docs.sui.io/standards/currency#coin-finalization
 fun init(witness: NBTC, ctx: &mut TxContext) {
-    let (treasury_cap, metadata) = coin::create_currency<NBTC>(
+    let mut contract = init__(witness, ctx);
+    contract
+        .config
+        .add(
+            VERSION,
+            config::new(
+                @bitcoin_lc.to_id(),
+                @fallback_addr,
+                10, // mint fee, TODO: increase it
+                @ika_coordinator.to_id(),
+                2*MINUTE,
+            ),
+        );
+
+    transfer::public_share_object(contract);
+}
+
+#[allow(lint(self_transfer))]
+fun init__(witness: NBTC, ctx: &mut TxContext): NbtcContract {
+    let (builder, treasury_cap) = coin_registry::new_currency_with_otw(
         witness,
         DECIMALS,
-        SYMBOL,
-        NAME,
-        DESCRIPTION,
-        option::some(url::new_unsafe_from_bytes(ICON_URL)),
+        SYMBOL.to_string(),
+        NAME.to_string(),
+        DESCRIPTION.to_string(),
+        ICON_URL.to_string(),
         ctx,
     );
 
-    // NOTE: we removed post deployment setup function and didn't want to implement PTB style
-    // initialization, so we require setting the address before publishing the package.
-    transfer::public_freeze_object(metadata);
-    let mut contract = NbtcContract {
+    let sender = ctx.sender();
+    let metadata_cap = builder.finalize(ctx);
+    transfer::public_transfer(metadata_cap, sender);
+    transfer::transfer(OpCap { id: object::new(ctx) }, sender);
+    transfer::transfer(AdminCap { id: object::new(ctx) }, sender);
+
+    NbtcContract {
         id: object::new(ctx),
         version: VERSION,
         cap: treasury_cap,
         tx_ids: table::new(ctx),
         config: table::new(ctx),
-        utxos: table::new(ctx),
         fees_collected: balance::zero(),
-        next_utxo: 0,
         redeem_requests: table::new<u64, RedeemRequest>(ctx),
         locked: table::new(ctx),
         storage: create_storage(ctx),
         active_dwallet_id: option::none(),
         next_redeem_req: 0,
-        redeem_duration: 5*60_000, // 5min
-    };
-
-    contract
-        .config
-        .add(
-            VERSION,
-            config::new(@bitcoin_lc.to_id(), @fallback_addr, 10, @ika_coordinator.to_id(), ctx),
-        );
-    transfer::public_share_object(contract);
-
-    transfer::transfer(
-        OpCap { id: object::new(ctx) },
-        ctx.sender(),
-    );
-    transfer::transfer(
-        AdminCap { id: object::new(ctx) },
-        ctx.sender(),
-    );
+    }
 }
 
 //
@@ -245,11 +261,10 @@ fun verify_deposit(
     assert!(contract.version == VERSION, EVersionMismatch);
     assert!(ops_arg == 0 || ops_arg == MINT_OP_APPLY_FEE, EInvalidOpsArg);
     let provided_lc_id = object::id(light_client);
-    assert!(provided_lc_id == contract.config().light_client_id(), EUntrustedLightClient);
+    let config = contract.config();
+    assert!(provided_lc_id == config.light_client_id(), EUntrustedLightClient);
 
-    let mut r = reader::new(tx_bytes);
-    let tx = tx::deserialize(&mut r);
-
+    let tx = tx::decode(tx_bytes);
     let tx_id = tx.tx_id();
 
     // Double spend prevent
@@ -268,7 +283,7 @@ fun verify_deposit(
     );
 
     assert!(amount > 0, EMintAmountIsZero);
-    let mut recipient: address = contract.config().fallback_addr();
+    let mut recipient: address = config.fallback_addr();
     if (op_return.is_some()) {
         let msg = op_return.extract();
         let mut msg_reader = reader::new(msg);
@@ -281,7 +296,7 @@ fun verify_deposit(
             // For op_ret_type=0x0 we expect only 32 bytes. If the stream is longer (more data), then
             // the format is invalid, so moving recipient to fallback.
             if (!msg_reader.end_stream()) {
-                recipient = contract.config().fallback_addr();
+                recipient = config.fallback_addr();
             }
         }
     };
@@ -290,26 +305,31 @@ fun verify_deposit(
     let o = tx.outputs();
     let mut utxo_idx = vector[];
     let mut i = 0;
-    let dwallet_id = *contract.active_dwallet_id.borrow();
+    let dwallet_id = contract.active_dwallet_id();
     while (i < vouts.length()) {
         let vout_idx = vouts[i];
         let o_amount = o[vout_idx as u64].amount();
-        let utxo_idx_next = contract.next_utxo;
-        add_utxo_to_contract(contract, tx_id, vout_idx, o_amount, lockscript, dwallet_id);
-        utxo_idx.push_back(utxo_idx_next);
+        utxo_idx.push_back(contract.storage.utxo_store().next_utxo());
+        contract.add_utxo_to_contract(tx_id, vout_idx, o_amount, dwallet_id);
         i = i + 1;
     };
 
     (amount, recipient, utxo_idx)
 }
 
+/// Returns the ID of the currently active dwallet.
+/// Aborts if no dwallet has been set as active.
+public fun active_dwallet_id(contract: &NbtcContract): ID {
+    *contract.active_dwallet_id.borrow()
+}
+
 public fun active_lockscript(contract: &NbtcContract): vector<u8> {
-    let dwallet_id = *contract.active_dwallet_id.borrow();
+    let dwallet_id = contract.active_dwallet_id();
     contract.storage.dwallet_metadata(dwallet_id).lockscript()
 }
 
 public fun active_balance(contract: &NbtcContract): u64 {
-    let dwallet_id = *contract.active_dwallet_id.borrow();
+    let dwallet_id = contract.active_dwallet_id();
     contract.storage.dwallet_metadata(dwallet_id).total_deposit()
 }
 //
@@ -340,7 +360,7 @@ public fun mint(
     ops_arg: u32,
     ctx: &mut TxContext,
 ) {
-    let active_dwallet_id = *contract.active_dwallet_id.borrow();
+    let active_dwallet_id = contract.active_dwallet_id();
     let (mut amount, recipient, utxo_ids) = contract.verify_deposit(
         light_client,
         active_dwallet_id,
@@ -367,8 +387,9 @@ public fun mint(
     if (amount > 0) transfer::public_transfer(coin::from_balance(minted, ctx), recipient)
     else minted.destroy_zero();
 
-    let btc_tx_id = contract.utxos[utxo_ids[0]].tx_id();
-    let btc_vout = contract.utxos[utxo_ids[0]].vout();
+    let utxo = contract.storage.utxo_store().get_utxo(utxo_ids[0], active_dwallet_id);
+    let btc_tx_id = utxo.tx_id();
+    let btc_vout = utxo.vout();
     event::emit(MintEvent {
         recipient,
         fee: fee_amount,
@@ -403,7 +424,8 @@ public fun record_inactive_deposit(
     assert!(contract.version == VERSION, EVersionMismatch);
     assert!(ops_arg == 0 || ops_arg == MINT_OP_APPLY_FEE, EInvalidOpsArg);
     let provided_lc_id = object::id(light_client);
-    assert!(provided_lc_id == contract.config().light_client_id(), EUntrustedLightClient);
+    let config = contract.config();
+    assert!(provided_lc_id == config.light_client_id(), EUntrustedLightClient);
     assert!(
         option::some(dwallet_id) != contract.active_dwallet_id && contract.storage.exist(dwallet_id),
         EInvalidDepositKey,
@@ -429,40 +451,57 @@ public fun record_inactive_deposit(
     });
 }
 
-/// Request signing for specific input in redeem transaction,
-/// partial_user_signature_cap: Created by future sign request
-/// Because we use shared dwallet this is already public and we don't need to send "user share's"
-/// signature. The Ika also auto checks if the message we want to sign is identical between messages
-/// signed by nbtc user share and message we request here.
-/// We will:
-///  - compute the sign hash for specific input
-///  - Request signature from Ika
-///  - Record sing_id and other recomputeable data
+/// Request signing for specific input in a redeem transaction.
+///
+/// This function will:
+/// - Compute the signature hash for the specified input
+/// - Request signature from Ika Network
+/// - Record the sign_id for later verification
+///
+/// # Arguments
+/// * `contract` - Mutable reference to the nBTC contract
+/// * `dwallet_coordinator` - The coordinator for dWallet operations
+/// * `redeem_id` - Unique identifier for the redeem request
+/// * `input_id` - Index of the Bitcoin input to be signed (0-indexed)
+/// * `nbtc_public_sign` - Partial signature created by nBTC public share
+/// * `presign` - Capability for unverified presigning operation
+/// * `ika_session` - Session identifier for the signing request
+/// * `payment_ika` - IKA coin for payment
+/// * `payment_sui` - SUI coin for gas fees
+/// * `ctx` - Transaction context
+///
+/// # Aborts
+/// * `EInvalidDWalletCoordinator` - If the provided coordinator doesn't match the contract's configured coordinator
+/// * `ENotReadlyForSign` - If the redeem request is not in signing state
+/// * `EInputAlreadyUsed` - If the input has already been signed
 public fun request_signature_for_input(
     contract: &mut NbtcContract,
     dwallet_coordinator: &mut DWalletCoordinator,
-    request_id: u64,
-    input_idx: u32,
-    user_sig_cap: VerifiedPartialUserSignatureCap,
-    session_identifier: SessionIdentifier,
+    redeem_id: u64,
+    input_id: u32,
+    nbtc_public_sign: vector<u8>,
+    presign: UnverifiedPresignCap,
+    ika_session: SessionIdentifier,
     payment_ika: &mut Coin<IKA>,
     payment_sui: &mut Coin<SUI>,
     ctx: &mut TxContext,
 ) {
+    let config = contract.config();
     assert!(
-        object::id(dwallet_coordinator) == contract.config().dwallet_coordinator(),
+        object::id(dwallet_coordinator) == config.dwallet_coordinator(),
         EInvalidDWalletCoordinator,
     );
-    let request = &mut contract.redeem_requests[request_id];
+    let request = &mut contract.redeem_requests[redeem_id];
     assert!(request.status().is_signing(), ENotReadlyForSign);
-    assert!(!request.has_signature(input_idx), EInputAlreadyUsed);
+    assert!(!request.has_signature(input_id), EInputAlreadyUsed);
     request.request_signature_for_input(
         dwallet_coordinator,
         &contract.storage,
-        request_id,
-        input_idx,
-        user_sig_cap,
-        session_identifier,
+        redeem_id,
+        input_id,
+        nbtc_public_sign,
+        presign,
+        ika_session,
         payment_ika,
         payment_sui,
         ctx,
@@ -507,47 +546,120 @@ public fun redeem(
     contract.locked.add(redeem_id, coin);
     contract.next_redeem_req = redeem_id + 1;
 
-    return redeem_id
+    redeem_id
 }
 
-public fun validate_signature(
+public fun finalize_redeem(
+    contract: &mut NbtcContract,
+    light_client: &LightClient,
+    redeem_id: u64,
+    proof: vector<vector<u8>>,
+    height: u64,
+    tx_index: u64,
+) {
+    assert!(contract.version == VERSION, EVersionMismatch);
+    let cfg = contract.config();
+    let provided_lc_id = object::id(light_client);
+    assert!(provided_lc_id == cfg.light_client_id(), EUntrustedLightClient);
+
+    let r = &contract.redeem_requests[redeem_id];
+    assert!(!r.status().is_confirmed(), EAlreadyConfirmed);
+    assert!(r.status().is_signed(), ENotSigned);
+
+    // TODO: we don't need to store the whole tx.
+    // We only need to remember tx_id and the reminder output
+    let expected_tx_bytes = r.raw_signed_tx(&contract.storage);
+    let tx = tx::decode(expected_tx_bytes);
+    let tx_id = tx.tx_id();
+    assert!(light_client.verify_tx(height, tx_id, proof, tx_index), ERedeemTxNotConfirmed);
+
+    contract.burn_redeem_utxos(redeem_id, &tx);
+}
+
+fun burn_redeem_utxos(contract: &mut NbtcContract, redeem_id: u64, tx: &Transaction) {
+    let tx_id = tx.tx_id();
+    let active_dwallet_id = contract.active_dwallet_id();
+    let expected_nbtc_lockscript = contract.active_lockscript();
+    // TODO we should remove it.
+    let r = &mut contract.redeem_requests[redeem_id];
+
+    let spent_utxos_ids = r.utxo_ids();
+    let dwallet_ids = r.dwallet_ids();
+
+    spent_utxos_ids.length().do!(|i| {
+        nbtc_utxo::unlock_utxo(
+            contract.storage.utxo_store_mut(),
+            spent_utxos_ids[i],
+            dwallet_ids[i],
+        );
+    });
+
+    r.burn_utxos();
+
+    let coin_to_burn = contract.locked.remove(redeem_id);
+    let burn_amount = coin_to_burn.value();
+    contract.cap.burn(coin_to_burn);
+    event::emit(BurnEvent {
+        redeem_id,
+        amount: burn_amount,
+    });
+
+    let outputs = tx.outputs();
+    if (outputs.length() > 1) {
+        let change_output = &outputs[1];
+        assert!(change_output.script_pubkey() == expected_nbtc_lockscript, EInvalidChangeRecipient);
+        let change_utxo = nbtc_utxo::new_utxo(tx_id, 1, change_output.amount());
+        contract.storage.utxo_store_mut().add(active_dwallet_id, change_utxo);
+    };
+
+    r.move_to_confirmed_status(redeem_id, tx_id);
+}
+
+// TODO: we should be able to record many signatures in a single tx
+/// Try to read sig from dwallet and save it in the inputs store.
+/// Fails if the sig is not available. Validation is left on the Ika side.
+public fun record_signature(
     contract: &mut NbtcContract,
     dwallet_coordinator: &DWalletCoordinator,
     redeem_id: u64,
-    input_idx: u32,
+    input_id: u32,
     sign_id: ID,
 ) {
+    let config = contract.config();
     assert!(
-        object::id(dwallet_coordinator) == contract.config().dwallet_coordinator(),
+        object::id(dwallet_coordinator) == config.dwallet_coordinator(),
         EInvalidDWalletCoordinator,
     );
     let r = &mut contract.redeem_requests[redeem_id];
-    assert!(!r.has_signature(input_idx), EInputAlreadyUsed);
+    assert!(!r.has_signature(input_id), EInputAlreadyUsed);
 
-    r.validate_signature(dwallet_coordinator, &contract.storage, input_idx, sign_id);
+    r.record_signature(dwallet_coordinator, input_id, sign_id);
 
     let is_fully_signed = r.status().is_signed();
-    event::emit(SignatureConfirmedEvent {
+    event::emit(RedeemSigCreatedEvent {
         redeem_id,
-        input_idx,
+        input_id,
         is_fully_signed,
     });
 }
 
-//TODO: update event emmitted to include the data from the redeem request
-public fun finalize_redeem_request(contract: &mut NbtcContract, redeem_id: u64, clock: &Clock) {
+// TODO: update event emitted to include the data from the redeem request
+// TODO: this is not needed - we decided to merge solved stage with signing stage
+//       https://github.com/gonative-cc/workers/issues/266
+public fun solve_redeem_request(contract: &mut NbtcContract, redeem_id: u64, clock: &Clock) {
     assert!(contract.version == VERSION, EVersionMismatch);
+    let config = contract.config();
     let r = &mut contract.redeem_requests[redeem_id];
 
     // 1. Make sure there is a utxo proposed and we are past the finalization time
     assert!(r.inputs_length() > 0, ENoUTXOsProposed);
     assert!(r.status().is_resolving(), ENotResolving);
 
-    let current_time = clock.timestamp_ms();
-    let deadline = r.redeem_created_at() + contract.redeem_duration;
-    assert!(current_time > deadline, ERedeemWindowExpired);
+    let now = clock.timestamp_ms();
+    let deadline = r.redeem_created_at() + config.redeem_duration();
+    assert!(now > deadline, ERedeemWindowExpired);
 
-    r.move_to_signing_status(redeem_id);
+    r.move_to_signing_status(redeem_id, &mut contract.storage);
 }
 
 public fun propose_utxos(
@@ -559,24 +671,46 @@ public fun propose_utxos(
 ) {
     assert!(contract.version == VERSION, EVersionMismatch);
 
+    let config = contract.config();
     let r = &mut contract.redeem_requests[redeem_id];
     assert!(r.status().is_resolving(), ENotResolving);
 
-    let current_time = clock.timestamp_ms();
-    let redeem_created_at = r.redeem_created_at();
-    let deadline = redeem_created_at + contract.redeem_duration;
-    assert!(current_time <= deadline, ERedeemWindowExpired);
+    // we check the deadline only if we have proposed solution
+    if (r.inputs_length() > 0) {
+        let now = clock.timestamp_ms();
+        let deadline = r.redeem_created_at() + config.redeem_duration();
+        assert!(now <= deadline, ERedeemWindowExpired);
+    };
+
     let requested_amount = r.amount();
 
-    assert!(
-        validate_utxos(&contract.utxos, &utxo_ids, dwallet_ids, requested_amount) >= requested_amount,
-        EInvalidUTXOSet,
-    );
+    contract
+        .storage
+        .utxo_store()
+        .validate_utxos(&utxo_ids, dwallet_ids, requested_amount, redeem_id);
 
-    let utxos = utxo_ids.map!(|idx| contract.utxos[idx]);
-    r.set_best_utxos(utxos, dwallet_ids);
+    let old_utxo_ids = r.utxo_ids();
+    let old_dwallet_ids = r.dwallet_ids();
+    old_utxo_ids.length().do!(|i| {
+        nbtc_utxo::unlock_utxo(
+            contract.storage.utxo_store_mut(),
+            old_utxo_ids[i],
+            old_dwallet_ids[i],
+        );
+    });
 
-    event::emit(ProposeUtxoEvent {
+    utxo_ids.length().do!(|i| {
+        nbtc_utxo::lock_utxo(
+            contract.storage.utxo_store_mut(),
+            utxo_ids[i],
+            dwallet_ids[i],
+            redeem_id,
+        );
+    });
+
+    r.set_utxos(dwallet_ids, utxo_ids);
+
+    event::emit(RedeemRequestProposeEvent {
         redeem_id,
         dwallet_ids,
         utxo_ids,
@@ -629,7 +763,8 @@ public fun merge_utxos(_: &mut NbtcContract, _num_utxos: u16) {}
 public fun update_redeem_duration(_: &OpCap, contract: &mut NbtcContract, redeem_duration: u64) {
     assert!(VERSION > contract.version, EAlreadyUpdated);
     assert!(redeem_duration >= 1000, EInvalidArguments); // at least 1s
-    contract.redeem_duration = redeem_duration;
+    let cfg = contract.config.borrow_mut(VERSION);
+    cfg.set_redeem_duration(redeem_duration);
 }
 
 public fun withdraw_fees(_: &OpCap, contract: &mut NbtcContract, ctx: &mut TxContext): Coin<NBTC> {
@@ -644,7 +779,8 @@ public fun change_fees(_: &AdminCap, contract: &mut NbtcContract, mint_fee: u64)
 
 /// Sets config for specific NBTC version.
 /// This should be called by the admin before updating the package with the next package_version
-public fun set_config(_: &AdminCap, contract: &mut NbtcContract, version: u32, config: Config) {
+public fun set_config(contract: &mut NbtcContract, _: &AdminCap, version: u32, config: Config) {
+    assert!(version == VERSION + 1);
     contract.config.add(version, config);
 }
 
@@ -700,18 +836,15 @@ public(package) fun add_utxo_to_contract(
     tx_id: vector<u8>,
     vout: u32,
     value: u64,
-    spend_key: vector<u8>,
     dwallet_id: ID,
 ) {
-    let utxo_idx = contract.next_utxo;
-    let utxo = nbtc_utxo::new_utxo(tx_id, vout, value, spend_key, dwallet_id);
-    contract.utxos.add(utxo_idx, utxo);
-    contract.next_utxo = contract.next_utxo + 1;
+    let utxo = nbtc_utxo::new_utxo(tx_id, vout, value);
+    contract.storage.utxo_store_mut().add(dwallet_id, utxo);
 }
 
 /// Remove a UTXO from the contract
-public fun remove_utxo(_: &AdminCap, contract: &mut NbtcContract, utxo_idx: u64) {
-    contract.utxos.remove(utxo_idx);
+public fun remove_utxo(_: &AdminCap, contract: &mut NbtcContract, utxo_idx: u64, dwallet_id: ID) {
+    contract.storage.utxo_store_mut().remove(utxo_idx, dwallet_id).burn();
 }
 
 //
@@ -722,21 +855,22 @@ public fun total_supply(contract: &NbtcContract): u64 {
     coin::total_supply(&contract.cap)
 }
 
-public fun redeem_request(contract: &NbtcContract, request_id: u64): &RedeemRequest {
-    &contract.redeem_requests[request_id]
+public fun redeem_request(contract: &NbtcContract, redeem_id: u64): &RedeemRequest {
+    &contract.redeem_requests[redeem_id]
 }
 
 public fun storage(contract: &NbtcContract): &Storage {
     &contract.storage
 }
 
-public fun config(contract: &NbtcContract): &Config {
-    &contract.config[VERSION]
+public fun config(contract: &NbtcContract): Config {
+    contract.config[VERSION]
 }
 
 public fun package_version(): u32 {
     VERSION
 }
+
 //
 // Testing
 //
@@ -745,41 +879,16 @@ public fun package_version(): u32 {
 public(package) fun init_for_testing(
     bitcoin_lc: address,
     fallback_addr: address,
-    nbtc_bitcoin_spend_key: vector<u8>,
     ika_coordinator: ID,
     ctx: &mut TxContext,
 ): NbtcContract {
-    let witness = NBTC {};
-    let (contract_cap, metadata) = coin::create_currency<NBTC>(
-        witness,
-        DECIMALS,
-        SYMBOL,
-        NAME,
-        DESCRIPTION,
-        option::some(url::new_unsafe_from_bytes(ICON_URL)),
-        ctx,
-    );
-    transfer::public_freeze_object(metadata);
-    let mut contract = NbtcContract {
-        id: object::new(ctx),
-        version: VERSION,
-        cap: contract_cap,
-        tx_ids: table::new(ctx),
-        config: table::new(ctx),
-        utxos: table::new(ctx),
-        redeem_requests: table::new(ctx),
-        locked: table::new(ctx),
-        next_redeem_req: 0,
-        next_utxo: 0,
-        active_dwallet_id: option::none(),
-        fees_collected: balance::zero(),
-        redeem_duration: 5*60_000, // 5min
-        storage: create_storage(ctx),
-    };
-
+    let mut contract = init__(NBTC {}, ctx);
     contract
         .config
-        .add(VERSION, config::new(bitcoin_lc.to_id(), fallback_addr, 10, ika_coordinator, ctx));
+        .add(
+            VERSION,
+            config::new(bitcoin_lc.to_id(), fallback_addr, 10, ika_coordinator, 5*MINUTE),
+        );
     contract
 }
 
@@ -788,19 +897,30 @@ public fun get_fees_collected(contract: &NbtcContract): u64 {
     contract.fees_collected.value()
 }
 
+#[test_only]
 public fun redeem_duration(contract: &NbtcContract): u64 {
-    contract.redeem_duration
+    contract.config().redeem_duration()
 }
 
 #[test_only]
-public fun add_utxo_for_test(ctr: &mut NbtcContract, idx: u64, utxo: Utxo) {
-    ctr.utxos.add(idx, utxo);
+use nbtc::nbtc_utxo::UtxoStore;
+
+#[test_only]
+/// Adds UTXO to the active wallet
+public fun add_utxo_for_test(ctr: &mut NbtcContract, _idx: u64, utxo: Utxo) {
+    let dwallet_id = ctr.active_dwallet_id();
+    ctr.storage.utxo_store_mut().add(dwallet_id, utxo);
+}
+
+#[test_only]
+public fun borrow_utxo_map_for_test(ctr: &NbtcContract): &UtxoStore {
+    ctr.storage.utxo_store()
 }
 
 #[test_only]
 public fun create_redeem_request_for_testing(
     contract: &mut NbtcContract,
-    request_id: u64,
+    redeem_id: u64,
     redeemer: address,
     recipient_script: vector<u8>,
     amount: u64,
@@ -822,7 +942,7 @@ public fun create_redeem_request_for_testing(
     contract
         .redeem_requests
         .add(
-            request_id,
+            redeem_id,
             r,
         )
 }
@@ -835,8 +955,8 @@ public fun admin_cap_for_testing(ctx: &mut TxContext): AdminCap {
 }
 
 #[test_only]
-public fun redeem_request_mut(contract: &mut NbtcContract, request_id: u64): &mut RedeemRequest {
-    &mut contract.redeem_requests[request_id]
+public fun redeem_request_mut(contract: &mut NbtcContract, redeem_id: u64): &mut RedeemRequest {
+    &mut contract.redeem_requests[redeem_id]
 }
 
 #[test_only]
@@ -857,5 +977,22 @@ public fun set_dwallet_cap_for_test(
     let dwallet_id = dwallet_cap.dwallet_id();
     contract.active_dwallet_id = option::some(dwallet_id);
     contract.storage.add_metadata(dwallet_id, dmeta);
+    contract.storage.add_dwallet_cap(dwallet_id, dwallet_cap);
+}
+
+#[test_only]
+public fun testing_mint(contract: &mut NbtcContract, amount: u64, ctx: &mut TxContext): Coin<NBTC> {
+    coin::mint(&mut contract.cap, amount, ctx)
+}
+
+#[test_only]
+public fun set_dwallet_metadata_for_test(
+    contract: &mut NbtcContract,
+    dwallet_id: ID,
+    dwallet_metadata: DWalletMetadata,
+    dwallet_cap: DWalletCap,
+) {
+    contract.active_dwallet_id = option::some(dwallet_id);
+    contract.storage.add_metadata(dwallet_id, dwallet_metadata);
     contract.storage.add_dwallet_cap(dwallet_id, dwallet_cap);
 }

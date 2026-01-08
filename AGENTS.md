@@ -46,6 +46,9 @@ Run from repository root:
 - **Format all**: `bun run format:all`
 - **Format Move files**: `bun run format:move-all`
 - **Test**: `bun run test`
+- **Generate TypeScript from Move**: `bun run generate-ts` (generates TypeScript SDK from Move contracts in sdk/src/generated)
+
+Note: The TypeScript generation creates bindings that interact with Move contracts. After running `generate-ts`, the generated files will be in `sdk/src/generated/`. The current TypeScript configuration has `verbatimModuleSyntax` disabled to accommodate the generated code.
 
 ### CI Commands
 
@@ -64,6 +67,10 @@ Run from repository root:
 - Each Move module is in its own file (e.g., `nbtc.move`, `light_client.move`)
 - Test modules are separate files with `_tests` suffix (e.g., `light_client_tests.move`)
 - Documentation is generated into `docs/` directories
+- SDK generated TypeScript code is in `sdk/src/generated/`:
+  - `utils/`: Common utilities for interacting with Sui
+  - `nbtc/`: TypeScript bindings for the nBTC Move package
+  - Each Move package gets its own directory with generated TypeScript bindings
 
 ### Module Organization
 
