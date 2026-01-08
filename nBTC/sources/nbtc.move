@@ -569,7 +569,7 @@ public fun finalize_redeem(
     let tx_id = tx.tx_id();
     assert!(light_client.verify_tx(height, tx_id, proof, tx_index), ERedeemTxNotConfirmed);
 
-    // Burn UTXOs and add a new reminder UTXO
+    // Burn UTXOs and add a new remainder UTXO
 
     let spent_utxos_ids = r.utxo_ids();
     let dwallet_ids = r.dwallet_ids();
