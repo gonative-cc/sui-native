@@ -378,12 +378,6 @@ fun test_taproot_sighash_preimage() {
             option::none(),
         );
         assert_eq!(sha256(sighash_preimage), test_case_outputs[i]);
-            values,
-            hash_type,
-            option::none(),
-            option::none(),
-        );
-        assert_eq!(sha256(sighash_preiamge), test_case_outputs[i]);
     });
 }
 // TODO: add a test case where user spends two UTXOs
