@@ -243,9 +243,8 @@ public fun taproot_sighash_preimage(
     // in our case tag is "TapSighash"
     // https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#specification
     // duplicate sha256("TapSighash");
-    let tag_hash = x"f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a031";
-    taproot_preimage.append(tag_hash);
-    taproot_preimage.append(tag_hash);
+    let mut hash_data =
+        x"f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a031f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a031";
     // Extra zero byte because:
     // https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#cite_note-20
     taproot_preimage.push_back(0x00);
