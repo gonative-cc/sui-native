@@ -8,7 +8,6 @@ use bitcoin_spv::light_client::LightClient;
 use ika::ika::IKA;
 use ika_dwallet_2pc_mpc::coordinator::DWalletCoordinator;
 use ika_dwallet_2pc_mpc::coordinator_inner::{DWalletCap, UnverifiedPresignCap};
-use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
 use nbtc::config::{Self, Config};
 use nbtc::nbtc_utxo::{Self, Utxo, validate_utxos};
 use nbtc::redeem_request::{Self, RedeemRequest};
@@ -465,7 +464,6 @@ public fun record_inactive_deposit(
 /// * `input_id` - Index of the Bitcoin input to be signed (0-indexed)
 /// * `nbtc_public_sign` - Partial signature created by nBTC public share
 /// * `presign` - Capability for unverified presigning operation
-/// * `ika_session` - Session identifier for the signing request
 /// * `payment_ika` - IKA coin for payment
 /// * `payment_sui` - SUI coin for gas fees
 /// * `ctx` - Transaction context
@@ -481,7 +479,6 @@ public fun request_signature_for_input(
     input_id: u32,
     nbtc_public_sign: vector<u8>,
     presign: UnverifiedPresignCap,
-    ika_session: SessionIdentifier,
     payment_ika: &mut Coin<IKA>,
     payment_sui: &mut Coin<SUI>,
     ctx: &mut TxContext,
@@ -501,7 +498,6 @@ public fun request_signature_for_input(
         input_id,
         nbtc_public_sign,
         presign,
-        ika_session,
         payment_ika,
         payment_sui,
         ctx,

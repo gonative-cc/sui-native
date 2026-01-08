@@ -6,9 +6,8 @@ use bitcoin_lib::sighash::{create_segwit_preimage, create_p2wpkh_scriptcode};
 use bitcoin_lib::tx;
 use bitcoin_lib::vector_utils::vector_slice;
 use ika::ika::IKA;
-use ika_dwallet_2pc_mpc::coordinator::DWalletCoordinator;
+use ika_dwallet_2pc_mpc::coordinator::{DWalletCoordinator, register_session_identifier};
 use ika_dwallet_2pc_mpc::coordinator_inner::UnverifiedPresignCap;
-use ika_dwallet_2pc_mpc::sessions_manager::SessionIdentifier;
 use nbtc::nbtc_utxo::Utxo;
 use nbtc::storage::Storage;
 use nbtc::tx_composer::compose_withdraw_tx;
@@ -193,7 +192,6 @@ public(package) fun move_to_confirmed_status(
 /// * `input_id` - Index of the Bitcoin input to be signed (0-indexed)
 /// * `nbtc_public_sign` - Partial signature from nBTC public share
 /// * `presign` - Unverified presign capability
-/// * `ika_session` - Session identifier for the request
 /// * `payment_ika` - IKA coin for payment
 /// * `payment_sui` - SUI coin for gas fees
 /// * `ctx` - Transaction context
@@ -205,7 +203,6 @@ public(package) fun request_signature_for_input(
     input_id: u32,
     nbtc_public_sign: vector<u8>,
     presign: UnverifiedPresignCap,
-    ika_session: SessionIdentifier,
     payment_ika: &mut Coin<IKA>,
     payment_sui: &mut Coin<SUI>,
     ctx: &mut TxContext,
@@ -216,8 +213,15 @@ public(package) fun request_signature_for_input(
 
     let dwallet_id = r.dwallet_ids[input_id as u64];
     let dwallet_cap = storage.dwallet_cap(dwallet_id);
-    let lockscript = storage.dwallet_metadata(dwallet_id).lockscript();
 
+    let message_approval = dwallet_coordinator.approve_message(
+        dwallet_cap,
+        ECDSA,
+        SHA256,
+        sig_hash,
+    );
+    let random_bytes = tx_context::fresh_object_address(ctx).to_bytes();
+    let ika_session = dwallet_coordinator.register_session_identifier(random_bytes, ctx);
     let sign_id = dwallet_coordinator.request_sign_and_return_id(
         verified_presign,
         message_approval,
