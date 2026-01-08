@@ -370,10 +370,14 @@ fun test_taproot_sighash_preimage() {
     test_case_inputs.length().do!(|i| {
         let input_idx_to_sign = test_case_inputs[i][0] as u32;
         let hash_type = test_case_inputs[i][1] as u8;
-        let sighash_preiamge = taproot_sighash_preimage(
+        let sighash_preimage = taproot_sighash_preimage(
             &txn,
             input_idx_to_sign,
             previous_output_pubscripts,
+            option::none(),
+            option::none(),
+        );
+        assert_eq!(sha256(sighash_preimage), test_case_outputs[i]);
             values,
             hash_type,
             option::none(),
