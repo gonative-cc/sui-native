@@ -59,7 +59,7 @@ classDiagram
         status: RedeemStatus
         inputs: vector_Utxo
         +status(): RedeemStatus
-        +raw_signed_tx(storage: NbtcStorage): vector_u8
+        +compose_tx(storage: NbtcStorage): vector_u8
         +utxo_ids(): vector_u64
         +dwallet_ids(): vector_address
         +move_to_signing_status(redeem_id: u64)

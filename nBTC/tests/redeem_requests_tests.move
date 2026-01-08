@@ -60,7 +60,10 @@ fun raw_withdraw_tx_signed_tests() {
     r.move_to_signing_status(0, &mut btc_store);
     r.update_to_signed_for_test(signatures);
 
-    let raw_tx = r.raw_signed_tx(&btc_store);
+    let tx = r.compose_tx(&btc_store);
+    let outputs = tx.outputs();
+    assert_eq!(outputs.length(), 1);
+    assert_eq!(tx.tx_id(), x"c148c42fbc5d424a9cce3518f678e86086d801bcd05bff10542fb52c1f09db4e");
     // one output, no remains token
     assert_eq!(
         raw_tx,

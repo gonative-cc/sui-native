@@ -1,7 +1,6 @@
 #[test_only]
 module nbtc::redeem_workflow_tests;
 
-use bitcoin_lib::tx;
 use nbtc::nbtc::NBTC;
 use nbtc::nbtc_tests::{setup, setup_with_pubkey};
 use nbtc::nbtc_utxo::{new_utxo, utxo_key};
@@ -300,8 +299,7 @@ fun test_finalize_redeem_burns_nbtc_and_removes_utxos() {
     );
 
     let r = ctr.redeem_request(redeem_id);
-    let tx_bytes = r.raw_signed_tx(ctr.storage());
-    let tx = tx::decode(tx_bytes);
+    let tx = r.compose_tx(ctr.storage());
     let tx_id = tx.tx_id();
     let parent_hash = lc.head_hash();
     let header = bitcoin_lib::header::create_header_for_test(
@@ -346,8 +344,7 @@ fun test_finalize_redeem_no_change() {
     );
 
     let r = ctr.redeem_request(redeem_id);
-    let tx_bytes = r.raw_signed_tx(ctr.storage());
-    let tx = tx::decode(tx_bytes);
+    let tx = r.compose_tx(ctr.storage());
     let tx_id = tx.tx_id();
 
     let parent_hash = lc.head_hash();
@@ -391,8 +388,7 @@ fun test_finalize_redeem_fails_when_already_confirmed() {
     );
 
     let r = ctr.redeem_request(redeem_id);
-    let tx_bytes = r.raw_signed_tx(ctr.storage());
-    let tx = tx::decode(tx_bytes);
+    let tx = r.compose_tx(ctr.storage());
     let tx_id = tx.tx_id();
 
     let parent_hash = lc.head_hash();
@@ -437,8 +433,7 @@ fun test_finalize_redeem_with_multiple_utxos() {
     request_mut.update_to_signed_for_test(vector[mock_sig, mock_sig]);
 
     let r = ctr.redeem_request(redeem_id);
-    let tx_bytes = r.raw_signed_tx(ctr.storage());
-    let tx = tx::decode(tx_bytes);
+    let tx = r.compose_tx(ctr.storage());
     let tx_id = tx.tx_id();
 
     let parent_hash = lc.head_hash();

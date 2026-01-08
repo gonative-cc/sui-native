@@ -162,7 +162,6 @@ public(package) fun move_to_confirmed_status(
     tx_id: vector<u8>,
 ) {
     r.status = RedeemStatus::Confirmed;
-    //TODO: Review what to emit for this event
     event::emit(ConfirmedEvent {
         id: redeem_id,
         btc_tx_id: tx_id,
@@ -248,8 +247,8 @@ public(package) fun set_sign_request_metadata(
     r.sign_ids.add(sign_id, true);
 }
 
-// return segwit transaction
-public fun raw_signed_tx(r: &RedeemRequest, storage: &Storage): vector<u8> {
+// returns Bitcoin withdraw transaction
+public fun compose_tx(r: &RedeemRequest, storage: &Storage): tx::Transaction {
     assert!(r.status == RedeemStatus::Signed, ERedeemTxSigningNotCompleted);
 
     let inputs = r.utxos();
@@ -279,7 +278,7 @@ public fun raw_signed_tx(r: &RedeemRequest, storage: &Storage): vector<u8> {
         );
     });
     tx.set_witness(witnesses);
-    tx.serialize_segwit()
+    tx
 }
 
 // add valid signature to redeem request for specific input index
