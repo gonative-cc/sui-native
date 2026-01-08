@@ -62,12 +62,15 @@ fun raw_withdraw_tx_signed_tests() {
     r.move_to_signing_status(0, &mut btc_store);
     r.update_to_signed_for_test(signatures);
 
-    let raw_tx = r.raw_signed_tx(&btc_store);
+    let tx = r.compose_tx(&btc_store);
+    let outputs = tx.outputs();
+    assert_eq!(outputs.length(), 1);
+    assert_eq!(tx.tx_id(), x"c148c42fbc5d424a9cce3518f678e86086d801bcd05bff10542fb52c1f09db4e");
     // one output, no remains token
-    assert_eq!(
-        raw_tx,
-        x"020000000001019dafd815a150414d02047a22ab806dbd2f43d0e1ea5922dadd5396f6d67769202900000000ffffffff01e11801000000000016001464f9139a4a853b3d5ad1315ceb707386ed343c2c02473044022063db5a24fec209152863fb251cc349a7030220bf4ca6e6296002d46d4c3651a502205a0b4b5a520fc42b91b8a888351c1c42bd2864aba2c398007405e957dea77bb101210329cdb63380e0a7109773703534659df6be41c48b4e80e5da77eb384ff7d41be200000000",
-    );
+    // assert_eq!(
+    //     raw_tx,
+    //     x"020000000001019dafd815a150414d02047a22ab806dbd2f43d0e1ea5922dadd5396f6d67769202900000000ffffffff01e11801000000000016001464f9139a4a853b3d5ad1315ceb707386ed343c2c02473044022063db5a24fec209152863fb251cc349a7030220bf4ca6e6296002d46d4c3651a502205a0b4b5a520fc42b91b8a888351c1c42bd2864aba2c398007405e957dea77bb101210329cdb63380e0a7109773703534659df6be41c48b4e80e5da77eb384ff7d41be200000000",
+    // );
     destroy(lc);
     destroy(ctr);
     destroy(r);

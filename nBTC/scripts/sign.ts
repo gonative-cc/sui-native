@@ -277,7 +277,7 @@ export async function getRedeemBtcTx(suiClient: SuiClient, redeemId: number, con
 	);
 
 	tx.add(
-		RedeemRequestModule.rawSignedTx({
+		RedeemRequestModule.composeTx({
 			arguments: {
 				r: redeem,
 				storage: storage,
