@@ -787,7 +787,6 @@ public fun add_dwallet(
     contract: &mut NbtcContract,
     dwallet_cap: DWalletCap,
     lockscript: vector<u8>,
-    public_key: vector<u8>,
     nbtc_endpoint_user_share: vector<u8>,
     ctx: &mut TxContext,
 ) {

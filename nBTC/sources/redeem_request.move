@@ -1,14 +1,8 @@
 module nbtc::redeem_request;
 
-use bitcoin_lib::encoding::{u64_to_le_bytes, der_encode_signature};
 use bitcoin_lib::script;
-use bitcoin_lib::sighash::{
-    create_segwit_preimage,
-    create_p2wpkh_scriptcode,
-    taproot_sighash_preimage
-};
+use bitcoin_lib::sighash::taproot_sighash_preimage;
 use bitcoin_lib::tx;
-use bitcoin_lib::vector_utils::vector_slice;
 use ika::ika::IKA;
 use ika_dwallet_2pc_mpc::coordinator::{DWalletCoordinator, register_session_identifier};
 use ika_dwallet_2pc_mpc::coordinator_inner::UnverifiedPresignCap;
@@ -21,7 +15,6 @@ use sui::sui::SUI;
 use sui::table::{Self, Table};
 use sui::vec_map::{Self, VecMap};
 
-use fun vector_slice as vector.slice;
 #[error]
 const ERedeemTxSigningNotCompleted: vector<u8> =
     b"The signature for the redeem has not been completed";
@@ -215,7 +208,6 @@ public(package) fun request_signature_for_input(
 
     let dwallet_id = r.dwallet_ids[input_id as u64];
     let dwallet_cap = storage.dwallet_cap(dwallet_id);
-    let lockscript = storage.dwallet_metadata(dwallet_id).lockscript();
 
     let message_approval = dwallet_coordinator.approve_message(
         dwallet_cap,
