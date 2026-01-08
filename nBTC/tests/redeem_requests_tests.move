@@ -66,7 +66,7 @@ fun raw_withdraw_tx_signed_tests() {
     assert_eq!(tx.tx_id(), x"c148c42fbc5d424a9cce3518f678e86086d801bcd05bff10542fb52c1f09db4e");
     // one output, no remains token
     assert_eq!(
-        raw_tx,
+        tx.serialize_segwit(),
         x"020000000001019dafd815a150414d02047a22ab806dbd2f43d0e1ea5922dadd5396f6d67769202900000000ffffffff01e11801000000000016001464f9139a4a853b3d5ad1315ceb707386ed343c2c0140b693a0797b24bae12ed0516a2f5ba765618dca89b75e498ba5b745b71644362298a45ca39230d10a02ee6290a91cebf9839600f7e35158a447ea182ea0e022ae00000000",
     );
     destroy(lc);
