@@ -11,7 +11,7 @@ use sui::clock;
 
 #[test]
 fun raw_withdraw_tx_signed_tests() {
-    let nbtc_spend_key = x"00145c2dc82f606be66506b7403f9b304f5e0908b652";
+    let nbtc_spend_key = x"51200f0c8db753acbd17343a39c2f3f4e35e4be6da749f9e35137ab220e7b238a667";
     let nbtc_pk = x"0329cdb63380e0a7109773703534659df6be41c48b4e80e5da77eb384ff7d41be2";
     let sender = @0x1;
     let (lc, ctr, mut scenario) = setup(nbtc_spend_key, sender, MOCK_DWALLET_ID!());
@@ -29,7 +29,7 @@ fun raw_withdraw_tx_signed_tests() {
     ];
 
     let signatures = vector[
-        x"0063db5a24fec209152863fb251cc349a7030220bf4ca6e6296002d46d4c3651a55a0b4b5a520fc42b91b8a888351c1c42bd2864aba2c398007405e957dea77bb1",
+        x"b693a0797b24bae12ed0516a2f5ba765618dca89b75e498ba5b745b71644362298a45ca39230d10a02ee6290a91cebf9839600f7e35158a447ea182ea0e022ae",
     ];
     let fee = 656;
     let clock = clock::create_for_testing(scenario.ctx());
@@ -66,7 +66,7 @@ fun raw_withdraw_tx_signed_tests() {
     // one output, no remains token
     assert_eq!(
         raw_tx,
-        x"020000000001019dafd815a150414d02047a22ab806dbd2f43d0e1ea5922dadd5396f6d67769202900000000ffffffff01e11801000000000016001464f9139a4a853b3d5ad1315ceb707386ed343c2c02473044022063db5a24fec209152863fb251cc349a7030220bf4ca6e6296002d46d4c3651a502205a0b4b5a520fc42b91b8a888351c1c42bd2864aba2c398007405e957dea77bb101210329cdb63380e0a7109773703534659df6be41c48b4e80e5da77eb384ff7d41be200000000",
+        x"020000000001019dafd815a150414d02047a22ab806dbd2f43d0e1ea5922dadd5396f6d67769202900000000ffffffff01e11801000000000016001464f9139a4a853b3d5ad1315ceb707386ed343c2c0140b693a0797b24bae12ed0516a2f5ba765618dca89b75e498ba5b745b71644362298a45ca39230d10a02ee6290a91cebf9839600f7e35158a447ea182ea0e022ae00000000",
     );
     destroy(lc);
     destroy(ctr);
