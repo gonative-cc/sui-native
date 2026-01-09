@@ -169,7 +169,6 @@ public struct RedeemSigCreatedEvent has copy, drop {
 // TODO: consider moving it to redeem_request.move
 public struct RedeemRequestProposeEvent has copy, drop {
     redeem_id: u64,
-    dwallet_ids: vector<ID>,
     utxo_ids: vector<u64>,
 }
 
@@ -386,7 +385,7 @@ public fun mint(
     if (amount > 0) transfer::public_transfer(coin::from_balance(minted, ctx), recipient)
     else minted.destroy_zero();
 
-    let utxo = contract.storage.utxo_store().get_utxo(utxo_ids[0], active_dwallet_id);
+    let utxo = contract.storage.utxo_store().get_utxo(utxo_ids[0]);
     let btc_tx_id = utxo.tx_id();
     let btc_vout = utxo.vout();
     event::emit(MintEvent {
@@ -572,13 +571,11 @@ public fun finalize_redeem(
     // Burn UTXOs and add a new remainder UTXO
 
     let spent_utxos_ids = r.utxo_ids();
-    let dwallet_ids = r.dwallet_ids();
 
     spent_utxos_ids.length().do!(|i| {
         nbtc_utxo::unlock_utxo(
             contract.storage.utxo_store_mut(),
             spent_utxos_ids[i],
-            dwallet_ids[i],
         );
     });
 
@@ -592,8 +589,8 @@ public fun finalize_redeem(
     if (outputs.length() > 1) {
         let change_output = &outputs[1];
         assert!(change_output.script_pubkey() == expected_nbtc_lockscript, EInvalidChangeRecipient);
-        let change_utxo = nbtc_utxo::new_utxo(tx_id, 1, change_output.amount());
-        contract.storage.utxo_store_mut().add(active_dwallet_id, change_utxo);
+        let change_utxo = nbtc_utxo::new_utxo(tx_id, 1, change_output.amount(), active_dwallet_id);
+        contract.storage.utxo_store_mut().add(change_utxo);
     };
 
     // TODO we should remove request ID (once we solve the cleaning)
@@ -656,7 +653,6 @@ public fun propose_utxos(
     contract: &mut NbtcContract,
     redeem_id: u64,
     utxo_ids: vector<u64>,
-    dwallet_ids: vector<ID>,
     clock: &Clock,
 ) {
     assert!(contract.version == VERSION, EVersionMismatch);
@@ -674,18 +670,13 @@ public fun propose_utxos(
 
     let requested_amount = r.amount();
 
-    contract
-        .storage
-        .utxo_store()
-        .validate_utxos(&utxo_ids, dwallet_ids, requested_amount, redeem_id);
+    contract.storage.utxo_store().validate_utxos(&utxo_ids, requested_amount, redeem_id);
 
     let old_utxo_ids = r.utxo_ids();
-    let old_dwallet_ids = r.dwallet_ids();
     old_utxo_ids.length().do!(|i| {
         nbtc_utxo::unlock_utxo(
             contract.storage.utxo_store_mut(),
             old_utxo_ids[i],
-            old_dwallet_ids[i],
         );
     });
 
@@ -693,16 +684,14 @@ public fun propose_utxos(
         nbtc_utxo::lock_utxo(
             contract.storage.utxo_store_mut(),
             utxo_ids[i],
-            dwallet_ids[i],
             redeem_id,
         );
     });
 
-    r.set_utxos(dwallet_ids, utxo_ids);
+    r.set_utxos(utxo_ids);
 
     event::emit(RedeemRequestProposeEvent {
         redeem_id,
-        dwallet_ids,
         utxo_ids,
     })
 }
@@ -826,13 +815,13 @@ public(package) fun add_utxo_to_contract(
     value: u64,
     dwallet_id: ID,
 ) {
-    let utxo = nbtc_utxo::new_utxo(tx_id, vout, value);
-    contract.storage.utxo_store_mut().add(dwallet_id, utxo);
+    let utxo = nbtc_utxo::new_utxo(tx_id, vout, value, dwallet_id);
+    contract.storage.utxo_store_mut().add(utxo);
 }
 
 /// Remove a UTXO from the contract
-public fun remove_utxo(_: &AdminCap, contract: &mut NbtcContract, utxo_idx: u64, dwallet_id: ID) {
-    contract.storage.utxo_store_mut().remove(utxo_idx, dwallet_id).burn();
+public fun remove_utxo(_: &AdminCap, contract: &mut NbtcContract, utxo_idx: u64) {
+    contract.storage.utxo_store_mut().remove(utxo_idx).burn();
 }
 
 //
@@ -896,8 +885,7 @@ use nbtc::nbtc_utxo::UtxoStore;
 #[test_only]
 /// Adds UTXO to the active wallet
 public fun add_utxo_for_test(ctr: &mut NbtcContract, _idx: u64, utxo: Utxo) {
-    let dwallet_id = ctr.active_dwallet_id();
-    ctr.storage.utxo_store_mut().add(dwallet_id, utxo);
+    ctr.storage.utxo_store_mut().add(utxo);
 }
 
 #[test_only]

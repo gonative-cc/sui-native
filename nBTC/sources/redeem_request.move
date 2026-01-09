@@ -48,7 +48,6 @@ public struct RedeemRequest has store {
     amount: u64,
     fee: u64,
     utxos: vector<Utxo>,
-    dwallet_ids: vector<ID>,
     utxo_ids: vector<u64>,
     // TODO we don't need vecmap - we can use a simple vector with the same order as UTXOs
     // so we can have only one vector to contain hashes, ids and signatures
@@ -65,7 +64,6 @@ public struct RedeemRequest has store {
 public struct SolvedEvent has copy, drop {
     id: u64,
     utxo_ids: vector<u64>,
-    dwallet_ids: vector<ID>,
 }
 
 /// Event emitted when Ika sign request for a given redeem request input is sent.
@@ -123,8 +121,6 @@ public fun status(r: &RedeemRequest): &RedeemStatus {
 
 public fun recipient_script(r: &RedeemRequest): vector<u8> { r.recipient_script }
 
-public fun dwallet_ids(r: &RedeemRequest): vector<ID> { r.dwallet_ids }
-
 public fun utxo_ids(r: &RedeemRequest): vector<u64> { r.utxo_ids }
 
 public fun redeem_created_at(r: &RedeemRequest): u64 { r.created_at }
@@ -146,13 +142,12 @@ public(package) fun move_to_signing_status(
 
     r.inputs_length().do!(|i| {
         let idx = r.utxo_ids[i];
-        let dwallet_id = r.dwallet_ids[i];
-        r.utxos.push_back(storage.utxo_store_mut().remove(idx, dwallet_id));
+        let utxo = storage.utxo_store_mut().remove(idx);
+        r.utxos.push_back(utxo);
     });
     event::emit(SolvedEvent {
         id: redeem_id,
         utxo_ids: r.utxo_ids,
-        dwallet_ids: r.dwallet_ids,
     });
 }
 
@@ -205,7 +200,8 @@ public(package) fun request_signature_for_input(
     // This should include other information for create sign hash
     let sig_hash = r.sig_hash(input_id, storage);
 
-    let dwallet_id = r.dwallet_ids[input_id as u64];
+    let utxo = r.utxo_at(input_id);
+    let dwallet_id = utxo.dwallet_id();
     let dwallet_cap = storage.dwallet_cap(dwallet_id);
 
     let message_approval = dwallet_coordinator.approve_message(
@@ -262,7 +258,8 @@ public fun compose_tx(r: &RedeemRequest, storage: &Storage): tx::Transaction {
 
     let mut witnesses = vector[];
     inputs.length().do!(|i| {
-        let dwallet_id = r.dwallet_ids[i];
+        let utxo = &inputs[i];
+        let dwallet_id = utxo.dwallet_id();
         let dwallet_metadata = storage.dwallet_metadata(dwallet_id);
         let lockscript = dwallet_metadata.lockscript();
         let ika_signature = *r.signatures_map.get(&(i as u32));
@@ -293,9 +290,10 @@ public(package) fun add_signature(r: &mut RedeemRequest, input_id: u32, ika_sign
 /// Returns sighash for input_id-th in redeem transaction
 public fun sig_hash(r: &RedeemRequest, input_id: u32, storage: &Storage): vector<u8> {
     r.sig_hashes.try_get(&input_id).extract_or!({
-        let dwallet_id = r.dwallet_ids[input_id as u64];
-        let lockscript = storage.dwallet_metadata(dwallet_id).lockscript();
         let inputs = r.utxos();
+        let utxo = &inputs[input_id as u64];
+        let dwallet_id = utxo.dwallet_id();
+        let lockscript = storage.dwallet_metadata(dwallet_id).lockscript();
         let tx = compose_withdraw_tx(
             lockscript,
             inputs,
@@ -305,9 +303,10 @@ public fun sig_hash(r: &RedeemRequest, input_id: u32, storage: &Storage): vector
         );
 
         if (script::is_taproot(lockscript)) {
-            let previous_pubscripts = r
-                .dwallet_ids
-                .map!(|dwallet_id| storage.dwallet_metadata(dwallet_id).lockscript());
+            let previous_pubscripts = vector::tabulate!(
+                inputs.length(),
+                |i| storage.dwallet_metadata(inputs[i].dwallet_id()).lockscript(),
+            );
             let previous_values = vector::tabulate!(inputs.length(), |i| inputs[i].value());
 
             taproot_sighash_preimage(
@@ -333,12 +332,7 @@ public(package) fun burn_utxos(r: &mut RedeemRequest) {
     });
 }
 
-public(package) fun set_utxos(
-    r: &mut RedeemRequest,
-    dwallet_ids: vector<ID>,
-    utxo_ids: vector<u64>,
-) {
-    r.dwallet_ids = dwallet_ids;
+public(package) fun set_utxos(r: &mut RedeemRequest, utxo_ids: vector<u64>) {
     r.utxo_ids = utxo_ids;
 }
 
@@ -362,16 +356,13 @@ public fun new(
         sign_ids: table::new(ctx),
         signatures_map: vec_map::empty(),
         status: RedeemStatus::Resolving,
-        dwallet_ids: vector::empty(),
         utxo_ids: vector::empty(),
         created_at,
     }
 }
 
-public fun utxo_at(r: &RedeemRequest, i: u32, storage: &Storage): &Utxo {
-    let idx = r.utxo_ids[i as u64];
-    let dwallet_id = r.dwallet_ids[i as u64];
-    storage.utxo_store().get_utxo(idx, dwallet_id)
+public fun utxo_at(r: &RedeemRequest, i: u32): &Utxo {
+    &r.utxos[i as u64]
 }
 
 public fun fee(r: &RedeemRequest): u64 { r.fee }
@@ -382,9 +373,8 @@ public(package) fun record_signature(
     input_id: u32,
     sign_id: ID,
 ) {
-    // TODO: ensure we get right spend key, because this spend key can also inactive_spend_key
-    assert!(r.sign_ids.contains(sign_id), EInvalidSignatureId);
-    let dwallet_id = r.dwallet_ids[input_id as u64];
+    let utxo = r.utxo_at(input_id);
+    let dwallet_id = utxo.dwallet_id();
     let signature = get_signature(dwallet_coordinator, dwallet_id, sign_id);
     // NOTE: We intentionally do not re-verify the signature on-chain here.
     // The DWallet / IKA protocol guarantees that `get_sign_signature` only
@@ -409,12 +399,8 @@ public fun get_signature(
 }
 
 #[test_only]
-public fun update_to_signing_for_test(
-    r: &mut RedeemRequest,
-    dwallet_ids: vector<ID>,
-    utxo_ids: vector<u64>,
-) {
-    r.set_utxos(dwallet_ids, utxo_ids);
+public fun update_to_signing_for_test(r: &mut RedeemRequest, utxo_ids: vector<u64>) {
+    r.set_utxos(utxo_ids);
     r.status = RedeemStatus::Signing;
 }
 
