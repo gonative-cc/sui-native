@@ -38,7 +38,7 @@ public struct UtxoStore has key, store {
     id: UID,
     // Mapping (utxo_idx + dwallet_id) => Utxo
     utxos: Table<u64, Utxo>,
-    // mapping ukey (utxo_idx + dwallet_id) => redeem_request_id
+    // Mapping utxo_idx => redeem_request_id
     locked_utxos: Table<u64, u64>,
     next_utxo: u64,
 }
