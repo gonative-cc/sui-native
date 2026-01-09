@@ -19,6 +19,9 @@ const EInsufficientAmount: vector<u8> = b"Total UTXO value is insufficient for w
 #[error]
 const EUtxoLockedByAnotherRequest: vector<u8> = b"UTXO is locked by another redeem request";
 
+#[error]
+const EInputLimitation: vector<u8> = b"Redeem request exceeds maximum input limit";
+
 // UTXO ranking constants
 const DUST_THRESHOLD: u64 = 10_000; // satoshis
 const BASE_SCORE: u64 = 4_000_000_000_000_000; // 4e15
@@ -26,6 +29,7 @@ const INPUTS_PENALTY: u64 = 100;
 const INACTIVE_BONUS: u64 = 200;
 const NO_CHANGE_BONUS: u64 = 1_000;
 const DUST_PENALTY: u64 = 200;
+const MAXIMUM_NUMBER_UTXO: u64 = 100; // Maximum number of UTXO inputs allowed per redeem request transaction
 
 public struct Utxo has store {
     tx_id: vector<u8>,
@@ -163,6 +167,7 @@ public fun validate_utxos(
     redeem_request_id: u64,
 ): u64 {
     assert!(!utxo_ids.is_empty(), EEmptyUtxoSet);
+    assert!(utxo_ids.length() <= MAXIMUM_NUMBER_UTXO, EInputLimitation);
 
     let mut total_value: u64 = 0;
     utxo_ids.length().do!(|i| {
