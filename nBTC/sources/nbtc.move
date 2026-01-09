@@ -114,7 +114,7 @@ public struct NbtcContract has key, store {
     tx_ids: Table<vector<u8>, bool>,
     config: Table<u32, Config>,
     fees_collected: Balance<NBTC>,
-    // TODO: probably we should have UTXOs / nbtc pubkey
+    // TODO: probably we should have UTXOs / dwallet
     // redeem request token for nbtc
     redeem_requests: Table<u64, RedeemRequest>,
     // lock nbtc for redeem, this is a mapping from request id to nBTC redeem coin
@@ -134,7 +134,7 @@ public struct MintEvent has copy, drop {
     utxo_id: u64,
     // btc data
     btc_script_publickey: vector<u8>,
-    btc_tx_id: vector<u8>, // TODO: maybe we should change to bitcoin address format?
+    btc_tx_id: vector<u8>,
     btc_vout: u32,
     btc_amount: u64, // in satoshi
 }
@@ -152,6 +152,8 @@ public struct RedeemInactiveDepositEvent has copy, drop {
     amount: u64, // in satoshi
 }
 
+// TODO: consider moving RedeemRequest events to redeem_request.move
+
 public struct RedeemRequestEvent has copy, drop {
     redeem_id: u64,
     redeemer: address,
@@ -166,7 +168,6 @@ public struct RedeemSigCreatedEvent has copy, drop {
     is_fully_signed: bool,
 }
 
-// TODO: consider moving it to redeem_request.move
 public struct RedeemRequestProposeEvent has copy, drop {
     redeem_id: u64,
     utxo_ids: vector<u64>,
@@ -516,22 +517,22 @@ public fun redeem(
     // TODO: implement logic to guard burning and manage UTXOs
     // TODO: we can call remove_inactive_spend_key if reserves of this key is zero
 
+    let sender = ctx.sender();
     let r = redeem_request::new(
         contract.active_lockscript(),
-        ctx.sender(),
+        sender,
         recipient_script,
         coin.value(),
         150, // TODO: query fee from oracle or give api for user to set this
         clock.timestamp_ms(),
         ctx,
     );
-    // TODO: we repeat this logic a lot of time. Consider to create a generic function for this
-    // type.
     let redeem_id = contract.next_redeem_req;
+    contract.next_redeem_req = redeem_id + 1;
 
     event::emit(RedeemRequestEvent {
         redeem_id,
-        redeemer: ctx.sender(),
+        redeemer: sender,
         recipient_script,
         amount: r.amount(),
         created_at: r.redeem_created_at(),
@@ -539,7 +540,6 @@ public fun redeem(
 
     contract.redeem_requests.add(redeem_id, r);
     contract.locked.add(redeem_id, coin);
-    contract.next_redeem_req = redeem_id + 1;
 
     redeem_id
 }

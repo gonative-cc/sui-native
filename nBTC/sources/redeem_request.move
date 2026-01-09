@@ -19,8 +19,6 @@ use sui::vec_map::{Self, VecMap};
 const ERedeemTxSigningNotCompleted: vector<u8> =
     b"The signature for the redeem has not been completed";
 #[error]
-const EInvalidSignatureId: vector<u8> = b"invalid signature id for redeem request";
-#[error]
 const EInvalidIkaSchnorrLength: vector<u8> = b"invalid schnorr signature length from ika format";
 #[error]
 const EUnsupportedLockscript: vector<u8> = b"unsupported lockscript";
@@ -39,7 +37,6 @@ public enum RedeemStatus has copy, drop, store {
 }
 
 public struct RedeemRequest has store {
-    // TODO: maybe we don't need the ID?
     redeemer: address, // TODO: maybe it's not needed
     /// Bitcoin spent key (address)
     recipient_script: vector<u8>,
@@ -58,7 +55,6 @@ public struct RedeemRequest has store {
     created_at: u64,
 }
 
-//TODO: Add logic to extract data from redeem inputs for:
 /// Event emitted when a proposal for redeem request is selected (solved) and we are ready
 /// for creating MPC signatures.
 public struct SolvedEvent has copy, drop {
@@ -73,7 +69,6 @@ public struct RequestSignatureEvent has copy, drop {
     input_id: u32,
 }
 
-//TODO: Maybe we should refactor to have a generic RedeemReqStatusEvent
 /// Event emitted when a redeem request is confirmed on Bitcoin network.
 public struct ConfirmedEvent has copy, drop {
     id: u64,
@@ -253,7 +248,7 @@ public fun compose_tx(r: &RedeemRequest, storage: &Storage): tx::Transaction {
         inputs,
         r.recipient_script,
         r.amount,
-        r.fee, // TODO:: Set fee at parameter, or query from oracle
+        r.fee,
     );
 
     let mut witnesses = vector[];
@@ -299,7 +294,7 @@ public fun sig_hash(r: &RedeemRequest, input_id: u32, storage: &Storage): vector
             inputs,
             r.recipient_script,
             r.amount,
-            r.fee, // TODO:: Set fee at parameter, or query from oracle
+            r.fee,
         );
 
         if (script::is_taproot(lockscript)) {
@@ -341,7 +336,7 @@ public fun new(
     redeemer: address,
     recipient_script: vector<u8>,
     amount: u64,
-    fee: u64,
+    fee: u64, // Bitcoin withdraw tx fee (for miners)
     created_at: u64,
     ctx: &mut TxContext,
 ): RedeemRequest {
