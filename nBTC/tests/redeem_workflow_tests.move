@@ -11,9 +11,8 @@ use sui::clock;
 use sui::coin::mint_for_testing;
 
 const NBTC_SCRIPT_PUBKEY: vector<u8> = x"76a914509a651dd392e1bc125323f629b67d65cca3d4bb88ac";
-const NBTC_P2WPKH_SCRIPT: vector<u8> = x"00145c2dc82f606be66506b7403f9b304f5e0908b652";
-const NBTC_PUBLIC_KEY: vector<u8> =
-    x"0329cdb63380e0a7109773703534659df6be41c48b4e80e5da77eb384ff7d41be2";
+const NBTC_TAPROOT_SCRIPT: vector<u8> =
+    x"51200f0c8db753acbd17343a39c2f3f4e35e4be6da749f9e35137ab220e7b238a667";
 const ADMIN: address = @0xad;
 const RECEIVER_SCRIPT: vector<u8> = x"00140000000000000000000000000000000000000002";
 const TX_HASH: vector<u8> = x"06ce677fd511851bb6cdacebed863d12dfd231d810e8e9fcba6e791001adf3a6";
@@ -23,7 +22,6 @@ fun setup_redeem_test(
     utxo_amount: u64,
     redeem_amount: u64,
     lockscript: vector<u8>,
-    public_key: vector<u8>,
     proceed_to_signed: bool,
 ): (
     bitcoin_spv::light_client::LightClient,
@@ -38,7 +36,6 @@ fun setup_redeem_test(
     let mut temp_scenario = sui::test_scenario::begin(ADMIN);
     let dwallet_metadata = storage::create_dwallet_metadata(
         lockscript,
-        public_key,
         vector::empty(),
         temp_scenario.ctx(),
     );
@@ -65,7 +62,7 @@ fun setup_redeem_test(
 
         let request_mut = ctr.redeem_request_mut(redeem_id);
         let mock_sig =
-            x"0063db5a24fec209152863fb251cc349a7030220bf4ca6e6296002d46d4c3651a55a0b4b5a520fc42b91b8a888351c1c42bd2864aba2c398007405e957dea77bb1";
+            x"b693a0797b24bae12ed0516a2f5ba765618dca89b75e498ba5b745b71644362298a45ca39230d10a02ee6290a91cebf9839600f7e35158a447ea182ea0e022ae";
         request_mut.update_to_signed_for_test(vector[mock_sig]);
     };
 
@@ -77,7 +74,6 @@ fun test_redeem_workflow_happy_case() {
     let (lc, mut ctr, redeem_id, dwallet_id, scenario, mut clock) = setup_redeem_test(
         2500,
         1000,
-        NBTC_SCRIPT_PUBKEY,
         NBTC_SCRIPT_PUBKEY,
         false,
     );
@@ -113,7 +109,6 @@ fun test_finalize_fails_with_no_utxos_proposed() {
         1500,
         1000,
         NBTC_SCRIPT_PUBKEY,
-        NBTC_SCRIPT_PUBKEY,
         false,
     );
 
@@ -133,7 +128,6 @@ fun test_propose_fails_with_insufficient_amount() {
         500,
         1000,
         NBTC_SCRIPT_PUBKEY,
-        NBTC_SCRIPT_PUBKEY,
         false,
     );
 
@@ -152,7 +146,6 @@ fun test_finalize_fails_before_deadline() {
     let (lc, mut ctr, redeem_id, dwallet_id, scenario, clock) = setup_redeem_test(
         1500,
         1000,
-        NBTC_SCRIPT_PUBKEY,
         NBTC_SCRIPT_PUBKEY,
         false,
     );
@@ -174,7 +167,6 @@ fun test_propose_fails_when_not_resolving() {
     let (lc, mut ctr, redeem_id, dwallet_id, scenario, mut clock) = setup_redeem_test(
         1500,
         1000,
-        NBTC_SCRIPT_PUBKEY,
         NBTC_SCRIPT_PUBKEY,
         false,
     );
@@ -200,7 +192,6 @@ fun test_propose_utxos_unlocks_old_and_locks_new() {
     let (lc, mut ctr, redeem_id, dwallet_id, scenario, clock) = setup_redeem_test(
         1000,
         1500,
-        NBTC_SCRIPT_PUBKEY,
         NBTC_SCRIPT_PUBKEY,
         false,
     );
@@ -303,8 +294,7 @@ fun test_finalize_redeem_burns_nbtc_and_removes_utxos() {
     let (mut lc, mut ctr, redeem_id, dwallet_id, scenario, clock) = setup_redeem_test(
         2500,
         1000,
-        NBTC_P2WPKH_SCRIPT,
-        NBTC_PUBLIC_KEY,
+        NBTC_TAPROOT_SCRIPT,
         true,
     );
 
@@ -318,7 +308,7 @@ fun test_finalize_redeem_burns_nbtc_and_removes_utxos() {
         tx_id,
         x"132ae858",
         x"ffff7f20",
-        x"01000000",
+        x"01000011",
     );
     lc.insert_headers(vector[header]);
 
@@ -349,8 +339,7 @@ fun test_finalize_redeem_no_change() {
     let (mut lc, mut ctr, redeem_id, dwallet_id, scenario, clock) = setup_redeem_test(
         1000,
         1000,
-        NBTC_P2WPKH_SCRIPT,
-        NBTC_PUBLIC_KEY,
+        NBTC_TAPROOT_SCRIPT,
         true,
     );
 
@@ -394,8 +383,7 @@ fun test_finalize_redeem_fails_when_already_confirmed() {
     let (mut lc, mut ctr, redeem_id, _dwallet_id, _scenario, _clock) = setup_redeem_test(
         2500,
         1000,
-        NBTC_P2WPKH_SCRIPT,
-        NBTC_PUBLIC_KEY,
+        NBTC_TAPROOT_SCRIPT,
         true,
     );
 
@@ -410,7 +398,7 @@ fun test_finalize_redeem_fails_when_already_confirmed() {
         tx_id,
         x"132ae858",
         x"ffff7f20",
-        x"01000000",
+        x"01000011",
     );
     lc.insert_headers(vector[header]);
 
@@ -424,8 +412,7 @@ fun test_finalize_redeem_with_multiple_utxos() {
     let (mut lc, mut ctr, redeem_id, dwallet_id, scenario, mut clock) = setup_redeem_test(
         1000,
         1000,
-        NBTC_P2WPKH_SCRIPT,
-        NBTC_PUBLIC_KEY,
+        NBTC_TAPROOT_SCRIPT,
         false,
     );
 
@@ -442,7 +429,7 @@ fun test_finalize_redeem_with_multiple_utxos() {
 
     let request_mut = ctr.redeem_request_mut(redeem_id);
     let mock_sig =
-        x"0063db5a24fec209152863fb251cc349a7030220bf4ca6e6296002d46d4c3651a55a0b4b5a520fc42b91b8a888351c1c42bd2864aba2c398007405e957dea77bb1";
+        x"b693a0797b24bae12ed0516a2f5ba765618dca89b75e498ba5b745b71644362298a45ca39230d10a02ee6290a91cebf9839600f7e35158a447ea182ea0e022ae";
     request_mut.update_to_signed_for_test(vector[mock_sig, mock_sig]);
 
     let r = ctr.redeem_request(redeem_id);
@@ -456,7 +443,7 @@ fun test_finalize_redeem_with_multiple_utxos() {
         tx_id,
         x"132ae858",
         x"ffff7f20",
-        x"00010000",
+        x"01000011",
     );
     lc.insert_headers(vector[header]);
 

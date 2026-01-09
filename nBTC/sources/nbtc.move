@@ -781,7 +781,6 @@ public fun add_dwallet(
     contract: &mut NbtcContract,
     dwallet_cap: DWalletCap,
     lockscript: vector<u8>,
-    public_key: vector<u8>,
     nbtc_endpoint_user_share: vector<u8>,
     ctx: &mut TxContext,
 ) {
@@ -794,7 +793,6 @@ public fun add_dwallet(
 
     let dmeta = create_dwallet_metadata(
         lockscript,
-        public_key,
         nbtc_endpoint_user_share,
         ctx,
     );
@@ -953,14 +951,12 @@ public fun redeem_request_mut(contract: &mut NbtcContract, redeem_id: u64): &mut
 public fun set_dwallet_cap_for_test(
     contract: &mut NbtcContract,
     spend_script: vector<u8>,
-    public_key: vector<u8>,
     nbtc_endpoint_user_share: vector<u8>,
     dwallet_cap: DWalletCap,
     ctx: &mut TxContext,
 ) {
     let dmeta = create_dwallet_metadata(
         spend_script,
-        public_key,
         nbtc_endpoint_user_share,
         ctx,
     );

@@ -5,12 +5,6 @@ use nbtc::nbtc_utxo::{UtxoStore, new_utxo_store};
 use sui::table::{Self, Table};
 
 public struct DWalletMetadata has store {
-    // TODO: change to taproot once Ika will support it
-    // we don't derive lockscript to public key
-    // the reason is this require ripend160 hash function
-    // and we don't have efficiency implementation in sui for this hash function
-    public_key: vector<u8>, // public key
-    public_key_type: u8, // type of public key of dwallet
     lockscript: vector<u8>, // lock script for this dwallet
     total_deposit: u64, // total deposit balance
     public_user_share: vector<u8>, // "user share" of dwallet
@@ -30,22 +24,15 @@ public struct Storage has key, store {
 
 public(package) fun create_dwallet_metadata(
     lockscript: vector<u8>,
-    public_key: vector<u8>,
     public_user_share: vector<u8>,
     ctx: &mut TxContext,
 ): DWalletMetadata {
     DWalletMetadata {
-        public_key,
         lockscript,
-        public_key_type: 0,
         total_deposit: 0,
         public_user_share,
         inactive_balances: table::new(ctx),
     }
-}
-
-public fun public_key(dmeta: &DWalletMetadata): vector<u8> {
-    dmeta.public_key
 }
 
 public fun lockscript(dmeta: &DWalletMetadata): vector<u8> {
@@ -54,10 +41,6 @@ public fun lockscript(dmeta: &DWalletMetadata): vector<u8> {
 
 public fun total_deposit(dmeta: &DWalletMetadata): u64 {
     dmeta.total_deposit
-}
-
-public fun public_key_type(dmeta: &DWalletMetadata): u8 {
-    dmeta.public_key_type
 }
 
 public fun inactive_balances(dmeta: &DWalletMetadata, addr: address): u64 {
@@ -146,8 +129,6 @@ public(package) fun remove(store: &mut Storage, dwallet_id: ID) {
         inactive_balances,
         total_deposit: _,
         lockscript: _,
-        public_key: _,
-        public_key_type: _,
         public_user_share: _,
     } = store.dwallet_metadatas.remove(dwallet_id);
     inactive_balances.destroy_empty();

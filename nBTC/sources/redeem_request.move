@@ -1,14 +1,8 @@
 module nbtc::redeem_request;
 
-use bitcoin_lib::encoding::{u64_to_le_bytes, der_encode_signature};
 use bitcoin_lib::script;
-use bitcoin_lib::sighash::{
-    create_segwit_preimage,
-    create_p2wpkh_scriptcode,
-    taproot_sighash_preimage
-};
+use bitcoin_lib::sighash::taproot_sighash_preimage;
 use bitcoin_lib::tx;
-use bitcoin_lib::vector_utils::vector_slice;
 use ika::ika::IKA;
 use ika_dwallet_2pc_mpc::coordinator::{DWalletCoordinator, register_session_identifier};
 use ika_dwallet_2pc_mpc::coordinator_inner::UnverifiedPresignCap;
@@ -21,21 +15,17 @@ use sui::sui::SUI;
 use sui::table::{Self, Table};
 use sui::vec_map::{Self, VecMap};
 
-use fun vector_slice as vector.slice;
 #[error]
 const ERedeemTxSigningNotCompleted: vector<u8> =
     b"The signature for the redeem has not been completed";
 #[error]
 const EInvalidSignatureId: vector<u8> = b"invalid signature id for redeem request";
 #[error]
-const EInvalidIkaECDSALength: vector<u8> = b"invalid ecdsa signature length from ika format";
-#[error]
 const EInvalidIkaSchnorrLength: vector<u8> = b"invalid schnorr signature length from ika format";
 #[error]
 const EUnsupportedLockscript: vector<u8> = b"unsupported lockscript";
 
 // signature algorithm
-const ECDSA: u32 = 0;
 const TAPROOT: u32 = 1;
 // hash function
 const SHA256: u32 = 1;
@@ -217,16 +207,10 @@ public(package) fun request_signature_for_input(
 
     let dwallet_id = r.dwallet_ids[input_id as u64];
     let dwallet_cap = storage.dwallet_cap(dwallet_id);
-    let lockscript = storage.dwallet_metadata(dwallet_id).lockscript();
 
-    let signature_algo = if (script::is_taproot(lockscript)) {
-        TAPROOT
-    } else {
-        ECDSA
-    };
     let message_approval = dwallet_coordinator.approve_message(
         dwallet_cap,
-        signature_algo,
+        TAPROOT,
         SHA256,
         sig_hash,
     );
@@ -286,12 +270,6 @@ public fun compose_tx(r: &RedeemRequest, storage: &Storage): tx::Transaction {
         let witness = if (script::is_taproot(lockscript)) {
             assert!(ika_signature.length() == 64, EInvalidIkaSchnorrLength);
             vector[ika_signature]
-        } else if (script::is_P2WPKH(lockscript)) {
-            // P2WPKH witness expects a 65-byte ECDSA signature (with recovery byte).
-            assert!(ika_signature.length() == 65, EInvalidIkaECDSALength);
-            let raw_signature = ika_signature.slice(1, 65); // skip the first byte (pub key recovery byte)
-            let public_key = storage.dwallet_metadata(dwallet_id).public_key();
-            vector[der_encode_signature(raw_signature, SIGNHASH_ALL), public_key]
         } else {
             abort EUnsupportedLockscript
         };
@@ -342,18 +320,7 @@ public fun sig_hash(r: &RedeemRequest, input_id: u32, storage: &Storage): vector
                 option::none(),
             )
         } else {
-            let script_code = create_p2wpkh_scriptcode(
-                lockscript.slice(2, 22) // nbtc public key hash
-            );
-            std::hash::sha2_256(
-                create_segwit_preimage(
-                    &tx,
-                    input_id, // input index
-                    &script_code, // segwit nbtc spend key
-                    u64_to_le_bytes(inputs[input_id as u64].value()), // amount
-                    SIGNHASH_ALL,
-                ),
-            )
+            abort EUnsupportedLockscript
         }
     })
 }

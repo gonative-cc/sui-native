@@ -24,4 +24,3 @@
 - Deposit Address: `bcrt1q90xm34jqm0kcpfclkdmn868rw6vcv9fzvfg6p6`
 
 This address is the destination for Bitcoin deposits that are used to mint nBTC.
-

@@ -26,7 +26,7 @@ export async function initialization(dwalletId: string, config: Config) {
 	const dWallet = await ikaClient.getDWalletInParticularState(dwalletId, "Active");
 	const dwalletCap = dWallet.dwallet_cap_id;
 
-	let { publicKey, lockscript } = await getDwalletMetadata(dWallet);
+	let { lockscript } = await getDwalletMetadata(dWallet);
 
 	let tx = new Transaction();
 
@@ -38,7 +38,6 @@ export async function initialization(dwalletId: string, config: Config) {
 				contract: config.nbtc,
 				dwalletCap: dwalletCap,
 				lockscript: Array.from(lockscript),
-				publicKey: Array.from(publicKey),
 				nbtcEndpointUserShare: Array.from(dWallet.public_user_secret_key_share!),
 			},
 		}),
