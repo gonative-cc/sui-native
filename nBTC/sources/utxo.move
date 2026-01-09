@@ -33,7 +33,7 @@ const INPUTS_PENALTY: u64 = 100;
 const INACTIVE_BONUS: u64 = 200;
 const NO_CHANGE_BONUS: u64 = 1_000;
 const DUST_PENALTY: u64 = 200;
-const MAXIMUM_NUMBER_UTXO: u64 = 100; // number input of redeem request tx should <= 100
+const MAXIMUM_NUMBER_UTXO: u64 = 100; // Maximum number of UTXO inputs allowed per redeem request transaction
 
 public struct Utxo has store {
     tx_id: vector<u8>,
