@@ -24,6 +24,7 @@ fun raw_withdraw_tx_signed_tests() {
             x"9dafd815a150414d02047a22ab806dbd2f43d0e1ea5922dadd5396f6d6776920",
             41,
             amount,
+            MOCK_DWALLET_ID!(),
         ),
     ];
 
@@ -53,10 +54,10 @@ fun raw_withdraw_tx_signed_tests() {
 
     let utxo_store = btc_store.utxo_store_mut();
     utxos.destroy!(|utxo| {
-        utxo_store.add(MOCK_DWALLET_ID!(), utxo);
+        utxo_store.add(utxo);
     });
 
-    r.update_to_signing_for_test(vector[MOCK_DWALLET_ID!()], vector[0]);
+    r.update_to_signing_for_test(vector[0]);
     r.move_to_signing_status(0, &mut btc_store);
     r.update_to_signed_for_test(signatures);
 
