@@ -710,7 +710,7 @@ public fun withdraw_inactive_deposit(
         option::some(dwallet_id) != contract.active_dwallet_id && contract.storage.exist(dwallet_id),
         EInvalidDepositKey,
     );
-    let amount = contract.storage.remove_inactive_balance(dwallet_id, ctx.sender());
+    let amount = contract.storage.remove_inactive_deposit(dwallet_id, ctx.sender());
     let deposit_spend_key = contract.storage.dwallet_metadata(dwallet_id).lockscript();
     event::emit(RedeemInactiveDepositEvent {
         bitcoin_spend_key: deposit_spend_key,

@@ -13,8 +13,8 @@ public struct DWalletMetadata has store {
     lockscript: vector<u8>, // lock script for this dwallet
     total_deposit: u64, // total deposit balance
     public_user_share: vector<u8>, // "user share" of dwallet
-    // map address to amount they deposit/mint
-    // only record when wallet is inactive
+    // TODO: rename to inactive_deposits
+    /// map user address to amount they deposit/mint
     inactive_balances: Table<address, u64>,
 }
 
@@ -82,6 +82,7 @@ public(package) fun dwallet_cap(store: &Storage, dwallet_id: ID): &DWalletCap {
     &store.dwallets[i]
 }
 
+// NOTE: It's OK to do linear search because we are limiting amount of dwallets to 10-20 max
 /// returns MAX_U64 if the idx doesn't exist.
 public(package) fun dwallet_idx(store: &Storage, dwallet_id: ID): u64 {
     let mut i = 0;
@@ -136,9 +137,9 @@ public(package) fun increase_record_balance(
     dm.total_deposit = dm.total_deposit + amount;
 }
 
-// TODO rename to remove_user_balance
+/// Removes inactive user deposit.
 /// Returns the dwallet total balance after removing the user balance.
-public(package) fun remove_inactive_balance(
+public(package) fun remove_inactive_deposit(
     store: &mut Storage,
     dwallet_id: ID,
     user: address,
