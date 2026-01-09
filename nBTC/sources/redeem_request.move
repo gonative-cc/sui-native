@@ -183,7 +183,7 @@ public(package) fun move_to_confirmed_status(
 /// * `payment_ika` - IKA coin for payment
 /// * `payment_sui` - SUI coin for gas fees
 /// * `ctx` - Transaction context
-public(package) fun request_signature_for_input(
+public(package) fun request_utxo_sig(
     r: &mut RedeemRequest,
     dwallet_coordinator: &mut DWalletCoordinator,
     storage: &Storage,

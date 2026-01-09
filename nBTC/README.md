@@ -64,7 +64,7 @@ classDiagram
         +dwallet_ids(): vector_address
         +move_to_signing_status(redeem_id: u64)
         +move_to_confirmed_status(redeem_id: u64, tx_id: vector_u8)
-        +request_signature_for_input(dwallet_coordinator: DWalletCoordinator, input_idx: u32)
+        +request_utxo_sig(dwallet_coordinator: DWalletCoordinator, input_idx: u32)
     }
 
     class RedeemStatus {

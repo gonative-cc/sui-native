@@ -471,7 +471,7 @@ public fun record_inactive_deposit(
 /// * `EInvalidDWalletCoordinator` - If the provided coordinator doesn't match the contract's configured coordinator
 /// * `ENotReadlyForSign` - If the redeem request is not in signing state
 /// * `EInputAlreadyUsed` - If the input has already been signed
-public fun request_signature_for_input(
+public fun request_utxo_sig(
     contract: &mut NbtcContract,
     dwallet_coordinator: &mut DWalletCoordinator,
     redeem_id: u64,
@@ -490,7 +490,7 @@ public fun request_signature_for_input(
     let request = &mut contract.redeem_requests[redeem_id];
     assert!(request.status().is_signing(), ENotReadlyForSign);
     assert!(!request.has_signature(input_id), EInputAlreadyUsed);
-    request.request_signature_for_input(
+    request.request_utxo_sig(
         dwallet_coordinator,
         &contract.storage,
         redeem_id,
