@@ -177,3 +177,25 @@ fun test_same_request_can_reuse_locked_utxos() {
     destroy(utxo_store);
     scenario.end();
 }
+
+#[test, expected_failure(abort_code = nbtc_utxo::EInputLimitation)]
+fun validate_utxos_exceeds_maximum_limit() {
+    let mut scenario = ts::begin(@0x1);
+    let ctx = scenario.ctx();
+    let mut onchain_utxos = nbtc_utxo::new_utxo_store(ctx);
+
+    let maximum_number_input = 101;
+
+    let proposed_indices = vector::tabulate!(maximum_number_input, |i| i);
+    let dwallet_ids = vector::tabulate!(maximum_number_input, |_| MOCK_DWALLET_ID!());
+
+    nbtc_utxo::validate_utxos(
+        &onchain_utxos,
+        &proposed_indices,
+        dwallet_ids,
+        100000,
+        0,
+    );
+
+    abort
+}
