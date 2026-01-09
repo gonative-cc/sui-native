@@ -785,8 +785,7 @@ public fun add_dwallet(
         nbtc_endpoint_user_share,
         ctx,
     );
-    contract.storage.add_metadata(dwallet_id, dmeta);
-    contract.storage.add_dwallet_cap(dwallet_id, dwallet_cap);
+    contract.storage.add_dwallet(dwallet_cap, dmeta);
 }
 
 public fun set_active_dwallet(_: &AdminCap, contract: &mut NbtcContract, dwallet_id: ID) {
@@ -805,7 +804,7 @@ public fun remove_inactive_dwallet(_: &AdminCap, contract: &mut NbtcContract, dw
         EInvalidDepositKey,
     );
     assert!(contract.storage.dwallet_metadata(dwallet_id).total_deposit() == 0, EBalanceNotEmpty);
-    contract.storage.remove(dwallet_id);
+    contract.storage.remove_dwallet(dwallet_id);
 }
 
 public(package) fun add_utxo_to_contract(
@@ -950,8 +949,7 @@ public fun set_dwallet_cap_for_test(
     );
     let dwallet_id = dwallet_cap.dwallet_id();
     contract.active_dwallet_id = option::some(dwallet_id);
-    contract.storage.add_metadata(dwallet_id, dmeta);
-    contract.storage.add_dwallet_cap(dwallet_id, dwallet_cap);
+    contract.storage.add_dwallet(dwallet_cap, dmeta);
 }
 
 #[test_only]
@@ -963,10 +961,9 @@ public fun testing_mint(contract: &mut NbtcContract, amount: u64, ctx: &mut TxCo
 public fun set_dwallet_metadata_for_test(
     contract: &mut NbtcContract,
     dwallet_id: ID,
-    dwallet_metadata: DWalletMetadata,
+    dmeta: DWalletMetadata,
     dwallet_cap: DWalletCap,
 ) {
     contract.active_dwallet_id = option::some(dwallet_id);
-    contract.storage.add_metadata(dwallet_id, dwallet_metadata);
-    contract.storage.add_dwallet_cap(dwallet_id, dwallet_cap);
+    contract.storage.add_dwallet(dwallet_cap, dmeta);
 }
