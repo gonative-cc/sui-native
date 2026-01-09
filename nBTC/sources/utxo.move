@@ -1,7 +1,6 @@
 // TODO: Refactor to bitcoinlib
 module nbtc::nbtc_utxo;
 
-use bitcoin_lib::encoding::u64_to_be_bytes;
 use sui::table::{Self, Table};
 
 //
@@ -16,9 +15,6 @@ const EInvalidUtxo: vector<u8> = b"Invalid UTXO";
 
 #[error]
 const EInsufficientAmount: vector<u8> = b"Total UTXO value is insufficient for withdrawal amount";
-
-#[error]
-const EDwalletIdMismatch: vector<u8> = b"UTXO dwallet_id mismatch";
 
 #[error]
 const EUtxoLockedByAnotherRequest: vector<u8> = b"UTXO is locked by another redeem request";
@@ -39,22 +35,24 @@ public struct Utxo has store {
     tx_id: vector<u8>,
     vout: u32,
     value: u64,
+    dwallet_id: ID,
 }
 
 public struct UtxoStore has key, store {
     id: UID,
-    // Mapping (utxo_idx + dwallet_id) => Utxo
-    utxos: Table<vector<u8>, Utxo>,
-    // mapping ukey (utxo_idx + dwallet_id) => redeem_request_id
-    locked_utxos: Table<vector<u8>, u64>,
+    // Mapping utxo_idx => Utxo
+    utxos: Table<u64, Utxo>,
+    // Mapping utxo_idx => redeem_request_id
+    locked_utxos: Table<u64, u64>,
     next_utxo: u64,
 }
 
-public fun new_utxo(tx_id: vector<u8>, vout: u32, value: u64): Utxo {
+public(package) fun new_utxo(tx_id: vector<u8>, vout: u32, value: u64, dwallet_id: ID): Utxo {
     Utxo {
         tx_id,
         vout,
         value,
+        dwallet_id,
     }
 }
 
@@ -70,8 +68,12 @@ public fun value(utxo: &Utxo): u64 {
     utxo.value
 }
 
+public fun dwallet_id(utxo: &Utxo): ID {
+    utxo.dwallet_id
+}
+
 public(package) fun burn(utxo: Utxo) {
-    let Utxo { tx_id: _, vout: _, value: _ } = utxo;
+    let Utxo { tx_id: _, vout: _, value: _, dwallet_id: _ } = utxo;
 }
 
 public(package) fun new_utxo_store(ctx: &mut TxContext): UtxoStore {
@@ -83,46 +85,29 @@ public(package) fun new_utxo_store(ctx: &mut TxContext): UtxoStore {
     }
 }
 
-public(package) fun lock_utxo(
-    utxo_store: &mut UtxoStore,
-    idx: u64,
-    dwallet_id: ID,
-    redeem_request_id: u64,
-) {
-    let ukey = utxo_key(idx, dwallet_id);
-    utxo_store.locked_utxos.add(ukey, redeem_request_id);
+public(package) fun lock_utxo(utxo_store: &mut UtxoStore, idx: u64, redeem_request_id: u64) {
+    utxo_store.locked_utxos.add(idx, redeem_request_id);
 }
 
-public(package) fun unlock_utxo(utxo_store: &mut UtxoStore, idx: u64, dwallet_id: ID) {
-    let ukey = utxo_key(idx, dwallet_id);
-    utxo_store.locked_utxos.remove(ukey);
+public(package) fun unlock_utxo(utxo_store: &mut UtxoStore, idx: u64): u64 {
+    utxo_store.locked_utxos.remove(idx)
 }
 
-public(package) fun utxo_key(idx: u64, dwallet_id: ID): vector<u8> {
-    let mut ukey = u64_to_be_bytes(idx);
-    ukey.append(dwallet_id.id_to_bytes());
-    ukey
-}
-
-public(package) fun add(utxo_store: &mut UtxoStore, dwallet_id: ID, utxo: Utxo) {
-    utxo_store.utxos.add(utxo_key(utxo_store.next_utxo, dwallet_id), utxo);
+public(package) fun add(utxo_store: &mut UtxoStore, utxo: Utxo) {
+    utxo_store.utxos.add(utxo_store.next_utxo, utxo);
     utxo_store.next_utxo = utxo_store.next_utxo + 1;
 }
 
-public(package) fun remove(utxo_store: &mut UtxoStore, idx: u64, dwallet_id: ID): Utxo {
-    utxo_store.utxos.remove(utxo_key(idx, dwallet_id))
+public(package) fun remove(utxo_store: &mut UtxoStore, idx: u64): Utxo {
+    utxo_store.utxos.remove(idx)
 }
 
-public(package) fun contains(utxo_store: &UtxoStore, ukey: vector<u8>): bool {
-    utxo_store.utxos.contains(ukey)
+public(package) fun contains(utxo_store: &UtxoStore, idx: u64): bool {
+    utxo_store.utxos.contains(idx)
 }
 
-public(package) fun get_utxo(utxo_store: &UtxoStore, idx: u64, dwallet_id: ID): &Utxo {
-    &utxo_store.utxos[utxo_key(idx, dwallet_id)]
-}
-
-public(package) fun get_utxo_by_ukey(utxo_store: &UtxoStore, ukey: vector<u8>): &Utxo {
-    &utxo_store.utxos[ukey]
+public(package) fun get_utxo(utxo_store: &UtxoStore, idx: u64): &Utxo {
+    &utxo_store.utxos[idx]
 }
 
 public fun next_utxo(utxo_store: &UtxoStore): u64 {
@@ -137,14 +122,13 @@ public fun next_utxo(utxo_store: &UtxoStore): u64 {
 public fun utxo_ranking(
     utxo_store: &UtxoStore,
     utxo_ids: vector<u64>,
-    dwallet_ids: vector<ID>,
     withdraw_amount: u64,
     active_dwallet_id: ID,
 ): u64 {
     let number_utxo = utxo_ids.length();
     let mut sum: u64 = 0;
     number_utxo.do!(|i| {
-        let utxo = utxo_store.get_utxo(utxo_ids[i], dwallet_ids[i]);
+        let utxo = utxo_store.get_utxo(utxo_ids[i]);
         sum = sum + utxo.value();
     });
     if (sum < withdraw_amount) {
@@ -154,7 +138,7 @@ public fun utxo_ranking(
     let mut score = BASE_SCORE;
     score = score - (number_utxo * INPUTS_PENALTY);
     number_utxo.do!(|i| {
-        if (dwallet_ids[i] != active_dwallet_id) {
+        if (utxo_store.get_utxo(utxo_ids[i]).dwallet_id() != active_dwallet_id) {
             score = score + INACTIVE_BONUS;
         };
     });
@@ -179,7 +163,6 @@ public fun utxo_ranking(
 public fun validate_utxos(
     utxo_store: &UtxoStore,
     utxo_ids: &vector<u64>,
-    dwallet_ids: vector<ID>,
     withdrawal_amount: u64,
     redeem_request_id: u64,
 ): u64 {
@@ -190,19 +173,13 @@ public fun validate_utxos(
     let mut total_value: u64 = 0;
     utxo_ids.length().do!(|i| {
         let idx = utxo_ids[i];
-        let dwallet_id = dwallet_ids[i];
-        let ukey = utxo_key(idx, dwallet_id);
-        assert!(utxo_store.contains(ukey), EInvalidUtxo);
+        assert!(utxo_store.contains(idx), EInvalidUtxo);
 
-        if (utxo_store.locked_utxos.contains(ukey)) {
-            assert!(
-                utxo_store.locked_utxos[ukey] == redeem_request_id,
-                EUtxoLockedByAnotherRequest,
-            );
+        if (utxo_store.locked_utxos.contains(idx)) {
+            assert!(utxo_store.locked_utxos[idx] == redeem_request_id, EUtxoLockedByAnotherRequest);
         };
 
-        let utxo = utxo_store.get_utxo_by_ukey(ukey);
-
+        let utxo = utxo_store.get_utxo(idx);
         total_value = total_value + utxo.value();
     });
 

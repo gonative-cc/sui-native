@@ -13,11 +13,11 @@ fun validate_utxos_working_case() {
 
     let mut onchain_utxos = nbtc_utxo::new_utxo_store(ctx);
 
-    let utxo_1 = nbtc_utxo::new_utxo(x"01", 0, 50000);
-    onchain_utxos.add(MOCK_DWALLET_ID!(), utxo_1);
+    let utxo_1 = nbtc_utxo::new_utxo(x"01", 0, 50000, MOCK_DWALLET_ID!());
+    onchain_utxos.add(utxo_1);
 
-    let utxo_2 = nbtc_utxo::new_utxo(x"02", 1, 30000);
-    onchain_utxos.add(MOCK_DWALLET_ID!(), utxo_2);
+    let utxo_2 = nbtc_utxo::new_utxo(x"02", 1, 30000, MOCK_DWALLET_ID!());
+    onchain_utxos.add(utxo_2);
 
     let proposed_indices = vector[0, 1];
     let withdrawal_amount = 70000;
@@ -25,7 +25,6 @@ fun validate_utxos_working_case() {
     let total_value = nbtc_utxo::validate_utxos(
         &onchain_utxos,
         &proposed_indices,
-        vector[MOCK_DWALLET_ID!(), MOCK_DWALLET_ID!()],
         withdrawal_amount,
         0,
     );
@@ -43,15 +42,14 @@ fun validate_utxos_empty_indices() {
 
     let mut onchain_utxos = nbtc_utxo::new_utxo_store(ctx);
 
-    let utxo = nbtc_utxo::new_utxo(x"01", 0, 50000);
-    onchain_utxos.add(MOCK_DWALLET_ID!(), utxo);
+    let utxo = nbtc_utxo::new_utxo(x"01", 0, 50000, MOCK_DWALLET_ID!());
+    onchain_utxos.add(utxo);
 
     let proposed_indices = vector[];
 
     nbtc_utxo::validate_utxos(
         &onchain_utxos,
         &proposed_indices,
-        vector[MOCK_DWALLET_ID!()],
         10000,
         0,
     );
@@ -69,7 +67,6 @@ fun validate_utxos_nonexistent_index() {
 
     onchain_utxos.validate_utxos(
         &proposed_indices,
-        vector[MOCK_DWALLET_ID!()],
         10000,
         0,
     );
@@ -84,15 +81,14 @@ fun validate_utxos_insufficient_amount() {
 
     let mut onchain_utxos = nbtc_utxo::new_utxo_store(ctx);
 
-    let utxo = nbtc_utxo::new_utxo(x"01", 0, 50000);
-    onchain_utxos.add(MOCK_DWALLET_ID!(), utxo);
+    let utxo = nbtc_utxo::new_utxo(x"01", 0, 50000, MOCK_DWALLET_ID!());
+    onchain_utxos.add(utxo);
 
     let proposed_indices = vector[0];
 
     nbtc_utxo::validate_utxos(
         &onchain_utxos,
         &proposed_indices,
-        vector[MOCK_DWALLET_ID!()],
         100000,
         0,
     );
@@ -107,15 +103,14 @@ fun validate_utxos_exact_match() {
 
     let mut onchain_utxos = nbtc_utxo::new_utxo_store(ctx);
 
-    let utxo = nbtc_utxo::new_utxo(x"01", 0, 50000);
-    onchain_utxos.add(MOCK_DWALLET_ID!(), utxo);
+    let utxo = nbtc_utxo::new_utxo(x"01", 0, 50000, MOCK_DWALLET_ID!());
+    onchain_utxos.add(utxo);
 
     let proposed_indices = vector[0];
 
     let total_value = nbtc_utxo::validate_utxos(
         &onchain_utxos,
         &proposed_indices,
-        vector[MOCK_DWALLET_ID!()],
         50000,
         0,
     );
@@ -133,14 +128,13 @@ fun test_locked_utxo_cannot_be_used_by_other_request() {
 
     let mut utxo_store = nbtc_utxo::new_utxo_store(ctx);
 
-    let utxo = nbtc_utxo::new_utxo(x"01", 0, 100000);
-    utxo_store.add(MOCK_DWALLET_ID!(), utxo);
-    nbtc_utxo::lock_utxo(&mut utxo_store, 0, MOCK_DWALLET_ID!(), 1);
+    let utxo = nbtc_utxo::new_utxo(x"01", 0, 100000, MOCK_DWALLET_ID!());
+    utxo_store.add(utxo);
+    nbtc_utxo::lock_utxo(&mut utxo_store, 0, 1);
 
     nbtc_utxo::validate_utxos(
         &utxo_store,
         &vector[0],
-        vector[MOCK_DWALLET_ID!()],
         50000,
         2,
     );
@@ -155,19 +149,18 @@ fun test_same_request_can_reuse_locked_utxos() {
 
     let mut utxo_store = nbtc_utxo::new_utxo_store(ctx);
 
-    let utxo_1 = nbtc_utxo::new_utxo(x"01", 0, 60000);
-    utxo_store.add(MOCK_DWALLET_ID!(), utxo_1);
+    let utxo_1 = nbtc_utxo::new_utxo(x"01", 0, 60000, MOCK_DWALLET_ID!());
+    utxo_store.add(utxo_1);
 
-    let utxo_2 = nbtc_utxo::new_utxo(x"02", 1, 40000);
-    utxo_store.add(MOCK_DWALLET_ID!(), utxo_2);
+    let utxo_2 = nbtc_utxo::new_utxo(x"02", 1, 40000, MOCK_DWALLET_ID!());
+    utxo_store.add(utxo_2);
 
-    nbtc_utxo::lock_utxo(&mut utxo_store, 0, MOCK_DWALLET_ID!(), 5);
-    nbtc_utxo::lock_utxo(&mut utxo_store, 1, MOCK_DWALLET_ID!(), 5);
+    nbtc_utxo::lock_utxo(&mut utxo_store, 0, 5);
+    nbtc_utxo::lock_utxo(&mut utxo_store, 1, 5);
 
     let total_value = nbtc_utxo::validate_utxos(
         &utxo_store,
         &vector[0, 1],
-        vector[MOCK_DWALLET_ID!(), MOCK_DWALLET_ID!()],
         90000,
         5,
     );
