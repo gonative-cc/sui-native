@@ -167,7 +167,6 @@ public fun validate_utxos(
     redeem_request_id: u64,
 ): u64 {
     assert!(!utxo_ids.is_empty(), EEmptyUtxoSet);
-    assert!(utxo_ids.length() == dwallet_ids.length(), EDwalletIdMismatch);
     assert!(utxo_ids.length() <= MAXIMUM_NUMBER_UTXO, EInputLimitation);
 
     let mut total_value: u64 = 0;
