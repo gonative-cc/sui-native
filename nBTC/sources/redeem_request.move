@@ -133,9 +133,11 @@ public(package) fun move_to_signing_status(
     redeem_id: u64,
     storage: &mut Storage,
 ) {
+    let number_input = r.inputs_length();
     r.status = RedeemStatus::Signing;
-
-    r.inputs_length().do!(|i| {
+    r.signatures = vector::tabulate!(number_input, |_| vector::empty());
+    r.sig_hashes = vector::tabulate!(number_input, |_| vector::empty());
+    number_input.do!(|i| {
         let idx = r.utxo_ids[i];
         let utxo = storage.utxo_store_mut().remove(idx);
         r.utxos.push_back(utxo);
