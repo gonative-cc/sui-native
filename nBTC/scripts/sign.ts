@@ -165,7 +165,7 @@ export async function getSignHash(
  * @param nbtcPublicSignature The public signature vector for nbtc.
  * @param config The configuration object containing IDs like `packageId` and `nbtc` object ID.
  */
-export async function requestSignatureForInput(
+export async function requestUtxoSig(
 	redeemId: number,
 	inputId: number,
 	presignId: string,
@@ -178,10 +178,6 @@ export async function requestSignatureForInput(
 	const signer = mkSigner();
 
 	let tx = new Transaction();
-	let ikaTx = new IkaTransaction({
-		ikaClient,
-		transaction: tx,
-	});
 
 	const ikaCoin = await getIkaCoin(suiClient, signer.toSuiAddress());
 	const unverifiedPresignCap = (
@@ -189,7 +185,7 @@ export async function requestSignatureForInput(
 	).cap_id;
 
 	tx.add(
-		nBTCContractModule.requestSignatureForInput({
+		nBTCContractModule.requestUtxoSig({
 			arguments: {
 				contract: config.nbtc,
 				dwalletCoordinator:
