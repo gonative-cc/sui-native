@@ -13,7 +13,6 @@ use sui::coin::Coin;
 use sui::event;
 use sui::sui::SUI;
 use sui::table::{Self, Table};
-use sui::vec_map::{Self, VecMap};
 
 #[error]
 const ERedeemTxSigningNotCompleted: vector<u8> =
@@ -53,6 +52,7 @@ public struct RedeemRequest has store {
     sign_ids: Table<ID, bool>,
     signatures: vector<vector<u8>>,
     created_at: u64,
+    signed_input: u64,
 }
 
 /// Event emitted when a proposal for redeem request is selected (solved) and we are ready
@@ -281,17 +281,20 @@ public(package) fun add_signature(r: &mut RedeemRequest, input_id: u64, ika_sign
     // NOTE: With taproot we don't need encode signature
     let s = &mut r.signatures[input_id];
     *s = ika_signature;
-    if (r.signatures.length() == r.inputs_length()) {
+    r.signed_input = r.signed_input + 1;
+    if (r.signed_input == r.inputs_length()) {
         r.status = RedeemStatus::Signed;
     }
 }
 
 /// Returns sighash for input_id-th in redeem transaction
 public fun sig_hash(r: &RedeemRequest, input_id: u64, storage: &Storage): vector<u8> {
+    // check cache
     if (!r.signatures[input_id].is_empty()) {
-        return r.signatures[input_id];
+        return r.signatures[input_id]
     };
 
+    // compute sighash
     let inputs = r.utxos();
     let utxo = &inputs[input_id];
     let dwallet_id = utxo.dwallet_id();
@@ -359,6 +362,7 @@ public fun new(
         status: RedeemStatus::Resolving,
         utxo_ids: vector::empty(),
         created_at,
+        signed_input: 0,
     }
 }
 
@@ -380,7 +384,7 @@ public(package) fun record_signature(
     // NOTE: We intentionally do not re-verify the signature on-chain here.
     // The DWallet / IKA protocol guarantees that `get_sign_signature` only
     // returns signatures that have already been validated against the
-    // appropriate public key and the computed `sign_hash`. As a result,
+    // appropriate public key and the computed `sig_hash`. As a result,
     // performing signature verification again in this module would be
     // redundant, and we safely persist the coordinator-provided signature.
     r.add_signature(input_id, signature);
