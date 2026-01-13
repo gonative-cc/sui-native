@@ -476,7 +476,7 @@ public fun request_utxo_sig(
     contract: &mut NbtcContract,
     dwallet_coordinator: &mut DWalletCoordinator,
     redeem_id: u64,
-    input_id: u32,
+    input_id: u64,
     nbtc_public_sign: vector<u8>,
     presign: UnverifiedPresignCap,
     payment_ika: &mut Coin<IKA>,
@@ -490,7 +490,7 @@ public fun request_utxo_sig(
     );
     let request = &mut contract.redeem_requests[redeem_id];
     assert!(request.status().is_signing(), ENotReadlyForSign);
-    assert!(!request.has_signature(input_id as u64), EInputAlreadyUsed);
+    assert!(!request.has_signature(input_id), EInputAlreadyUsed);
     request.request_utxo_sig(
         dwallet_coordinator,
         &contract.storage,
