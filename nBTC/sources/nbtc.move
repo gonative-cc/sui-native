@@ -608,7 +608,8 @@ public fun finalize_redeem(
 // TODO: we should be able to record many signatures in a single tx
 /// Try to read sig from dwallet and save it in the inputs store.
 /// Fails if the sig is not available. Validation is left on the Ika side.
-/// Returns true if sig is recorded, false if sig was already recorded before.
+/// Returns true if sig is recorded, false if sig was already recorded before and aborts if
+/// the validation fails.
 public fun record_signature(
     contract: &mut NbtcContract,
     dwallet_coordinator: &DWalletCoordinator,
