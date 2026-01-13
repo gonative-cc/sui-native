@@ -21,6 +21,8 @@ const ERedeemTxSigningNotCompleted: vector<u8> =
 const EInvalidIkaSchnorrLength: vector<u8> = b"invalid schnorr signature length from ika format";
 #[error]
 const EUnsupportedLockscript: vector<u8> = b"unsupported lockscript";
+#[error]
+const EAlreadyHasSignature: vector<u8> = b"signature already recorded for this input";
 
 // signature algorithm
 const TAPROOT: u32 = 1;
@@ -278,6 +280,7 @@ public fun compose_tx(r: &RedeemRequest, storage: &Storage): tx::Transaction {
 
 // add valid signature to redeem request for specific input index
 public(package) fun add_signature(r: &mut RedeemRequest, input_id: u64, ika_signature: vector<u8>) {
+    assert!(!r.has_signature(input_id), EAlreadyHasSignature);
     // NOTE: With taproot we don't need encode signature
     let s = &mut r.signatures[input_id];
     *s = ika_signature;
@@ -290,8 +293,8 @@ public(package) fun add_signature(r: &mut RedeemRequest, input_id: u64, ika_sign
 /// Returns sighash for input_id-th in redeem transaction
 public fun sig_hash(r: &RedeemRequest, input_id: u64, storage: &Storage): vector<u8> {
     // check cache
-    if (!r.signatures[input_id].is_empty()) {
-        return r.signatures[input_id]
+    if (!r.sig_hashes[input_id].is_empty()) {
+        return r.sig_hashes[input_id]
     };
 
     // compute sighash
