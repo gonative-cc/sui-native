@@ -376,6 +376,11 @@ public(package) fun record_signature(
     let utxo = r.utxo_at(input_id);
     let dwallet_id = utxo.dwallet_id();
     let signature = get_signature(dwallet_coordinator, dwallet_id, sign_id);
+
+    // TODO:
+    // 1. merge this and add_signature function
+    // 2. make sure sign_id (and signature) is for the specified redeem_request and input (need to update sign_ids)
+
     // NOTE: We intentionally do not re-verify the signature on-chain here.
     // The DWallet / IKA protocol guarantees that `get_sign_signature` only
     // returns signatures that have already been validated against the
