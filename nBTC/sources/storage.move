@@ -13,9 +13,8 @@ public struct DWalletMetadata has store {
     lockscript: vector<u8>, // lock script for this dwallet
     total_deposit: u64, // total deposit balance
     public_user_share: vector<u8>, // "user share" of dwallet
-    // TODO: rename to inactive_deposits
     /// map user address to amount they deposit/mint
-    inactive_balances: Table<address, u64>,
+    inactive_deposits: Table<address, u64>,
 }
 
 public struct Storage has key, store {
@@ -47,7 +46,7 @@ public(package) fun create_dwallet_metadata(
         lockscript,
         total_deposit: 0,
         public_user_share,
-        inactive_balances: table::new(ctx),
+        inactive_deposits: table::new(ctx),
     }
 }
 
@@ -59,9 +58,9 @@ public fun total_deposit(dmeta: &DWalletMetadata): u64 {
     dmeta.total_deposit
 }
 
-public fun inactive_balances(dmeta: &DWalletMetadata, addr: address): u64 {
-    if (dmeta.inactive_balances.contains(addr)) {
-        dmeta.inactive_balances[addr]
+public fun inactive_deposits(dmeta: &DWalletMetadata, addr: address): u64 {
+    if (dmeta.inactive_deposits.contains(addr)) {
+        dmeta.inactive_deposits[addr]
     } else {
         // they don't use this wallet
         0
@@ -131,11 +130,11 @@ public(package) fun increase_record_balance(
 ) {
     let i = store.dwallet_idx_assert(dwallet_id);
     let dm = &mut store.dwallets_meta[i];
-    if (dm.inactive_balances.contains(user)) {
-        let user_balance = &mut dm.inactive_balances[user];
+    if (dm.inactive_deposits.contains(user)) {
+        let user_balance = &mut dm.inactive_deposits[user];
         *user_balance = *user_balance + amount;
     } else {
-        dm.inactive_balances.add(user, amount);
+        dm.inactive_deposits.add(user, amount);
     };
     dm.total_deposit = dm.total_deposit + amount;
 }
@@ -150,7 +149,7 @@ public(package) fun remove_inactive_deposit(
     let i = store.dwallet_idx_assert(dwallet_id);
     let dm = &mut store.dwallets_meta[i];
     // TODO: bug: use remove
-    let user_balance = &mut dm.inactive_balances[user];
+    let user_balance = &mut dm.inactive_deposits[user];
     let amount = *user_balance;
     *user_balance = 0;
     dm.total_deposit = dm.total_deposit - amount;
@@ -162,12 +161,12 @@ public(package) fun remove_inactive_deposit(
 public(package) fun remove_dwallet(store: &mut Storage, dwallet_id: ID) {
     let i = store.dwallet_idx_assert(dwallet_id);
     let DWalletMetadata {
-        inactive_balances,
+        inactive_deposits,
         total_deposit: _,
         lockscript: _,
         public_user_share: _,
     } = store.dwallets_meta.swap_remove(i);
-    inactive_balances.destroy_empty();
+    inactive_deposits.destroy_empty();
     let d = store.dwallets.swap_remove(i);
     store.dwallet_trash.add(dwallet_id, d);
 }
