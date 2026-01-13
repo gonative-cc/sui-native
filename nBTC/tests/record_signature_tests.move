@@ -8,7 +8,6 @@ use nbtc::test_constants::MOCK_DWALLET_ID;
 use std::unit_test::{assert_eq, destroy};
 use sui::clock;
 use sui::coin::mint_for_testing;
-use sui::test_utils::assert_eq as assert_ref_eq;
 
 const NBTC_SCRIPT_PUBKEY: vector<u8> = x"76a914509a651dd392e1bc125323f629b67d65cca3d4bb88ac";
 const ADMIN: address = @0xad;
@@ -154,7 +153,12 @@ fun test_record_signature_with_multiple_inputs() {
     let utxo1 = new_utxo(TX_HASH, 0, 1000, dwallet_id);
     ctr.add_utxo_for_test(0, utxo1);
 
-    let utxo2 = new_utxo(x"02ce677fd511851bb6cdacebed863d12dfd231d810e8e9fcba6e791001adf3a6", 1, 1000, dwallet_id);
+    let utxo2 = new_utxo(
+        x"02ce677fd511851bb6cdacebed863d12dfd231d810e8e9fcba6e791001adf3a6",
+        1,
+        1000,
+        dwallet_id,
+    );
     ctr.add_utxo_for_test(1, utxo2);
 
     let nbtc_coin = mint_for_testing<NBTC>(1500, scenario.ctx());
