@@ -108,7 +108,7 @@ public(package) fun dwallet_idx_assert(store: &Storage, dwallet_id: ID): u64 {
 // TODO - remove, we don't need this
 public(package) fun exist(store: &Storage, dwallet_id: ID): bool {
     let i = store.dwallet_idx(dwallet_id);
-    return i != MAX_U64
+    i != MAX_U64
 }
 
 public(package) fun add_dwallet(store: &mut Storage, d: DWalletCap, m: DWalletMetadata) {
