@@ -165,7 +165,7 @@ export async function getSignHash(
  * @param nbtcPublicSignature The public signature vector for nbtc.
  * @param config The configuration object containing IDs like `packageId` and `nbtc` object ID.
  */
-export async function requestSignatureForInput(
+export async function requestUtxoSig(
 	redeemId: number,
 	inputId: number,
 	presignId: string,
@@ -189,7 +189,7 @@ export async function requestSignatureForInput(
 	).cap_id;
 
 	tx.add(
-		nBTCContractModule.requestSignatureForInput({
+		nBTCContractModule.requestUtxoSig({
 			arguments: {
 				contract: config.nbtc,
 				dwalletCoordinator:
@@ -220,7 +220,7 @@ export async function requestSignatureForInput(
  * @param suiClient The initialized Sui client instance.
  * @param redeemId The ID of the redeem request.
  * @param inputId The index of the Bitcoin input being signed (0-indexed).
- * @param signId The object ID of the sign session returned from requestSignatureForInput
+ * @param signId The object ID of the sign session returned from requestUtxoSig
  * @param config The configuration object containing IDs like `packageId` and `nbtc` object ID.
  * @returns A promise that resolves when the verification transaction is executed successfully (no explicit return value).
  */
