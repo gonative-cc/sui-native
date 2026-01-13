@@ -408,3 +408,9 @@ public fun update_to_signed_for_test(r: &mut RedeemRequest, signatures: vector<v
         );
     r.status = RedeemStatus::Signed
 }
+
+#[test_only]
+/// Add a signature for a specific input_id directly without going through DWalletCoordinator
+public fun add_signature_for_test(r: &mut RedeemRequest, input_id: u32, signature: vector<u8>) {
+    r.add_signature(input_id, signature);
+}
