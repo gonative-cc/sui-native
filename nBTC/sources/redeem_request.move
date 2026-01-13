@@ -280,8 +280,6 @@ public fun compose_tx(r: &RedeemRequest, storage: &Storage): tx::Transaction {
 
 // add valid signature to redeem request for specific input index
 public(package) fun add_signature(r: &mut RedeemRequest, input_id: u64, ika_signature: vector<u8>) {
-    assert!(!r.has_signature(input_id), EAlreadyHasSignature);
-    // NOTE: With taproot we don't need encode signature
     let s = &mut r.signatures[input_id];
     *s = ika_signature;
     r.signed_input = r.signed_input + 1;
