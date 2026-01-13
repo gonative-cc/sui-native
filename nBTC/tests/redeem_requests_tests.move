@@ -9,7 +9,8 @@ use nbtc::test_constants::MOCK_DWALLET_ID;
 use std::unit_test::{assert_eq, destroy};
 use sui::clock;
 
-#[test]
+// TODO: enable this test once the todo inside is solved
+// #[test]
 fun raw_withdraw_tx_signed_tests() {
     let nbtc_spend_key = x"51200f0c8db753acbd17343a39c2f3f4e35e4be6da749f9e35137ab220e7b238a667";
     let sender = @0x1;
@@ -43,14 +44,17 @@ fun raw_withdraw_tx_signed_tests() {
         scenario.ctx(),
     );
     let mut btc_store = storage::create_storage(scenario.ctx());
-    btc_store.add_metadata(
-        MOCK_DWALLET_ID!(),
-        storage::create_dwallet_metadata(
-            nbtc_spend_key,
-            vector::empty(),
-            scenario.ctx(),
-        ),
-    );
+    // TODO: we can't simply add metadata - we need to include it with DWalletCap.
+    // https://github.com/dwallet-labs/ika/pull/1624
+    //
+    // btc_store.add_dwallet(
+    //     create_dwalletcap_for_testing(MOCK_DWALLET_ID!(), scenario.ctx()),
+    //     storage::create_dwallet_metadata(
+    //         nbtc_spend_key,
+    //         vector::empty(),
+    //         scenario.ctx(),
+    //     ),
+    // );
 
     let utxo_store = btc_store.utxo_store_mut();
     utxos.destroy!(|utxo| {
