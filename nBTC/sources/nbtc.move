@@ -451,11 +451,6 @@ public fun record_inactive_deposit(
     });
 }
 
-/// Query users inactive deposits in a given dwallet.
-public fun inactive_deposit(contract: &mut NbtcContract, dwallet_id: ID, user: address): u64 {
-    contract.storage.dwallet_metadata(dwallet_id).inactive_deposits(user)
-}
-
 /// Request signing for specific input in a redeem transaction.
 ///
 /// This function will:
@@ -847,7 +842,12 @@ public fun redeem_request(contract: &NbtcContract, redeem_id: u64): &RedeemReque
     &contract.redeem_requests[redeem_id]
 }
 
-public fun storage(contract: &NbtcContract): &Storage {
+/// Query users inactive deposits in a given dwallet.
+public fun inactive_deposit(contract: &mut NbtcContract, dwallet_id: ID, user: address): u64 {
+    contract.storage.dwallet_metadata(dwallet_id).inactive_deposits(user)
+}
+
+public(package) fun storage(contract: &NbtcContract): &Storage {
     &contract.storage
 }
 
