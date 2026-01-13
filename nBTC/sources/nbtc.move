@@ -520,7 +520,7 @@ public fun redeem(
     // TODO: implement logic to guard burning and manage UTXOs
     // TODO: we can call remove_inactive_spend_key if reserves of this key is zero
 
-    assert!(coin.value() >= fee, EInvalidRedeemFee);
+    assert!(coin.value() > fee, EInvalidRedeemFee);
     let sender = ctx.sender();
     let r = redeem_request::new(
         contract.active_lockscript(),
