@@ -842,8 +842,8 @@ public fun redeem_request(contract: &NbtcContract, redeem_id: u64): &RedeemReque
     &contract.redeem_requests[redeem_id]
 }
 
-/// Query users inactive deposits in a given dwallet.
-public fun inactive_deposit(contract: &mut NbtcContract, dwallet_id: ID, user: address): u64 {
+/// Query user's inactive deposits in a given dwallet.
+public fun inactive_deposit(contract: &NbtcContract, dwallet_id: ID, user: address): u64 {
     contract.storage.dwallet_metadata(dwallet_id).inactive_deposits(user)
 }
 
