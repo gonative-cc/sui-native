@@ -16,6 +16,7 @@ const NBTC_TAPROOT_SCRIPT: vector<u8> =
 const ADMIN: address = @0xad;
 const RECEIVER_SCRIPT: vector<u8> = x"00140000000000000000000000000000000000000002";
 const TX_HASH: vector<u8> = x"06ce677fd511851bb6cdacebed863d12dfd231d810e8e9fcba6e791001adf3a6";
+const REDEEM_FEE: u64 = 150;
 
 #[test_only]
 fun setup_redeem_test(
@@ -52,7 +53,7 @@ fun setup_redeem_test(
     let nbtc_coin = ctr.testing_mint(redeem_amount, scenario.ctx());
 
     let mut clock = clock::create_for_testing(scenario.ctx());
-    let redeem_id = ctr.redeem(nbtc_coin, RECEIVER_SCRIPT, &clock, scenario.ctx());
+    let redeem_id = ctr.redeem(nbtc_coin, RECEIVER_SCRIPT, REDEEM_FEE, &clock, scenario.ctx());
 
     if (proceed_to_signed) {
         ctr.propose_utxos(redeem_id, vector[0], &clock);
@@ -241,12 +242,12 @@ fun test_two_requests_cannot_share_utxos() {
 
     let nbtc_coin_1 = mint_for_testing<NBTC>(1000, scenario.ctx());
     let clock = clock::create_for_testing(scenario.ctx());
-    let redeem_id_1 = ctr.redeem(nbtc_coin_1, RECEIVER_SCRIPT, &clock, scenario.ctx());
+    let redeem_id_1 = ctr.redeem(nbtc_coin_1, RECEIVER_SCRIPT, REDEEM_FEE, &clock, scenario.ctx());
 
     ctr.propose_utxos(redeem_id_1, vector[0], &clock);
 
     let nbtc_coin_2 = mint_for_testing<NBTC>(1000, scenario.ctx());
-    let redeem_id_2 = ctr.redeem(nbtc_coin_2, RECEIVER_SCRIPT, &clock, scenario.ctx());
+    let redeem_id_2 = ctr.redeem(nbtc_coin_2, RECEIVER_SCRIPT, REDEEM_FEE, &clock, scenario.ctx());
 
     ctr.propose_utxos(redeem_id_2, vector[0], &clock);
 
@@ -271,11 +272,11 @@ fun test_cannot_propose_overlapping_locked_utxos() {
     let clock = clock::create_for_testing(scenario.ctx());
 
     let nbtc_coin_1 = mint_for_testing<NBTC>(1500, scenario.ctx());
-    let redeem_id_1 = ctr.redeem(nbtc_coin_1, RECEIVER_SCRIPT, &clock, scenario.ctx());
+    let redeem_id_1 = ctr.redeem(nbtc_coin_1, RECEIVER_SCRIPT, REDEEM_FEE, &clock, scenario.ctx());
     ctr.propose_utxos(redeem_id_1, vector[0, 1], &clock);
 
     let nbtc_coin_2 = mint_for_testing<NBTC>(1500, scenario.ctx());
-    let redeem_id_2 = ctr.redeem(nbtc_coin_2, RECEIVER_SCRIPT, &clock, scenario.ctx());
+    let redeem_id_2 = ctr.redeem(nbtc_coin_2, RECEIVER_SCRIPT, REDEEM_FEE, &clock, scenario.ctx());
 
     ctr.propose_utxos(redeem_id_2, vector[1, 2], &clock);
 

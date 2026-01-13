@@ -63,6 +63,7 @@ const EAlreadyUpdated: vector<u8> =
     b"The package version has been already updated to the latest one";
 #[error]
 const EInvalidOpsArg: vector<u8> = b"invalid mint ops_arg";
+
 #[error]
 const EDuplicatedDWallet: vector<u8> = b"duplicated dwallet";
 #[error]
@@ -510,6 +511,7 @@ public fun redeem(
     contract: &mut NbtcContract,
     coin: Coin<NBTC>,
     recipient_script: vector<u8>,
+    fee: u64,
     clock: &Clock,
     ctx: &mut TxContext,
 ): u64 {
@@ -517,13 +519,14 @@ public fun redeem(
     // TODO: implement logic to guard burning and manage UTXOs
     // TODO: we can call remove_inactive_spend_key if reserves of this key is zero
 
+    assert!(coin.value() > fee, EInvalidArguments);
     let sender = ctx.sender();
     let r = redeem_request::new(
         contract.active_lockscript(),
         sender,
         recipient_script,
         coin.value(),
-        150, // TODO: query fee from oracle or give api for user to set this
+        fee,
         clock.timestamp_ms(),
         ctx,
     );

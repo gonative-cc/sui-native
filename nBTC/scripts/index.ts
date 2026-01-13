@@ -10,7 +10,7 @@ import {
 	globalPreSign,
 	getSignHash,
 	createUserSigMessage,
-	requestSignatureForInput,
+	requestUtxoSig,
 	verifySignature,
 	getRedeemBtcTx,
 } from "./sign";
@@ -51,7 +51,7 @@ program
 			signHash,
 		);
 
-		let signID = await requestSignatureForInput(
+		let signID = await requestUtxoSig(
 			redeem_id,
 			input_idx,
 			presignId,
