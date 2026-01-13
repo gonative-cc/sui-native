@@ -453,9 +453,7 @@ public fun record_inactive_deposit(
 
 /// Query users inactive deposits in a given dwallet.
 public fun inactive_deposit(contract: &mut NbtcContract, dwallet_id: ID, user: address): u64 {
-    let dm = contract.storage.dwallet_metadata(dwallet_id);
-    if (!dm.inactive_deposits.contains(user)) return 0;
-    dm.inactive_deposits[user]
+    contract.storage.dwallet_metadata(dwallet_id).inactive_deposits(user)
 }
 
 /// Request signing for specific input in a redeem transaction.
