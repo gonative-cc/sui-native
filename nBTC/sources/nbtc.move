@@ -759,10 +759,7 @@ public fun fill_presign(
     ctx: &mut TxContext,
 ) {
     let config = contract.config();
-    assert!(
-        object::id(dwallet_coordinator) == config.dwallet_coordinator(),
-        EInvalidDWalletCoordinator,
-    );
+    assert!(object::id(coordinator) == config.dwallet_coordinator(), EInvalidDWalletCoordinator);
     let active_dwallet_id = contract.active_dwallet_id();
     let dwallet_cap = contract.storage.dwallet_cap(active_dwallet_id);
     let dwallet = coordinator.get_dwallet(dwallet_cap.dwallet_id());
