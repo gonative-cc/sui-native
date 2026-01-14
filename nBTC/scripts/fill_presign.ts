@@ -13,8 +13,6 @@ import { nBTCContractModule } from "../../sdk/nBTC/src";
 const config = loadConfig();
 
 let suiClient = createSuiClient(config.packageId);
-let ikaClient = createIkaClient(suiClient);
-await ikaClient.initialize();
 
 /**
  * Fills the nBTC contract's presign buffer up to MAX_PRESIGNS (100)
