@@ -9,6 +9,7 @@ use ika::ika::IKA;
 use ika_dwallet_2pc_mpc::coordinator::DWalletCoordinator;
 use ika_dwallet_2pc_mpc::coordinator_inner::{DWalletCap, UnverifiedPresignCap};
 use nbtc::config::{Self, Config};
+use nbtc::dwallet_helpers::new_session_identifier;
 use nbtc::nbtc_utxo::{Self, Utxo, validate_utxos};
 use nbtc::redeem_request::{Self, RedeemRequest};
 use nbtc::storage::{Storage, DWalletMetadata, create_storage, create_dwallet_metadata};
@@ -30,6 +31,12 @@ use sui::table::{Self, Table};
 const VERSION: u32 = 1;
 
 const MINUTE: u64 = 60_000;
+
+// hash function
+const SHA256: u32 = 1;
+
+// Maximum number of presigns to keep in buffer
+const MAX_PRESIGNS: u64 = 100;
 
 /// Coin Metadata
 const DECIMALS: u8 = 8;
@@ -120,6 +127,7 @@ public struct NbtcContract has key, store {
     redeem_requests: Table<u64, RedeemRequest>,
     // lock nbtc for redeem, this is a mapping from request id to nBTC redeem coin
     locked: Table<u64, Coin<NBTC>>,
+    presigns: vector<UnverifiedPresignCap>,
     storage: Storage,
     // should have one active_dwallet_id
     active_dwallet_id: Option<ID>,
@@ -232,6 +240,7 @@ fun init__(witness: NBTC, ctx: &mut TxContext): NbtcContract {
         fees_collected: balance::zero(),
         redeem_requests: table::new<u64, RedeemRequest>(ctx),
         locked: table::new(ctx),
+        presigns: vector[],
         storage: create_storage(ctx),
         active_dwallet_id: option::none(),
         next_redeem_req: 0,
@@ -479,7 +488,6 @@ public fun request_utxo_sig(
     redeem_id: u64,
     input_id: u64,
     nbtc_public_sign: vector<u8>,
-    presign: UnverifiedPresignCap,
     payment_ika: &mut Coin<IKA>,
     payment_sui: &mut Coin<SUI>,
     ctx: &mut TxContext,
@@ -492,6 +500,8 @@ public fun request_utxo_sig(
     let request = &mut contract.redeem_requests[redeem_id];
     assert!(request.status().is_signing(), ENotReadlyForSign);
     assert!(!request.has_signature(input_id), EInputAlreadyUsed);
+
+    let presign = contract.presigns.pop_back();
     request.request_utxo_sig(
         dwallet_coordinator,
         &contract.storage,
@@ -741,6 +751,34 @@ public fun update_version(contract: &mut NbtcContract) {
 /// Used for moving funds from an inactive spend key to an active one.
 public fun merge_utxos(_: &mut NbtcContract, _num_utxos: u16) {}
 
+public fun fill_presign(
+    contract: &mut NbtcContract,
+    coordinator: &mut DWalletCoordinator,
+    sui_payment: &mut Coin<SUI>,
+    ika_payment: &mut Coin<IKA>,
+    ctx: &mut TxContext,
+) {
+    let active_dwallet_id = contract.active_dwallet_id();
+    let dwallet_cap = contract.storage.dwallet_cap(active_dwallet_id);
+    let dwallet = coordinator.get_dwallet(dwallet_cap.dwallet_id());
+    let dwallet_network_encryption_key_id = dwallet.dwallet_network_encryption_key_id();
+    let curve = dwallet.curve();
+
+    let number = MAX_PRESIGNS - contract.presigns.length();
+    number.do!(|_| {
+        let session_identifier = new_session_identifier(coordinator, ctx);
+        let presign = coordinator.request_global_presign(
+            dwallet_network_encryption_key_id,
+            curve,
+            SHA256,
+            session_identifier,
+            ika_payment,
+            sui_payment,
+            ctx,
+        );
+        contract.presigns.push_back(presign);
+    });
+}
 //
 // Admin functions
 //
