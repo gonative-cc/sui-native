@@ -21,8 +21,6 @@ const ERedeemTxSigningNotCompleted: vector<u8> =
 const EInvalidIkaSchnorrLength: vector<u8> = b"invalid schnorr signature length from ika format";
 #[error]
 const EUnsupportedLockscript: vector<u8> = b"unsupported lockscript";
-#[error]
-const EAlreadyHasSignature: vector<u8> = b"signature already recorded for this input";
 
 // signature algorithm
 const TAPROOT: u32 = 1;
@@ -108,6 +106,9 @@ public fun is_confirmed(status: &RedeemStatus): bool {
 }
 
 // ========== RedeemRequest methods ===============
+/// Returns true if a signature has been recorded for the given input.
+///
+/// Aborts if `input_id` is out of bounds (>= number of inputs).
 public fun has_signature(r: &RedeemRequest, input_id: u64): bool {
     !r.signatures[input_id].is_empty()
 }
@@ -230,6 +231,9 @@ public(package) fun request_utxo_sig(
     });
 }
 
+/// Sets signature request metadata for a specific input.
+///
+/// Aborts if `input_id` is out of bounds (>= number of inputs).
 public(package) fun set_sign_request_metadata(
     r: &mut RedeemRequest,
     input_id: u64,
@@ -278,7 +282,9 @@ public fun compose_tx(r: &RedeemRequest, storage: &Storage): tx::Transaction {
     tx
 }
 
-// add valid signature to redeem request for specific input index
+/// Add valid signature to redeem request for specific input index.
+///
+/// Aborts if `input_id` is out of bounds (>= number of inputs).
 public(package) fun add_signature(r: &mut RedeemRequest, input_id: u64, ika_signature: vector<u8>) {
     let s = &mut r.signatures[input_id];
     *s = ika_signature;
@@ -288,7 +294,9 @@ public(package) fun add_signature(r: &mut RedeemRequest, input_id: u64, ika_sign
     }
 }
 
-/// Returns sighash for input_id-th in redeem transaction
+/// Returns sighash for input_id-th in redeem transaction.
+///
+/// Aborts if `input_id` is out of bounds (>= number of inputs).
 public fun sig_hash(r: &RedeemRequest, input_id: u64, storage: &Storage): vector<u8> {
     // check cache
     if (!r.sig_hashes[input_id].is_empty()) {
@@ -367,6 +375,9 @@ public fun new(
     }
 }
 
+/// Returns a reference to the UTXO at the given index.
+///
+/// Aborts if `i` is out of bounds (>= number of UTXOs).
 public fun utxo_at(r: &RedeemRequest, i: u64): &Utxo {
     &r.utxos[i]
 }
@@ -413,5 +424,6 @@ public fun update_to_signing_for_test(r: &mut RedeemRequest, utxo_ids: vector<u6
 #[test_only]
 public fun update_to_signed_for_test(r: &mut RedeemRequest, signatures: vector<vector<u8>>) {
     r.signatures = signatures;
+    r.signed_input = signatures.length();
     r.status = RedeemStatus::Signed
 }

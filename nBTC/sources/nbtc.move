@@ -495,7 +495,7 @@ public fun request_utxo_sig(
         dwallet_coordinator,
         &contract.storage,
         redeem_id,
-        input_id as u64,
+        input_id,
         nbtc_public_sign,
         presign,
         payment_ika,
