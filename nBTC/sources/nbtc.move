@@ -165,7 +165,7 @@ public struct RedeemRequestEvent has copy, drop {
 
 public struct RedeemSigCreatedEvent has copy, drop {
     redeem_id: u64,
-    input_id: u32,
+    input_id: u64,
     is_fully_signed: bool,
 }
 
@@ -477,7 +477,7 @@ public fun request_utxo_sig(
     contract: &mut NbtcContract,
     dwallet_coordinator: &mut DWalletCoordinator,
     redeem_id: u64,
-    input_id: u32,
+    input_id: u64,
     nbtc_public_sign: vector<u8>,
     presign: UnverifiedPresignCap,
     payment_ika: &mut Coin<IKA>,
@@ -614,7 +614,7 @@ public fun record_signature(
     contract: &mut NbtcContract,
     dwallet_coordinator: &DWalletCoordinator,
     redeem_id: u64,
-    input_id: u32,
+    input_id: u64,
     sign_id: ID,
 ): bool {
     let config = contract.config();

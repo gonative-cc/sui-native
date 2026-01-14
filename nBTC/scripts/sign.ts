@@ -178,10 +178,6 @@ export async function requestUtxoSig(
 	const signer = mkSigner();
 
 	let tx = new Transaction();
-	let ikaTx = new IkaTransaction({
-		ikaClient,
-		transaction: tx,
-	});
 
 	const ikaCoin = await getIkaCoin(suiClient, signer.toSuiAddress());
 	const unverifiedPresignCap = (
