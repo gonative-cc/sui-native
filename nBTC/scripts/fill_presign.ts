@@ -32,8 +32,7 @@ export async function fillPresign() {
 	const ikaCoin = await getIkaCoin(suiClient, signer.toSuiAddress());
 
 	// Use the DWalletCoordinator ID from the existing requestUtxoSig pattern
-	const dwalletCoordinator =
-		"0x4d157b7415a298c56ec2cb1dcab449525fa74aec17ddba376a83a7600f2062fc";
+	const dwalletCoordinator = "0x4d157b7415a298c56ec2cb1dcab449525fa74aec17ddba376a83a7600f2062fc";
 
 	// Call fill_presign function from nBTC contract
 	transaction.add(
@@ -50,4 +49,3 @@ export async function fillPresign() {
 	await executeTransaction(suiClient, transaction);
 	console.log("Successfully filled presign buffer");
 }
-
