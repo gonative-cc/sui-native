@@ -13,7 +13,6 @@ use sui::coin::Coin;
 use sui::event;
 use sui::sui::SUI;
 use sui::table::{Self, Table};
-use sui::vec_map::{Self, VecMap};
 
 #[error]
 const ERedeemTxSigningNotCompleted: vector<u8> =
@@ -49,10 +48,11 @@ public struct RedeemRequest has store {
     // TODO we don't need vecmap - we can use a simple vector with the same order as UTXOs
     // so we can have only one vector to contain hashes, ids and signatures
     // and we need to know the mapping between sign_id and utxo idx
-    sig_hashes: VecMap<u32, vector<u8>>,
+    sig_hashes: vector<vector<u8>>,
     sign_ids: Table<ID, bool>,
-    signatures_map: VecMap<u32, vector<u8>>,
+    signatures: vector<vector<u8>>,
     created_at: u64,
+    signed_input: u64,
 }
 
 /// Event emitted when a proposal for redeem request is selected (solved) and we are ready
@@ -66,7 +66,7 @@ public struct SolvedEvent has copy, drop {
 public struct RequestSignatureEvent has copy, drop {
     redeem_id: u64,
     sign_id: ID, // IKA sign session ID
-    input_id: u32,
+    input_id: u64,
 }
 
 /// Event emitted when a redeem request is confirmed on Bitcoin network.
@@ -106,8 +106,11 @@ public fun is_confirmed(status: &RedeemStatus): bool {
 }
 
 // ========== RedeemRequest methods ===============
-public fun has_signature(r: &RedeemRequest, input_id: u32): bool {
-    r.signatures_map.contains(&input_id)
+/// Returns true if a signature has been recorded for the given input.
+///
+/// Aborts if `input_id` is out of bounds (>= number of inputs).
+public fun has_signature(r: &RedeemRequest, input_id: u64): bool {
+    !r.signatures[input_id].is_empty()
 }
 
 public fun status(r: &RedeemRequest): &RedeemStatus {
@@ -133,9 +136,11 @@ public(package) fun move_to_signing_status(
     redeem_id: u64,
     storage: &mut Storage,
 ) {
+    let number_input = r.inputs_length();
     r.status = RedeemStatus::Signing;
-
-    r.inputs_length().do!(|i| {
+    r.signatures = vector::tabulate!(number_input, |_| vector::empty());
+    r.sig_hashes = vector::tabulate!(number_input, |_| vector::empty());
+    number_input.do!(|i| {
         let idx = r.utxo_ids[i];
         let utxo = storage.utxo_store_mut().remove(idx);
         r.utxos.push_back(utxo);
@@ -183,7 +188,7 @@ public(package) fun request_utxo_sig(
     dwallet_coordinator: &mut DWalletCoordinator,
     storage: &Storage,
     redeem_id: u64,
-    input_id: u32,
+    input_id: u64,
     nbtc_public_sign: vector<u8>,
     presign: UnverifiedPresignCap,
     payment_ika: &mut Coin<IKA>,
@@ -226,14 +231,18 @@ public(package) fun request_utxo_sig(
     });
 }
 
+/// Sets signature request metadata for a specific input.
+///
+/// Aborts if `input_id` is out of bounds (>= number of inputs).
 public(package) fun set_sign_request_metadata(
     r: &mut RedeemRequest,
-    input_id: u32,
+    input_id: u64,
     sig_hash: vector<u8>,
     sign_id: ID,
 ) {
-    if (!r.sig_hashes.contains(&input_id)) {
-        r.sig_hashes.insert(input_id, sig_hash);
+    if (r.sig_hashes[input_id].is_empty()) {
+        let s = &mut r.sig_hashes[input_id];
+        *s = sig_hash;
     };
     r.sign_ids.add(sign_id, true);
 }
@@ -257,7 +266,7 @@ public fun compose_tx(r: &RedeemRequest, storage: &Storage): tx::Transaction {
         let dwallet_id = utxo.dwallet_id();
         let dwallet_metadata = storage.dwallet_metadata(dwallet_id);
         let lockscript = dwallet_metadata.lockscript();
-        let ika_signature = *r.signatures_map.get(&(i as u32));
+        let ika_signature = r.signatures[i];
         // Taproot witness expects a 64-byte Schnorr signature, no sighash flag byte.
         let witness = if (script::is_taproot(lockscript)) {
             assert!(ika_signature.length() == 64, EInvalidIkaSchnorrLength);
@@ -273,50 +282,59 @@ public fun compose_tx(r: &RedeemRequest, storage: &Storage): tx::Transaction {
     tx
 }
 
-// add valid signature to redeem request for specific input index
-public(package) fun add_signature(r: &mut RedeemRequest, input_id: u32, ika_signature: vector<u8>) {
-    // NOTE: With taproot we don't need encode signature
-    r.signatures_map.insert(input_id, ika_signature);
-    if (r.signatures_map.length() == r.inputs_length()) {
+/// Add valid signature to redeem request for specific input index.
+///
+/// Aborts if `input_id` is out of bounds (>= number of inputs).
+public(package) fun add_signature(r: &mut RedeemRequest, input_id: u64, ika_signature: vector<u8>) {
+    let s = &mut r.signatures[input_id];
+    *s = ika_signature;
+    r.signed_input = r.signed_input + 1;
+    if (r.signed_input == r.inputs_length()) {
         r.status = RedeemStatus::Signed;
     }
 }
 
-/// Returns sighash for input_id-th in redeem transaction
-public fun sig_hash(r: &RedeemRequest, input_id: u32, storage: &Storage): vector<u8> {
-    r.sig_hashes.try_get(&input_id).extract_or!({
-        let inputs = r.utxos();
-        let utxo = &inputs[input_id as u64];
-        let dwallet_id = utxo.dwallet_id();
-        let lockscript = storage.dwallet_metadata(dwallet_id).lockscript();
-        let tx = compose_withdraw_tx(
-            lockscript,
-            inputs,
-            r.recipient_script,
-            r.amount,
-            r.fee,
+/// Returns sighash for input_id-th in redeem transaction.
+///
+/// Aborts if `input_id` is out of bounds (>= number of inputs).
+public fun sig_hash(r: &RedeemRequest, input_id: u64, storage: &Storage): vector<u8> {
+    // check cache
+    if (!r.sig_hashes[input_id].is_empty()) {
+        return r.sig_hashes[input_id]
+    };
+
+    // compute sighash
+    let inputs = r.utxos();
+    let utxo = &inputs[input_id];
+    let dwallet_id = utxo.dwallet_id();
+    let lockscript = storage.dwallet_metadata(dwallet_id).lockscript();
+    let tx = compose_withdraw_tx(
+        lockscript,
+        inputs,
+        r.recipient_script,
+        r.amount,
+        r.fee,
+    );
+
+    if (script::is_taproot(lockscript)) {
+        let previous_pubscripts = vector::tabulate!(
+            inputs.length(),
+            |i| storage.dwallet_metadata(inputs[i].dwallet_id()).lockscript(),
         );
+        let previous_values = vector::tabulate!(inputs.length(), |i| inputs[i].value());
 
-        if (script::is_taproot(lockscript)) {
-            let previous_pubscripts = vector::tabulate!(
-                inputs.length(),
-                |i| storage.dwallet_metadata(inputs[i].dwallet_id()).lockscript(),
-            );
-            let previous_values = vector::tabulate!(inputs.length(), |i| inputs[i].value());
-
-            taproot_sighash_preimage(
+        return taproot_sighash_preimage(
                 &tx,
-                input_id, // input index
+                input_id as u32, // input index
                 previous_pubscripts,
                 previous_values,
                 SIGNHASH_ALL,
                 option::none(),
                 option::none(),
             )
-        } else {
-            abort EUnsupportedLockscript
-        }
-    })
+    } else {
+        abort EUnsupportedLockscript
+    }
 }
 
 public(package) fun burn_utxos(r: &mut RedeemRequest) {
@@ -345,19 +363,23 @@ public fun new(
         redeemer,
         recipient_script,
         amount,
-        sig_hashes: vec_map::empty(),
+        sig_hashes: vector::empty(),
         fee,
         utxos: vector::empty(),
         sign_ids: table::new(ctx),
-        signatures_map: vec_map::empty(),
+        signatures: vector::empty(),
         status: RedeemStatus::Resolving,
         utxo_ids: vector::empty(),
         created_at,
+        signed_input: 0,
     }
 }
 
-public fun utxo_at(r: &RedeemRequest, i: u32): &Utxo {
-    &r.utxos[i as u64]
+/// Returns a reference to the UTXO at the given index.
+///
+/// Aborts if `i` is out of bounds (>= number of UTXOs).
+public fun utxo_at(r: &RedeemRequest, i: u64): &Utxo {
+    &r.utxos[i]
 }
 
 public fun fee(r: &RedeemRequest): u64 { r.fee }
@@ -365,7 +387,7 @@ public fun fee(r: &RedeemRequest): u64 { r.fee }
 public(package) fun record_signature(
     r: &mut RedeemRequest,
     dwallet_coordinator: &DWalletCoordinator,
-    input_id: u32,
+    input_id: u64,
     sign_id: ID,
 ) {
     let utxo = r.utxo_at(input_id);
@@ -374,7 +396,7 @@ public(package) fun record_signature(
     // NOTE: We intentionally do not re-verify the signature on-chain here.
     // The DWallet / IKA protocol guarantees that `get_sign_signature` only
     // returns signatures that have already been validated against the
-    // appropriate public key and the computed `sign_hash`. As a result,
+    // appropriate public key and the computed `sig_hash`. As a result,
     // performing signature verification again in this module would be
     // redundant, and we safely persist the coordinator-provided signature.
     r.add_signature(input_id, signature);
@@ -401,10 +423,7 @@ public fun update_to_signing_for_test(r: &mut RedeemRequest, utxo_ids: vector<u6
 
 #[test_only]
 public fun update_to_signed_for_test(r: &mut RedeemRequest, signatures: vector<vector<u8>>) {
-    r.signatures_map =
-        vec_map::from_keys_values(
-            vector::tabulate!(signatures.length(), |i| i as u32),
-            signatures,
-        );
+    r.signatures = signatures;
+    r.signed_input = signatures.length();
     r.status = RedeemStatus::Signed
 }
