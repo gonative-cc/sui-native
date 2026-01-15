@@ -992,7 +992,7 @@ public fun record_signature_for_test(
     let r = &mut contract.redeem_requests[redeem_id];
     if (r.has_signature(input_id)) return false;
 
-    r.add_signature_for_test(input_id, signature);
+    r.add_signature(input_id, signature);
 
     let is_fully_signed = r.status().is_signed();
     event::emit(RedeemSigCreatedEvent {

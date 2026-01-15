@@ -162,7 +162,7 @@ fun test_record_signature_with_multiple_inputs() {
     ctr.add_utxo_for_test(1, utxo2);
 
     let nbtc_coin = mint_for_testing<NBTC>(1500, scenario.ctx());
-    let clock = clock::create_for_testing(scenario.ctx());
+    let mut clock = clock::create_for_testing(scenario.ctx());
     let redeem_id = ctr.redeem(nbtc_coin, RECEIVER_SCRIPT, REDEEM_FEE, &clock, scenario.ctx());
 
     // Move to signing state with both UTXOs
