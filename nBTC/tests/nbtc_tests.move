@@ -7,7 +7,7 @@ use bitcoin_lib::header;
 use bitcoin_spv::light_client::{new_light_client, LightClient};
 use ika_dwallet_2pc_mpc::coordinator_inner::dwallet_cap_for_testing;
 use nbtc::nbtc::{Self, NbtcContract, EMintAmountIsZero, ETxAlreadyUsed, EAlreadyUpdated, NBTC};
-use nbtc::storage::{Self, DWalletMetadata};
+use nbtc::storage::{Self, BtcDWallet};
 use nbtc::test_constants::MOCK_DWALLET_ID;
 use std::unit_test::{assert_eq, destroy};
 use sui::address;
@@ -89,7 +89,7 @@ fun get_fallback_mint_data(): TestData {
 public fun setup_with_pubkey(
     sender: address,
     dwallet_id: ID,
-    dwallet_metadata: DWalletMetadata,
+    dw: BtcDWallet,
 ): (LightClient, NbtcContract, Scenario) {
     let mut scenario = test_scenario::begin(sender);
     // TODO: we should use a dummy or create parameter for function setup
@@ -109,11 +109,7 @@ public fun setup_with_pubkey(
         scenario.ctx(),
     );
 
-    ctr.set_dwallet_metadata_for_test(
-        dwallet_id,
-        dwallet_metadata,
-        dwallet_cap_for_testing(dwallet_id, scenario.ctx()),
-    );
+    ctr.set_dwallet_for_test(dwallet_id, dw);
 
     (lc, ctr, scenario)
 }
@@ -124,14 +120,15 @@ public fun setup(
     sender: address,
     dwallet_id: ID,
 ): (LightClient, NbtcContract, Scenario) {
-    let mut temp_scenario = test_scenario::begin(sender);
-    let dwallet_metadata = storage::create_dwallet_metadata(
+    let mut scenario = test_scenario::begin(sender);
+    let dw = storage::create_dwallet(
+        dwallet_cap_for_testing(dwallet_id, scenario.ctx()),
         nbtc_bitcoin_addr,
         vector::empty(),
-        temp_scenario.ctx(),
+        scenario.ctx(),
     );
-    temp_scenario.end();
-    setup_with_pubkey(sender, dwallet_id, dwallet_metadata)
+    scenario.end();
+    setup_with_pubkey(sender, dwallet_id, dw)
 }
 
 #[test]

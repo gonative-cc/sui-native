@@ -1,6 +1,7 @@
 #[test_only]
 module nbtc::redeem_request_tests;
 
+use ika_dwallet_2pc_mpc::coordinator_inner::dwallet_cap_for_testing;
 use nbtc::nbtc_tests::setup;
 use nbtc::nbtc_utxo::new_utxo;
 use nbtc::redeem_request;
@@ -43,9 +44,9 @@ fun raw_withdraw_tx_signed_tests() {
         scenario.ctx(),
     );
     let mut btc_store = storage::create_storage(scenario.ctx());
-    btc_store.add_metadata(
-        MOCK_DWALLET_ID!(),
-        storage::create_dwallet_metadata(
+    btc_store.add_dwallet(
+        storage::create_dwallet(
+            dwallet_cap_for_testing(MOCK_DWALLET_ID!(), scenario.ctx()),
             nbtc_spend_key,
             vector::empty(),
             scenario.ctx(),

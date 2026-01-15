@@ -11,7 +11,7 @@ use ika_dwallet_2pc_mpc::coordinator_inner::{DWalletCap, UnverifiedPresignCap};
 use nbtc::config::{Self, Config};
 use nbtc::nbtc_utxo::{Self, Utxo, validate_utxos};
 use nbtc::redeem_request::{Self, RedeemRequest};
-use nbtc::storage::{Storage, DWalletMetadata, create_storage, create_dwallet_metadata};
+use nbtc::storage::{Storage, BtcDWallet, create_storage, create_dwallet};
 use nbtc::verify_payment::verify_payment;
 use sui::address;
 use sui::balance::{Self, Balance};
@@ -270,7 +270,7 @@ fun verify_deposit(
     // Double spend prevent
     assert!(!contract.tx_ids.contains(tx_id), ETxAlreadyUsed);
     contract.tx_ids.add(tx_id, true);
-    let lockscript = contract.storage.dwallet_metadata(dwallet_id).lockscript();
+    let lockscript = contract.storage.dwallet(dwallet_id).lockscript();
     // NOTE: We assume only one active key. We should handle mutiple nbtc active key in the
     // future.
     let (amount, mut op_return, vouts) = verify_payment(
@@ -317,6 +317,8 @@ fun verify_deposit(
     (amount, recipient, utxo_idx)
 }
 
+// TODO: create active_dwallet, instead the functions below
+
 /// Returns the ID of the currently active dwallet.
 /// Aborts if no dwallet has been set as active.
 public fun active_dwallet_id(contract: &NbtcContract): ID {
@@ -325,12 +327,12 @@ public fun active_dwallet_id(contract: &NbtcContract): ID {
 
 public fun active_lockscript(contract: &NbtcContract): vector<u8> {
     let dwallet_id = contract.active_dwallet_id();
-    contract.storage.dwallet_metadata(dwallet_id).lockscript()
+    contract.storage.dwallet(dwallet_id).lockscript()
 }
 
 public fun active_balance(contract: &NbtcContract): u64 {
     let dwallet_id = contract.active_dwallet_id();
-    contract.storage.dwallet_metadata(dwallet_id).total_deposit()
+    contract.storage.dwallet(dwallet_id).total_deposit()
 }
 //
 // Public methods
@@ -431,7 +433,7 @@ public fun record_inactive_deposit(
         EInvalidDepositKey,
     );
 
-    let deposit_spend_key = contract.storage.dwallet_metadata(dwallet_id).lockscript();
+    let deposit_spend_key = contract.storage.dwallet(dwallet_id).lockscript();
     let (amount, recipient, _utxo_idx) = contract.verify_deposit(
         light_client,
         dwallet_id,
@@ -443,7 +445,7 @@ public fun record_inactive_deposit(
         ops_arg,
     );
 
-    contract.storage.increase_record_balance(dwallet_id, recipient, amount);
+    contract.storage.increase_user_balance(dwallet_id, recipient, amount);
     event::emit(InactiveDepositEvent {
         bitcoin_spend_key: deposit_spend_key,
         recipient,
@@ -716,8 +718,8 @@ public fun withdraw_inactive_deposit(
         option::some(dwallet_id) != contract.active_dwallet_id && contract.storage.exist(dwallet_id),
         EInvalidDepositKey,
     );
-    let amount = contract.storage.remove_inactive_balance(dwallet_id, ctx.sender());
-    let deposit_spend_key = contract.storage.dwallet_metadata(dwallet_id).lockscript();
+    let amount = contract.storage.remove_inactive_deposit(dwallet_id, ctx.sender());
+    let deposit_spend_key = contract.storage.dwallet(dwallet_id).lockscript();
     event::emit(RedeemInactiveDepositEvent {
         bitcoin_spend_key: deposit_spend_key,
         recipient: bitcoin_recipient,
@@ -776,25 +778,25 @@ public fun set_config(contract: &mut NbtcContract, _: &AdminCap, version: u32, c
 public fun add_dwallet(
     _: &AdminCap,
     contract: &mut NbtcContract,
-    dwallet_cap: DWalletCap,
+    cap: DWalletCap,
     lockscript: vector<u8>,
-    nbtc_endpoint_user_share: vector<u8>,
+    user_key_share: vector<u8>,
     ctx: &mut TxContext,
 ) {
     // TODO: Verify public key and lockscript
     // In the case lockscript is p2wpkh, p2pkh:
     // - verify public key hash in lock script is compute from public_key
     // Reseach what we should check when lockscript is taproot, p2wsh(p2sh)..
-    let dwallet_id = dwallet_cap.dwallet_id();
+    let dwallet_id = cap.dwallet_id();
     assert!(!contract.storage.exist(dwallet_id), EDuplicatedDWallet);
 
-    let dmeta = create_dwallet_metadata(
+    let dw = create_dwallet(
+        cap,
         lockscript,
-        nbtc_endpoint_user_share,
+        user_key_share,
         ctx,
     );
-    contract.storage.add_metadata(dwallet_id, dmeta);
-    contract.storage.add_dwallet_cap(dwallet_id, dwallet_cap);
+    contract.storage.add_dwallet(dw);
 }
 
 public fun set_active_dwallet(_: &AdminCap, contract: &mut NbtcContract, dwallet_id: ID) {
@@ -812,8 +814,8 @@ public fun remove_inactive_dwallet(_: &AdminCap, contract: &mut NbtcContract, dw
         option::some(dwallet_id) != contract.active_dwallet_id && contract.storage.exist(dwallet_id),
         EInvalidDepositKey,
     );
-    assert!(contract.storage.dwallet_metadata(dwallet_id).total_deposit() == 0, EBalanceNotEmpty);
-    contract.storage.remove(dwallet_id);
+    assert!(contract.storage.dwallet(dwallet_id).total_deposit() == 0, EBalanceNotEmpty);
+    contract.storage.remove_dwallet(dwallet_id);
 }
 
 public(package) fun add_utxo_to_contract(
@@ -944,37 +946,12 @@ public fun redeem_request_mut(contract: &mut NbtcContract, redeem_id: u64): &mut
 }
 
 #[test_only]
-public fun set_dwallet_cap_for_test(
-    contract: &mut NbtcContract,
-    spend_script: vector<u8>,
-    nbtc_endpoint_user_share: vector<u8>,
-    dwallet_cap: DWalletCap,
-    ctx: &mut TxContext,
-) {
-    let dmeta = create_dwallet_metadata(
-        spend_script,
-        nbtc_endpoint_user_share,
-        ctx,
-    );
-    let dwallet_id = dwallet_cap.dwallet_id();
-    contract.active_dwallet_id = option::some(dwallet_id);
-    contract.storage.add_metadata(dwallet_id, dmeta);
-    contract.storage.add_dwallet_cap(dwallet_id, dwallet_cap);
-}
-
-#[test_only]
 public fun testing_mint(contract: &mut NbtcContract, amount: u64, ctx: &mut TxContext): Coin<NBTC> {
     coin::mint(&mut contract.cap, amount, ctx)
 }
 
 #[test_only]
-public fun set_dwallet_metadata_for_test(
-    contract: &mut NbtcContract,
-    dwallet_id: ID,
-    dwallet_metadata: DWalletMetadata,
-    dwallet_cap: DWalletCap,
-) {
+public fun set_dwallet_for_test(contract: &mut NbtcContract, dwallet_id: ID, dw: BtcDWallet) {
     contract.active_dwallet_id = option::some(dwallet_id);
-    contract.storage.add_metadata(dwallet_id, dwallet_metadata);
-    contract.storage.add_dwallet_cap(dwallet_id, dwallet_cap);
+    contract.storage.add_dwallet(dw);
 }
