@@ -34,7 +34,7 @@ fun setup_redeem_test(
     let dwallet_id = MOCK_DWALLET_ID!();
 
     let mut temp_scenario = sui::test_scenario::begin(ADMIN);
-    let dwallet_metadata = storage::create_dwallet_metadata(
+    let dwallet_metadata = storage::create_dwallet(
         lockscript,
         vector::empty(),
         temp_scenario.ctx(),

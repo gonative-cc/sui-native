@@ -49,7 +49,7 @@ fun raw_withdraw_tx_signed_tests() {
     //
     // btc_store.add_dwallet(
     //     create_dwalletcap_for_testing(MOCK_DWALLET_ID!(), scenario.ctx()),
-    //     storage::create_dwallet_metadata(
+    //     storage::create_dwallet(
     //         nbtc_spend_key,
     //         vector::empty(),
     //         scenario.ctx(),

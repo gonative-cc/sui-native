@@ -202,7 +202,7 @@ public(package) fun request_utxo_sig(
 
     let utxo = r.utxo_at(input_id);
     let dwallet_id = utxo.dwallet_id();
-    let dwallet_cap = storage.dwallet_cap(dwallet_id);
+    let dwallet_cap = storage.dwallet(dwallet_id).cap();
 
     let message_approval = dwallet_coordinator.approve_message(
         dwallet_cap,
@@ -264,8 +264,7 @@ public fun compose_tx(r: &RedeemRequest, storage: &Storage): tx::Transaction {
     inputs.length().do!(|i| {
         let utxo = &inputs[i];
         let dwallet_id = utxo.dwallet_id();
-        let dwallet_metadata = storage.dwallet_metadata(dwallet_id);
-        let lockscript = dwallet_metadata.lockscript();
+        let lockscript = storage.dwallet(dwallet_id).lockscript();
         let ika_signature = r.signatures[i];
         // Taproot witness expects a 64-byte Schnorr signature, no sighash flag byte.
         let witness = if (script::is_taproot(lockscript)) {
@@ -307,7 +306,7 @@ public fun sig_hash(r: &RedeemRequest, input_id: u64, storage: &Storage): vector
     let inputs = r.utxos();
     let utxo = &inputs[input_id];
     let dwallet_id = utxo.dwallet_id();
-    let lockscript = storage.dwallet_metadata(dwallet_id).lockscript();
+    let lockscript = storage.dwallet(dwallet_id).lockscript();
     let tx = compose_withdraw_tx(
         lockscript,
         inputs,
@@ -319,7 +318,7 @@ public fun sig_hash(r: &RedeemRequest, input_id: u64, storage: &Storage): vector
     if (script::is_taproot(lockscript)) {
         let previous_pubscripts = vector::tabulate!(
             inputs.length(),
-            |i| storage.dwallet_metadata(inputs[i].dwallet_id()).lockscript(),
+            |i| storage.dwallet(inputs[i].dwallet_id()).lockscript(),
         );
         let previous_values = vector::tabulate!(inputs.length(), |i| inputs[i].value());
 
