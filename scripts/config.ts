@@ -97,11 +97,31 @@ export async function generateConfig(
 	count: number = 11,
 ): Promise<LightClientConfig> {
 	const network = await getActiveNetwork();
-	const bitcoinLibId = getPublishedPackageId("bitcoin_lib", network);
-	const bitcoinSpvId = getPublishedPackageId("bitcoin_spv", network);
 
-	if (!bitcoinLibId || !bitcoinSpvId) {
-		throw new Error(`Could not find published package IDs for network ${network}`);
+	const deployInfoPath = join(PROJECT_ROOT, "deploy-information.json");
+	const deployInfo = JSON.parse(readFileSync(deployInfoPath, "utf-8"));
+
+	// Validate network matches if deploy-info has network info
+	if (deployInfo.sui_network && deployInfo.sui_network !== network) {
+		throw new Error(
+			`Deployment information exists for network '${deployInfo.sui_network}', but current network is '${network}'`,
+		);
+	}
+
+	let bitcoinLibId = deployInfo.bitcoin_lib_pkg || null;
+	let bitcoinSpvId = deployInfo.lc_pkg || null;
+
+	if (bitcoinLibId && bitcoinSpvId) {
+		console.log("Using package IDs from deploy-information.json");
+	} else {
+		// If not found in deploy-info, try Move.lock
+		if (!bitcoinLibId) {
+			bitcoinLibId = getPublishedPackageId("bitcoin_lib", network);
+		}
+		if (!bitcoinSpvId) {
+			bitcoinSpvId = getPublishedPackageId("bitcoin_spv", network);
+		}
+		throw new Error("Packages not published");
 	}
 
 	console.log(`Network: ${network}`);
