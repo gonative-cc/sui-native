@@ -98,7 +98,7 @@ public(package) fun dwallet_mut(store: &mut Storage, dwallet_id: ID): &mut BtcDW
 
 // NOTE: It's OK to do linear search because we are limiting amount of dwallets to 10-20 max
 /// returns MAX_U64 if the idx doesn't exist.
-public(package) fun dwallet_idx(store: &Storage, dwallet_id: ID): u64 {
+fun dwallet_idx(store: &Storage, dwallet_id: ID): u64 {
     let mut i = 0;
     let len = store.dwallets.length();
     while (i < len) {
@@ -110,7 +110,7 @@ public(package) fun dwallet_idx(store: &Storage, dwallet_id: ID): u64 {
 }
 
 /// aborts if dwallet is not found
-public(package) fun dwallet_idx_assert(store: &Storage, dwallet_id: ID): u64 {
+fun dwallet_idx_assert(store: &Storage, dwallet_id: ID): u64 {
     let i = store.dwallet_idx(dwallet_id);
     if (i == MAX_U64) abort EDwalletNotFound;
     i
