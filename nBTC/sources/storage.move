@@ -79,23 +79,6 @@ public fun user_key_share(dw: &BtcDWallet): vector<u8> {
     dw.user_key_share
 }
 
-public fun dwallet(store: &Storage, dwallet_id: ID): &BtcDWallet {
-    let i = store.dwallet_idx_assert(dwallet_id);
-    &store.dwallets[i]
-}
-
-// Must not be exported outside of the package!
-public(package) fun dwallet_mut(store: &mut Storage, dwallet_id: ID): &mut BtcDWallet {
-    let i = store.dwallet_idx_assert(dwallet_id);
-    &mut store.dwallets[i]
-}
-
-// // NOTE: Never export this function publicly!
-// public(package) fun dwallet_cap(store: &Storage, dwallet_id: ID): &DWalletCap {
-//     let i = store.dwallet_idx_assert(dwallet_id);
-//     &store.dwallets[i]
-// }
-
 // NOTE: It's OK to do linear search because we are limiting amount of dwallets to 10-20 max
 /// returns MAX_U64 if the idx doesn't exist.
 fun dwallet_idx(store: &Storage, dwallet_id: ID): u64 {
@@ -116,14 +99,46 @@ fun dwallet_idx_assert(store: &Storage, dwallet_id: ID): u64 {
     i
 }
 
-// TODO - remove, we don't need this
 public(package) fun exist(store: &Storage, dwallet_id: ID): bool {
     let i = store.dwallet_idx(dwallet_id);
     i != MAX_U64
 }
 
+public fun dwallet(store: &Storage, dwallet_id: ID): &BtcDWallet {
+    let i = store.dwallet_idx_assert(dwallet_id);
+    &store.dwallets[i]
+}
+
+// Must not be exported outside of the package!
+public(package) fun dwallet_mut(store: &mut Storage, dwallet_id: ID): &mut BtcDWallet {
+    let i = store.dwallet_idx_assert(dwallet_id);
+    &mut store.dwallets[i]
+}
+
+// // NOTE: Never export this function publicly!
+// public(package) fun dwallet_cap(store: &Storage, dwallet_id: ID): &DWalletCap {
+//     let i = store.dwallet_idx_assert(dwallet_id);
+//     &store.dwallets[i]
+// }
+
 public(package) fun add_dwallet(store: &mut Storage, d: BtcDWallet) {
     store.dwallets.push_back(d);
+}
+
+// TODO: move the total_deposit check here (from nbtc)
+/// Removes dwallet metadata and moves dwallet to the trash.
+/// Aborts if the balance is not zero.
+public(package) fun remove_dwallet(store: &mut Storage, dwallet_id: ID) {
+    let i = store.dwallet_idx_assert(dwallet_id);
+    let BtcDWallet {
+        cap,
+        inactive_deposits,
+        total_deposit: _,
+        lockscript: _,
+        user_key_share: _,
+    } = store.dwallets.swap_remove(i);
+    inactive_deposits.destroy_empty();
+    store.dwallet_trash.add(dwallet_id, cap);
 }
 
 public(package) fun increase_total_deposit(store: &mut Storage, dwallet_id: ID, amount: u64) {
@@ -162,22 +177,6 @@ public(package) fun remove_inactive_deposit(
     *user_balance = 0;
     d.total_deposit = d.total_deposit - amount;
     amount
-}
-
-// TODO: move the total_deposit check here (from nbtc)
-/// Removes dwallet metadata and moves dwallet to the trash.
-/// Aborts if the balance is not zero.
-public(package) fun remove_dwallet(store: &mut Storage, dwallet_id: ID) {
-    let i = store.dwallet_idx_assert(dwallet_id);
-    let BtcDWallet {
-        cap,
-        inactive_deposits,
-        total_deposit: _,
-        lockscript: _,
-        user_key_share: _,
-    } = store.dwallets.swap_remove(i);
-    inactive_deposits.destroy_empty();
-    store.dwallet_trash.add(dwallet_id, cap);
 }
 
 public(package) fun utxo_store(self: &Storage): &UtxoStore {
