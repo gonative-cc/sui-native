@@ -986,7 +986,7 @@ public fun set_dwallet_metadata_for_test(
 public fun record_signature_for_test(
     contract: &mut NbtcContract,
     redeem_id: u64,
-    input_id: u32,
+    input_id: u64,
     signature: vector<u8>,
 ): bool {
     let r = &mut contract.redeem_requests[redeem_id];
