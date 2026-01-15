@@ -737,9 +737,11 @@ public fun update_version(contract: &mut NbtcContract) {
     contract.version = VERSION;
 }
 
+/* TODO
 /// Merge existing UTXOs to a new, aggregated one assigned to the current active spend key.
 /// Used for moving funds from an inactive spend key to an active one.
 public fun merge_utxos(_: &mut NbtcContract, _num_utxos: u16) {}
+*/
 
 //
 // Admin functions
