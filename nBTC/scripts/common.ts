@@ -19,7 +19,7 @@ import { Transaction } from "@mysten/sui/transactions";
 import "dotenv/config";
 
 import * as bitcoin from "bitcoinjs-lib";
-import * as tinysecp from 'tiny-secp256k1';
+import * as tinysecp from "tiny-secp256k1";
 
 bitcoin.initEccLib(tinysecp);
 const REGTEST = bitcoin.networks.regtest;
@@ -53,12 +53,12 @@ export function createSuiClient(packageId?: string) {
 		url: getFullnodeUrl("testnet"),
 		mvr: packageId
 			? {
-				overrides: {
-					packages: {
-						"@local-pkg/nbtc": packageId,
+					overrides: {
+						packages: {
+							"@local-pkg/nbtc": packageId,
+						},
 					},
-				},
-			}
+				}
 			: undefined,
 	});
 }
