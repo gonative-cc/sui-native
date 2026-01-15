@@ -13,7 +13,7 @@ public struct BtcDWallet has store {
     cap: DWalletCap,
     lockscript: vector<u8>, // lock script for this dwallet
     total_deposit: u64, // total deposit balance
-    public_user_share: vector<u8>, // "user share" of dwallet
+    user_key_share: vector<u8>, // "user share" of dwallet
     /// map user address to amount they deposit/mint
     inactive_deposits: Table<address, u64>,
 }
@@ -39,14 +39,14 @@ public(package) fun create_storage(ctx: &mut TxContext): Storage {
 public(package) fun create_dwallet(
     cap: DWalletCap,
     lockscript: vector<u8>,
-    public_user_share: vector<u8>,
+    user_key_share: vector<u8>,
     ctx: &mut TxContext,
 ): BtcDWallet {
     BtcDWallet {
         cap,
         lockscript,
         total_deposit: 0,
-        public_user_share,
+        user_key_share,
         inactive_deposits: table::new(ctx),
     }
 }
@@ -75,8 +75,8 @@ public fun inactive_deposits(dw: &BtcDWallet, addr: address): u64 {
 
 /// Return public user share of dwallet
 /// Ika don't have public api to get it onchain, this is the reason we store it in dwallet metadata
-public fun public_user_share(dw: &BtcDWallet): vector<u8> {
-    dw.public_user_share
+public fun user_key_share(dw: &BtcDWallet): vector<u8> {
+    dw.user_key_share
 }
 
 public fun dwallet(store: &Storage, dwallet_id: ID): &BtcDWallet {
@@ -174,7 +174,7 @@ public(package) fun remove_dwallet(store: &mut Storage, dwallet_id: ID) {
         inactive_deposits,
         total_deposit: _,
         lockscript: _,
-        public_user_share: _,
+        user_key_share: _,
     } = store.dwallets.swap_remove(i);
     inactive_deposits.destroy_empty();
     store.dwallet_trash.add(dwallet_id, cap);

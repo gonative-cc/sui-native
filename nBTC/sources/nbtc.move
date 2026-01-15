@@ -780,7 +780,7 @@ public fun add_dwallet(
     contract: &mut NbtcContract,
     cap: DWalletCap,
     lockscript: vector<u8>,
-    public_key_share: vector<u8>,
+    user_key_share: vector<u8>,
     ctx: &mut TxContext,
 ) {
     // TODO: Verify public key and lockscript
@@ -793,7 +793,7 @@ public fun add_dwallet(
     let dw = create_dwallet(
         cap,
         lockscript,
-        public_key_share,
+        user_key_share,
         ctx,
     );
     contract.storage.add_dwallet(dw);

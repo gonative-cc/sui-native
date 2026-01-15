@@ -2,7 +2,7 @@ import type { StorageModule } from ".";
 import type { nBTCContractModule, RedeemRequestModule } from ".";
 
 // Storage types
-export type DWalletMetadata = typeof StorageModule.DWalletMetadata.$inferInput;
+export type DWalletMetadata = typeof StorageModule.BtcDWallet.$inferInput;
 export type Storage = typeof StorageModule.Storage.$inferInput;
 
 // nBTC contract types
