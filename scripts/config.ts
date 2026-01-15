@@ -121,7 +121,6 @@ export async function generateConfig(
 		if (!bitcoinSpvId) {
 			bitcoinSpvId = getPublishedPackageId("bitcoin_spv", network);
 		}
-		throw new Error("Packages not published");
 	}
 
 	console.log(`Network: ${network}`);
