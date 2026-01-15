@@ -946,35 +946,12 @@ public fun redeem_request_mut(contract: &mut NbtcContract, redeem_id: u64): &mut
 }
 
 #[test_only]
-public fun set_dwallet_cap_for_test(
-    contract: &mut NbtcContract,
-    spend_script: vector<u8>,
-    nbtc_endpoint_user_share: vector<u8>,
-    cap: DWalletCap,
-    ctx: &mut TxContext,
-) {
-    let dw = create_dwallet(
-        cap,
-        spend_script,
-        nbtc_endpoint_user_share,
-        ctx,
-    );
-    let dwallet_id = dwallet_cap.dwallet_id();
-    contract.active_dwallet_id = option::some(dwallet_id);
-    contract.storage.add_dwallet(dw);
-}
-
-#[test_only]
 public fun testing_mint(contract: &mut NbtcContract, amount: u64, ctx: &mut TxContext): Coin<NBTC> {
     coin::mint(&mut contract.cap, amount, ctx)
 }
 
 #[test_only]
-public fun set_dwallet_metadata_for_test(
-    contract: &mut NbtcContract,
-    dwallet_id: ID,
-    dw: BtcDWallet,
-) {
+public fun set_dwallet_for_test(contract: &mut NbtcContract, dwallet_id: ID, dw: BtcDWallet) {
     contract.active_dwallet_id = option::some(dwallet_id);
     contract.storage.add_dwallet(dw);
 }

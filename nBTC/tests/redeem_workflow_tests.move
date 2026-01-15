@@ -1,6 +1,7 @@
 #[test_only]
 module nbtc::redeem_workflow_tests;
 
+use ika_dwallet_2pc_mpc::coordinator_inner::dwallet_cap_for_testing;
 use nbtc::nbtc::NBTC;
 use nbtc::nbtc_tests::{setup, setup_with_pubkey};
 use nbtc::nbtc_utxo::new_utxo;
@@ -34,18 +35,15 @@ fun setup_redeem_test(
     let dwallet_id = MOCK_DWALLET_ID!();
 
     let mut temp_scenario = sui::test_scenario::begin(ADMIN);
-    let dwallet_metadata = storage::create_dwallet(
+    let dw = storage::create_dwallet(
+        dwallet_cap_for_testing(dwallet_id, temp_scenario.ctx()),
         lockscript,
         vector::empty(),
         temp_scenario.ctx(),
     );
     temp_scenario.end();
 
-    let (lc, mut ctr, mut scenario) = setup_with_pubkey(
-        ADMIN,
-        dwallet_id,
-        dwallet_metadata,
-    );
+    let (lc, mut ctr, mut scenario) = setup_with_pubkey(ADMIN, dwallet_id, dw);
 
     let utxo = new_utxo(TX_HASH, 0, utxo_amount, dwallet_id);
     ctr.add_utxo_for_test(0, utxo);
