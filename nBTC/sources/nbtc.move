@@ -892,10 +892,9 @@ public fun create_redeem_request_for_testing(
     created_at: u64,
     ctx: &mut TxContext,
 ) {
-    let lockscript = contract.active_lockscript();
-
+    let remainder_lockscript = contract.active_dwallet().lockscript();
     let r = redeem_request::new(
-        lockscript,
+        remainder_lockscript,
         redeemer,
         recipient_script,
         amount,
