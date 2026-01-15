@@ -84,7 +84,8 @@ public fun dwallet(store: &Storage, dwallet_id: ID): &BtcDWallet {
     &store.dwallets[i]
 }
 
-public fun dwallet_mut(store: &mut Storage, dwallet_id: ID): &mut BtcDWallet {
+// Must not be exported outside of the package!
+public(package) fun dwallet_mut(store: &mut Storage, dwallet_id: ID): &mut BtcDWallet {
     let i = store.dwallet_idx_assert(dwallet_id);
     &mut store.dwallets[i]
 }
