@@ -8,6 +8,8 @@ const MAX_U64: u64 = 0xFFFFFFFFFFFFFFFF;
 
 #[error]
 const EDwalletNotFound: vector<u8> = b"DWallet not found";
+#[error]
+const EBalanceNotEmpty: vector<u8> = b"balance not empty";
 
 public struct BtcDWallet has store {
     cap: DWalletCap,
@@ -125,7 +127,6 @@ public(package) fun add_dwallet(store: &mut Storage, d: BtcDWallet) {
     store.dwallets.push_back(d);
 }
 
-// TODO: move the total_deposit check here (from nbtc)
 /// Removes dwallet metadata and moves dwallet to the trash.
 /// Aborts if the balance is not zero.
 public(package) fun remove_dwallet(store: &mut Storage, dwallet_id: ID) {
@@ -133,11 +134,13 @@ public(package) fun remove_dwallet(store: &mut Storage, dwallet_id: ID) {
     let BtcDWallet {
         cap,
         inactive_deposits,
-        total_deposit: _,
+        total_deposit,
         lockscript: _,
         user_key_share: _,
     } = store.dwallets.swap_remove(i);
+    assert!(total_deposit == 0, EBalanceNotEmpty);
     inactive_deposits.destroy_empty();
+
     store.dwallet_trash.add(dwallet_id, cap);
 }
 
@@ -146,7 +149,6 @@ public(package) fun increase_total_deposit(store: &mut Storage, dwallet_id: ID, 
     d.total_deposit = d.total_deposit + amount;
 }
 
-// TODO: use dwallet mut ref, rather than storage
 public(package) fun increase_user_balance(
     store: &mut Storage,
     dwallet_id: ID,
@@ -163,9 +165,8 @@ public(package) fun increase_user_balance(
     d.total_deposit = d.total_deposit + amount;
 }
 
-/// Removes inactive user deposit.
 /// Returns the dwallet total balance after removing the user balance.
-public(package) fun remove_inactive_deposit(
+public(package) fun remove_inactive_user_deposit(
     store: &mut Storage,
     dwallet_id: ID,
     user: address,
