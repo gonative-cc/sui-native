@@ -106,7 +106,7 @@ public struct NbtcContract has key, store {
     cap: TreasuryCap<NBTC>,
     /// set of "minted" txs
     tx_ids: Table<vector<u8>, bool>,
-    config: Table<u32, Config>,
+    config: Config,
     fees_collected: Balance<NBTC>,
     // TODO: probably we should have UTXOs / dwallet
     // redeem request token for nbtc
@@ -181,25 +181,19 @@ public struct BurnEvent has copy, drop {
 // We MUST call coin_registry::finalize_registration to place the coin into the registry.
 // https://docs.sui.io/standards/currency#coin-finalization
 fun init(witness: NBTC, ctx: &mut TxContext) {
-    let mut contract = init__(witness, ctx);
-    contract
-        .config
-        .add(
-            VERSION,
-            config::new(
-                @bitcoin_lc.to_id(),
-                @fallback_addr,
-                10, // mint fee, TODO: increase it
-                @ika_coordinator.to_id(),
-                2*MINUTE,
-            ),
-        );
-
+    let cfg = config::new(
+        @bitcoin_lc.to_id(),
+        @fallback_addr,
+        10, // mint fee, TODO: increase it
+        @ika_coordinator.to_id(),
+        2*MINUTE,
+    );
+    let contract = init__(witness, cfg, ctx);
     transfer::public_share_object(contract);
 }
 
 #[allow(lint(self_transfer))]
-fun init__(witness: NBTC, ctx: &mut TxContext): NbtcContract {
+fun init__(witness: NBTC, config: Config, ctx: &mut TxContext): NbtcContract {
     let (builder, treasury_cap) = coin_registry::new_currency_with_otw(
         witness,
         DECIMALS,
@@ -219,9 +213,9 @@ fun init__(witness: NBTC, ctx: &mut TxContext): NbtcContract {
     NbtcContract {
         id: object::new(ctx),
         version: VERSION,
+        config,
         cap: treasury_cap,
         tx_ids: table::new(ctx),
-        config: table::new(ctx),
         fees_collected: balance::zero(),
         redeem_requests: table::new<u64, RedeemRequest>(ctx),
         locked: table::new(ctx),
@@ -274,8 +268,7 @@ fun verify_deposit(
     );
 
     assert!(amount > 0, EMintAmountIsZero);
-    let config = contract.config();
-    let mut recipient: address = config.fallback_addr();
+    let mut recipient: address = contract.config.fallback_addr();
     if (op_return.is_some()) {
         let msg = op_return.extract();
         let mut msg_reader = reader::new(msg);
@@ -288,7 +281,7 @@ fun verify_deposit(
             // For op_ret_type=0x0 we expect only 32 bytes. If the stream is longer (more data), then
             // the format is invalid, so moving recipient to fallback.
             if (!msg_reader.end_stream()) {
-                recipient = config.fallback_addr();
+                recipient = contract.config.fallback_addr();
             }
         }
     };
@@ -367,7 +360,7 @@ public fun mint(
     let mut fee_amount = 0;
 
     if (ops_arg == MINT_OP_APPLY_FEE) {
-        fee_amount = amount.min(contract.config().mint_fee());
+        fee_amount = amount.min(contract.config.mint_fee());
         let fee = minted.split(fee_amount);
         amount = amount - fee_amount;
         contract.fees_collected.join(fee);
@@ -470,9 +463,8 @@ public fun request_utxo_sig(
     ctx: &mut TxContext,
 ) {
     assert!(contract.version == VERSION, EVersionMismatch);
-    let config = contract.config();
     assert!(
-        object::id(dwallet_coordinator) == config.dwallet_coordinator(),
+        object::id(dwallet_coordinator) == contract.config.dwallet_coordinator(),
         EInvalidDWalletCoordinator,
     );
     let request = &mut contract.redeem_requests[redeem_id];
@@ -603,9 +595,8 @@ public fun record_signature(
     sign_id: ID,
 ): bool {
     assert!(contract.version == VERSION, EVersionMismatch);
-    let config = contract.config();
     assert!(
-        object::id(dwallet_coordinator) == config.dwallet_coordinator(),
+        object::id(dwallet_coordinator) == contract.config.dwallet_coordinator(),
         EInvalidDWalletCoordinator,
     );
     let r = &mut contract.redeem_requests[redeem_id];
@@ -627,7 +618,6 @@ public fun record_signature(
 //       https://github.com/gonative-cc/workers/issues/266
 public fun solve_redeem_request(contract: &mut NbtcContract, redeem_id: u64, clock: &Clock) {
     assert!(contract.version == VERSION, EVersionMismatch);
-    let config = contract.config();
     let r = &mut contract.redeem_requests[redeem_id];
 
     // 1. Make sure there is a utxo proposed and we are past the finalization time
@@ -635,7 +625,7 @@ public fun solve_redeem_request(contract: &mut NbtcContract, redeem_id: u64, clo
     assert!(r.status().is_resolving(), ENotResolving);
 
     let now = clock.timestamp_ms();
-    let deadline = r.redeem_created_at() + config.redeem_duration();
+    let deadline = r.redeem_created_at() + contract.config.redeem_duration();
     assert!(now > deadline, ERedeemWindowExpired);
 
     r.move_to_signing_status(redeem_id, &mut contract.storage);
@@ -649,14 +639,13 @@ public fun propose_utxos(
 ) {
     assert!(contract.version == VERSION, EVersionMismatch);
 
-    let config = contract.config();
     let r = &mut contract.redeem_requests[redeem_id];
     assert!(r.status().is_resolving(), ENotResolving);
 
     // we check the deadline only if we have proposed solution
     if (r.inputs_length() > 0) {
         let now = clock.timestamp_ms();
-        let deadline = r.redeem_created_at() + config.redeem_duration();
+        let deadline = r.redeem_created_at() + contract.config.redeem_duration();
         assert!(now <= deadline, ERedeemWindowExpired);
     };
 
@@ -733,8 +722,7 @@ public fun merge_utxos(_: &mut NbtcContract, _num_utxos: u16) {}
 public fun update_redeem_duration(_: &OpCap, contract: &mut NbtcContract, redeem_duration: u64) {
     assert!(VERSION == contract.version, EAlreadyUpdated);
     assert!(redeem_duration >= 1000, EInvalidArguments); // at least 1s
-    let cfg = contract.config.borrow_mut(VERSION);
-    cfg.set_redeem_duration(redeem_duration);
+    contract.config.set_redeem_duration(redeem_duration);
 }
 
 public fun withdraw_fees(_: &OpCap, contract: &mut NbtcContract, ctx: &mut TxContext): Coin<NBTC> {
@@ -744,18 +732,14 @@ public fun withdraw_fees(_: &OpCap, contract: &mut NbtcContract, ctx: &mut TxCon
 
 public fun change_fees(_: &AdminCap, contract: &mut NbtcContract, mint_fee: u64) {
     assert!(contract.version == VERSION, EVersionMismatch);
-    let config_mut = &mut contract.config[VERSION];
-    config_mut.set_mint_fee(mint_fee);
+    contract.config.set_mint_fee(mint_fee);
 }
 
-/// Sets config for specific NBTC version.
-/// This should be called by the admin before updating the package with the next package_version
-public fun set_config(contract: &mut NbtcContract, _: &AdminCap, version: u32, config: Config) {
-    assert!(version == VERSION + 1);
-    contract.config.add(version, config);
+public fun update_config(contract: &mut NbtcContract, _: &AdminCap, config: Config) {
+    contract.config = config;
 }
 
-/// Set a metadata for dwallet
+/// Registers a new dwallet with it's bitcoin spending script.
 /// BTC lockscript must derive from dwallet public key which is control by dwallet_cap.
 public fun add_dwallet(
     _: &AdminCap,
@@ -819,6 +803,10 @@ public fun remove_utxo(_: &AdminCap, contract: &mut NbtcContract, utxo_idx: u64)
 // View functions
 //
 
+public fun config(contract: &NbtcContract): Config {
+    contract.config
+}
+
 public fun total_supply(contract: &NbtcContract): u64 {
     coin::total_supply(&contract.cap)
 }
@@ -831,10 +819,6 @@ public fun storage(contract: &NbtcContract): &Storage {
     &contract.storage
 }
 
-public fun config(contract: &NbtcContract): Config {
-    contract.config[VERSION]
-}
-
 public fun package_version(): u32 {
     VERSION
 }
@@ -844,7 +828,7 @@ public fun package_version(): u32 {
 //
 
 fun assert_light_client(contract: &NbtcContract, light_client_id: ID) {
-    let expected = contract.config[VERSION].light_client_id();
+    let expected = contract.config.light_client_id();
     assert!(light_client_id == expected, EUntrustedLightClient);
 }
 
@@ -859,14 +843,8 @@ public(package) fun init_for_testing(
     ika_coordinator: ID,
     ctx: &mut TxContext,
 ): NbtcContract {
-    let mut contract = init__(NBTC {}, ctx);
-    contract
-        .config
-        .add(
-            VERSION,
-            config::new(bitcoin_lc.to_id(), fallback_addr, 10, ika_coordinator, 5*MINUTE),
-        );
-    contract
+    let cfg = config::new(bitcoin_lc.to_id(), fallback_addr, 10, ika_coordinator, 5*MINUTE);
+    init__(NBTC {}, cfg, ctx)
 }
 
 #[test_only]
