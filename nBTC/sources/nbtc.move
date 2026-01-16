@@ -49,7 +49,7 @@ const MINT_OP_APPLY_FEE: u32 = 1;
 #[error]
 const EInvalidArguments: vector<u8> = b"Function arguments are not valid";
 #[error]
-const EInvalidDepositKey: vector<u8> = b"Not an nBTC deposit spend key";
+const EInvalidDWallet: vector<u8> = b"Invalid DWallet ID";
 #[error]
 const ETxAlreadyUsed: vector<u8> = b"The Bitcoin transaction ID has been already used for minting";
 #[error]
@@ -63,17 +63,10 @@ const EAlreadyUpdated: vector<u8> =
     b"The package version has been already updated to the latest one";
 #[error]
 const EInvalidOpsArg: vector<u8> = b"invalid mint ops_arg";
-
-#[error]
-const EDuplicatedDWallet: vector<u8> = b"duplicated dwallet";
-#[error]
-const EBalanceNotEmpty: vector<u8> = b"balance not empty";
 #[error]
 const ENotReadlyForSign: vector<u8> = b"redeem tx is not ready for signing";
 #[error]
 const EInputAlreadyUsed: vector<u8> = b"input has been already used";
-#[error]
-const EActiveDwalletNotInStorage: vector<u8> = b"try active dwallet not exist in storage";
 #[error]
 const ERedeemWindowExpired: vector<u8> = b"resolving window has expired";
 #[error]
@@ -317,7 +310,9 @@ fun verify_deposit(
     (amount, recipient, utxo_idx)
 }
 
-// TODO: create active_dwallet, instead the functions below
+//
+// Public methods
+//
 
 /// Returns the ID of the currently active dwallet.
 /// Aborts if no dwallet has been set as active.
@@ -325,18 +320,10 @@ public fun active_dwallet_id(contract: &NbtcContract): ID {
     *contract.active_dwallet_id.borrow()
 }
 
-public fun active_lockscript(contract: &NbtcContract): vector<u8> {
+public fun active_dwallet(contract: &NbtcContract): &BtcDWallet {
     let dwallet_id = contract.active_dwallet_id();
-    contract.storage.dwallet(dwallet_id).lockscript()
+    contract.storage.dwallet(dwallet_id)
 }
-
-public fun active_balance(contract: &NbtcContract): u64 {
-    let dwallet_id = contract.active_dwallet_id();
-    contract.storage.dwallet(dwallet_id).total_deposit()
-}
-//
-// Public methods
-//
 
 /// Mints nBTC tokens after verifying a Bitcoin transaction proof.
 /// * `tx_bytes`: raw, hex-encoded tx bytes.
@@ -363,10 +350,10 @@ public fun mint(
     ctx: &mut TxContext,
 ) {
     assert!(contract.version == VERSION, EVersionMismatch);
-    let active_dwallet_id = contract.active_dwallet_id();
+    let dwallet_id = contract.active_dwallet_id();
     let (mut amount, recipient, utxo_ids) = contract.verify_deposit(
         light_client,
-        active_dwallet_id,
+        dwallet_id,
         tx_bytes,
         proof,
         height,
@@ -376,7 +363,7 @@ public fun mint(
     );
     assert!(amount > 0, EMintAmountIsZero);
 
-    contract.storage.increase_total_deposit(active_dwallet_id, amount);
+    contract.storage.increase_total_deposit(dwallet_id, amount);
     let mut minted = contract.cap.mint_balance(amount);
     let mut fee_amount = 0;
 
@@ -393,12 +380,13 @@ public fun mint(
     let utxo = contract.storage.utxo_store().get_utxo(utxo_ids[0]);
     let btc_tx_id = utxo.tx_id();
     let btc_vout = utxo.vout();
+    let btc_script_publickey = contract.storage.dwallet(dwallet_id).lockscript();
     event::emit(MintEvent {
         recipient,
         fee: fee_amount,
-        dwallet_id: active_dwallet_id,
+        dwallet_id,
         utxo_id: utxo_ids[0],
-        btc_script_publickey: contract.active_lockscript(),
+        btc_script_publickey,
         btc_tx_id,
         btc_vout,
         btc_amount: amount,
@@ -429,10 +417,7 @@ public fun record_inactive_deposit(
     let provided_lc_id = object::id(light_client);
     let config = contract.config();
     assert!(provided_lc_id == config.light_client_id(), EUntrustedLightClient);
-    assert!(
-        option::some(dwallet_id) != contract.active_dwallet_id && contract.storage.exist(dwallet_id),
-        EInvalidDepositKey,
-    );
+    assert!(dwallet_id != contract.active_dwallet_id.borrow(), EInvalidDWallet);
 
     let deposit_spend_key = contract.storage.dwallet(dwallet_id).lockscript();
     let (amount, recipient, _utxo_idx) = contract.verify_deposit(
@@ -525,8 +510,9 @@ public fun redeem(
 
     assert!(coin.value() > fee, EInvalidArguments);
     let sender = ctx.sender();
+    let lockscript = contract.active_dwallet().lockscript();
     let r = redeem_request::new(
-        contract.active_lockscript(),
+        lockscript,
         sender,
         recipient_script,
         coin.value(),
@@ -564,8 +550,8 @@ public fun finalize_redeem(
     let provided_lc_id = object::id(light_client);
     assert!(provided_lc_id == cfg.light_client_id(), EUntrustedLightClient);
 
-    let active_dwallet_id = contract.active_dwallet_id();
-    let expected_nbtc_lockscript = contract.active_lockscript();
+    let dwallet_id = contract.active_dwallet_id();
+    let lockscript = contract.storage.dwallet(dwallet_id).lockscript();
 
     let r = &mut contract.redeem_requests[redeem_id];
     assert!(!r.status().is_confirmed(), EAlreadyConfirmed);
@@ -595,8 +581,8 @@ public fun finalize_redeem(
     let outputs = tx.outputs();
     if (outputs.length() > 1) {
         let change_output = &outputs[1];
-        assert!(change_output.script_pubkey() == expected_nbtc_lockscript, EInvalidChangeRecipient);
-        let change_utxo = nbtc_utxo::new_utxo(tx_id, 1, change_output.amount(), active_dwallet_id);
+        assert!(change_output.script_pubkey() == lockscript, EInvalidChangeRecipient);
+        let change_utxo = nbtc_utxo::new_utxo(tx_id, 1, change_output.amount(), dwallet_id);
         contract.storage.utxo_store_mut().add(change_utxo);
     };
 
@@ -717,11 +703,8 @@ public fun withdraw_inactive_deposit(
     ctx: &mut TxContext,
 ): u64 {
     assert!(contract.version == VERSION, EVersionMismatch);
-    assert!(
-        option::some(dwallet_id) != contract.active_dwallet_id && contract.storage.exist(dwallet_id),
-        EInvalidDepositKey,
-    );
-    let amount = contract.storage.remove_inactive_deposit(dwallet_id, ctx.sender());
+    assert!(dwallet_id != contract.active_dwallet_id.borrow(), EInvalidDWallet);
+    let amount = contract.storage.remove_inactive_user_deposit(dwallet_id, ctx.sender());
     let deposit_spend_key = contract.storage.dwallet(dwallet_id).lockscript();
     event::emit(RedeemInactiveDepositEvent {
         bitcoin_spend_key: deposit_spend_key,
@@ -792,8 +775,6 @@ public fun add_dwallet(
     // In the case lockscript is p2wpkh, p2pkh:
     // - verify public key hash in lock script is compute from public_key
     // Reseach what we should check when lockscript is taproot, p2wsh(p2sh)..
-    let dwallet_id = cap.dwallet_id();
-    assert!(!contract.storage.exist(dwallet_id), EDuplicatedDWallet);
 
     let dw = create_dwallet(
         cap,
@@ -806,7 +787,8 @@ public fun add_dwallet(
 
 public fun set_active_dwallet(_: &AdminCap, contract: &mut NbtcContract, dwallet_id: ID) {
     assert!(contract.version == VERSION, EVersionMismatch);
-    assert!(contract.storage.exist(dwallet_id), EActiveDwalletNotInStorage);
+    assert!(contract.storage.exist(dwallet_id), EInvalidDWallet);
+    // FIXME: make sure the previous one is not lost!
     contract.active_dwallet_id = option::some(dwallet_id);
 }
 
@@ -817,11 +799,7 @@ public fun remove_inactive_dwallet(_: &AdminCap, contract: &mut NbtcContract, dw
     // NOTE: we don't check inactive_user_balance here because this is out of our control and the
     // spend key is recorded as a part of the Table key.
 
-    assert!(
-        option::some(dwallet_id) != contract.active_dwallet_id && contract.storage.exist(dwallet_id),
-        EInvalidDepositKey,
-    );
-    assert!(contract.storage.dwallet(dwallet_id).total_deposit() == 0, EBalanceNotEmpty);
+    assert!(dwallet_id != contract.active_dwallet_id.borrow(), EInvalidDWallet);
     contract.storage.remove_dwallet(dwallet_id);
 }
 
@@ -922,10 +900,9 @@ public fun create_redeem_request_for_testing(
     created_at: u64,
     ctx: &mut TxContext,
 ) {
-    let lockscript = contract.active_lockscript();
-
+    let remainder_lockscript = contract.active_dwallet().lockscript();
     let r = redeem_request::new(
-        lockscript,
+        remainder_lockscript,
         redeemer,
         recipient_script,
         amount,
