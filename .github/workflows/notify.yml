@@ -1,0 +1,23 @@
+name: Trigger Relayer
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  trigger-relayer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger All Workflows in Relayer
+        env:
+          GH_TOKEN: ${{ secrets.CROSS_REPO_TRIGGER_TOKEN }}
+        run: |
+          echo "Fetching active workflows from gonative-cc/relayer..."
+
+          WORKFLOWS=$(gh workflow list --repo gonative-cc/relayer --json path,state --jq '.[] | select(.state=="active") | .path | split("/") | last')
+
+          for wf in $WORKFLOWS; do
+            echo "---"
+            echo "🚀 Triggering: $wf"
+            gh workflow run "$wf" --repo gonative-cc/relayer --ref master
+          done
