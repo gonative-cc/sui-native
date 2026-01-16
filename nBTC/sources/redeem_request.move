@@ -4,8 +4,9 @@ use bitcoin_lib::script;
 use bitcoin_lib::sighash::taproot_sighash_preimage;
 use bitcoin_lib::tx;
 use ika::ika::IKA;
-use ika_dwallet_2pc_mpc::coordinator::{DWalletCoordinator, register_session_identifier};
+use ika_dwallet_2pc_mpc::coordinator::DWalletCoordinator;
 use ika_dwallet_2pc_mpc::coordinator_inner::UnverifiedPresignCap;
+use nbtc::dwallet_helpers::new_session_identifier;
 use nbtc::nbtc_utxo::Utxo;
 use nbtc::storage::Storage;
 use nbtc::tx_composer::compose_withdraw_tx;
@@ -210,8 +211,7 @@ public(package) fun request_utxo_sig(
         SHA256,
         sig_hash,
     );
-    let random_bytes = tx_context::fresh_object_address(ctx).to_bytes();
-    let ika_session = dwallet_coordinator.register_session_identifier(random_bytes, ctx);
+    let ika_session = new_session_identifier(dwallet_coordinator, ctx);
     let sign_id = dwallet_coordinator.request_sign_and_return_id(
         verified_presign,
         message_approval,

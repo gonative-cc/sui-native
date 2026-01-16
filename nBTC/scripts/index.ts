@@ -16,6 +16,7 @@ import {
 } from "./sign";
 import { initialization } from "./initialization";
 import { broadcastBtcTx } from "./btc-helper";
+import { fillPresign } from "./fill_presign";
 
 const config = loadConfig();
 
@@ -31,6 +32,13 @@ program
 		let dwallet = await createSharedDwallet(ikaClient, suiClient);
 		await initialization(dwallet.id.id, config);
 		console.log(`Successfully created and initialized Dwallet with ID: ${dwallet.id.id}`);
+	});
+
+program
+	.command("fill_presign")
+	.description("Fills the nBTC contract's presign buffer up to MAX_PRESIGNS (100)")
+	.action(async () => {
+		await fillPresign();
 	});
 
 program

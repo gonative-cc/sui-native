@@ -180,9 +180,6 @@ export async function requestUtxoSig(
 	let tx = new Transaction();
 
 	const ikaCoin = await getIkaCoin(suiClient, signer.toSuiAddress());
-	const unverifiedPresignCap = (
-		await ikaClient.getPresignInParticularState(presignId, "Completed")
-	).cap_id;
 
 	tx.add(
 		nBTCContractModule.requestUtxoSig({
@@ -193,7 +190,6 @@ export async function requestUtxoSig(
 				redeemId,
 				inputId,
 				nbtcPublicSign: Array.from(nbtcPublicSignature),
-				presign: unverifiedPresignCap,
 				paymentIka: ikaCoin,
 				paymentSui: tx.gas,
 			},
