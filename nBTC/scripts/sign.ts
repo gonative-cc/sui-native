@@ -68,7 +68,7 @@ export async function globalPreSign() {
  * @param dwalletId The ID of the active dWallet to be used
  * @param presignId The PreSign ID get from globalPreSign
  * @param message data (Uint8Array) to be signed
- * @returns A promise that resolves to the nbtc_public_signature
+ * @returns A promise that resolves to a msg_central_sig.
  */
 export async function createUserSigMessage(
 	ikaClient: IkaClient,
