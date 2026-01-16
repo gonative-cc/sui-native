@@ -172,24 +172,14 @@ public(package) fun move_to_confirmed_status(
 /// - Requests signature from the Ika Network
 /// - Stores the signature metadata and emits an event
 ///
-/// # Arguments
-/// * `r` - Mutable reference to the redeem request
-/// * `dwallet_coordinator` - Coordinator for dWallet operations
-/// * `storage` - Storage containing dWallet capabilities
-/// * `redeem_id` - Unique identifier for the redeem request
-/// * `input_id` - Index of the Bitcoin input to be signed (0-indexed)
-/// * `nbtc_public_sign` - Partial signature from nBTC public share
-/// * `presign` - Unverified presign capability
-/// * `payment_ika` - IKA coin for payment
-/// * `payment_sui` - SUI coin for gas fees
-/// * `ctx` - Transaction context
+/// # Arguments - see nbtc::request_utxo_sig function.
 public(package) fun request_utxo_sig(
     r: &mut RedeemRequest,
     dwallet_coordinator: &mut DWalletCoordinator,
     storage: &Storage,
     redeem_id: u64,
     input_id: u64,
-    nbtc_public_sign: vector<u8>,
+    msg_central_sig: vector<u8>,
     presign: UnverifiedPresignCap,
     payment_ika: &mut Coin<IKA>,
     payment_sui: &mut Coin<SUI>,
@@ -215,7 +205,7 @@ public(package) fun request_utxo_sig(
     let sign_id = dwallet_coordinator.request_sign_and_return_id(
         verified_presign,
         message_approval,
-        nbtc_public_sign,
+        msg_central_sig,
         ika_session,
         payment_ika,
         payment_sui,

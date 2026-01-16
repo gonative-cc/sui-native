@@ -441,7 +441,7 @@ public fun record_inactive_deposit(
 /// * `dwallet_coordinator` - The coordinator for dWallet operations
 /// * `redeem_id` - Unique identifier for the redeem request
 /// * `input_id` - Index of the Bitcoin input to be signed (0-indexed)
-/// * `nbtc_public_sign` - Partial signature created by nBTC public share
+/// * `msg_central_sig` - nBTC public sig share for the Ika MPC process.
 /// * `presign` - Capability for unverified presigning operation
 /// * `payment_ika` - IKA coin for payment
 /// * `payment_sui` - SUI coin for gas fees
@@ -456,7 +456,7 @@ public fun request_utxo_sig(
     dwallet_coordinator: &mut DWalletCoordinator,
     redeem_id: u64,
     input_id: u64,
-    nbtc_public_sign: vector<u8>,
+    msg_central_sig: vector<u8>,
     presign: UnverifiedPresignCap,
     payment_ika: &mut Coin<IKA>,
     payment_sui: &mut Coin<SUI>,
@@ -475,7 +475,7 @@ public fun request_utxo_sig(
         &contract.storage,
         redeem_id,
         input_id,
-        nbtc_public_sign,
+        msg_central_sig,
         presign,
         payment_ika,
         payment_sui,
