@@ -253,9 +253,7 @@ fun verify_deposit(
 ): (u64, address, vector<u64>) {
     assert!(contract.version == VERSION, EVersionMismatch);
     assert!(ops_arg == 0 || ops_arg == MINT_OP_APPLY_FEE, EInvalidOpsArg);
-    let provided_lc_id = object::id(light_client);
-    let config = contract.config();
-    assert!(provided_lc_id == config.light_client_id(), EUntrustedLightClient);
+    contract.assert_light_client(object::id(light_client));
 
     let tx = tx::decode(tx_bytes);
     let tx_id = tx.tx_id();
@@ -276,6 +274,7 @@ fun verify_deposit(
     );
 
     assert!(amount > 0, EMintAmountIsZero);
+    let config = contract.config();
     let mut recipient: address = config.fallback_addr();
     if (op_return.is_some()) {
         let msg = op_return.extract();
@@ -414,9 +413,7 @@ public fun record_inactive_deposit(
 ) {
     assert!(contract.version == VERSION, EVersionMismatch);
     assert!(ops_arg == 0 || ops_arg == MINT_OP_APPLY_FEE, EInvalidOpsArg);
-    let provided_lc_id = object::id(light_client);
-    let config = contract.config();
-    assert!(provided_lc_id == config.light_client_id(), EUntrustedLightClient);
+    contract.assert_light_client(object::id(light_client));
     assert!(dwallet_id != contract.active_dwallet_id.borrow(), EInvalidDWallet);
 
     let deposit_spend_key = contract.storage.dwallet(dwallet_id).lockscript();
@@ -546,9 +543,7 @@ public fun finalize_redeem(
     tx_index: u64,
 ) {
     assert!(contract.version == VERSION, EVersionMismatch);
-    let cfg = contract.config();
-    let provided_lc_id = object::id(light_client);
-    assert!(provided_lc_id == cfg.light_client_id(), EUntrustedLightClient);
+    contract.assert_light_client(object::id(light_client));
 
     let dwallet_id = contract.active_dwallet_id();
     let lockscript = contract.storage.dwallet(dwallet_id).lockscript();
@@ -842,6 +837,15 @@ public fun config(contract: &NbtcContract): Config {
 
 public fun package_version(): u32 {
     VERSION
+}
+
+//
+// Helper functions
+//
+
+fun assert_light_client(contract: &NbtcContract, light_client_id: ID) {
+    let expected = contract.config[VERSION].light_client_id();
+    assert!(light_client_id == expected, EUntrustedLightClient);
 }
 
 //
