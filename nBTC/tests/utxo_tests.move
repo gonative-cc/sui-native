@@ -175,7 +175,7 @@ fun test_same_request_can_reuse_locked_utxos() {
 fun validate_utxos_exceeds_maximum_limit() {
     let mut scenario = ts::begin(@0x1);
     let ctx = scenario.ctx();
-    let mut onchain_utxos = nbtc_utxo::new_utxo_store(ctx);
+    let onchain_utxos = nbtc_utxo::new_utxo_store(ctx);
     let maximum_number_utxo = 101;
     let proposed_indices = vector::tabulate!(maximum_number_utxo, |i| i);
 
