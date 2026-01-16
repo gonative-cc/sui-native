@@ -844,7 +844,7 @@ public fun package_version(): u32 {
 //
 
 fun assert_light_client(contract: &NbtcContract, light_client_id: ID) {
-    let expected = contract.contract.config[VERSION].light_client_id();
+    let expected = contract.config[VERSION].light_client_id();
     assert!(light_client_id == expected, EUntrustedLightClient);
 }
 
