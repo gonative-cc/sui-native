@@ -737,8 +737,7 @@ public fun change_fees(_: &AdminCap, contract: &mut NbtcContract, mint_fee: u64)
 
 /// Sets config for specific NBTC version.
 /// This should be called by the admin before updating the package with the next package_version
-public fun set_config(contract: &mut NbtcContract, _: &AdminCap, version: u32, config: Config) {
-    assert!(version == VERSION + 1);
+public fun update_config(contract: &mut NbtcContract, _: &AdminCap, config: Config) {
     contract.config = config;
 }
 
