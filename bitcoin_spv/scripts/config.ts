@@ -22,9 +22,10 @@ function validateHeaders(headers: string[]): string[] {
 		if (!header.startsWith("0x")) {
 			throw new Error(`Header must start with 0x: ${header.substring(0, 20)}...`);
 		}
+		console.log("test");
 		if (header.slice(2).length !== 160) {
 			throw new Error(
-				`Header must be 80 bytes (160 hex chars): ${header.substring(0, 20)}...`,
+				`Header must be 80 bytes (160 hex chars): ${header.substring(0, 20)}...`
 			);
 		}
 	}
