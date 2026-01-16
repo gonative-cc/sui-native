@@ -2,7 +2,7 @@ name: Trigger Relayer on SPV Change
 on:
   push:
     branches:
-      - master
+      - ravindra/spv-ci-cd
     # --- THIS IS THE FOLDER FILTER ---
     paths:
       - 'bitcoin_spv/**'
