@@ -735,13 +735,11 @@ public fun change_fees(_: &AdminCap, contract: &mut NbtcContract, mint_fee: u64)
     contract.config.set_mint_fee(mint_fee);
 }
 
-/// Sets config for specific NBTC version.
-/// This should be called by the admin before updating the package with the next package_version
 public fun update_config(contract: &mut NbtcContract, _: &AdminCap, config: Config) {
     contract.config = config;
 }
 
-/// Set a metadata for dwallet
+/// Registers a new dwallet with it's bitcoin spending script.
 /// BTC lockscript must derive from dwallet public key which is control by dwallet_cap.
 public fun add_dwallet(
     _: &AdminCap,
