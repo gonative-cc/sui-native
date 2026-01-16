@@ -218,7 +218,6 @@ public(package) fun request_utxo_sig(
         redeem_id,
         sign_id,
         input_id,
-        msg_central_sig,
     });
 }
 
