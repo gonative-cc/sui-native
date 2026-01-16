@@ -753,14 +753,14 @@ public fun merge_utxos(_: &mut NbtcContract, _num_utxos: u16) {}
 //
 
 public fun update_redeem_duration(_: &OpCap, contract: &mut NbtcContract, redeem_duration: u64) {
-    assert!(VERSION > contract.version, EAlreadyUpdated);
+    assert!(VERSION == contract.version, EAlreadyUpdated);
     assert!(redeem_duration >= 1000, EInvalidArguments); // at least 1s
     let cfg = contract.config.borrow_mut(VERSION);
     cfg.set_redeem_duration(redeem_duration);
 }
 
 public fun withdraw_fees(_: &OpCap, contract: &mut NbtcContract, ctx: &mut TxContext): Coin<NBTC> {
-    assert!(VERSION > contract.version, EAlreadyUpdated);
+    assert!(VERSION == contract.version, EAlreadyUpdated);
     coin::from_balance(contract.fees_collected.withdraw_all(), ctx)
 }
 
