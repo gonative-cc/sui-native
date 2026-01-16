@@ -384,7 +384,7 @@ public fun mint(
     event::emit(MintEvent {
         recipient,
         fee: fee_amount,
-        dwallet_id: dwallet_id,
+        dwallet_id,
         utxo_id: utxo_ids[0],
         btc_script_publickey,
         btc_tx_id,
