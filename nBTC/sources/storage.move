@@ -171,10 +171,7 @@ public(package) fun remove_inactive_deposit(
     user: address,
 ): u64 {
     let d = store.dwallet_mut(dwallet_id);
-    // TODO: bug: use remove
-    let user_balance = &mut d.inactive_deposits[user];
-    let amount = *user_balance;
-    *user_balance = 0;
+    let amount = d.inactive_deposits.remove(user);
     d.total_deposit = d.total_deposit - amount;
     amount
 }
