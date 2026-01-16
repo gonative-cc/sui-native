@@ -349,6 +349,7 @@ public fun mint(
     ops_arg: u32,
     ctx: &mut TxContext,
 ) {
+    assert!(contract.version == VERSION, EVersionMismatch);
     let dwallet_id = contract.active_dwallet_id();
     let (mut amount, recipient, utxo_ids) = contract.verify_deposit(
         light_client,
@@ -471,6 +472,7 @@ public fun request_utxo_sig(
     payment_sui: &mut Coin<SUI>,
     ctx: &mut TxContext,
 ) {
+    assert!(contract.version == VERSION, EVersionMismatch);
     let config = contract.config();
     assert!(
         object::id(dwallet_coordinator) == config.dwallet_coordinator(),
@@ -605,6 +607,7 @@ public fun record_signature(
     input_id: u64,
     sign_id: ID,
 ): bool {
+    assert!(contract.version == VERSION, EVersionMismatch);
     let config = contract.config();
     assert!(
         object::id(dwallet_coordinator) == config.dwallet_coordinator(),
@@ -733,18 +736,19 @@ public fun merge_utxos(_: &mut NbtcContract, _num_utxos: u16) {}
 //
 
 public fun update_redeem_duration(_: &OpCap, contract: &mut NbtcContract, redeem_duration: u64) {
-    assert!(VERSION > contract.version, EAlreadyUpdated);
+    assert!(VERSION == contract.version, EAlreadyUpdated);
     assert!(redeem_duration >= 1000, EInvalidArguments); // at least 1s
     let cfg = contract.config.borrow_mut(VERSION);
     cfg.set_redeem_duration(redeem_duration);
 }
 
 public fun withdraw_fees(_: &OpCap, contract: &mut NbtcContract, ctx: &mut TxContext): Coin<NBTC> {
-    assert!(VERSION > contract.version, EAlreadyUpdated);
+    assert!(VERSION == contract.version, EAlreadyUpdated);
     coin::from_balance(contract.fees_collected.withdraw_all(), ctx)
 }
 
 public fun change_fees(_: &AdminCap, contract: &mut NbtcContract, mint_fee: u64) {
+    assert!(contract.version == VERSION, EVersionMismatch);
     let config_mut = &mut contract.config[VERSION];
     config_mut.set_mint_fee(mint_fee);
 }
@@ -766,6 +770,7 @@ public fun add_dwallet(
     user_key_share: vector<u8>,
     ctx: &mut TxContext,
 ) {
+    assert!(contract.version == VERSION, EVersionMismatch);
     // TODO: Verify public key and lockscript
     // In the case lockscript is p2wpkh, p2pkh:
     // - verify public key hash in lock script is compute from public_key
@@ -781,12 +786,14 @@ public fun add_dwallet(
 }
 
 public fun set_active_dwallet(_: &AdminCap, contract: &mut NbtcContract, dwallet_id: ID) {
+    assert!(contract.version == VERSION, EVersionMismatch);
     assert!(contract.storage.exist(dwallet_id), EInvalidDWallet);
     // FIXME: make sure the previous one is not lost!
     contract.active_dwallet_id = option::some(dwallet_id);
 }
 
 public fun remove_inactive_dwallet(_: &AdminCap, contract: &mut NbtcContract, dwallet_id: ID) {
+    assert!(contract.version == VERSION, EVersionMismatch);
     // TODO: need to decide if we want to keep balance check. Technically, it's not needed
     // if we can provide public signature to the merge_coins
     // NOTE: we don't check inactive_user_balance here because this is out of our control and the
@@ -809,6 +816,7 @@ public(package) fun add_utxo_to_contract(
 
 /// Remove a UTXO from the contract
 public fun remove_utxo(_: &AdminCap, contract: &mut NbtcContract, utxo_idx: u64) {
+    assert!(contract.version == VERSION, EVersionMismatch);
     contract.storage.utxo_store_mut().remove(utxo_idx).burn();
 }
 
