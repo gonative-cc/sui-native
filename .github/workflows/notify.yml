@@ -2,7 +2,7 @@ name: Trigger Relayer
 on:
   push:
     branches:
-      - master
+      - ravindra/spv-ci-cd
 
 jobs:
   trigger-relayer:
