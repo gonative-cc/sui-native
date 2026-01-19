@@ -34,7 +34,8 @@ const MINUTE: u64 = 60_000;
 
 // hash function
 const SHA256: u32 = 1;
-
+// curve
+const SECP256K1: u32 = 0;
 // Maximum number of presigns to keep in buffer
 const MAX_PRESIGNS: u64 = 30;
 
@@ -465,9 +466,7 @@ public fun request_utxo_sig(
     dwallet_coordinator: &mut DWalletCoordinator,
     redeem_id: u64,
     input_id: u64,
-    nbtc_public_sign: vector<u8>,
     msg_central_sig: vector<u8>,
-    presign: UnverifiedPresignCap,
     payment_ika: &mut Coin<IKA>,
     payment_sui: &mut Coin<SUI>,
     ctx: &mut TxContext,
@@ -737,17 +736,14 @@ public fun fill_presign(
     let config = contract.config();
     assert!(object::id(coordinator) == config.dwallet_coordinator(), EInvalidDWalletCoordinator);
     let active_dwallet_id = contract.active_dwallet_id();
-    let dwallet_cap = contract.storage.dwallet_cap(active_dwallet_id);
-    let dwallet = coordinator.get_dwallet(dwallet_cap.dwallet_id());
+    let dwallet = coordinator.get_dwallet(active_dwallet_id);
     let dwallet_network_encryption_key_id = dwallet.dwallet_network_encryption_key_id();
-    let curve = dwallet.curve();
-
     let number = MAX_PRESIGNS - contract.presigns.length();
     number.do!(|_| {
         let session_identifier = new_session_identifier(coordinator, ctx);
         let presign = coordinator.request_global_presign(
             dwallet_network_encryption_key_id,
-            curve,
+            SECP256K1,
             SHA256,
             session_identifier,
             ika_payment,
