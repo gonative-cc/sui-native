@@ -51,21 +51,9 @@ program
 		let signHash = await getSignHash(suiClient, redeem_id, input_idx, config);
 		let dwalletID = loadConfig().dwalletId;
 
-		// Create nbtc_public_signature using the new approach
-		let nbtcPublicSignature = await createUserSigMessage(
-			ikaClient,
-			dwalletID,
-			presignId,
-			signHash,
-		);
+		let msgCentralSig = await createUserSigMessage(ikaClient, dwalletID, presignId, signHash);
 
-		let signID = await requestUtxoSig(
-			redeem_id,
-			input_idx,
-			presignId,
-			nbtcPublicSignature,
-			config,
-		);
+		let signID = await requestUtxoSig(redeem_id, input_idx, presignId, msgCentralSig, config);
 		console.log("Ika sign id =", signID);
 	});
 
