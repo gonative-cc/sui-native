@@ -36,7 +36,7 @@ const MINUTE: u64 = 60_000;
 const SHA256: u32 = 1;
 
 // Maximum number of presigns to keep in buffer
-const MAX_PRESIGNS: u64 = 100;
+const MAX_PRESIGNS: u64 = 30;
 
 /// Coin Metadata
 const DECIMALS: u8 = 8;

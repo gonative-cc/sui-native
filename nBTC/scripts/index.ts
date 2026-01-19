@@ -36,7 +36,7 @@ program
 
 program
 	.command("fill_presign")
-	.description("Fills the nBTC contract's presign buffer up to MAX_PRESIGNS (100)")
+	.description("Fills the nBTC contract's presign buffer up to MAX_PRESIGNS (30)")
 	.action(async () => {
 		await fillPresign();
 	});

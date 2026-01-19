@@ -15,7 +15,7 @@ const config = loadConfig();
 let suiClient = createSuiClient(config.packageId);
 
 /**
- * Fills the nBTC contract's presign buffer up to MAX_PRESIGNS (100)
+ * Fills the nBTC contract's presign buffer up to MAX_PRESIGNS (30)
  *
  * This function creates global presigns and stores them in the contract's presigns vector.
  * Each presign costs IKA coins for protocol fees.
