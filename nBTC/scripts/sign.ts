@@ -187,7 +187,6 @@ export async function requestUtxoSig(
 				redeemId,
 				inputId,
 				msgCentralSig: Array.from(msgCentralSig),
-				presign: unverifiedPresignCap,
 				paymentIka: ikaCoin,
 				paymentSui: tx.gas,
 			},
