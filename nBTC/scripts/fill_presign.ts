@@ -15,14 +15,18 @@ const config = loadConfig();
 let suiClient = createSuiClient(config.packageId);
 
 /**
- * Fills the nBTC contract's presign buffer up to MAX_PRESIGNS (30)
+ * Refills the nBTC contract's presign queue if it falls below MIN_PRESIGN_QUEUE_SIZE (30)
  *
- * This function creates global presigns and stores them in the contract's presigns vector.
+ * This function checks the current presign queue size and if below threshold,
+ * creates enough presigns to reach 2*MIN_PRESIGN_QUEUE_SIZE (60).
  * Each presign costs IKA coins for protocol fees.
  *
- * @returns A promise that resolves when fill_presign transaction is executed successfully.
+ * This function should be called periodically (e.g., every hour) to maintain
+ * an adequate supply of presignatures for Bitcoin transactions.
+ *
+ * @returns A promise that resolves when refill_presign_queue transaction is executed successfully.
  */
-export async function fillPresign() {
+export async function refillPresignQueue() {
 	const signer = mkSigner();
 	const transaction = new Transaction();
 
@@ -32,9 +36,9 @@ export async function fillPresign() {
 	// Use the DWalletCoordinator ID from the existing requestUtxoSig pattern
 	const dwalletCoordinator = "0x4d157b7415a298c56ec2cb1dcab449525fa74aec17ddba376a83a7600f2062fc";
 
-	// Call fill_presign function from nBTC contract
+	// Call refill_presign_queue function from nBTC contract
 	transaction.add(
-		nBTCContractModule.fillPresign({
+		nBTCContractModule.refillPresignQueue({
 			arguments: {
 				contract: config.nbtc,
 				coordinator: dwalletCoordinator,
@@ -45,5 +49,7 @@ export async function fillPresign() {
 	);
 
 	await executeTransaction(suiClient, transaction);
-	console.log("Successfully filled presign buffer");
+	console.log("Successfully refilled presign queue");
 }
+
+

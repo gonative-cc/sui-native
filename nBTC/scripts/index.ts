@@ -16,7 +16,7 @@ import {
 } from "./sign";
 import { initialization } from "./initialization";
 import { broadcastBtcTx } from "./btc-helper";
-import { fillPresign } from "./fill_presign";
+import { refillPresignQueue } from "./fill_presign";
 
 const config = loadConfig();
 
@@ -35,10 +35,10 @@ program
 	});
 
 program
-	.command("fill_presign")
-	.description("Fills the nBTC contract's presign buffer up to MAX_PRESIGNS (30)")
+	.command("refill_presign_queue")
+	.description("Refills presign queue to 2*MIN_PRESIGN_QUEUE_SIZE if below threshold")
 	.action(async () => {
-		await fillPresign();
+		await refillPresignQueue();
 	});
 
 program
