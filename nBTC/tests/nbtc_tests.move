@@ -286,3 +286,24 @@ fun test_update_version_fail() {
     nbtc::update_version(&mut ctr);
     abort
 }
+
+#[test]
+fun test_presigns_length() {
+    // Simple test to verify we can check the presigns queue length
+    let sender = @0x01;
+    let (mut lc, mut ctr, mut scenario) = setup(
+        NBTC_SCRIPT_PUBKEY,
+        sender,
+        object::id_from_address(@0x01),
+    );
+
+    // Initially, presign queue should be empty
+    let initial_queue_size = ctr.presigns_length();
+    assert!(initial_queue_size == 0, 0);
+
+    //TODO:: use module extend and finish the test
+    // Clean up
+    destroy(lc);
+    destroy(ctr);
+    scenario.end();
+}

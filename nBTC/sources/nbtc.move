@@ -36,8 +36,8 @@ const MINUTE: u64 = 60_000;
 const SHA256: u32 = 1;
 // curve
 const SECP256K1: u32 = 0;
-// Maximum number of presigns to keep in buffer
-const MAX_PRESIGNS: u64 = 30;
+// Minimum number of presigns to keep in queue
+const MIN_PRESIGN_QUEUE_SIZE: u64 = 30;
 
 /// Coin Metadata
 const DECIMALS: u8 = 8;
@@ -325,6 +325,11 @@ public fun active_dwallet_id(contract: &NbtcContract): ID {
 public fun active_dwallet(contract: &NbtcContract): &BtcDWallet {
     let dwallet_id = contract.active_dwallet_id();
     contract.storage.dwallet(dwallet_id)
+}
+
+/// Returns the current number of presignatures in the queue
+public fun presigns_length(contract: &NbtcContract): u64 {
+    contract.presigns.length()
 }
 
 /// Mints nBTC tokens after verifying a Bitcoin transaction proof.
@@ -726,7 +731,16 @@ public fun update_version(contract: &mut NbtcContract) {
 public fun merge_utxos(_: &mut NbtcContract, _num_utxos: u16) {}
 */
 
-public fun fill_presign(
+/// Refills the presignature queue if it falls below MIN_PRESIGN_QUEUE_SIZE.
+/// This function should be called periodically (e.g., every hour) to maintain an adequate
+/// supply of presignatures for Bitcoin transactions.
+///
+/// If the queue has less than MIN_PRESIGN_QUEUE_SIZE presigns, it creates enough
+/// new presigns to reach 2*MIN_PRESIGN_QUEUE_SIZE total.
+///
+/// Example: If queue has 10 presigns (with MIN_PRESIGN_QUEUE_SIZE=30), it will
+/// create 50 more presigns to reach 60 total.
+public fun refill_presign_queue(
     contract: &mut NbtcContract,
     coordinator: &mut DWalletCoordinator,
     sui_payment: &mut Coin<SUI>,
@@ -738,20 +752,29 @@ public fun fill_presign(
     let active_dwallet_id = contract.active_dwallet_id();
     let dwallet = coordinator.get_dwallet(active_dwallet_id);
     let dwallet_network_encryption_key_id = dwallet.dwallet_network_encryption_key_id();
-    let number = MAX_PRESIGNS - contract.presigns.length();
-    number.do!(|_| {
-        let session_identifier = new_session_identifier(coordinator, ctx);
-        let presign = coordinator.request_global_presign(
-            dwallet_network_encryption_key_id,
-            SECP256K1,
-            SHA256,
-            session_identifier,
-            ika_payment,
-            sui_payment,
-            ctx,
-        );
-        contract.presigns.push_back(presign);
-    });
+
+    // Get current queue size
+    let current_queue_size = contract.presigns.length();
+
+    // If queue has less than MIN_PRESIGN_QUEUE_SIZE, refill to 2*MIN_PRESIGN_QUEUE_SIZE
+    if (current_queue_size < MIN_PRESIGN_QUEUE_SIZE) {
+        let target_size = 2 * MIN_PRESIGN_QUEUE_SIZE;
+        let number_to_create = target_size - current_queue_size;
+
+        number_to_create.do!(|_| {
+            let session_identifier = new_session_identifier(coordinator, ctx);
+            let presign = coordinator.request_global_presign(
+                dwallet_network_encryption_key_id,
+                SECP256K1,
+                SHA256,
+                session_identifier,
+                ika_payment,
+                sui_payment,
+                ctx,
+            );
+            contract.presigns.push_back(presign);
+        });
+    };
 }
 //
 // Admin functions
