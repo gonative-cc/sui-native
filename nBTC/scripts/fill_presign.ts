@@ -51,5 +51,3 @@ export async function refillPresignQueue() {
 	await executeTransaction(suiClient, transaction);
 	console.log("Successfully refilled presign queue");
 }
-
-
