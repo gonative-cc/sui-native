@@ -5,7 +5,8 @@ module nbtc::nbtc_tests;
 
 use bitcoin_lib::header;
 use bitcoin_spv::light_client::{new_light_client, LightClient};
-use ika_dwallet_2pc_mpc::coordinator_inner::dwallet_cap_for_testing;
+use ika_dwallet_2pc_mpc::coordinator::{coordinator_for_test, DWalletCoordinator};
+use ika_dwallet_2pc_mpc::coordinator_inner::{dwallet_coordinator_internal, dwallet_cap_for_testing};
 use nbtc::nbtc::{Self, NbtcContract, EMintAmountIsZero, ETxAlreadyUsed, EAlreadyUpdated, NBTC};
 use nbtc::storage::{Self, BtcDWallet};
 use nbtc::test_constants::MOCK_DWALLET_ID;
@@ -90,11 +91,26 @@ public fun setup_with_pubkey(
     sender: address,
     dwallet_id: ID,
     dw: BtcDWallet,
-): (LightClient, NbtcContract, Scenario) {
+): (LightClient, NbtcContract, DWalletCoordinator, Scenario) {
     let mut scenario = test_scenario::begin(sender);
-    // TODO: we should use a dummy or create parameter for function setup
-    // for dwallet_coordinator
-    let dwallet_coordinator = dwallet_id;
+
+    // Create test coordinator
+    let coordinator_inner = dwallet_coordinator_internal(scenario.ctx());
+    let mut dwallet_coordinator = coordinator_for_test(scenario.ctx(), coordinator_inner);
+
+    // Add dwallet to coordinator
+    let dwallet_cap_id = object::id_from_address(@0x1);
+    dwallet_coordinator.add_dwallet_for_testing(
+        dwallet_id,
+        dwallet_cap_id,
+        0,
+        vector[],
+        scenario.ctx(),
+    );
+
+    // Use coordinator's ID for contract
+    let coordinator_id = object::id(&dwallet_coordinator);
+
     let headers = vector[
         header::new(
             x"00000020a97594d6b5b9369535da225d464bde7e0ae3794e9b270a010000000000000000addcae45a90f73dc68e3225b2d0be1c155bf9b0864f187e31203079c0b6d42c5bb27e8585a330218b119eaee",
@@ -105,13 +121,13 @@ public fun setup_with_pubkey(
     let mut ctr = nbtc::init_for_testing(
         lc.client_id().to_address(),
         FALLBACK_ADDR,
-        dwallet_coordinator,
+        coordinator_id,
         scenario.ctx(),
     );
 
     ctr.set_dwallet_for_test(dwallet_id, dw);
 
-    (lc, ctr, scenario)
+    (lc, ctr, dwallet_coordinator, scenario)
 }
 
 #[test_only]
@@ -119,7 +135,7 @@ public fun setup(
     nbtc_bitcoin_addr: vector<u8>,
     sender: address,
     dwallet_id: ID,
-): (LightClient, NbtcContract, Scenario) {
+): (LightClient, NbtcContract, DWalletCoordinator, Scenario) {
     let mut scenario = test_scenario::begin(sender);
     let dw = storage::create_dwallet(
         dwallet_cap_for_testing(dwallet_id, scenario.ctx()),
@@ -134,7 +150,7 @@ public fun setup(
 #[test]
 fun test_nbtc_mint() {
     let sender = @0x1;
-    let (lc, mut ctr, mut scenario) = setup(
+    let (lc, mut ctr, dwallet_coordinator, mut scenario) = setup(
         NBTC_SCRIPT_PUBKEY,
         sender,
         MOCK_DWALLET_ID!(),
@@ -164,13 +180,14 @@ fun test_nbtc_mint() {
     assert_eq!(balance, total_amount_expected);
     destroy(lc);
     destroy(ctr);
+    destroy(dwallet_coordinator);
     scenario.end();
 }
 
 #[test]
 fun test_mint_with_fee() {
     let sender = @0x1;
-    let (lc, mut ctr, mut scenario) = setup(
+    let (lc, mut ctr, dwallet_coordinator, mut scenario) = setup(
         NBTC_SCRIPT_PUBKEY,
         sender,
         MOCK_DWALLET_ID!(),
@@ -204,6 +221,7 @@ fun test_mint_with_fee() {
     assert_eq!(total_amount, total_amount_expected);
     destroy(lc);
     destroy(ctr);
+    destroy(dwallet_coordinator);
     scenario.end();
 }
 
@@ -212,7 +230,7 @@ fun test_mint_with_fee() {
 fun test_nbtc_mint_fail_amount_is_zero() {
     let sender = @0x1;
     // Use a different treasury address so the payment to our main treasury is not found.
-    let (lc, mut ctr, mut scenario) = setup(
+    let (lc, mut ctr, dwallet_coordinator, mut scenario) = setup(
         x"76a914509a651dd392e1bc125323f629b67d65cca3d4ff88ac",
         sender,
         MOCK_DWALLET_ID!(),
@@ -232,6 +250,7 @@ fun test_nbtc_mint_fail_amount_is_zero() {
 
     destroy(lc);
     destroy(ctr);
+    destroy(dwallet_coordinator);
     scenario.end();
 }
 
@@ -239,7 +258,7 @@ fun test_nbtc_mint_fail_amount_is_zero() {
 #[expected_failure(abort_code = ETxAlreadyUsed)]
 fun test_nbtc_mint_fail_tx_already_used() {
     let sender = @0x1;
-    let (lc, mut ctr, mut scenario) = setup(
+    let (lc, mut ctr, dwallet_coordinator, mut scenario) = setup(
         NBTC_SCRIPT_PUBKEY,
         sender,
         object::id_from_address(@0x01),
@@ -272,13 +291,14 @@ fun test_nbtc_mint_fail_tx_already_used() {
 
     destroy(lc);
     destroy(ctr);
+    destroy(dwallet_coordinator);
     scenario.end();
 }
 
 #[test, expected_failure(abort_code = EAlreadyUpdated)]
 fun test_update_version_fail() {
     let sender = @0x01;
-    let (_lc, mut ctr, _scenario) = setup(
+    let (_lc, mut ctr, _dwallet_coordinator, _scenario) = setup(
         NBTC_SCRIPT_PUBKEY,
         sender,
         object::id_from_address(@0x01),
