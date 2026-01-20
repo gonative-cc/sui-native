@@ -1,7 +1,6 @@
 #[test_only]
 module nbtc::redeem_workflow_tests;
 
-use ika_dwallet_2pc_mpc::coordinator::DWalletCoordinator;
 use ika_dwallet_2pc_mpc::coordinator_inner::dwallet_cap_for_testing;
 use nbtc::nbtc::NBTC;
 use nbtc::nbtc_tests::{setup, setup_with_pubkey};

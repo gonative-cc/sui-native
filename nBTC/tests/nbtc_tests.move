@@ -13,7 +13,6 @@ use nbtc::test_constants::MOCK_DWALLET_ID;
 use std::unit_test::{assert_eq, destroy};
 use sui::address;
 use sui::coin::Coin;
-use sui::object;
 use sui::test_scenario::{Self, take_from_address, Scenario};
 
 // The fallback Sui address to receive nBTC if OP_RETURN data is invalid or missing.
@@ -151,7 +150,7 @@ public fun setup(
 #[test]
 fun test_nbtc_mint() {
     let sender = @0x1;
-    let (lc, mut ctr, mut dwallet_coordinator, mut scenario) = setup(
+    let (lc, mut ctr, dwallet_coordinator, mut scenario) = setup(
         NBTC_SCRIPT_PUBKEY,
         sender,
         MOCK_DWALLET_ID!(),
@@ -188,7 +187,7 @@ fun test_nbtc_mint() {
 #[test]
 fun test_mint_with_fee() {
     let sender = @0x1;
-    let (lc, mut ctr, mut dwallet_coordinator, mut scenario) = setup(
+    let (lc, mut ctr, dwallet_coordinator, mut scenario) = setup(
         NBTC_SCRIPT_PUBKEY,
         sender,
         MOCK_DWALLET_ID!(),
@@ -231,7 +230,7 @@ fun test_mint_with_fee() {
 fun test_nbtc_mint_fail_amount_is_zero() {
     let sender = @0x1;
     // Use a different treasury address so the payment to our main treasury is not found.
-    let (lc, mut ctr, mut dwallet_coordinator, mut scenario) = setup(
+    let (lc, mut ctr, dwallet_coordinator, mut scenario) = setup(
         x"76a914509a651dd392e1bc125323f629b67d65cca3d4ff88ac",
         sender,
         MOCK_DWALLET_ID!(),
@@ -259,7 +258,7 @@ fun test_nbtc_mint_fail_amount_is_zero() {
 #[expected_failure(abort_code = ETxAlreadyUsed)]
 fun test_nbtc_mint_fail_tx_already_used() {
     let sender = @0x1;
-    let (lc, mut ctr, mut dwallet_coordinator, mut scenario) = setup(
+    let (lc, mut ctr, dwallet_coordinator, mut scenario) = setup(
         NBTC_SCRIPT_PUBKEY,
         sender,
         object::id_from_address(@0x01),

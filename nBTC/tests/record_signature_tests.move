@@ -2,13 +2,10 @@
 module nbtc::record_signature_tests;
 
 use ika_dwallet_2pc_mpc::coordinator::{
-    coordinator_for_test,
     set_signature_for_testing,
-    add_dwallet_for_testing,
     add_sign_session_for_testing,
     DWalletCoordinator
 };
-use ika_dwallet_2pc_mpc::coordinator_inner::dwallet_coordinator_internal;
 use nbtc::nbtc::NBTC;
 use nbtc::nbtc_tests::setup;
 use nbtc::nbtc_utxo::new_utxo;
