@@ -232,8 +232,8 @@ export async function verifySignature(
 				dwalletCoordinator:
 					"0x4d157b7415a298c56ec2cb1dcab449525fa74aec17ddba376a83a7600f2062fc",
 				redeemId,
-				inputId,
-				signId,
+				inputIds: [BigInt(inputId)],
+				signIds: [signId],
 			},
 		}),
 	);
