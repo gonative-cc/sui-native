@@ -582,35 +582,37 @@ public fun finalize_redeem(
     });
 }
 
-// TODO: we should be able to record many signatures in a single tx
-/// Try to read sig from dwallet and save it in the inputs store.
-/// Fails if the sig is not available. Validation is left on the Ika side.
-/// Returns true if sig is recorded, false if sig was already recorded before and aborts if
-/// the validation fails.
+/// Batch record multiple signatures for a redeem request in a single tx.
+/// Takes a single redeem_id and vectors of input_ids and sign_ids.
+/// Returns vector of booleans indicating which signatures were recorded.
 public fun record_signature(
     contract: &mut NbtcContract,
     dwallet_coordinator: &DWalletCoordinator,
     redeem_id: u64,
-    input_id: u64,
-    sign_id: ID,
-): bool {
+    input_ids: vector<u64>,
+    sign_ids: vector<ID>,
+): vector<bool> {
     assert!(contract.version == VERSION, EVersionMismatch);
     assert!(
         object::id(dwallet_coordinator) == contract.config.dwallet_coordinator(),
         EInvalidDWalletCoordinator,
     );
     let r = &mut contract.redeem_requests[redeem_id];
-    if (r.has_signature(input_id)) return false;
+    input_ids.length().do!(|i| {
+        let input_id = input_ids[i];
+        if (!r.has_signature(input_id)) {
+            r.record_signature(dwallet_coordinator, input_id, sign_ids[i]);
 
-    r.record_signature(dwallet_coordinator, input_id, sign_id);
-
-    let is_fully_signed = r.status().is_signed();
-    event::emit(RedeemSigCreatedEvent {
-        redeem_id,
-        input_id,
-        is_fully_signed,
+            let is_fully_signed = r.status().is_signed();
+            event::emit(RedeemSigCreatedEvent {
+                redeem_id,
+                input_id,
+                is_fully_signed,
+            });
+        }
     });
-    true
+
+    input_ids.map!(|input_id| r.has_signature(input_id))
 }
 
 // TODO: update event emitted to include the data from the redeem request
