@@ -616,7 +616,7 @@ public fun record_signature(
             let is_fully_signed = r.status().is_signed();
             event::emit(RedeemSigCreatedEvent {
                 redeem_id,
-                input_id: input_id,
+                input_id
                 is_fully_signed,
             });
         }
