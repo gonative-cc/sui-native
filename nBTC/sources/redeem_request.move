@@ -172,24 +172,14 @@ public(package) fun move_to_confirmed_status(
 /// - Requests signature from the Ika Network
 /// - Stores the signature metadata and emits an event
 ///
-/// # Arguments
-/// * `r` - Mutable reference to the redeem request
-/// * `dwallet_coordinator` - Coordinator for dWallet operations
-/// * `storage` - Storage containing dWallet capabilities
-/// * `redeem_id` - Unique identifier for the redeem request
-/// * `input_id` - Index of the Bitcoin input to be signed (0-indexed)
-/// * `nbtc_public_sign` - Partial signature from nBTC public share
-/// * `presign` - Unverified presign capability
-/// * `payment_ika` - IKA coin for payment
-/// * `payment_sui` - SUI coin for gas fees
-/// * `ctx` - Transaction context
+/// # Arguments - see nbtc::request_utxo_sig function.
 public(package) fun request_utxo_sig(
     r: &mut RedeemRequest,
     dwallet_coordinator: &mut DWalletCoordinator,
     storage: &Storage,
     redeem_id: u64,
     input_id: u64,
-    nbtc_public_sign: vector<u8>,
+    msg_central_sig: vector<u8>,
     presign: UnverifiedPresignCap,
     payment_ika: &mut Coin<IKA>,
     payment_sui: &mut Coin<SUI>,
@@ -202,7 +192,7 @@ public(package) fun request_utxo_sig(
 
     let utxo = r.utxo_at(input_id);
     let dwallet_id = utxo.dwallet_id();
-    let dwallet_cap = storage.dwallet_cap(dwallet_id);
+    let dwallet_cap = storage.dwallet(dwallet_id).cap();
 
     let message_approval = dwallet_coordinator.approve_message(
         dwallet_cap,
@@ -215,7 +205,7 @@ public(package) fun request_utxo_sig(
     let sign_id = dwallet_coordinator.request_sign_and_return_id(
         verified_presign,
         message_approval,
-        nbtc_public_sign,
+        msg_central_sig,
         ika_session,
         payment_ika,
         payment_sui,
@@ -264,8 +254,7 @@ public fun compose_tx(r: &RedeemRequest, storage: &Storage): tx::Transaction {
     inputs.length().do!(|i| {
         let utxo = &inputs[i];
         let dwallet_id = utxo.dwallet_id();
-        let dwallet_metadata = storage.dwallet_metadata(dwallet_id);
-        let lockscript = dwallet_metadata.lockscript();
+        let lockscript = storage.dwallet(dwallet_id).lockscript();
         let ika_signature = r.signatures[i];
         // Taproot witness expects a 64-byte Schnorr signature, no sighash flag byte.
         let witness = if (script::is_taproot(lockscript)) {
@@ -307,7 +296,7 @@ public fun sig_hash(r: &RedeemRequest, input_id: u64, storage: &Storage): vector
     let inputs = r.utxos();
     let utxo = &inputs[input_id];
     let dwallet_id = utxo.dwallet_id();
-    let lockscript = storage.dwallet_metadata(dwallet_id).lockscript();
+    let lockscript = storage.dwallet(dwallet_id).lockscript();
     let tx = compose_withdraw_tx(
         lockscript,
         inputs,
@@ -319,7 +308,7 @@ public fun sig_hash(r: &RedeemRequest, input_id: u64, storage: &Storage): vector
     if (script::is_taproot(lockscript)) {
         let previous_pubscripts = vector::tabulate!(
             inputs.length(),
-            |i| storage.dwallet_metadata(inputs[i].dwallet_id()).lockscript(),
+            |i| storage.dwallet(inputs[i].dwallet_id()).lockscript(),
         );
         let previous_values = vector::tabulate!(inputs.length(), |i| inputs[i].value());
 

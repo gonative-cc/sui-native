@@ -36,9 +36,9 @@ export async function initialization(dwalletId: string, config: Config) {
 			arguments: {
 				_: config.adminCap,
 				contract: config.nbtc,
-				dwalletCap: dwalletCap,
+				cap: dwalletCap,
 				lockscript: Array.from(lockscript),
-				nbtcEndpointUserShare: Array.from(dWallet.public_user_secret_key_share!),
+				userKeyShare: Array.from(dWallet.public_user_secret_key_share!),
 			},
 		}),
 	);

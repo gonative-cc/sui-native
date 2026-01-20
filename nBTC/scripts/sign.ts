@@ -68,7 +68,7 @@ export async function globalPreSign() {
  * @param dwalletId The ID of the active dWallet to be used
  * @param presignId The PreSign ID get from globalPreSign
  * @param message data (Uint8Array) to be signed
- * @returns A promise that resolves to the nbtc_public_signature as Uint8Array
+ * @returns A promise that resolves to a msg_central_sig.
  */
 export async function createUserSigMessage(
 	ikaClient: IkaClient,
@@ -85,8 +85,7 @@ export async function createUserSigMessage(
 	const userSecretKeyShare = new Uint8Array(dWallet.public_user_secret_key_share as number[]);
 	const presign = await ikaClient.getPresign(presignId);
 
-	// Create the nbtc_public_signature using the centralized DKG output function
-	const nbtcPublicSignature = await createUserSignMessageWithCentralizedOutput(
+	return createUserSignMessageWithCentralizedOutput(
 		protocolPublicParameters,
 		centralizedDkgOutput,
 		userSecretKeyShare,
@@ -96,8 +95,6 @@ export async function createUserSigMessage(
 		SignatureAlgorithm.ECDSASecp256k1,
 		Curve.SECP256K1,
 	);
-
-	return nbtcPublicSignature;
 }
 
 /**
@@ -162,14 +159,14 @@ export async function getSignHash(
  * @param redeemId The ID of the redeem request.
  * @param inputId The index of the Bitcoin input being signed (0-indexed).
  * @param presignId The presignId we use to get the unverifiedPresignCap ID
- * @param nbtcPublicSignature The public signature vector for nbtc.
+ * @param msgCentralSig - nBTC public sig share for the Ika MPC process.
  * @param config The configuration object containing IDs like `packageId` and `nbtc` object ID.
  */
 export async function requestUtxoSig(
 	redeemId: number,
 	inputId: number,
 	presignId: string,
-	nbtcPublicSignature: Uint8Array,
+	msgCentralSig: Uint8Array,
 	config: Config,
 ) {
 	let suiClient = createSuiClient();
@@ -192,7 +189,7 @@ export async function requestUtxoSig(
 					"0x4d157b7415a298c56ec2cb1dcab449525fa74aec17ddba376a83a7600f2062fc",
 				redeemId,
 				inputId,
-				nbtcPublicSign: Array.from(nbtcPublicSignature),
+				msgCentralSig: Array.from(msgCentralSig),
 				presign: unverifiedPresignCap,
 				paymentIka: ikaCoin,
 				paymentSui: tx.gas,
@@ -235,8 +232,8 @@ export async function verifySignature(
 				dwalletCoordinator:
 					"0x4d157b7415a298c56ec2cb1dcab449525fa74aec17ddba376a83a7600f2062fc",
 				redeemId,
-				inputId,
-				signId,
+				inputIds: [BigInt(inputId)],
+				signIds: [signId],
 			},
 		}),
 	);
