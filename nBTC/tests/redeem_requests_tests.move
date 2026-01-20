@@ -14,7 +14,11 @@ use sui::clock;
 fun raw_withdraw_tx_signed_tests() {
     let nbtc_spend_key = x"51200f0c8db753acbd17343a39c2f3f4e35e4be6da749f9e35137ab220e7b238a667";
     let sender = @0x1;
-    let (lc, ctr, mut scenario) = setup(nbtc_spend_key, sender, MOCK_DWALLET_ID!());
+    let (lc, ctr, _dwallet_coordinator, mut scenario) = setup(
+        nbtc_spend_key,
+        sender,
+        MOCK_DWALLET_ID!(),
+    );
 
     scenario.next_tx(sender);
 
@@ -75,6 +79,7 @@ fun raw_withdraw_tx_signed_tests() {
     destroy(ctr);
     destroy(r);
     destroy(btc_store);
+    destroy(_dwallet_coordinator);
     clock.destroy_for_testing();
     scenario.end();
 }

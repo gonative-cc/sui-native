@@ -603,21 +603,26 @@ public fun record_signature(
     assert!(input_ids.length() == sign_ids.length(), EInputSignIdLengthMismatch);
 
     let r = &mut contract.redeem_requests[redeem_id];
+    let mut results = vector::empty<bool>();
+
     input_ids.length().do!(|i| {
         let input_id = input_ids[i];
-        if (!r.has_signature(input_id)) {
+        let signature_existed_before = !r.has_signature(input_id);
+        results.push_back(signature_existed_before);
+
+        if (signature_existed_before) {
             r.record_signature(dwallet_coordinator, input_id, sign_ids[i]);
 
             let is_fully_signed = r.status().is_signed();
             event::emit(RedeemSigCreatedEvent {
                 redeem_id,
-                input_id,
+                input_id: input_id,
                 is_fully_signed,
             });
         }
     });
 
-    input_ids.map!(|input_id| r.has_signature(input_id))
+    results
 }
 
 // TODO: update event emitted to include the data from the redeem request

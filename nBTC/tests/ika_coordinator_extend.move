@@ -9,20 +9,13 @@ use ika_dwallet_2pc_mpc::coordinator_inner::{
 };
 
 #[test_only]
-/// Returns inner mutable reference without version check
-/// For testing purposes only - bypasses version assertion
-public fun inner_mut_unchecked(self: &mut DWalletCoordinator): &mut DWalletCoordinatorInner {
-    dynamic_field::borrow_mut(&mut self.id, VERSION)
-}
-
-#[test_only]
 public fun set_signature_for_testing(
     self: &mut DWalletCoordinator,
     dwallet_id: ID,
     sign_id: ID,
     signature: vector<u8>,
 ) {
-    let inner = self.inner_mut_unchecked();
+    let inner = self.inner_mut();
     set_signature_in_inner(inner, dwallet_id, sign_id, signature);
 }
 
@@ -35,7 +28,7 @@ public fun add_dwallet_for_testing(
     public_output: vector<u8>,
     ctx: &mut TxContext,
 ) {
-    let inner = self.inner_mut_unchecked();
+    let inner = self.inner_mut();
     add_dwallet_to_inner(inner, dwallet_id, dwallet_cap_id, curve, public_output, ctx);
 }
 
@@ -46,7 +39,7 @@ public fun add_sign_session_for_testing(
     sign_id: ID,
     ctx: &mut TxContext,
 ) {
-    let inner = self.inner_mut_unchecked();
+    let inner = self.inner_mut();
     add_sign_session_to_inner(inner, dwallet_id, sign_id, ctx);
 }
 
@@ -57,7 +50,7 @@ public fun coordinator_for_test(
 ): DWalletCoordinator {
     let mut self = DWalletCoordinator {
         id: object::new(ctx),
-        version: 0,
+        version: VERSION,
         package_id: object::id_from_address(@0x0789),
         new_package_id: option::none(),
         migration_epoch: option::none(),

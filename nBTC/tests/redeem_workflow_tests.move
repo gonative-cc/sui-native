@@ -1,6 +1,7 @@
 #[test_only]
 module nbtc::redeem_workflow_tests;
 
+use ika_dwallet_2pc_mpc::coordinator::DWalletCoordinator;
 use ika_dwallet_2pc_mpc::coordinator_inner::dwallet_cap_for_testing;
 use nbtc::nbtc::NBTC;
 use nbtc::nbtc_tests::{setup, setup_with_pubkey};
@@ -43,7 +44,11 @@ fun setup_redeem_test(
     );
     temp_scenario.end();
 
-    let (lc, mut ctr, mut scenario) = setup_with_pubkey(ADMIN, dwallet_id, dw);
+    let (lc, mut ctr, mut _dwallet_coordinator, mut scenario) = setup_with_pubkey(
+        ADMIN,
+        dwallet_id,
+        dw,
+    );
 
     let utxo = new_utxo(TX_HASH, 0, utxo_amount, dwallet_id);
     ctr.add_utxo_for_test(0, utxo);
@@ -64,6 +69,7 @@ fun setup_redeem_test(
         request_mut.update_to_signed_for_test(vector[mock_sig]);
     };
 
+    destroy(_dwallet_coordinator);
     (lc, ctr, redeem_id, scenario, clock)
 }
 
@@ -229,7 +235,11 @@ fun test_propose_utxos_unlocks_old_and_locks_new() {
 
 #[test, expected_failure(abort_code = nbtc::nbtc_utxo::EUtxoLockedByAnotherRequest)]
 fun test_two_requests_cannot_share_utxos() {
-    let (_lc, mut ctr, mut scenario) = setup(NBTC_SCRIPT_PUBKEY, ADMIN, MOCK_DWALLET_ID!());
+    let (_lc, mut ctr, _dwallet_coordinator, mut scenario) = setup(
+        NBTC_SCRIPT_PUBKEY,
+        ADMIN,
+        MOCK_DWALLET_ID!(),
+    );
 
     let dwallet_id = MOCK_DWALLET_ID!();
     let utxo_1 = new_utxo(TX_HASH, 0, 2000, dwallet_id);
@@ -254,7 +264,11 @@ fun test_two_requests_cannot_share_utxos() {
 
 #[test, expected_failure(abort_code = nbtc::nbtc_utxo::EUtxoLockedByAnotherRequest)]
 fun test_cannot_propose_overlapping_locked_utxos() {
-    let (_lc, mut ctr, mut scenario) = setup(NBTC_SCRIPT_PUBKEY, ADMIN, MOCK_DWALLET_ID!());
+    let (_lc, mut ctr, _dwallet_coordinator, mut scenario) = setup(
+        NBTC_SCRIPT_PUBKEY,
+        ADMIN,
+        MOCK_DWALLET_ID!(),
+    );
 
     let dwallet_id = MOCK_DWALLET_ID!();
 
