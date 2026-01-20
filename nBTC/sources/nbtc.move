@@ -83,6 +83,9 @@ const EAlreadyConfirmed: vector<u8> = b"redeem request already confirmed";
 const ERedeemTxNotConfirmed: vector<u8> = b"Bitcoin redeem tx not confirmed via SPV";
 #[error]
 const EInvalidChangeRecipient: vector<u8> = b"Invalid change recipient";
+#[error]
+const EInputSignIdLengthMismatch: vector<u8> =
+    b"input_ids and sign_ids vectors must have the same length";
 
 //
 // Structs
@@ -584,7 +587,7 @@ public fun finalize_redeem(
 
 /// Batch record multiple signatures for a redeem request in a single tx.
 /// Takes a single redeem_id and vectors of input_ids and sign_ids.
-/// Returns vector of booleans indicating which signatures were recorded.
+/// Returns vector of booleans indicating which signatures were newly recorded in this call.
 public fun record_signature(
     contract: &mut NbtcContract,
     dwallet_coordinator: &DWalletCoordinator,
@@ -597,6 +600,8 @@ public fun record_signature(
         object::id(dwallet_coordinator) == contract.config.dwallet_coordinator(),
         EInvalidDWalletCoordinator,
     );
+    assert!(input_ids.length() == sign_ids.length(), EInputSignIdLengthMismatch);
+
     let r = &mut contract.redeem_requests[redeem_id];
     input_ids.length().do!(|i| {
         let input_id = input_ids[i];
