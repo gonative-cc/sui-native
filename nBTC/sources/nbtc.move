@@ -978,27 +978,3 @@ public fun set_dwallet_metadata_for_test(
     contract.storage.add_metadata(dwallet_id, dwallet_metadata);
     contract.storage.add_dwallet_cap(dwallet_id, dwallet_cap);
 }
-
-#[test_only]
-/// Test-only version of record_signature that bypasses DWalletCoordinator
-/// and directly records a mock signature. Returns true if sig is recorded,
-/// false if sig was already recorded before.
-public fun record_signature_for_test(
-    contract: &mut NbtcContract,
-    redeem_id: u64,
-    input_id: u64,
-    signature: vector<u8>,
-): bool {
-    let r = &mut contract.redeem_requests[redeem_id];
-    if (r.has_signature(input_id)) return false;
-
-    r.add_signature(input_id, signature);
-
-    let is_fully_signed = r.status().is_signed();
-    event::emit(RedeemSigCreatedEvent {
-        redeem_id,
-        input_id,
-        is_fully_signed,
-    });
-    true
-}
