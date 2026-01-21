@@ -2,27 +2,15 @@
 	"name": "@sui-native/nbtc",
 	"version": "0.0.1",
 	"description": "TypeScript SDK for nBTC on Sui blockchain",
-	"main": "./dist/index.js",
-	"module": "./dist/index.js",
-	"types": "./dist/index.d.ts",
 	"type": "module",
-	"exports": {
-		".": {
-			"types": "./dist/index.d.ts",
-			"default": "./dist/index.js"
-		}
-	},
-	"files": [
-		"dist",
-		"README.md"
-	],
+	"main": "./dist/index.js",
+	"types": "./dist/src/index.d.ts",
+	"files": ["dist", "README.md"],
 	"scripts": {
-		"build": "bun build src/index.ts --outdir dist --target node --format esm && tsc --declaration --emitDeclarationOnly -p tsconfig.json && cp dist/src/index.d.ts dist/index.d.ts && cp dist/src/types.d.ts dist/types.d.ts",
+		"build": "rm -rf dist && bun build src/index.ts --outdir dist --target node --format esm && tsc --declaration --emitDeclarationOnly -p tsconfig.json",
 		"prepublishOnly": "bun run build"
 	},
-	"publishConfig": {
-		"access": "public"
-	},
+	"publishConfig": { "access": "public" },
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/sui-native/sui-native.git"
