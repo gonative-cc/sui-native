@@ -7,11 +7,6 @@ permissions:
 on:
   release:
     types: [published]
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to publish (for testing)'
-        required: true
 
 concurrency:
   group: publish-${{ github.ref }}
@@ -20,6 +15,9 @@ concurrency:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    container:
+      image: mysten/sui-tools:testnet
+
     steps:
       - uses: actions/checkout@v4
 
