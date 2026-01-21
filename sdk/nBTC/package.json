@@ -5,22 +5,27 @@
 	"type": "module",
 	"main": "./dist/index.js",
 	"types": "./dist/src/index.d.ts",
-	"files": ["dist", "README.md"],
+	"files": [
+		"dist",
+		"README.md"
+	],
 	"scripts": {
 		"build": "rm -rf dist && bun build src/index.ts --outdir dist --target node --format esm && tsc --declaration --emitDeclarationOnly -p tsconfig.json",
 		"prepublishOnly": "bun run build"
 	},
-	"publishConfig": { "access": "public" },
+	"publishConfig": {
+		"access": "public"
+	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/sui-native/sui-native.git"
+		"url": "git+https://github.com/gonative-cc/sui-native.git"
 	},
 	"author": "Native",
 	"license": "MPL-2.0",
 	"bugs": {
-		"url": "https://github.com/sui-native/sui-native/issues"
+		"url": "https://github.com/gonative-cc/sui-native/issues"
 	},
-	"homepage": "https://github.com/sui-native/sui-native#readme",
+	"homepage": "https://github.com/gonative-cc/sui-native#readme",
 	"dependencies": {
 		"@mysten/sui": "^1.45.0"
 	},
