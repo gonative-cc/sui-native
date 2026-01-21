@@ -1,0 +1,46 @@
+name: Publish nBTC SDK
+
+permissions:
+  contents: read
+  id-token: write
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (for testing)'
+        required: true
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: apt-get update && apt-get install -y unzip
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        working-directory: ./sdk/nBTC
+        run: bun install
+
+      - name: Build SDK
+        working-directory: ./sdk/nBTC
+        run: bun run build
+
+      - name: Publish to npm
+        working-directory: ./sdk/nBTC
+        run: bun publish --access public
+        env:
+          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}

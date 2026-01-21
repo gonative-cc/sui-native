@@ -1,13 +1,44 @@
 {
-	"name": "nbtc",
-	"module": "src/index.ts",
+	"name": "@sui-native/nbtc",
+	"version": "0.0.1",
+	"description": "TypeScript SDK for nBTC on Sui blockchain",
+	"main": "./dist/index.js",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
 	"type": "module",
-	"private": true,
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist",
+		"README.md"
+	],
+	"scripts": {
+		"build": "bun build src/index.ts --outdir dist --target node --format esm && tsc --declaration --emitDeclarationOnly -p tsconfig.json",
+		"prepublishOnly": "bun run build"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/sui-native/sui-native.git"
+	},
+	"author": "sui-native",
+	"license": "MPL-2.0",
+	"bugs": {
+		"url": "https://github.com/sui-native/sui-native/issues"
+	},
+	"homepage": "https://github.com/sui-native/sui-native#readme",
 	"dependencies": {
 		"@mysten/sui": "^1.45.0"
 	},
 	"devDependencies": {
-		"@types/bun": "latest"
+		"@types/bun": "latest",
+		"typescript": "^5.9.3"
 	},
 	"peerDependencies": {
 		"typescript": "^5"
