@@ -33,7 +33,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./sdk/nBTC
-        run: bun install
+        run: bun ci
 
       - name: Build SDK
         working-directory: ./sdk/nBTC
