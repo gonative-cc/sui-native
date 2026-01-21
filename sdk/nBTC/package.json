@@ -1,6 +1,6 @@
 {
 	"name": "@sui-native/nbtc",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"description": "TypeScript SDK for nBTC on Sui blockchain",
 	"type": "module",
 	"main": "./dist/index.js",
