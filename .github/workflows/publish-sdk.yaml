@@ -27,7 +27,7 @@ jobs:
         run: apt-get update && apt-get install -y unzip
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@635640504f6d7197d3bb29876a652f671028dc97
         with:
           bun-version: latest
 
