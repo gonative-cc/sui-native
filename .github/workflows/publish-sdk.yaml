@@ -31,7 +31,13 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Install dependencies
+      - name: Install root dependencies
+        run: bun ci
+
+      - name: Generate TypeScript from Move contracts
+        run: bun run generate-ts
+
+      - name: Install nBTC dependencies
         working-directory: ./sdk/nBTC
         run: bun ci
 
