@@ -3,7 +3,7 @@ name: Publish nBTC SDK
 permissions:
   contents: read
   id-token: write
-
+  packages: write
 on:
   release:
     types: [published]
@@ -50,6 +50,6 @@ jobs:
 
       - name: Publish to npm
         working-directory: ./sdk/nBTC
-        run: bun publish --access public
+        run: bun publish
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
