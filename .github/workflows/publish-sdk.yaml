@@ -50,6 +50,6 @@ jobs:
 
       - name: Publish to npm
         working-directory: ./sdk/nBTC
-        run: bun publish
+        run: bun publish --access public
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}

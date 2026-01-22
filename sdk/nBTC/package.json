@@ -1,5 +1,5 @@
 {
-	"name": "@sui-native/nbtc",
+	"name": "@gonative-cc/nbtc",
 	"version": "0.1.0",
 	"description": "TypeScript SDK for nBTC on Sui blockchain",
 	"type": "module",
