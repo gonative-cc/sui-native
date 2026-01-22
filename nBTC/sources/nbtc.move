@@ -78,8 +78,6 @@ const EInvalidDWalletCoordinator: vector<u8> = b"Invalid Dwallet coordinator";
 #[error]
 const ENotSigned: vector<u8> = b"redeem request is not signed";
 #[error]
-const EAlreadyConfirmed: vector<u8> = b"redeem request already confirmed";
-#[error]
 const ERedeemTxNotConfirmed: vector<u8> = b"Bitcoin redeem tx not confirmed via SPV";
 #[error]
 const EInvalidChangeRecipient: vector<u8> = b"Invalid change recipient";
@@ -174,6 +172,7 @@ public struct RedeemRequestProposeEvent has copy, drop {
 public struct BurnEvent has copy, drop {
     redeem_id: u64,
     amount: u64,
+    tx_id: vector<u8>,
 }
 
 //
@@ -529,6 +528,26 @@ public fun redeem(
     redeem_id
 }
 
+/// Finalizes a redeem request by verifying the Bitcoin transaction via SPV,
+/// burning nBTC/UTXOs, and destroying the request.
+///
+/// Emits BurnEvent containing the Bitcoin transaction ID.
+///
+/// # Parameters
+/// * `contract` - Mutable reference to the nBTC contract
+/// * `light_client` - Reference to the light client for SPV verification
+/// * `redeem_id` - ID of the redeem request to finalize
+/// * `proof` - SPV merkle proof for the Bitcoin transaction
+/// * `height` - Block height where the Bitcoin transaction was confirmed
+/// * `tx_index` - Index of the transaction within the block
+///
+/// # Aborts
+/// * `EVersionMismatch` - Wrong contract version
+/// * `EUntrustedLightClient` - Invalid light client
+/// * `sui::table::ENotFound` - Redeem ID does not exist (request already finalized or invalid ID)
+/// * `ENotSigned` - Request not yet signed
+/// * `ERedeemTxNotConfirmed` - SPV verification failed
+/// * `EInvalidChangeRecipient` - Change output wrong address
 public fun finalize_redeem(
     contract: &mut NbtcContract,
     light_client: &LightClient,
@@ -543,8 +562,7 @@ public fun finalize_redeem(
     let dwallet_id = contract.active_dwallet_id();
     let lockscript = contract.storage.dwallet(dwallet_id).lockscript();
 
-    let r = &mut contract.redeem_requests[redeem_id];
-    assert!(!r.status().is_confirmed(), EAlreadyConfirmed);
+    let mut r = contract.redeem_requests.remove(redeem_id);
     assert!(r.status().is_signed(), ENotSigned);
 
     let tx = r.compose_tx(&contract.storage);
@@ -576,12 +594,11 @@ public fun finalize_redeem(
         contract.storage.utxo_store_mut().add(change_utxo);
     };
 
-    // TODO we should remove request ID (once we solve the cleaning)
-    r.move_to_confirmed_status(redeem_id, tx_id);
-
+    r.destroy_confirmed();
     event::emit(BurnEvent {
         redeem_id,
         amount: burn_amount,
+        tx_id,
     });
 }
 
@@ -811,10 +828,6 @@ public fun remove_utxo(_: &AdminCap, contract: &mut NbtcContract, utxo_idx: u64)
     contract.storage.utxo_store_mut().remove(utxo_idx).burn();
 }
 
-public fun cleanup_redeem(_: &AdminCap, contract: &mut NbtcContract, redeem_id: u64) {
-    let r = contract.redeem_requests.remove(redeem_id);
-    redeem_request::destroy_confirmed(r);
-}
 //
 // View functions
 //
