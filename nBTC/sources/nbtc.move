@@ -811,6 +811,10 @@ public fun remove_utxo(_: &AdminCap, contract: &mut NbtcContract, utxo_idx: u64)
     contract.storage.utxo_store_mut().remove(utxo_idx).burn();
 }
 
+public fun cleanup_redeem(_: &AdminCap, contract: &mut NbtcContract, redeem_id: u64) {
+    let r = contract.redeem_requests.remove(redeem_id);
+    redeem_request::destroy_confirmed(r);
+}
 //
 // View functions
 //

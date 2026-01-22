@@ -21,6 +21,8 @@ const ERedeemTxSigningNotCompleted: vector<u8> =
 const EInvalidIkaSchnorrLength: vector<u8> = b"invalid schnorr signature length from ika format";
 #[error]
 const EUnsupportedLockscript: vector<u8> = b"unsupported lockscript";
+#[error]
+const ENotConfirmed: vector<u8> = b"redeem request is not confirmed";
 
 // signature algorithm
 const TAPROOT: u32 = 1;
@@ -404,6 +406,28 @@ public fun get_signature(
     signature.extract()
 }
 
+/// Destroys a confirmed redeem request to free storage.
+/// This function should only be called after the redeem has been finalized and confirmed.
+public(package) fun destroy_confirmed(r: RedeemRequest) {
+    assert!(r.status.is_confirmed(), ENotConfirmed);
+    let RedeemRequest {
+        redeemer: _,
+        recipient_script: _,
+        nbtc_spend_script: _,
+        status: _,
+        amount: _,
+        fee: _,
+        utxos,
+        utxo_ids: _,
+        sig_hashes: _,
+        sign_ids,
+        signatures: _,
+        created_at: _,
+        signed_input: _,
+    } = r;
+    utxos.destroy_empty();
+    sign_ids.drop();
+}
 #[test_only]
 public fun update_to_signing_for_test(r: &mut RedeemRequest, utxo_ids: vector<u64>) {
     r.set_utxos(utxo_ids);
@@ -415,4 +439,18 @@ public fun update_to_signed_for_test(r: &mut RedeemRequest, signatures: vector<v
     r.signatures = signatures;
     r.signed_input = signatures.length();
     r.status = RedeemStatus::Signed
+}
+
+#[test_only]
+public fun update_to_confirmed_for_test(r: &mut RedeemRequest, tx_id: vector<u8>) {
+    r.status = RedeemStatus::Confirmed;
+    event::emit(ConfirmedEvent {
+        id: 0, // dummy redeem_id for testing
+        btc_tx_id: tx_id,
+    });
+}
+
+#[test_only]
+public fun add_sign_id_for_test(r: &mut RedeemRequest, sign_id: ID) {
+    r.sign_ids.add(sign_id, true);
 }

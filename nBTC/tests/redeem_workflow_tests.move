@@ -2,9 +2,10 @@
 module nbtc::redeem_workflow_tests;
 
 use ika_dwallet_2pc_mpc::coordinator_inner::dwallet_cap_for_testing;
-use nbtc::nbtc::NBTC;
+use nbtc::nbtc::{NBTC, admin_cap_for_testing, cleanup_redeem};
 use nbtc::nbtc_tests::{setup, setup_with_pubkey};
 use nbtc::nbtc_utxo::new_utxo;
+use nbtc::redeem_request::{update_to_signed_for_test, update_to_confirmed_for_test};
 use nbtc::storage;
 use nbtc::test_constants::MOCK_DWALLET_ID;
 use std::unit_test::{assert_eq, destroy};
@@ -472,4 +473,68 @@ fun test_finalize_redeem_with_multiple_utxos() {
     destroy(lc);
     destroy(ctr);
     scenario.end();
+}
+
+#[test]
+fun test_cleanup_redeem_removes_confirmed_request() {
+    let (lc, mut ctr, redeem_id, mut scenario, clock) = setup_redeem_test(
+        2500,
+        1000,
+        NBTC_TAPROOT_SCRIPT,
+        false,
+    );
+
+    // mock data for redeem_request
+    let request_mut = ctr.redeem_request_mut(redeem_id);
+    request_mut.update_to_signed_for_test(vector[x"111111"]);
+    request_mut.update_to_confirmed_for_test(x"0102030405060708");
+    request_mut.add_sign_id_for_test(object::id(&lc));
+    let admin_cap = admin_cap_for_testing(scenario.ctx());
+    cleanup_redeem(&admin_cap, &mut ctr, redeem_id);
+
+    destroy(admin_cap);
+    clock.destroy_for_testing();
+    destroy(lc);
+    destroy(ctr);
+    scenario.end();
+}
+
+#[test, expected_failure]
+fun test_cleanup_redeem_removes_confirmed_request_twice() {
+    let (lc, mut ctr, redeem_id, mut scenario, clock) = setup_redeem_test(
+        2500,
+        1000,
+        NBTC_TAPROOT_SCRIPT,
+        false,
+    );
+
+    // mock data for redeem_request
+    let request_mut = ctr.redeem_request_mut(redeem_id);
+    request_mut.update_to_signed_for_test(vector[x"111111"]);
+    request_mut.update_to_confirmed_for_test(x"0102030405060708");
+    request_mut.add_sign_id_for_test(object::id(&lc));
+    let admin_cap = admin_cap_for_testing(scenario.ctx());
+    cleanup_redeem(&admin_cap, &mut ctr, redeem_id);
+    // clean up second time
+    cleanup_redeem(&admin_cap, &mut ctr, redeem_id);
+
+    destroy(admin_cap);
+    clock.destroy_for_testing();
+    destroy(lc);
+    destroy(ctr);
+    scenario.end();
+}
+
+#[test, expected_failure(abort_code = nbtc::redeem_request::ENotConfirmed)]
+fun test_cleanup_fails_when_not_confirmed() {
+    let (_lc, mut ctr, redeem_id, mut scenario, _clock) = setup_redeem_test(
+        2500,
+        1000,
+        NBTC_TAPROOT_SCRIPT,
+        false,
+    );
+
+    let admin_cap = admin_cap_for_testing(scenario.ctx());
+    cleanup_redeem(&admin_cap, &mut ctr, redeem_id);
+    abort
 }
