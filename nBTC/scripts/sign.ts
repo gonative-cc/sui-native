@@ -43,7 +43,7 @@ export async function globalPreSign() {
 
 	const presignCap = ikaTransaction.requestGlobalPresign({
 		curve: Curve.SECP256K1,
-		signatureAlgorithm: SignatureAlgorithm.ECDSASecp256k1,
+		signatureAlgorithm: SignatureAlgorithm.Taproot,
 		ikaCoin: transaction.object(ikaCoin),
 		suiCoin: transaction.gas,
 		dwalletNetworkEncryptionKeyId: dWalletEncryptionKey.id,
