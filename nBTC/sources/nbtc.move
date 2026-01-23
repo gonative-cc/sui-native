@@ -172,6 +172,7 @@ public struct RedeemRequestProposeEvent has copy, drop {
 public struct BurnEvent has copy, drop {
     redeem_id: u64,
     amount: u64,
+    /// Bitcoin withdraw TX ID
     tx_id: vector<u8>,
 }
 
