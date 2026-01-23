@@ -566,6 +566,7 @@ public fun finalize_redeem(
     assert!(r.status().is_signed(), ENotSigned);
 
     let tx = r.compose_tx(&contract.storage);
+    // TODO:: we should store tx_id in redeem request
     let tx_id = tx.tx_id();
     assert!(light_client.verify_tx(height, tx_id, proof, tx_index), ERedeemTxNotConfirmed);
 
