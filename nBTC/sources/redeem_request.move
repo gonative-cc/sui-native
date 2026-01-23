@@ -32,7 +32,6 @@ public enum RedeemStatus has copy, drop, store {
     Resolving, // finding the best UTXOs
     Signing,
     Signed,
-    Confirmed,
 }
 
 public struct RedeemRequest has store {
@@ -69,12 +68,6 @@ public struct RequestSignatureEvent has copy, drop {
     input_id: u64,
 }
 
-/// Event emitted when a redeem request is confirmed on Bitcoin network.
-public struct ConfirmedEvent has copy, drop {
-    id: u64,
-    btc_tx_id: vector<u8>,
-}
-
 // ========== RedeemStatus methods ================
 
 public fun is_resolving(status: &RedeemStatus): bool {
@@ -94,13 +87,6 @@ public fun is_signing(status: &RedeemStatus): bool {
 public fun is_signed(status: &RedeemStatus): bool {
     match (status) {
         RedeemStatus::Signed => true,
-        _ => false,
-    }
-}
-
-public fun is_confirmed(status: &RedeemStatus): bool {
-    match (status) {
-        RedeemStatus::Confirmed => true,
         _ => false,
     }
 }
@@ -148,18 +134,6 @@ public(package) fun move_to_signing_status(
     event::emit(SolvedEvent {
         id: redeem_id,
         utxo_ids: r.utxo_ids,
-    });
-}
-
-public(package) fun move_to_confirmed_status(
-    r: &mut RedeemRequest,
-    redeem_id: u64,
-    tx_id: vector<u8>,
-) {
-    r.status = RedeemStatus::Confirmed;
-    event::emit(ConfirmedEvent {
-        id: redeem_id,
-        btc_tx_id: tx_id,
     });
 }
 
@@ -404,6 +378,27 @@ public fun get_signature(
     signature.extract()
 }
 
+/// Destroys a signed/confirmed redeem request to free storage.
+/// This function should only be called after the redeem has been finalized on-chain.
+public(package) fun destroy_confirmed(r: RedeemRequest) {
+    let RedeemRequest {
+        redeemer: _,
+        recipient_script: _,
+        nbtc_spend_script: _,
+        status: _,
+        amount: _,
+        fee: _,
+        utxos,
+        utxo_ids: _,
+        sig_hashes: _,
+        sign_ids,
+        signatures: _,
+        created_at: _,
+        signed_input: _,
+    } = r;
+    utxos.destroy_empty();
+    sign_ids.drop();
+}
 #[test_only]
 public fun update_to_signing_for_test(r: &mut RedeemRequest, utxo_ids: vector<u64>) {
     r.set_utxos(utxo_ids);
@@ -415,4 +410,9 @@ public fun update_to_signed_for_test(r: &mut RedeemRequest, signatures: vector<v
     r.signatures = signatures;
     r.signed_input = signatures.length();
     r.status = RedeemStatus::Signed
+}
+
+#[test_only]
+public fun add_sign_id_for_test(r: &mut RedeemRequest, sign_id: ID) {
+    r.sign_ids.add(sign_id, true);
 }

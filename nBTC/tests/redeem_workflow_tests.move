@@ -5,6 +5,7 @@ use ika_dwallet_2pc_mpc::coordinator_inner::dwallet_cap_for_testing;
 use nbtc::nbtc::NBTC;
 use nbtc::nbtc_tests::{setup, setup_with_pubkey};
 use nbtc::nbtc_utxo::new_utxo;
+use nbtc::redeem_request::update_to_signed_for_test;
 use nbtc::storage;
 use nbtc::test_constants::MOCK_DWALLET_ID;
 use std::unit_test::{assert_eq, destroy};
@@ -322,9 +323,6 @@ fun test_finalize_redeem_burns_nbtc_and_removes_utxos() {
     let supply_after = ctr.total_supply();
     assert_eq!(supply_after, supply_before - 1000);
 
-    let request = ctr.redeem_request(redeem_id);
-    assert_eq!(request.status().is_confirmed(), true);
-
     let utxo_store = ctr.borrow_utxo_map_for_test();
     assert_eq!(utxo_store.contains(0), false);
 
@@ -367,9 +365,6 @@ fun test_finalize_redeem_no_change() {
     let supply_after = ctr.total_supply();
     assert_eq!(supply_after, supply_before - 1000);
 
-    let request = ctr.redeem_request(redeem_id);
-    assert_eq!(request.status().is_confirmed(), true);
-
     let utxo_store = ctr.borrow_utxo_map_for_test();
 
     assert_eq!(utxo_store.contains(0), false);
@@ -381,7 +376,13 @@ fun test_finalize_redeem_no_change() {
     scenario.end();
 }
 
-#[test, expected_failure(abort_code = nbtc::nbtc::EAlreadyConfirmed)]
+#[
+    test,
+    expected_failure(
+        abort_code = 1,
+        location = sui::dynamic_field,
+    ),
+] // EKeyNotFound from table::remove
 fun test_finalize_redeem_fails_when_already_confirmed() {
     let (mut lc, mut ctr, redeem_id, _scenario, _clock) = setup_redeem_test(
         2500,
@@ -406,6 +407,7 @@ fun test_finalize_redeem_fails_when_already_confirmed() {
     lc.insert_headers(vector[header]);
 
     ctr.finalize_redeem(&lc, redeem_id, vector[], 1, 0);
+    // Try to finalize again - request no longer exists in table
     ctr.finalize_redeem(&lc, redeem_id, vector[], 1, 0);
     abort
 }
@@ -464,9 +466,6 @@ fun test_finalize_redeem_with_multiple_utxos() {
     assert_eq!(utxo_store.contains(2), true);
     let change_utxo = utxo_store.get_utxo(2);
     assert_eq!(change_utxo.value(), 800);
-
-    let request = ctr.redeem_request(redeem_id);
-    assert_eq!(request.status().is_confirmed(), true);
 
     clock.destroy_for_testing();
     destroy(lc);
