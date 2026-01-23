@@ -3,7 +3,7 @@ module nbtc::redeem_workflow_tests;
 
 use ika_dwallet_2pc_mpc::coordinator_inner::dwallet_cap_for_testing;
 use nbtc::nbtc::NBTC;
-use nbtc::nbtc_tests::{setup, setup_with_pubkey};
+use nbtc::nbtc_tests::{setup, setup_with_dwallet};
 use nbtc::nbtc_utxo::new_utxo;
 use nbtc::redeem_request::update_to_signed_for_test;
 use nbtc::storage;
@@ -44,7 +44,7 @@ fun setup_redeem_test(
     );
     temp_scenario.end();
 
-    let (lc, mut ctr, mut _dwallet_coordinator, mut scenario) = setup_with_pubkey(
+    let (lc, mut ctr, mut _dwallet_coordinator, mut scenario) = setup_with_dwallet(
         ADMIN,
         dwallet_id,
         dw,

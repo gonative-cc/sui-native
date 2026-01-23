@@ -87,7 +87,7 @@ fun get_fallback_mint_data(): TestData {
 }
 
 #[test_only]
-public fun setup_with_pubkey(
+public fun setup_with_dwallet(
     sender: address,
     dwallet_id: ID,
     dw: BtcDWallet,
@@ -144,7 +144,7 @@ public fun setup(
         scenario.ctx(),
     );
     scenario.end();
-    setup_with_pubkey(sender, dwallet_id, dw)
+    setup_with_dwallet(sender, dwallet_id, dw)
 }
 
 #[test]
