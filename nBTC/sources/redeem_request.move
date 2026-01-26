@@ -140,24 +140,6 @@ public(package) fun move_to_signing_status(
         r.utxos.push_back(utxo);
     });
 
-    // user cover the fee
-    let user_receive_amount = r.amount - r.fee;
-    let mut total_spend = 0;
-    let utxo_len = r.utxos.length();
-    utxo_len.do!(|i| {
-        total_spend = total_spend + r.utxos[i].value();
-    });
-    let remain_amount = total_spend - r.amount;
-
-    // output for receiver
-    let mut outs = vector[output::new(user_receive_amount, r.recipient_script)];
-
-    if (remain_amount > 0) {
-        outs.push_back(output::new(remain_amount, r.nbtc_spend_script));
-    };
-
-    r.outputs = outs;
-
     let tx = compose_withdraw_tx(
         r.nbtc_spend_script,
         r.utxos(),
@@ -166,6 +148,7 @@ public(package) fun move_to_signing_status(
         r.fee,
     );
     r.btc_redeem_tx_id = tx.tx_id();
+    r.outputs = tx.outputs();
     event::emit(SolvedEvent {
         id: redeem_id,
         utxo_ids: r.utxo_ids,
