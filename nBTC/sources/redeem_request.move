@@ -121,8 +121,8 @@ public fun outputs(r: &RedeemRequest): &vector<output::Output> {
     &r.outputs
 }
 
-public fun btc_redeem_tx_id(r: &RedeemRequest): vector<u8> {
-    r.btc_redeem_tx_id
+public fun btc_tx_id(r: &RedeemRequest): vector<u8> {
+    r.btc_tx_id
 }
 
 public(package) fun move_to_signing_status(
@@ -147,7 +147,7 @@ public(package) fun move_to_signing_status(
         r.amount,
         r.fee,
     );
-    r.btc_redeem_tx_id = tx.tx_id();
+    r.btc_tx_id = tx.tx_id();
     r.outputs = tx.outputs();
     event::emit(SolvedEvent {
         id: redeem_id,
@@ -351,7 +351,7 @@ public fun new(
         signatures: vector::empty(),
         status: RedeemStatus::Resolving,
         utxo_ids: vector::empty(),
-        btc_redeem_tx_id: vector::empty(),
+        btc_tx_id: vector::empty(),
         outputs: vector::empty(),
         created_at,
         signed_input: 0,
