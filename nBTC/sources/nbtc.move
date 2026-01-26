@@ -642,11 +642,14 @@ public fun record_signature(
             });
         }
     });
+
     if (r.status().is_signed()) {
+        let tx = r.compose_tx(&contract.storage);
+        let tx_raw = tx::serialize_segwit(&tx);
         event::emit(RedeemWithdrawReadyEvent {
             redeem_id,
             tx_id: r.btc_redeem_tx_id(),
-            tx_raw: vector[],
+            tx_raw,
         });
     };
     results

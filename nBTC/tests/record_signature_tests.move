@@ -11,7 +11,7 @@ use nbtc::nbtc_tests::setup;
 use nbtc::nbtc_utxo::new_utxo;
 use nbtc::test_constants::{
     MOCK_DWALLET_ID,
-    NBTC_SCRIPT_PUBKEY,
+    NBTC_TAPROOT_SCRIPT,
     ADMIN,
     RECEIVER_SCRIPT,
     TX_HASH,
@@ -43,7 +43,7 @@ fun setup_redeem_in_signing_state(
 
     // Setup nBTC contract first to get scenario
     let (lc, mut ctr, mut dwallet_coordinator, mut scenario) = setup(
-        NBTC_SCRIPT_PUBKEY!(),
+        NBTC_TAPROOT_SCRIPT!(),
         ADMIN!(),
         dwallet_id,
     );
@@ -267,7 +267,7 @@ fun test_record_signature_event_emission() {
 fun test_record_signature_with_multiple_inputs() {
     let dwallet_id = MOCK_DWALLET_ID!();
     let (lc, mut ctr, mut dwallet_coordinator, mut scenario) = setup(
-        NBTC_SCRIPT_PUBKEY!(),
+        NBTC_TAPROOT_SCRIPT!(),
         ADMIN!(),
         dwallet_id,
     );
@@ -363,7 +363,7 @@ fun test_record_signature_with_multiple_inputs() {
 fun test_record_signature_batch() {
     let dwallet_id = MOCK_DWALLET_ID!();
     let (lc, mut ctr, mut dwallet_coordinator, mut scenario) = setup(
-        NBTC_SCRIPT_PUBKEY!(),
+        NBTC_TAPROOT_SCRIPT!(),
         ADMIN!(),
         dwallet_id,
     );
