@@ -628,10 +628,10 @@ public fun record_signature(
 
     input_ids.length().do!(|i| {
         let input_id = input_ids[i];
-        let signature_existed_before = !r.has_signature(input_id);
-        results.push_back(signature_existed_before);
+        let no_signature_for_input = !r.has_signature(input_id);
+        results.push_back(no_signature_for_input);
 
-        if (signature_existed_before) {
+        if (no_signature_for_input) {
             r.record_signature(dwallet_coordinator, input_id, sign_ids[i]);
             event::emit(RedeemSigCreatedEvent {
                 redeem_id,
