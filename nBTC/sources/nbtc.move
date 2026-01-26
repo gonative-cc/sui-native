@@ -169,7 +169,7 @@ public struct RedeemSigCreatedEvent has copy, drop {
 
 public struct RedeemWithdrawReadyEvent has copy, drop {
     redeem_id: u64,
-    tx_id: u64,
+    tx_id: vector<u8>,
     tx_raw: vector<u8>,
 }
 
@@ -645,7 +645,8 @@ public fun record_signature(
     if (r.status().is_signed()) {
         event::emit(RedeemWithdrawReadyEvent {
             redeem_id,
-            // TODO: add tx_id and tx_raw
+            tx_id: r.btc_redeem_tx_id(),
+            tx_raw: vector[],
         });
     };
     results

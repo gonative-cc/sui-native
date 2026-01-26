@@ -58,7 +58,6 @@ public struct RedeemRequest has store {
 /// for creating MPC signatures.
 public struct SolvedEvent has copy, drop {
     id: u64,
-    btc_redeem_tx_id: vector<u8>,
     utxo_ids: vector<u64>,
 }
 
@@ -122,6 +121,10 @@ public fun outputs(r: &RedeemRequest): &vector<output::Output> {
     &r.outputs
 }
 
+public fun btc_redeem_tx_id(r: &RedeemRequest): vector<u8> {
+    r.btc_redeem_tx_id
+}
+
 public(package) fun move_to_signing_status(
     r: &mut RedeemRequest,
     redeem_id: u64,
@@ -165,7 +168,6 @@ public(package) fun move_to_signing_status(
     r.btc_redeem_tx_id = tx.tx_id();
     event::emit(SolvedEvent {
         id: redeem_id,
-        btc_redeem_tx_id: r.btc_redeem_tx_id,
         utxo_ids: r.utxo_ids,
     });
 }
