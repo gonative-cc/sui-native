@@ -9,7 +9,7 @@ use ika::ika::IKA;
 use ika_dwallet_2pc_mpc::coordinator::DWalletCoordinator;
 use ika_dwallet_2pc_mpc::coordinator_inner::{DWalletCap, UnverifiedPresignCap};
 use nbtc::config::{Self, Config};
-use nbtc::nbtc_utxo::{Self, Utxo, validate_utxos};
+use nbtc::nbtc_utxo::{Self, validate_utxos};
 use nbtc::redeem_request::{Self, RedeemRequest};
 use nbtc::storage::{Storage, BtcDWallet, create_storage, create_dwallet};
 use nbtc::verify_payment::verify_payment;
@@ -889,16 +889,13 @@ public fun redeem_duration(contract: &NbtcContract): u64 {
 }
 
 #[test_only]
-use nbtc::nbtc_utxo::UtxoStore;
-
-#[test_only]
 /// Adds UTXO to the active wallet
-public fun add_utxo_for_test(ctr: &mut NbtcContract, _idx: u64, utxo: Utxo) {
+public fun add_utxo_for_test(ctr: &mut NbtcContract, _idx: u64, utxo: nbtc_utxo::Utxo) {
     ctr.storage.utxo_store_mut().add(utxo);
 }
 
 #[test_only]
-public fun borrow_utxo_map_for_test(ctr: &NbtcContract): &UtxoStore {
+public fun borrow_utxo_map_for_test(ctr: &NbtcContract): &nbtc_utxo::UtxoStore {
     ctr.storage.utxo_store()
 }
 
