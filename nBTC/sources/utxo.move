@@ -123,7 +123,7 @@ public fun utxo_ranking(
     utxo_store: &UtxoStore,
     utxo_ids: vector<u64>,
     withdraw_amount: u64,
-    active_dwallet_id: ID,
+    active_dwallet_id: ID, // Should we use vector for active_dwallet_ids
 ): u64 {
     let number_utxo = utxo_ids.length();
     let mut sum: u64 = 0;
