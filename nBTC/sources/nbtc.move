@@ -223,7 +223,7 @@ fun init__(witness: NBTC, config: Config, ctx: &mut TxContext): NbtcContract {
         redeem_requests: table::new<u64, RedeemRequest>(ctx),
         locked: table::new(ctx),
         storage: create_storage(ctx),
-        active_dwallet_ids: vector::empty<ID>(),
+        active_dwallet_ids: vector::empty(),
         next_redeem_req: 0,
     }
 }
@@ -313,7 +313,8 @@ fun verify_deposit(
 /// Aborts if no dwallet has been set as active.
 public fun active_dwallet_id(contract: &NbtcContract): ID {
     assert!(!contract.active_dwallet_ids.is_empty(), EInvalidDWallet);
-    contract.active_dwallet_ids[0]
+    // We use the latest active one
+    contract.active_dwallet_ids[contract.active_dwallet_ids.length() - 1];
 }
 
 public fun active_dwallet(contract: &NbtcContract): &BtcDWallet {
