@@ -157,15 +157,20 @@ public struct RedeemRequestEvent has copy, drop {
     created_at: u64,
 }
 
-public struct RedeemSigCreatedEvent has copy, drop {
-    redeem_id: u64,
-    input_id: u64,
-    is_fully_signed: bool,
-}
-
 public struct RedeemRequestProposeEvent has copy, drop {
     redeem_id: u64,
     utxo_ids: vector<u64>,
+}
+
+public struct RedeemSigCreatedEvent has copy, drop {
+    redeem_id: u64,
+    input_id: u64,
+}
+
+public struct RedeemWithdrawReadyEvent has copy, drop {
+    redeem_id: u64,
+    tx_id: u64,
+    tx_raw: vector<u8>,
 }
 
 /// Event emitted when nBTC is burned
@@ -631,16 +636,18 @@ public fun record_signature(
 
         if (signature_existed_before) {
             r.record_signature(dwallet_coordinator, input_id, sign_ids[i]);
-
-            let is_fully_signed = r.status().is_signed();
             event::emit(RedeemSigCreatedEvent {
                 redeem_id,
                 input_id,
-                is_fully_signed,
             });
         }
     });
-
+    if (r.status().is_signed()) {
+        event::emit(RedeemWithdrawReadyEvent {
+            redeem_id,
+            // TODO: add tx_id and tx_raw
+        });
+    };
     results
 }
 
