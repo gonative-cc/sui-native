@@ -1,5 +1,6 @@
 module nbtc::redeem_request;
 
+use bitcoin_lib::output::{Self, Output};
 use bitcoin_lib::script;
 use bitcoin_lib::sighash::taproot_sighash_preimage;
 use bitcoin_lib::tx;
@@ -45,6 +46,7 @@ public struct RedeemRequest has store {
     utxos: vector<Utxo>,
     utxo_ids: vector<u64>,
     btc_redeem_tx_id: vector<u8>,
+    outputs: vector<Output>,
     sig_hashes: vector<vector<u8>>,
     sign_ids: Table<ID, bool>,
     signatures: vector<vector<u8>>,
@@ -116,6 +118,10 @@ public fun utxos(r: &RedeemRequest): &vector<Utxo> {
     &r.utxos
 }
 
+public fun outputs(r: &RedeemRequest): &vector<output::Output> {
+    &r.outputs
+}
+
 public(package) fun move_to_signing_status(
     r: &mut RedeemRequest,
     redeem_id: u64,
@@ -130,6 +136,24 @@ public(package) fun move_to_signing_status(
         let utxo = storage.utxo_store_mut().remove(idx);
         r.utxos.push_back(utxo);
     });
+
+    // user cover the fee
+    let user_receive_amount = r.amount - r.fee;
+    let mut total_spend = 0;
+    let utxo_len = r.utxos.length();
+    utxo_len.do!(|i| {
+        total_spend = total_spend + r.utxos[i].value();
+    });
+    let remain_amount = total_spend - r.amount;
+
+    // output for receiver
+    let mut outs = vector[output::new(user_receive_amount, r.recipient_script)];
+
+    if (remain_amount > 0) {
+        outs.push_back(output::new(remain_amount, r.nbtc_spend_script));
+    };
+
+    r.outputs = outs;
 
     let tx = compose_withdraw_tx(
         r.nbtc_spend_script,
@@ -343,6 +367,7 @@ public fun new(
         status: RedeemStatus::Resolving,
         utxo_ids: vector::empty(),
         btc_redeem_tx_id: vector::empty(),
+        outputs: vector::empty(),
         created_at,
         signed_input: 0,
     }
@@ -401,6 +426,7 @@ public(package) fun destroy_confirmed(r: RedeemRequest) {
         utxos,
         utxo_ids: _,
         btc_redeem_tx_id: _,
+        outputs: _,
         sig_hashes: _,
         sign_ids,
         signatures: _,
