@@ -328,6 +328,12 @@ public(package) fun is_active_dwallet(contract: &NbtcContract, dwallet_id: ID): 
     exists
 }
 
+public(package) fun remove_active_dwallet_ids(contract: &mut NbtcContract, dwallet_id: ID) {
+    let (exists, idx) = contract.active_dwallet_ids.index_of(&dwallet_id);
+    assert!(exists, EInvalidDWallet);
+    contract.active_dwallet_ids.swap_remove(idx);
+}
+
 /// Mints nBTC tokens after verifying a Bitcoin transaction proof.
 /// * `tx_bytes`: raw, hex-encoded tx bytes.
 /// * `proof`: merkle proof for the tx.
@@ -817,8 +823,8 @@ public fun remove_inactive_dwallet(_: &AdminCap, contract: &mut NbtcContract, dw
     // NOTE: we don't check inactive_user_balance here because this is out of our control and the
     // spend key is recorded as a part of the Table key.
 
-    assert!(!contract.is_active_dwallet(dwallet_id), EInvalidDWallet);
     contract.storage.remove_dwallet(dwallet_id);
+    contract.remove_active_dwallet_ids(dwallet_id);
 }
 
 public(package) fun add_utxo_to_contract(
