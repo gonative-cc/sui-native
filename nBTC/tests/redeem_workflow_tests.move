@@ -7,18 +7,20 @@ use nbtc::nbtc_tests::{setup, setup_with_dwallet};
 use nbtc::nbtc_utxo::new_utxo;
 use nbtc::redeem_request::update_to_signed_for_test;
 use nbtc::storage;
-use nbtc::test_constants::MOCK_DWALLET_ID;
+use nbtc::test_constants::{
+    MOCK_DWALLET_ID,
+    NBTC_SCRIPT_PUBKEY,
+    ADMIN,
+    RECEIVER_SCRIPT,
+    TX_HASH,
+    REDEEM_FEE
+};
 use std::unit_test::{assert_eq, destroy};
 use sui::clock;
 use sui::coin::mint_for_testing;
 
-const NBTC_SCRIPT_PUBKEY: vector<u8> = x"76a914509a651dd392e1bc125323f629b67d65cca3d4bb88ac";
 const NBTC_TAPROOT_SCRIPT: vector<u8> =
     x"51200f0c8db753acbd17343a39c2f3f4e35e4be6da749f9e35137ab220e7b238a667";
-const ADMIN: address = @0xad;
-const RECEIVER_SCRIPT: vector<u8> = x"00140000000000000000000000000000000000000002";
-const TX_HASH: vector<u8> = x"06ce677fd511851bb6cdacebed863d12dfd231d810e8e9fcba6e791001adf3a6";
-const REDEEM_FEE: u64 = 150;
 
 #[test_only]
 fun setup_redeem_test(
@@ -35,7 +37,7 @@ fun setup_redeem_test(
 ) {
     let dwallet_id = MOCK_DWALLET_ID!();
 
-    let mut temp_scenario = sui::test_scenario::begin(ADMIN);
+    let mut temp_scenario = sui::test_scenario::begin(ADMIN!());
     let dw = storage::create_dwallet(
         dwallet_cap_for_testing(dwallet_id, temp_scenario.ctx()),
         lockscript,
@@ -45,18 +47,24 @@ fun setup_redeem_test(
     temp_scenario.end();
 
     let (lc, mut ctr, mut _dwallet_coordinator, mut scenario) = setup_with_dwallet(
-        ADMIN,
+        ADMIN!(),
         dwallet_id,
         dw,
     );
 
-    let utxo = new_utxo(TX_HASH, 0, utxo_amount, dwallet_id);
+    let utxo = new_utxo(TX_HASH!(), 0, utxo_amount, dwallet_id);
     ctr.add_utxo_for_test(0, utxo);
 
     let nbtc_coin = ctr.testing_mint(redeem_amount, scenario.ctx());
 
     let mut clock = clock::create_for_testing(scenario.ctx());
-    let redeem_id = ctr.redeem(nbtc_coin, RECEIVER_SCRIPT, REDEEM_FEE, &clock, scenario.ctx());
+    let redeem_id = ctr.redeem(
+        nbtc_coin,
+        RECEIVER_SCRIPT!(),
+        REDEEM_FEE!(),
+        &clock,
+        scenario.ctx(),
+    );
 
     if (proceed_to_signed) {
         ctr.propose_utxos(redeem_id, vector[0], &clock);
@@ -78,7 +86,7 @@ fun test_redeem_workflow_happy_case() {
     let (lc, mut ctr, redeem_id, scenario, mut clock) = setup_redeem_test(
         2500,
         1000,
-        NBTC_SCRIPT_PUBKEY,
+        NBTC_SCRIPT_PUBKEY!(),
         false,
     );
 
@@ -111,7 +119,7 @@ fun test_finalize_fails_with_no_utxos_proposed() {
     let (lc, mut ctr, redeem_id, scenario, mut clock) = setup_redeem_test(
         1500,
         1000,
-        NBTC_SCRIPT_PUBKEY,
+        NBTC_SCRIPT_PUBKEY!(),
         false,
     );
 
@@ -130,7 +138,7 @@ fun test_propose_fails_with_insufficient_amount() {
     let (lc, mut ctr, redeem_id, scenario, clock) = setup_redeem_test(
         500,
         1000,
-        NBTC_SCRIPT_PUBKEY,
+        NBTC_SCRIPT_PUBKEY!(),
         false,
     );
 
@@ -148,7 +156,7 @@ fun test_finalize_fails_before_deadline() {
     let (lc, mut ctr, redeem_id, scenario, clock) = setup_redeem_test(
         1500,
         1000,
-        NBTC_SCRIPT_PUBKEY,
+        NBTC_SCRIPT_PUBKEY!(),
         false,
     );
 
@@ -168,7 +176,7 @@ fun test_propose_fails_when_not_resolving() {
     let (lc, mut ctr, redeem_id, scenario, mut clock) = setup_redeem_test(
         1500,
         1000,
-        NBTC_SCRIPT_PUBKEY,
+        NBTC_SCRIPT_PUBKEY!(),
         false,
     );
 
@@ -192,7 +200,7 @@ fun test_propose_utxos_unlocks_old_and_locks_new() {
     let (lc, mut ctr, redeem_id, scenario, clock) = setup_redeem_test(
         1000,
         1500,
-        NBTC_SCRIPT_PUBKEY,
+        NBTC_SCRIPT_PUBKEY!(),
         false,
     );
 
@@ -236,13 +244,13 @@ fun test_propose_utxos_unlocks_old_and_locks_new() {
 #[test, expected_failure(abort_code = nbtc::nbtc_utxo::EUtxoLockedByAnotherRequest)]
 fun test_two_requests_cannot_share_utxos() {
     let (_lc, mut ctr, _dwallet_coordinator, mut scenario) = setup(
-        NBTC_SCRIPT_PUBKEY,
-        ADMIN,
+        NBTC_SCRIPT_PUBKEY!(),
+        ADMIN!(),
         MOCK_DWALLET_ID!(),
     );
 
     let dwallet_id = MOCK_DWALLET_ID!();
-    let utxo_1 = new_utxo(TX_HASH, 0, 2000, dwallet_id);
+    let utxo_1 = new_utxo(TX_HASH!(), 0, 2000, dwallet_id);
     ctr.add_utxo_for_test(0, utxo_1);
 
     let utxo_2 = new_utxo(x"01", 1, 2000, dwallet_id);
@@ -250,12 +258,24 @@ fun test_two_requests_cannot_share_utxos() {
 
     let nbtc_coin_1 = mint_for_testing<NBTC>(1000, scenario.ctx());
     let clock = clock::create_for_testing(scenario.ctx());
-    let redeem_id_1 = ctr.redeem(nbtc_coin_1, RECEIVER_SCRIPT, REDEEM_FEE, &clock, scenario.ctx());
+    let redeem_id_1 = ctr.redeem(
+        nbtc_coin_1,
+        RECEIVER_SCRIPT!(),
+        REDEEM_FEE!(),
+        &clock,
+        scenario.ctx(),
+    );
 
     ctr.propose_utxos(redeem_id_1, vector[0], &clock);
 
     let nbtc_coin_2 = mint_for_testing<NBTC>(1000, scenario.ctx());
-    let redeem_id_2 = ctr.redeem(nbtc_coin_2, RECEIVER_SCRIPT, REDEEM_FEE, &clock, scenario.ctx());
+    let redeem_id_2 = ctr.redeem(
+        nbtc_coin_2,
+        RECEIVER_SCRIPT!(),
+        REDEEM_FEE!(),
+        &clock,
+        scenario.ctx(),
+    );
 
     ctr.propose_utxos(redeem_id_2, vector[0], &clock);
 
@@ -265,14 +285,14 @@ fun test_two_requests_cannot_share_utxos() {
 #[test, expected_failure(abort_code = nbtc::nbtc_utxo::EUtxoLockedByAnotherRequest)]
 fun test_cannot_propose_overlapping_locked_utxos() {
     let (_lc, mut ctr, _dwallet_coordinator, mut scenario) = setup(
-        NBTC_SCRIPT_PUBKEY,
-        ADMIN,
+        NBTC_SCRIPT_PUBKEY!(),
+        ADMIN!(),
         MOCK_DWALLET_ID!(),
     );
 
     let dwallet_id = MOCK_DWALLET_ID!();
 
-    let utxo_1 = new_utxo(TX_HASH, 0, 2000, dwallet_id);
+    let utxo_1 = new_utxo(TX_HASH!(), 0, 2000, dwallet_id);
     ctr.add_utxo_for_test(0, utxo_1);
 
     let utxo_2 = new_utxo(x"01", 1, 2000, dwallet_id);
@@ -284,11 +304,23 @@ fun test_cannot_propose_overlapping_locked_utxos() {
     let clock = clock::create_for_testing(scenario.ctx());
 
     let nbtc_coin_1 = mint_for_testing<NBTC>(1500, scenario.ctx());
-    let redeem_id_1 = ctr.redeem(nbtc_coin_1, RECEIVER_SCRIPT, REDEEM_FEE, &clock, scenario.ctx());
+    let redeem_id_1 = ctr.redeem(
+        nbtc_coin_1,
+        RECEIVER_SCRIPT!(),
+        REDEEM_FEE!(),
+        &clock,
+        scenario.ctx(),
+    );
     ctr.propose_utxos(redeem_id_1, vector[0, 1], &clock);
 
     let nbtc_coin_2 = mint_for_testing<NBTC>(1500, scenario.ctx());
-    let redeem_id_2 = ctr.redeem(nbtc_coin_2, RECEIVER_SCRIPT, REDEEM_FEE, &clock, scenario.ctx());
+    let redeem_id_2 = ctr.redeem(
+        nbtc_coin_2,
+        RECEIVER_SCRIPT!(),
+        REDEEM_FEE!(),
+        &clock,
+        scenario.ctx(),
+    );
 
     ctr.propose_utxos(redeem_id_2, vector[1, 2], &clock);
 

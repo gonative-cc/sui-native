@@ -9,7 +9,7 @@ use ika_dwallet_2pc_mpc::coordinator::{coordinator_for_test, DWalletCoordinator}
 use ika_dwallet_2pc_mpc::coordinator_inner::{dwallet_coordinator_internal, dwallet_cap_for_testing};
 use nbtc::nbtc::{Self, NbtcContract, EMintAmountIsZero, ETxAlreadyUsed, EAlreadyUpdated, NBTC};
 use nbtc::storage::{Self, BtcDWallet};
-use nbtc::test_constants::MOCK_DWALLET_ID;
+use nbtc::test_constants::{MOCK_DWALLET_ID, NBTC_SCRIPT_PUBKEY, FALLBACK_ADDR};
 use std::unit_test::{assert_eq, destroy};
 use sui::address;
 use sui::coin::Coin;
@@ -17,8 +17,6 @@ use sui::test_scenario::{Self, take_from_address, Scenario};
 
 // The fallback Sui address to receive nBTC if OP_RETURN data is invalid or missing.
 // Use for test
-const FALLBACK_ADDR: address = @0xB0B;
-const NBTC_SCRIPT_PUBKEY: vector<u8> = x"76a914509a651dd392e1bc125323f629b67d65cca3d4bb88ac";
 
 // copy from nbtc.move
 const MINT_OP_APPLY_FEE: u32 = 1;
@@ -81,7 +79,7 @@ fun get_fallback_mint_data(): TestData {
         proof: vector[x"514956dad9c4d52fbdb3ae846646d1ad1ba34587dee9c82a291447a9f9909061"], // pre-image: single sha256 over the tx_2
         height: 0,
         tx_index: 0,
-        expected_recipient: FALLBACK_ADDR,
+        expected_recipient: FALLBACK_ADDR!(),
         expected_amount: 100_000_000,
     }
 }
@@ -120,7 +118,7 @@ public fun setup_with_dwallet(
     let lc = new_light_client(bitcoin_spv::params::regtest(), 0, headers, 0, 1, scenario.ctx());
     let mut ctr = nbtc::init_for_testing(
         lc.client_id().to_address(),
-        FALLBACK_ADDR,
+        FALLBACK_ADDR!(),
         coordinator_id,
         scenario.ctx(),
     );
@@ -151,7 +149,7 @@ public fun setup(
 fun test_nbtc_mint() {
     let sender = @0x1;
     let (lc, mut ctr, dwallet_coordinator, mut scenario) = setup(
-        NBTC_SCRIPT_PUBKEY,
+        NBTC_SCRIPT_PUBKEY!(),
         sender,
         MOCK_DWALLET_ID!(),
     );
@@ -188,7 +186,7 @@ fun test_nbtc_mint() {
 fun test_mint_with_fee() {
     let sender = @0x1;
     let (lc, mut ctr, dwallet_coordinator, mut scenario) = setup(
-        NBTC_SCRIPT_PUBKEY,
+        NBTC_SCRIPT_PUBKEY!(),
         sender,
         MOCK_DWALLET_ID!(),
     );
@@ -259,7 +257,7 @@ fun test_nbtc_mint_fail_amount_is_zero() {
 fun test_nbtc_mint_fail_tx_already_used() {
     let sender = @0x1;
     let (lc, mut ctr, dwallet_coordinator, mut scenario) = setup(
-        NBTC_SCRIPT_PUBKEY,
+        NBTC_SCRIPT_PUBKEY!(),
         sender,
         object::id_from_address(@0x01),
     );
@@ -299,7 +297,7 @@ fun test_nbtc_mint_fail_tx_already_used() {
 fun test_update_version_fail() {
     let sender = @0x01;
     let (_lc, mut ctr, _dwallet_coordinator, _scenario) = setup(
-        NBTC_SCRIPT_PUBKEY,
+        NBTC_SCRIPT_PUBKEY!(),
         sender,
         object::id_from_address(@0x01),
     );

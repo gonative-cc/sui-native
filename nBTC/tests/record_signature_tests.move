@@ -9,16 +9,17 @@ use ika_dwallet_2pc_mpc::coordinator::{
 use nbtc::nbtc::NBTC;
 use nbtc::nbtc_tests::setup;
 use nbtc::nbtc_utxo::new_utxo;
-use nbtc::test_constants::MOCK_DWALLET_ID;
+use nbtc::test_constants::{
+    MOCK_DWALLET_ID,
+    NBTC_SCRIPT_PUBKEY,
+    ADMIN,
+    RECEIVER_SCRIPT,
+    TX_HASH,
+    REDEEM_FEE
+};
 use std::unit_test::{assert_eq, destroy};
 use sui::clock;
 use sui::coin::mint_for_testing;
-
-const NBTC_SCRIPT_PUBKEY: vector<u8> = x"76a914509a651dd392e1bc125323f629b67d65cca3d4bb88ac";
-const ADMIN: address = @0xad;
-const RECEIVER_SCRIPT: vector<u8> = x"0014000000000000000000000000000000000000000002";
-const TX_HASH: vector<u8> = x"06ce677fd511851bb6cdacebed863d12dfd231d810e8e9fcba6e791001adf3a6";
-const REDEEM_FEE: u64 = 150;
 
 const MOCK_SIGNATURE: vector<u8> =
     x"b693a0797b24bae12ed0516a2f5ba765618dca89b75e498ba5b745b71644362298a45ca39230d10a02ee6290a91cebf9839600f7e35158a447ea182ea0e022ae";
@@ -42,21 +43,27 @@ fun setup_redeem_in_signing_state(
 
     // Setup nBTC contract first to get scenario
     let (lc, mut ctr, mut dwallet_coordinator, mut scenario) = setup(
-        NBTC_SCRIPT_PUBKEY,
-        ADMIN,
+        NBTC_SCRIPT_PUBKEY!(),
+        ADMIN!(),
         dwallet_id,
     );
 
     // Create real DWalletCoordinator with inner state
     // The coordinator is already returned by setup with dwallet added
 
-    let utxo = new_utxo(TX_HASH, 0, utxo_amount, dwallet_id);
+    let utxo = new_utxo(TX_HASH!(), 0, utxo_amount, dwallet_id);
     ctr.add_utxo_for_test(0, utxo);
 
     let nbtc_coin = ctr.testing_mint(redeem_amount, scenario.ctx());
 
     let mut clock = clock::create_for_testing(scenario.ctx());
-    let redeem_id = ctr.redeem(nbtc_coin, RECEIVER_SCRIPT, REDEEM_FEE, &clock, scenario.ctx());
+    let redeem_id = ctr.redeem(
+        nbtc_coin,
+        RECEIVER_SCRIPT!(),
+        REDEEM_FEE!(),
+        &clock,
+        scenario.ctx(),
+    );
 
     // Move to signing state
     ctr.propose_utxos(redeem_id, vector[0], &clock);
@@ -237,7 +244,7 @@ fun test_record_signature_event_emission() {
     assert_eq!(results1[0], true);
 
     // Move to next transaction to check events
-    scenario.next_tx(ADMIN);
+    scenario.next_tx(ADMIN!());
 
     // Second call - should NOT emit event (early return)
     let results2 = ctr.record_signature(
@@ -260,15 +267,15 @@ fun test_record_signature_event_emission() {
 fun test_record_signature_with_multiple_inputs() {
     let dwallet_id = MOCK_DWALLET_ID!();
     let (lc, mut ctr, mut dwallet_coordinator, mut scenario) = setup(
-        NBTC_SCRIPT_PUBKEY,
-        ADMIN,
+        NBTC_SCRIPT_PUBKEY!(),
+        ADMIN!(),
         dwallet_id,
     );
 
     // Add dwallet to coordinator is already done in setup
 
     // Add two UTXOs
-    let utxo1 = new_utxo(TX_HASH, 0, 1000, dwallet_id);
+    let utxo1 = new_utxo(TX_HASH!(), 0, 1000, dwallet_id);
     ctr.add_utxo_for_test(0, utxo1);
 
     let utxo2 = new_utxo(
@@ -281,7 +288,13 @@ fun test_record_signature_with_multiple_inputs() {
 
     let nbtc_coin = mint_for_testing<NBTC>(1500, scenario.ctx());
     let mut clock = clock::create_for_testing(scenario.ctx());
-    let redeem_id = ctr.redeem(nbtc_coin, RECEIVER_SCRIPT, REDEEM_FEE, &clock, scenario.ctx());
+    let redeem_id = ctr.redeem(
+        nbtc_coin,
+        RECEIVER_SCRIPT!(),
+        REDEEM_FEE!(),
+        &clock,
+        scenario.ctx(),
+    );
 
     // Move to signing state with both UTXOs
     ctr.propose_utxos(redeem_id, vector[0, 1], &clock);
@@ -350,15 +363,15 @@ fun test_record_signature_with_multiple_inputs() {
 fun test_record_signature_batch() {
     let dwallet_id = MOCK_DWALLET_ID!();
     let (lc, mut ctr, mut dwallet_coordinator, mut scenario) = setup(
-        NBTC_SCRIPT_PUBKEY,
-        ADMIN,
+        NBTC_SCRIPT_PUBKEY!(),
+        ADMIN!(),
         dwallet_id,
     );
 
     // Add dwallet to coordinator is already done in setup
 
     // Add two UTXOs
-    let utxo1 = new_utxo(TX_HASH, 0, 1000, dwallet_id);
+    let utxo1 = new_utxo(TX_HASH!(), 0, 1000, dwallet_id);
     ctr.add_utxo_for_test(0, utxo1);
 
     let utxo2 = new_utxo(
@@ -371,7 +384,13 @@ fun test_record_signature_batch() {
 
     let nbtc_coin = mint_for_testing<NBTC>(1500, scenario.ctx());
     let mut clock = clock::create_for_testing(scenario.ctx());
-    let redeem_id = ctr.redeem(nbtc_coin, RECEIVER_SCRIPT, REDEEM_FEE, &clock, scenario.ctx());
+    let redeem_id = ctr.redeem(
+        nbtc_coin,
+        RECEIVER_SCRIPT!(),
+        REDEEM_FEE!(),
+        &clock,
+        scenario.ctx(),
+    );
 
     // Move to signing state with both UTXOs
     ctr.propose_utxos(redeem_id, vector[0, 1], &clock);
