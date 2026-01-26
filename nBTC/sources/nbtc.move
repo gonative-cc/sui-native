@@ -571,13 +571,10 @@ public fun finalize_redeem(
     let mut r = contract.redeem_requests.remove(redeem_id);
     assert!(r.status().is_signed(), ENotSigned);
 
-    let tx = r.compose_tx(&contract.storage);
-    // TODO:: we should store tx_id in redeem request
-    let tx_id = tx.tx_id();
+    let tx_id = r.btc_redeem_tx_id();
     assert!(light_client.verify_tx(height, tx_id, proof, tx_index), ERedeemTxNotConfirmed);
 
     // Burn UTXOs and add a new remainder UTXO
-
     let spent_utxos_ids = r.utxo_ids();
 
     spent_utxos_ids.length().do!(|i| {
@@ -593,7 +590,7 @@ public fun finalize_redeem(
     let burn_amount = coin_to_burn.value();
     contract.cap.burn(coin_to_burn);
 
-    let outputs = tx.outputs();
+    let outputs = r.outputs();
     if (outputs.length() > 1) {
         let change_output = &outputs[1];
         assert!(change_output.script_pubkey() == lockscript, EInvalidChangeRecipient);
