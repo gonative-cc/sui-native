@@ -571,7 +571,7 @@ public fun finalize_redeem(
     let mut r = contract.redeem_requests.remove(redeem_id);
     assert!(r.status().is_signed(), ENotSigned);
 
-    let tx_id = r.btc_redeem_tx_id();
+    let tx_id = r.btc_tx_id();
     assert!(light_client.verify_tx(height, tx_id, proof, tx_index), ERedeemTxNotConfirmed);
 
     // Burn UTXOs and add a new remainder UTXO
@@ -608,6 +608,7 @@ public fun finalize_redeem(
 
 /// Batch record multiple signatures for a redeem request in a single tx.
 /// Takes a single redeem_id and vectors of input_ids and sign_ids.
+/// * `sign_ids` - IKA sign session IDs returned from `request_utxo_sig` calls
 /// Returns vector of booleans indicating which signatures were newly recorded in this call.
 public fun record_signature(
     contract: &mut NbtcContract,
@@ -645,7 +646,7 @@ public fun record_signature(
         let tx_raw = tx::serialize_segwit(&tx);
         event::emit(RedeemWithdrawReadyEvent {
             redeem_id,
-            tx_id: r.btc_redeem_tx_id(),
+            tx_id: r.btc_tx_id(),
             tx_raw,
         });
     };
