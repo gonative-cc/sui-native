@@ -44,9 +44,6 @@ public struct RedeemRequest has store {
     fee: u64,
     utxos: vector<Utxo>,
     utxo_ids: vector<u64>,
-    // TODO we don't need vecmap - we can use a simple vector with the same order as UTXOs
-    // so we can have only one vector to contain hashes, ids and signatures
-    // and we need to know the mapping between sign_id and utxo idx
     sig_hashes: vector<vector<u8>>,
     sign_ids: Table<ID, bool>,
     signatures: vector<vector<u8>>,
