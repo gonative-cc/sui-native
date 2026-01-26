@@ -115,7 +115,8 @@ public struct NbtcContract has key, store {
     // lock nbtc for redeem, this is a mapping from request id to nBTC redeem coin
     locked: Table<u64, Coin<NBTC>>,
     storage: Storage,
-    // should have one active_dwallet_id
+    // Vector of active dwallet IDs. The most recently added (last element) is the current active dwallet.
+    // Older dwallets can be rotated back by removing and re-adding.
     active_dwallet_ids: vector<ID>,
     next_redeem_req: u64,
 }
@@ -309,11 +310,14 @@ fun verify_deposit(
 // Public methods
 //
 
-/// Returns the ID of the first active dwallet.
+public fun active_dwallet_ids(contract: &NbtcContract): vector<ID> {
+    contract.active_dwallet_ids
+}
+
+/// Returns the ID of the current active dwallet (last element in the vector).
 /// Aborts if no dwallet has been set as active.
 public fun active_dwallet_id(contract: &NbtcContract): ID {
     assert!(!contract.active_dwallet_ids.is_empty(), EInvalidDWallet);
-    // We use the latest active one
     contract.active_dwallet_ids[contract.active_dwallet_ids.length() - 1]
 }
 
