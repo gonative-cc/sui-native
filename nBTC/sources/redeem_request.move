@@ -44,9 +44,7 @@ public struct RedeemRequest has store {
     fee: u64,
     utxos: vector<Utxo>,
     utxo_ids: vector<u64>,
-    // TODO we don't need vecmap - we can use a simple vector with the same order as UTXOs
-    // so we can have only one vector to contain hashes, ids and signatures
-    // and we need to know the mapping between sign_id and utxo idx
+    btc_redeem_tx_id: vector<u8>,
     sig_hashes: vector<vector<u8>>,
     sign_ids: Table<ID, bool>,
     signatures: vector<vector<u8>>,
@@ -58,6 +56,7 @@ public struct RedeemRequest has store {
 /// for creating MPC signatures.
 public struct SolvedEvent has copy, drop {
     id: u64,
+    btc_redeem_tx_id: vector<u8>,
     utxo_ids: vector<u64>,
 }
 
@@ -131,8 +130,18 @@ public(package) fun move_to_signing_status(
         let utxo = storage.utxo_store_mut().remove(idx);
         r.utxos.push_back(utxo);
     });
+
+    let tx = compose_withdraw_tx(
+        r.nbtc_spend_script,
+        r.utxos(),
+        r.recipient_script,
+        r.amount,
+        r.fee,
+    );
+    r.btc_redeem_tx_id = tx.tx_id();
     event::emit(SolvedEvent {
         id: redeem_id,
+        btc_redeem_tx_id: r.btc_redeem_tx_id,
         utxo_ids: r.utxo_ids,
     });
 }
@@ -333,6 +342,7 @@ public fun new(
         signatures: vector::empty(),
         status: RedeemStatus::Resolving,
         utxo_ids: vector::empty(),
+        btc_redeem_tx_id: vector::empty(),
         created_at,
         signed_input: 0,
     }
@@ -390,6 +400,7 @@ public(package) fun destroy_confirmed(r: RedeemRequest) {
         fee: _,
         utxos,
         utxo_ids: _,
+        btc_redeem_tx_id: _,
         sig_hashes: _,
         sign_ids,
         signatures: _,
