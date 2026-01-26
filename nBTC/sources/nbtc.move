@@ -314,7 +314,7 @@ fun verify_deposit(
 public fun active_dwallet_id(contract: &NbtcContract): ID {
     assert!(!contract.active_dwallet_ids.is_empty(), EInvalidDWallet);
     // We use the latest active one
-    contract.active_dwallet_ids[contract.active_dwallet_ids.length() - 1];
+    contract.active_dwallet_ids[contract.active_dwallet_ids.length() - 1]
 }
 
 public fun active_dwallet(contract: &NbtcContract): &BtcDWallet {
