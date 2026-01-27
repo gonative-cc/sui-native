@@ -45,7 +45,15 @@ program
 
 		let msgCentralSig = await createUserSigMessage(ikaClient, dwalletID, presignId, signHash);
 
-		let signID = await requestUtxoSig(redeem_id, input_idx, presignId, msgCentralSig, config);
+		let signID = await requestUtxoSig(
+			suiClient,
+			ikaClient,
+			redeem_id,
+			input_idx,
+			presignId,
+			msgCentralSig,
+			config,
+		);
 		console.log("Ika sign id =", signID);
 	});
 
