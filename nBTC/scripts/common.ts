@@ -53,12 +53,12 @@ export function createSuiClient(packageId?: string) {
 		url: getFullnodeUrl("testnet"),
 		mvr: packageId
 			? {
-				overrides: {
-					packages: {
-						"@local-pkg/nbtc": packageId,
+					overrides: {
+						packages: {
+							"@local-pkg/nbtc": packageId,
+						},
 					},
-				},
-			}
+				}
 			: undefined,
 	});
 }
@@ -218,5 +218,5 @@ export async function getDwalletMetadata(dWallet: DWalletWithState<"Active">): P
  * @returns A Promise that resolves after the specified time.
  */
 export function delay(ms: number): Promise<void> {
-	return new Promise(resolve => setTimeout(resolve, ms));
+	return new Promise((resolve) => setTimeout(resolve, ms));
 }
