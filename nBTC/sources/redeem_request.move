@@ -8,7 +8,7 @@ use ika::ika::IKA;
 use ika_dwallet_2pc_mpc::coordinator::{DWalletCoordinator, register_session_identifier};
 use ika_dwallet_2pc_mpc::coordinator_inner::UnverifiedPresignCap;
 use nbtc::nbtc_utxo::Utxo;
-use nbtc::storage::Storage;
+use nbtc::storage::{Self, Storage};
 use nbtc::tx_composer::compose_withdraw_tx;
 use sui::coin::Coin;
 use sui::event;
@@ -22,11 +22,13 @@ const ERedeemTxSigningNotCompleted: vector<u8> =
 const EInvalidIkaSchnorrLength: vector<u8> = b"invalid schnorr signature length from ika format";
 #[error]
 const EUnsupportedLockscript: vector<u8> = b"unsupported lockscript";
+#[error]
+const EInvalidLeafHash: vector<u8> = b"invalid leaf hash for taproot script spending";
 
 // signature algorithm
 const TAPROOT: u32 = 1;
 // hash function
-const SHA256: u32 = 1;
+const SHA256: u32 = 0;
 const SIGNHASH_ALL: u8 = 0x01;
 
 public enum RedeemStatus has copy, drop, store {
@@ -172,13 +174,15 @@ public(package) fun request_utxo_sig(
     redeem_id: u64,
     input_id: u64,
     msg_central_sig: vector<u8>,
-    sig_hash: vector<u8>,
     presign: UnverifiedPresignCap,
     payment_ika: &mut Coin<IKA>,
     payment_sui: &mut Coin<SUI>,
     ctx: &mut TxContext,
 ) {
     let verified_presign = dwallet_coordinator.verify_presign_cap(presign, ctx);
+
+    // This should include other information for create sign hash
+    let sig_hash = r.sig_hash(input_id, storage);
 
     let utxo = r.utxo_at(input_id);
     let dwallet_id = utxo.dwallet_id();
@@ -209,6 +213,101 @@ public(package) fun request_utxo_sig(
         sign_id,
         input_id,
     });
+}
+
+public(package) fun request_utxo_sig_for_tapscript(
+    r: &RedeemRequest,
+    dwallet_coordinator: &mut DWalletCoordinator,
+    storage: &Storage,
+    redeem_id: u64,
+    input_id: u64,
+    msg_central_sig: vector<u8>,
+    leaf_script_hash: vector<u8>,
+    merkle_path: vector<vector<u8>>,
+    presign: UnverifiedPresignCap,
+    payment_ika: &mut Coin<IKA>,
+    payment_sui: &mut Coin<SUI>,
+    ctx: &mut TxContext,
+) {
+    let utxo = r.utxo_at(input_id);
+    let dwallet_id = utxo.dwallet_id();
+    let dwallet = storage.dwallet(dwallet_id);
+
+    assert!(
+        storage::verify_taproot_script(dwallet, leaf_script_hash, merkle_path),
+        EInvalidLeafHash,
+    );
+
+    let sig_hash = sig_hash_with_leaf_hash(r, input_id, leaf_script_hash, storage);
+
+    let verified_presign = dwallet_coordinator.verify_presign_cap(presign, ctx);
+
+    let dwallet_cap = dwallet.cap();
+
+    let message_approval = dwallet_coordinator.approve_message(
+        dwallet_cap,
+        TAPROOT,
+        SHA256,
+        sig_hash,
+    );
+    let random_bytes = tx_context::fresh_object_address(ctx).to_bytes();
+    let ika_session = dwallet_coordinator.register_session_identifier(random_bytes, ctx);
+    let sign_id = dwallet_coordinator.request_sign_and_return_id(
+        verified_presign,
+        message_approval,
+        msg_central_sig,
+        ika_session,
+        payment_ika,
+        payment_sui,
+        ctx,
+    );
+
+    event::emit(RequestSignatureEvent {
+        redeem_id,
+        sign_id,
+        input_id,
+    });
+}
+
+/// Returns sighash for input_id-th in redeem transaction with leaf script hash (for taproot script path).
+///
+/// Aborts if `input_id` is out of bounds (>= number of inputs).
+public fun sig_hash_with_leaf_hash(
+    r: &RedeemRequest,
+    input_id: u64,
+    leaf_hash: vector<u8>,
+    storage: &Storage,
+): vector<u8> {
+    let inputs = r.utxos();
+    let utxo = &inputs[input_id];
+    let dwallet_id = utxo.dwallet_id();
+    let lockscript = storage.dwallet(dwallet_id).lockscript();
+    let tx = compose_withdraw_tx(
+        lockscript,
+        inputs,
+        r.recipient_script,
+        r.amount,
+        r.fee,
+    );
+
+    if (script::is_taproot(lockscript)) {
+        let previous_pubscripts = vector::tabulate!(
+            inputs.length(),
+            |i| storage.dwallet(inputs[i].dwallet_id()).lockscript(),
+        );
+        let previous_values = vector::tabulate!(inputs.length(), |i| inputs[i].value());
+
+        return taproot_sighash_preimage(
+                &tx,
+                input_id as u32,
+                previous_pubscripts,
+                previous_values,
+                SIGNHASH_ALL,
+                option::some(leaf_hash),
+                option::none(),
+            )
+    };
+    abort EUnsupportedLockscript
 }
 
 // /// Sets signature request metadata for a specific input.

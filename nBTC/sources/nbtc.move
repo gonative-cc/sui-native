@@ -478,14 +478,48 @@ public fun request_utxo_sig(
     let request = &mut contract.redeem_requests[redeem_id];
     assert!(request.status().is_signing(), ENotReadlyForSign);
     assert!(!request.has_signature(input_id), EInputAlreadyUsed);
-    let sig_hash = request.sig_hash(input_id, &contract.storage);
     request.request_utxo_sig(
         dwallet_coordinator,
         &contract.storage,
         redeem_id,
         input_id,
         msg_central_sig,
-        sig_hash,
+        presign,
+        payment_ika,
+        payment_sui,
+        ctx,
+    );
+}
+
+public fun request_utxo_sig_for_tapscript(
+    contract: &NbtcContract,
+    dwallet_coordinator: &mut DWalletCoordinator,
+    redeem_id: u64,
+    input_id: u64,
+    msg_central_sig: vector<u8>,
+    leaf_script_hash: vector<u8>,
+    merkle_path: vector<vector<u8>>,
+    presign: UnverifiedPresignCap,
+    payment_ika: &mut Coin<IKA>,
+    payment_sui: &mut Coin<SUI>,
+    ctx: &mut TxContext,
+) {
+    assert!(contract.version == VERSION, EVersionMismatch);
+    assert!(
+        object::id(dwallet_coordinator) == contract.config.dwallet_coordinator(),
+        EInvalidDWalletCoordinator,
+    );
+    let request = &contract.redeem_requests[redeem_id];
+    assert!(request.status().is_signing(), ENotReadlyForSign);
+    assert!(!request.has_signature(input_id), EInputAlreadyUsed);
+    request.request_utxo_sig_for_tapscript(
+        dwallet_coordinator,
+        &contract.storage,
+        redeem_id,
+        input_id,
+        msg_central_sig,
+        leaf_script_hash,
+        merkle_path,
         presign,
         payment_ika,
         payment_sui,
