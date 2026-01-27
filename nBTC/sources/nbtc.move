@@ -609,14 +609,15 @@ public fun finalize_redeem(
 /// Batch record multiple signatures for a redeem request in a single tx.
 /// Takes a single redeem_id and vectors of input_ids and sign_ids.
 /// * `sign_ids` - IKA sign session IDs returned from `request_utxo_sig` calls
-/// Returns vector of booleans indicating which signatures were newly recorded in this call.
+/// Emits a RedeemSigCreatedEvent for each newly recorded signature.
+/// Emits a RedeemWithdrawReadyEvent when all signatures are recorded.
 public fun record_signature(
     contract: &mut NbtcContract,
     dwallet_coordinator: &DWalletCoordinator,
     redeem_id: u64,
     input_ids: vector<u64>,
     sign_ids: vector<ID>,
-): vector<bool> {
+) {
     assert!(contract.version == VERSION, EVersionMismatch);
     assert!(
         object::id(dwallet_coordinator) == contract.config.dwallet_coordinator(),
@@ -625,12 +626,10 @@ public fun record_signature(
     assert!(input_ids.length() == sign_ids.length(), EInputSignIdLengthMismatch);
 
     let r = &mut contract.redeem_requests[redeem_id];
-    let mut results = vector::empty<bool>();
 
     input_ids.length().do!(|i| {
         let input_id = input_ids[i];
         let no_signature_for_input = !r.has_signature(input_id);
-        results.push_back(no_signature_for_input);
 
         if (no_signature_for_input) {
             r.record_signature(dwallet_coordinator, input_id, sign_ids[i]);
@@ -650,7 +649,6 @@ public fun record_signature(
             tx_raw,
         });
     };
-    results
 }
 
 // TODO: update event emitted to include the data from the redeem request
@@ -958,4 +956,30 @@ public fun testing_mint(contract: &mut NbtcContract, amount: u64, ctx: &mut TxCo
 public fun set_dwallet_for_test(contract: &mut NbtcContract, dwallet_id: ID, dw: BtcDWallet) {
     contract.active_dwallet_id = option::some(dwallet_id);
     contract.storage.add_dwallet(dw);
+}
+
+#[test_only]
+/// Helper functions to access event fields in tests
+public fun get_redeem_sig_created_event_redeem_id(event: &RedeemSigCreatedEvent): u64 {
+    event.redeem_id
+}
+
+#[test_only]
+public fun get_redeem_sig_created_event_input_id(event: &RedeemSigCreatedEvent): u64 {
+    event.input_id
+}
+
+#[test_only]
+public fun get_redeem_withdraw_ready_event_redeem_id(event: &RedeemWithdrawReadyEvent): u64 {
+    event.redeem_id
+}
+
+#[test_only]
+public fun get_redeem_withdraw_ready_event_tx_id(event: &RedeemWithdrawReadyEvent): vector<u8> {
+    event.tx_id
+}
+
+#[test_only]
+public fun get_redeem_withdraw_ready_event_tx_raw(event: &RedeemWithdrawReadyEvent): vector<u8> {
+    event.tx_raw
 }
