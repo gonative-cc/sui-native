@@ -52,6 +52,8 @@ fun raw_withdraw_tx_signed_tests() {
         storage::create_dwallet(
             dwallet_cap_for_testing(MOCK_DWALLET_ID!(), scenario.ctx()),
             nbtc_spend_key,
+            0,
+            vector::empty(),
             vector::empty(),
             scenario.ctx(),
         ),

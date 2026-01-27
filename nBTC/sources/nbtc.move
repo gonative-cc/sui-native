@@ -478,12 +478,14 @@ public fun request_utxo_sig(
     let request = &mut contract.redeem_requests[redeem_id];
     assert!(request.status().is_signing(), ENotReadlyForSign);
     assert!(!request.has_signature(input_id), EInputAlreadyUsed);
+    let sig_hash = request.sig_hash(input_id, &contract.storage);
     request.request_utxo_sig(
         dwallet_coordinator,
         &contract.storage,
         redeem_id,
         input_id,
         msg_central_sig,
+        sig_hash,
         presign,
         payment_ika,
         payment_sui,
@@ -784,6 +786,8 @@ public fun add_dwallet(
     contract: &mut NbtcContract,
     cap: DWalletCap,
     lockscript: vector<u8>,
+    control_byte: u8,
+    script_merkle_root: vector<u8>,
     user_key_share: vector<u8>,
     ctx: &mut TxContext,
 ) {
@@ -796,6 +800,8 @@ public fun add_dwallet(
     let dw = create_dwallet(
         cap,
         lockscript,
+        control_byte,
+        script_merkle_root,
         user_key_share,
         ctx,
     );

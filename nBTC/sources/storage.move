@@ -1,5 +1,6 @@
 module nbtc::storage;
 
+use bitcoin_lib::script::verify_script_merkle_proof;
 use ika_dwallet_2pc_mpc::coordinator_inner::DWalletCap;
 use nbtc::nbtc_utxo::{UtxoStore, new_utxo_store};
 use sui::table::{Self, Table};
@@ -14,6 +15,8 @@ const EBalanceNotEmpty: vector<u8> = b"balance not empty";
 public struct BtcDWallet has store {
     cap: DWalletCap,
     lockscript: vector<u8>, // lock script for this dwallet
+    control_byte: u8, // Taproot control byte for script path spending
+    script_merkle_root: vector<u8>, // Taproot script merkle root (32 bytes)
     total_deposit: u64, // total deposit balance
     user_key_share: vector<u8>, // "user share" of dwallet
     /// map user address to amount they deposit/mint
@@ -41,12 +44,16 @@ public(package) fun create_storage(ctx: &mut TxContext): Storage {
 public(package) fun create_dwallet(
     cap: DWalletCap,
     lockscript: vector<u8>,
+    control_byte: u8,
+    script_merkle_root: vector<u8>,
     user_key_share: vector<u8>,
     ctx: &mut TxContext,
 ): BtcDWallet {
     BtcDWallet {
         cap,
         lockscript,
+        control_byte,
+        script_merkle_root,
         total_deposit: 0,
         user_key_share,
         inactive_deposits: table::new(ctx),
@@ -79,6 +86,41 @@ public fun inactive_deposits(dw: &BtcDWallet, addr: address): u64 {
 /// Ika don't have public api to get it onchain, this is the reason we store it in dwallet metadata
 public fun user_key_share(dw: &BtcDWallet): vector<u8> {
     dw.user_key_share
+}
+
+/// Return Taproot control byte for script path spending
+public fun control_byte(dw: &BtcDWallet): u8 {
+    dw.control_byte
+}
+
+/// Return Taproot script merkle root (32 bytes)
+public fun script_merkle_root(dw: &BtcDWallet): vector<u8> {
+    dw.script_merkle_root
+}
+
+/// Verifies that a Taproot leaf hash belongs to the dWallet's script merkle tree.
+/// Verifies the provided leaf hash against the dWallet's script_merkle_root
+/// using the provided merkle proof path.
+///
+/// # Arguments
+/// * `dwallet` - The dWallet containing the script_merkle_root
+/// * `leaf_hash` - The TapLeaf hash to verify (32 bytes)
+/// * `merkle_path` - Vector of sibling hashes from leaf to root (ordered from leaf level upward)
+///
+/// # Returns
+/// * `true` if the leaf hash is in the dWallet's merkle tree
+/// * `false` otherwise
+/// ```
+public fun verify_taproot_script(
+    dwallet: &BtcDWallet,
+    leaf_hash: vector<u8>,
+    merkle_path: vector<vector<u8>>,
+): bool {
+    verify_script_merkle_proof(
+        leaf_hash,
+        merkle_path,
+        dwallet.script_merkle_root,
+    )
 }
 
 // NOTE: It's OK to do linear search because we are limiting amount of dwallets to 10-20 max
@@ -136,6 +178,8 @@ public(package) fun remove_dwallet(store: &mut Storage, dwallet_id: ID) {
         inactive_deposits,
         total_deposit,
         lockscript: _,
+        control_byte: _,
+        script_merkle_root: _,
         user_key_share: _,
     } = store.dwallets.swap_remove(i);
     assert!(total_deposit == 0, EBalanceNotEmpty);

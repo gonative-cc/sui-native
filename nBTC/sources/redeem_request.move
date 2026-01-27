@@ -172,15 +172,13 @@ public(package) fun request_utxo_sig(
     redeem_id: u64,
     input_id: u64,
     msg_central_sig: vector<u8>,
+    sig_hash: vector<u8>,
     presign: UnverifiedPresignCap,
     payment_ika: &mut Coin<IKA>,
     payment_sui: &mut Coin<SUI>,
     ctx: &mut TxContext,
 ) {
     let verified_presign = dwallet_coordinator.verify_presign_cap(presign, ctx);
-
-    // This should include other information for create sign hash
-    let sig_hash = r.sig_hash(input_id, storage);
 
     let utxo = r.utxo_at(input_id);
     let dwallet_id = utxo.dwallet_id();
@@ -213,7 +211,7 @@ public(package) fun request_utxo_sig(
     });
 }
 
-/// Sets signature request metadata for a specific input.
+// /// Sets signature request metadata for a specific input.
 ///
 /// Aborts if `input_id` is out of bounds (>= number of inputs).
 public(package) fun set_sign_request_metadata(

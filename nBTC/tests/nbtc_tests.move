@@ -138,6 +138,8 @@ public fun setup(
     let dw = storage::create_dwallet(
         dwallet_cap_for_testing(dwallet_id, scenario.ctx()),
         nbtc_bitcoin_addr,
+        0,
+        vector::empty(),
         vector::empty(),
         scenario.ctx(),
     );
