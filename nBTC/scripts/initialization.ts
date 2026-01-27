@@ -44,7 +44,7 @@ export async function initialization(dwalletId: string, config: Config) {
 	);
 
 	tx.add(
-		nBTCContractModule.setActiveDwallet({
+		nBTCContractModule.addActiveDwallet({
 			arguments: {
 				_: config.adminCap,
 				contract: config.nbtc,
