@@ -6,12 +6,17 @@ use ika_dwallet_2pc_mpc::coordinator::{
     add_sign_session_for_testing,
     DWalletCoordinator
 };
-use nbtc::nbtc::NBTC;
+use nbtc::nbtc::{
+    NBTC,
+    RedeemSigCreatedEvent,
+    get_redeem_sig_created_event_redeem_id,
+    get_redeem_sig_created_event_input_id
+};
 use nbtc::nbtc_tests::setup;
 use nbtc::nbtc_utxo::new_utxo;
 use nbtc::test_constants::{
     MOCK_DWALLET_ID,
-    NBTC_SCRIPT_PUBKEY,
+    NBTC_TAPROOT_SCRIPT,
     ADMIN,
     RECEIVER_SCRIPT,
     TX_HASH,
@@ -20,6 +25,7 @@ use nbtc::test_constants::{
 use std::unit_test::{assert_eq, destroy};
 use sui::clock;
 use sui::coin::mint_for_testing;
+use sui::event;
 
 const MOCK_SIGNATURE: vector<u8> =
     x"b693a0797b24bae12ed0516a2f5ba765618dca89b75e498ba5b745b71644362298a45ca39230d10a02ee6290a91cebf9839600f7e35158a447ea182ea0e022ae";
@@ -43,7 +49,7 @@ fun setup_redeem_in_signing_state(
 
     // Setup nBTC contract first to get scenario
     let (lc, mut ctr, mut dwallet_coordinator, mut scenario) = setup(
-        NBTC_SCRIPT_PUBKEY!(),
+        NBTC_TAPROOT_SCRIPT!(),
         ADMIN!(),
         dwallet_id,
     );
@@ -95,8 +101,7 @@ fun test_record_signature_returns_true_on_first_call() {
     set_signature_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id, MOCK_SIGNATURE);
 
     // Now call the real batch record_signature function
-    let results = ctr.record_signature(&dwallet_coordinator, redeem_id, vector[0], vector[sign_id]);
-    assert_eq!(results[0], true);
+    ctr.record_signature(&dwallet_coordinator, redeem_id, vector[0], vector[sign_id]);
 
     // Verify the signature was actually recorded
     let request = ctr.redeem_request(redeem_id);
@@ -126,23 +131,21 @@ fun test_record_signature_returns_false_when_already_recorded() {
     let dwallet_id = ctr.active_dwallet_id();
     set_signature_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id, MOCK_SIGNATURE);
 
-    // First call - should return true
-    let results1 = ctr.record_signature(
+    // First call - should record signature
+    ctr.record_signature(
         &dwallet_coordinator,
         redeem_id,
         vector[0],
         vector[sign_id],
     );
-    assert_eq!(results1[0], true);
 
-    // Second call with same input_id - should return false (idempotent)
-    let results2 = ctr.record_signature(
+    // Second call with same input_id - should be idempotent
+    ctr.record_signature(
         &dwallet_coordinator,
         redeem_id,
         vector[0],
         vector[sign_id],
     );
-    assert_eq!(results2[0], false);
 
     // Verify the signature is still there (only recorded once)
     let request = ctr.redeem_request(redeem_id);
@@ -172,39 +175,35 @@ fun test_record_signature_multiple_calls_safe() {
     let dwallet_id = ctr.active_dwallet_id();
     set_signature_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id, MOCK_SIGNATURE);
 
-    // First call - should return true
-    let results1 = ctr.record_signature(
+    // First call - should record signature
+    ctr.record_signature(
         &dwallet_coordinator,
         redeem_id,
         vector[0],
         vector[sign_id],
     );
-    assert_eq!(results1[0], true);
 
-    // Call multiple times with same input_id - all should return false
-    let results2 = ctr.record_signature(
+    // Call multiple times with same input_id - all should be idempotent
+    ctr.record_signature(
         &dwallet_coordinator,
         redeem_id,
         vector[0],
         vector[sign_id],
     );
-    assert_eq!(results2[0], false);
 
-    let results3 = ctr.record_signature(
+    ctr.record_signature(
         &dwallet_coordinator,
         redeem_id,
         vector[0],
         vector[sign_id],
     );
-    assert_eq!(results3[0], false);
 
-    let results4 = ctr.record_signature(
+    ctr.record_signature(
         &dwallet_coordinator,
         redeem_id,
         vector[0],
         vector[sign_id],
     );
-    assert_eq!(results4[0], false);
 
     // Verify the signature is still valid after multiple calls
     let request = ctr.redeem_request(redeem_id);
@@ -235,25 +234,29 @@ fun test_record_signature_event_emission() {
     set_signature_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id, MOCK_SIGNATURE);
 
     // First call - should emit event
-    let results1 = ctr.record_signature(
+    ctr.record_signature(
         &dwallet_coordinator,
         redeem_id,
         vector[0],
         vector[sign_id],
     );
-    assert_eq!(results1[0], true);
+
+    // Verify RedeemSigCreatedEvent was emitted
+    let sig_events = event::events_by_type<RedeemSigCreatedEvent>();
+    assert_eq!(sig_events.length(), 1);
+    assert_eq!(get_redeem_sig_created_event_redeem_id(&sig_events[0]), redeem_id);
+    assert_eq!(get_redeem_sig_created_event_input_id(&sig_events[0]), 0);
 
     // Move to next transaction to check events
     scenario.next_tx(ADMIN!());
 
     // Second call - should NOT emit event (early return)
-    let results2 = ctr.record_signature(
+    ctr.record_signature(
         &dwallet_coordinator,
         redeem_id,
         vector[0],
         vector[sign_id],
     );
-    assert_eq!(results2[0], false);
 
     clock.destroy_for_testing();
     destroy(lc);
@@ -267,7 +270,7 @@ fun test_record_signature_event_emission() {
 fun test_record_signature_with_multiple_inputs() {
     let dwallet_id = MOCK_DWALLET_ID!();
     let (lc, mut ctr, mut dwallet_coordinator, mut scenario) = setup(
-        NBTC_SCRIPT_PUBKEY!(),
+        NBTC_TAPROOT_SCRIPT!(),
         ADMIN!(),
         dwallet_id,
     );
@@ -308,43 +311,39 @@ fun test_record_signature_with_multiple_inputs() {
     let sign_id2 = sui::object::id_from_address(@0x3);
     add_sign_session_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id2, scenario.ctx());
 
-    // Record signature for input 0 - should return true
+    // Record signature for input 0
     set_signature_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id1, MOCK_SIGNATURE);
-    let results1 = ctr.record_signature(
+    ctr.record_signature(
         &dwallet_coordinator,
         redeem_id,
         vector[0],
         vector[sign_id1],
     );
-    assert_eq!(results1[0], true);
 
-    // Try to record again for input 0 - should return false
-    let results2 = ctr.record_signature(
+    // Try to record again for input 0 - should be idempotent
+    ctr.record_signature(
         &dwallet_coordinator,
         redeem_id,
         vector[0],
         vector[sign_id1],
     );
-    assert_eq!(results2[0], false);
 
-    // Record signature for input 1 - should return true (different input)
+    // Record signature for input 1
     set_signature_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id2, MOCK_SIGNATURE);
-    let results3 = ctr.record_signature(
+    ctr.record_signature(
         &dwallet_coordinator,
         redeem_id,
         vector[1],
         vector[sign_id2],
     );
-    assert_eq!(results3[0], true);
 
-    // Try to record again for input 1 - should return false
-    let results4 = ctr.record_signature(
+    // Try to record again for input 1 - should be idempotent
+    ctr.record_signature(
         &dwallet_coordinator,
         redeem_id,
         vector[1],
         vector[sign_id2],
     );
-    assert_eq!(results4[0], false);
 
     // Verify both signatures are recorded
     let request = ctr.redeem_request(redeem_id);
@@ -363,7 +362,7 @@ fun test_record_signature_with_multiple_inputs() {
 fun test_record_signature_batch() {
     let dwallet_id = MOCK_DWALLET_ID!();
     let (lc, mut ctr, mut dwallet_coordinator, mut scenario) = setup(
-        NBTC_SCRIPT_PUBKEY!(),
+        NBTC_TAPROOT_SCRIPT!(),
         ADMIN!(),
         dwallet_id,
     );
@@ -409,14 +408,12 @@ fun test_record_signature_batch() {
     set_signature_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id2, MOCK_SIGNATURE);
 
     // Record both signatures in one batch call
-    let results = ctr.record_signature(
+    ctr.record_signature(
         &dwallet_coordinator,
         redeem_id,
         vector[0, 1],
         vector[sign_id1, sign_id2],
     );
-    assert_eq!(results[0], true);
-    assert_eq!(results[1], true);
 
     // Verify both signatures are recorded
     let request = ctr.redeem_request(redeem_id);
