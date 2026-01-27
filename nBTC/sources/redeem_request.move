@@ -215,6 +215,21 @@ public(package) fun request_utxo_sig(
     });
 }
 
+/// Requests signature from Ika Network for taproot script path spending.
+/// Verifies the leaf script hash is in dWallet's merkle tree before signing.
+///
+/// # Arguments
+/// * `r` - The redeem request
+/// * `dwallet_coordinator` - Ika dWallet coordinator
+/// * `storage` - Contract storage containing dWallet data
+/// * `redeem_id` - The redeem request ID
+/// * `input_id` - The UTXO input index to sign
+/// * `msg_central_sig` - Central signature message
+/// * `leaf_script_hash` - Taproot leaf script hash (32 bytes)
+/// * `merkle_path` - Merkle proof path from leaf to root
+/// * `presign` - Presign capability for Ika signing
+/// * `payment_ika` - IKA payment coin
+/// * `payment_sui` - SUI payment coin
 public(package) fun request_utxo_sig_for_tapscript(
     r: &RedeemRequest,
     dwallet_coordinator: &mut DWalletCoordinator,
@@ -269,9 +284,16 @@ public(package) fun request_utxo_sig_for_tapscript(
     });
 }
 
-/// Returns sighash for input_id-th in redeem transaction with leaf script hash (for taproot script path).
+/// Computes sighash for taproot script path spending with the provided leaf hash.
 ///
-/// Aborts if `input_id` is out of bounds (>= number of inputs).
+/// # Arguments
+/// * `r` - The redeem request containing transaction data
+/// * `input_id` - The UTXO input index (0-based)
+/// * `leaf_hash` - The Taproot leaf script hash (32 bytes)
+/// * `storage` - Contract storage for accessing UTXO lock scripts
+///
+/// # Returns
+/// * `vector<u8>` - The sighash for the specified input
 public fun sig_hash_with_leaf_hash(
     r: &RedeemRequest,
     input_id: u64,
