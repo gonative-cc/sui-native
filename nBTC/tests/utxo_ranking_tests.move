@@ -13,14 +13,14 @@ fun exact_match_wins_over_change() {
     let ctx = scenario.ctx();
 
     let mut utxo_map = new_utxo_store(ctx);
-    let active_dwallet_id = MOCK_DWALLET_ID!();
+    let recommended_dwallet_id = MOCK_DWALLET_ID!();
 
     // Add UTXOs to the map
     let utxo1 = new_utxo(
         x"a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
         0,
         35_000_000,
-        active_dwallet_id,
+        recommended_dwallet_id,
     );
     utxo_map.add(utxo1);
 
@@ -28,7 +28,7 @@ fun exact_match_wins_over_change() {
         x"b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2",
         1,
         30_000_000,
-        active_dwallet_id,
+        recommended_dwallet_id,
     );
     utxo_map.add(utxo2);
 
@@ -36,7 +36,7 @@ fun exact_match_wins_over_change() {
         x"c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3",
         0,
         20_000_000,
-        active_dwallet_id,
+        recommended_dwallet_id,
     );
     utxo_map.add(utxo3);
 
@@ -44,14 +44,14 @@ fun exact_match_wins_over_change() {
         x"d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4",
         2,
         15_000_000,
-        active_dwallet_id,
+        recommended_dwallet_id,
     );
     utxo_map.add(utxo4);
 
     let utxo_ids1 = vector[0, 1, 2, 3];
     let withdraw = 100_000_000;
 
-    let score1 = utxo_ranking(&utxo_map, utxo_ids1, withdraw, active_dwallet_id);
+    let score1 = utxo_ranking(&utxo_map, utxo_ids1, withdraw, recommended_dwallet_id);
 
     // Create second set of UTXOs
     let mut utxo_map2 = new_utxo_store(ctx);
@@ -60,7 +60,7 @@ fun exact_match_wins_over_change() {
         x"e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5",
         0,
         110_000_000,
-        active_dwallet_id,
+        recommended_dwallet_id,
     );
     utxo_map2.add(utxo5);
 
@@ -68,7 +68,7 @@ fun exact_match_wins_over_change() {
         x"f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6",
         1,
         80_000_000,
-        active_dwallet_id,
+        recommended_dwallet_id,
     );
     utxo_map2.add(utxo6);
 
@@ -76,13 +76,13 @@ fun exact_match_wins_over_change() {
         x"a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7",
         0,
         50_000_000,
-        active_dwallet_id,
+        recommended_dwallet_id,
     );
     utxo_map2.add(utxo7);
 
     let utxo_ids2 = vector[0, 1, 2];
 
-    let score2 = utxo_ranking(&utxo_map2, utxo_ids2, withdraw, active_dwallet_id);
+    let score2 = utxo_ranking(&utxo_map2, utxo_ids2, withdraw, recommended_dwallet_id);
 
     assert_eq!(score1 > score2, true);
 
@@ -98,7 +98,7 @@ fun inactive_keys_with_exact_match_rank_above() {
     let ctx = scenario.ctx();
 
     let mut utxo_map = new_utxo_store(ctx);
-    let active_dwallet_id = MOCK_DWALLET_ID!();
+    let recommended_dwallet_id = MOCK_DWALLET_ID!();
     let inactive_dwallet_id = MOCK_DWALLET_ID_2!();
 
     // Add UTXOs to the map
@@ -145,7 +145,7 @@ fun inactive_keys_with_exact_match_rank_above() {
     let utxo_ids1 = vector[0, 1, 2, 3, 4];
     let withdraw = 100_000_000;
 
-    let score1 = utxo_ranking(&utxo_map, utxo_ids1, withdraw, active_dwallet_id);
+    let score1 = utxo_ranking(&utxo_map, utxo_ids1, withdraw, recommended_dwallet_id);
 
     // Create second set of UTXOs
     let mut utxo_map2 = new_utxo_store(ctx);
@@ -154,7 +154,7 @@ fun inactive_keys_with_exact_match_rank_above() {
         x"a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0",
         0,
         110_000_000,
-        active_dwallet_id,
+        recommended_dwallet_id,
     );
     utxo_map2.add(utxo6);
 
@@ -162,7 +162,7 @@ fun inactive_keys_with_exact_match_rank_above() {
         x"b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1",
         2,
         90_000_000,
-        active_dwallet_id,
+        recommended_dwallet_id,
     );
     utxo_map2.add(utxo7);
 
@@ -170,7 +170,7 @@ fun inactive_keys_with_exact_match_rank_above() {
         x"c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2",
         1,
         70_000_000,
-        active_dwallet_id,
+        recommended_dwallet_id,
     );
     utxo_map2.add(utxo8);
 
@@ -178,13 +178,13 @@ fun inactive_keys_with_exact_match_rank_above() {
         x"d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3",
         0,
         50_000_000,
-        active_dwallet_id,
+        recommended_dwallet_id,
     );
     utxo_map2.add(utxo9);
 
     let utxo_ids2 = vector[0, 1, 2, 3];
 
-    let score2 = utxo_ranking(&utxo_map2, utxo_ids2, withdraw, active_dwallet_id);
+    let score2 = utxo_ranking(&utxo_map2, utxo_ids2, withdraw, recommended_dwallet_id);
 
     assert_eq!(score1 > score2, true);
 
@@ -200,21 +200,21 @@ fun minimize_inputs_priority() {
     let ctx = scenario.ctx();
 
     let mut utxo_map = new_utxo_store(ctx);
-    let active_dwallet_id = MOCK_DWALLET_ID!();
+    let recommended_dwallet_id = MOCK_DWALLET_ID!();
 
     // Add UTXOs to the map
     let utxo1 = new_utxo(
         x"1111111111111111111111111111111111111111111111111111111111111111",
         0,
         110_000_000,
-        active_dwallet_id,
+        recommended_dwallet_id,
     );
     utxo_map.add(utxo1);
 
     let utxo_ids1 = vector[0];
     let withdraw = 100_000_000;
 
-    let score1 = utxo_ranking(&utxo_map, utxo_ids1, withdraw, active_dwallet_id);
+    let score1 = utxo_ranking(&utxo_map, utxo_ids1, withdraw, recommended_dwallet_id);
 
     // Create second set of UTXOs
     let mut utxo_map2 = new_utxo_store(ctx);
@@ -223,7 +223,7 @@ fun minimize_inputs_priority() {
         x"2222222222222222222222222222222222222222222222222222222222222222",
         0,
         20_000_000,
-        active_dwallet_id,
+        recommended_dwallet_id,
     );
     utxo_map2.add(utxo2);
 
@@ -231,7 +231,7 @@ fun minimize_inputs_priority() {
         x"3333333333333333333333333333333333333333333333333333333333333333",
         1,
         20_000_000,
-        active_dwallet_id,
+        recommended_dwallet_id,
     );
     utxo_map2.add(utxo3);
 
@@ -239,7 +239,7 @@ fun minimize_inputs_priority() {
         x"4444444444444444444444444444444444444444444444444444444444444444",
         2,
         20_000_000,
-        active_dwallet_id,
+        recommended_dwallet_id,
     );
     utxo_map2.add(utxo4);
 
@@ -247,7 +247,7 @@ fun minimize_inputs_priority() {
         x"5555555555555555555555555555555555555555555555555555555555555555",
         3,
         20_000_000,
-        active_dwallet_id,
+        recommended_dwallet_id,
     );
     utxo_map2.add(utxo5);
 
@@ -255,13 +255,13 @@ fun minimize_inputs_priority() {
         x"6666666666666666666666666666666666666666666666666666666666666666",
         4,
         20_000_000,
-        active_dwallet_id,
+        recommended_dwallet_id,
     );
     utxo_map2.add(utxo6);
 
     let utxo_ids2 = vector[0, 1, 2, 3, 4];
 
-    let score2 = utxo_ranking(&utxo_map2, utxo_ids2, withdraw, active_dwallet_id);
+    let score2 = utxo_ranking(&utxo_map2, utxo_ids2, withdraw, recommended_dwallet_id);
 
     assert_eq!(score2 > score1, true);
 
@@ -277,21 +277,21 @@ fun dust_penalized() {
     let ctx = scenario.ctx();
 
     let mut utxo_map = new_utxo_store(ctx);
-    let active_dwallet_id = MOCK_DWALLET_ID!();
+    let recommended_dwallet_id = MOCK_DWALLET_ID!();
 
     // Add dust UTXO
     let utxo1 = new_utxo(
         x"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         0,
         100_008_000,
-        active_dwallet_id,
+        recommended_dwallet_id,
     );
     utxo_map.add(utxo1);
 
     let utxo_ids1 = vector[0];
     let withdraw = 100_000_000;
 
-    let score_dust = utxo_ranking(&utxo_map, utxo_ids1, withdraw, active_dwallet_id);
+    let score_dust = utxo_ranking(&utxo_map, utxo_ids1, withdraw, recommended_dwallet_id);
 
     // Create clean UTXO
     let mut utxo_map2 = new_utxo_store(ctx);
@@ -300,7 +300,7 @@ fun dust_penalized() {
         x"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
         0,
         100_050_000,
-        active_dwallet_id,
+        recommended_dwallet_id,
     );
     utxo_map2.add(utxo2);
 
@@ -310,7 +310,7 @@ fun dust_penalized() {
         &utxo_map2,
         utxo_ids2,
         withdraw,
-        active_dwallet_id,
+        recommended_dwallet_id,
     );
 
     assert_eq!(score_clean > score_dust, true);

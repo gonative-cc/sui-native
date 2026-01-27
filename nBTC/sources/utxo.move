@@ -123,7 +123,7 @@ public fun utxo_ranking(
     utxo_store: &UtxoStore,
     utxo_ids: vector<u64>,
     withdraw_amount: u64,
-    active_dwallet_id: ID, // Current active dwallet ID (last element from NbtcContract.active_dwallet_ids)
+    recommended_dwallet_id: ID, // Current recommended dwallet ID (last element from NbtcContract.active_dwallet_ids)
 ): u64 {
     let number_utxo = utxo_ids.length();
     let mut sum: u64 = 0;
@@ -138,7 +138,7 @@ public fun utxo_ranking(
     let mut score = BASE_SCORE;
     score = score - (number_utxo * INPUTS_PENALTY);
     number_utxo.do!(|i| {
-        if (utxo_store.get_utxo(utxo_ids[i]).dwallet_id() != active_dwallet_id) {
+        if (utxo_store.get_utxo(utxo_ids[i]).dwallet_id() != recommended_dwallet_id) {
             score = score + INACTIVE_BONUS;
         };
     });

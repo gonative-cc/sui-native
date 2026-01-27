@@ -115,7 +115,7 @@ public struct NbtcContract has key, store {
     // lock nbtc for redeem, this is a mapping from request id to nBTC redeem coin
     locked: Table<u64, Coin<NBTC>>,
     storage: Storage,
-    // Vector of active dwallet IDs. The most recently added (last element) is the current active dwallet.
+    // Vector of active dwallet IDs.
     // Older dwallets can be rotated back by removing and re-adding.
     active_dwallet_ids: vector<ID>,
     next_redeem_req: u64,
@@ -294,7 +294,7 @@ fun verify_deposit(
     let o = tx.outputs();
     let mut utxo_idx = vector[];
     let mut i = 0;
-    let dwallet_id = contract.active_dwallet_id();
+    let dwallet_id = contract.recommended_dwallet_id();
     while (i < vouts.length()) {
         let vout_idx = vouts[i];
         let o_amount = o[vout_idx as u64].amount();
@@ -316,13 +316,13 @@ public fun active_dwallet_ids(contract: &NbtcContract): vector<ID> {
 
 /// Returns the ID of the current active dwallet (last element in the vector).
 /// Aborts if no dwallet has been set as active.
-public fun active_dwallet_id(contract: &NbtcContract): ID {
+public fun recommended_dwallet_id(contract: &NbtcContract): ID {
     assert!(!contract.active_dwallet_ids.is_empty(), EInvalidDWallet);
     contract.active_dwallet_ids[contract.active_dwallet_ids.length() - 1]
 }
 
 public fun active_dwallet(contract: &NbtcContract): &BtcDWallet {
-    let dwallet_id = contract.active_dwallet_id();
+    let dwallet_id = contract.recommended_dwallet_id();
     contract.storage.dwallet(dwallet_id)
 }
 
@@ -330,12 +330,6 @@ public fun active_dwallet(contract: &NbtcContract): &BtcDWallet {
 public(package) fun is_active_dwallet(contract: &NbtcContract, dwallet_id: ID): bool {
     let (exists, _) = contract.active_dwallet_ids.index_of(&dwallet_id);
     exists
-}
-
-public(package) fun remove_active_dwallet_ids(contract: &mut NbtcContract, dwallet_id: ID) {
-    let (exists, idx) = contract.active_dwallet_ids.index_of(&dwallet_id);
-    assert!(exists, EInvalidDWallet);
-    contract.active_dwallet_ids.swap_remove(idx);
 }
 
 /// Mints nBTC tokens after verifying a Bitcoin transaction proof.
@@ -363,7 +357,7 @@ public fun mint(
     ctx: &mut TxContext,
 ) {
     assert!(contract.version == VERSION, EVersionMismatch);
-    let dwallet_id = contract.active_dwallet_id();
+    let dwallet_id = contract.recommended_dwallet_id();
     let (mut amount, recipient, utxo_ids) = contract.verify_deposit(
         light_client,
         dwallet_id,
@@ -578,7 +572,7 @@ public fun finalize_redeem(
     assert!(contract.version == VERSION, EVersionMismatch);
     contract.assert_light_client(object::id(light_client));
 
-    let dwallet_id = contract.active_dwallet_id();
+    let dwallet_id = contract.recommended_dwallet_id();
     let lockscript = contract.storage.dwallet(dwallet_id).lockscript();
 
     let mut r = contract.redeem_requests.remove(redeem_id);
@@ -813,11 +807,17 @@ public fun add_dwallet(
     contract.storage.add_dwallet(dw);
 }
 
-public fun set_active_dwallet(_: &AdminCap, contract: &mut NbtcContract, dwallet_id: ID) {
+public fun add_active_dwallet(_: &AdminCap, contract: &mut NbtcContract, dwallet_id: ID) {
     assert!(contract.version == VERSION, EVersionMismatch);
     assert!(contract.storage.exist(dwallet_id), EInvalidDWallet);
     assert!(!contract.is_active_dwallet(dwallet_id), EInvalidDWallet);
     contract.active_dwallet_ids.push_back(dwallet_id);
+}
+
+public fun deactive_dwallet(_: &AdminCap, contract: &mut NbtcContract, dwallet_id: ID) {
+    let (exists, idx) = contract.active_dwallet_ids.index_of(&dwallet_id);
+    assert!(exists, EInvalidDWallet);
+    contract.active_dwallet_ids.remove(idx);
 }
 
 public fun remove_inactive_dwallet(_: &AdminCap, contract: &mut NbtcContract, dwallet_id: ID) {
@@ -826,9 +826,7 @@ public fun remove_inactive_dwallet(_: &AdminCap, contract: &mut NbtcContract, dw
     // if we can provide public signature to the merge_coins
     // NOTE: we don't check inactive_user_balance here because this is out of our control and the
     // spend key is recorded as a part of the Table key.
-
     contract.storage.remove_dwallet(dwallet_id);
-    contract.remove_active_dwallet_ids(dwallet_id);
 }
 
 public(package) fun add_utxo_to_contract(

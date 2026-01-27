@@ -91,7 +91,7 @@ fun test_record_signature_returns_true_on_first_call() {
     ) = setup_redeem_in_signing_state(2500, 1000);
 
     // Use set_signature_for_testing to mock the signature in coordinator
-    let dwallet_id = ctr.active_dwallet_id();
+    let dwallet_id = ctr.recommended_dwallet_id();
     set_signature_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id, MOCK_SIGNATURE);
 
     // Now call the real batch record_signature function
@@ -123,7 +123,7 @@ fun test_record_signature_returns_false_when_already_recorded() {
     ) = setup_redeem_in_signing_state(2500, 1000);
 
     // Use set_signature_for_testing to mock the signature
-    let dwallet_id = ctr.active_dwallet_id();
+    let dwallet_id = ctr.recommended_dwallet_id();
     set_signature_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id, MOCK_SIGNATURE);
 
     // First call - should return true
@@ -169,7 +169,7 @@ fun test_record_signature_multiple_calls_safe() {
     ) = setup_redeem_in_signing_state(2500, 1000);
 
     // Use set_signature_for_testing to mock the signature
-    let dwallet_id = ctr.active_dwallet_id();
+    let dwallet_id = ctr.recommended_dwallet_id();
     set_signature_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id, MOCK_SIGNATURE);
 
     // First call - should return true
@@ -231,7 +231,7 @@ fun test_record_signature_event_emission() {
     ) = setup_redeem_in_signing_state(2500, 1000);
 
     // Use set_signature_for_testing to mock the signature
-    let dwallet_id = ctr.active_dwallet_id();
+    let dwallet_id = ctr.recommended_dwallet_id();
     set_signature_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id, MOCK_SIGNATURE);
 
     // First call - should emit event
