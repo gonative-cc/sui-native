@@ -26,7 +26,7 @@ const EUnsupportedLockscript: vector<u8> = b"unsupported lockscript";
 // signature algorithm
 const TAPROOT: u32 = 1;
 // hash function
-const SHA256: u32 = 1;
+const SHA256: u32 = 0;
 const SIGNHASH_ALL: u8 = 0x01;
 
 public enum RedeemStatus has copy, drop, store {
