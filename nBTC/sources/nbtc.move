@@ -820,15 +820,6 @@ public fun deactive_dwallet(_: &AdminCap, contract: &mut NbtcContract, dwallet_i
     contract.active_dwallet_ids.remove(idx);
 }
 
-public fun remove_inactive_dwallet(_: &AdminCap, contract: &mut NbtcContract, dwallet_id: ID) {
-    assert!(contract.version == VERSION, EVersionMismatch);
-    // TODO: need to decide if we want to keep balance check. Technically, it's not needed
-    // if we can provide public signature to the merge_coins
-    // NOTE: we don't check inactive_user_balance here because this is out of our control and the
-    // spend key is recorded as a part of the Table key.
-    contract.storage.remove_dwallet(dwallet_id);
-}
-
 public(package) fun add_utxo_to_contract(
     contract: &mut NbtcContract,
     tx_id: vector<u8>,
