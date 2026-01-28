@@ -21,6 +21,10 @@ public macro fun NBTC_SCRIPT_PUBKEY(): vector<u8> {
     x"76a914509a651dd392e1bc125323f629b67d65cca3d4bb88ac"
 }
 
+// Common test constants - as public macros
+public macro fun NBTC_TAPROOT_SCRIPT(): vector<u8> {
+    x"51200f0c8db753acbd17343a39c2f3f4e35e4be6da749f9e35137ab220e7b238a667"
+}
 public macro fun ADMIN(): address {
     @0xad
 }

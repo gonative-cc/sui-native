@@ -5,7 +5,7 @@ import {
 	IkaTransaction,
 	SessionsManagerModule,
 	SignatureAlgorithm,
-	createUserSignMessageWithCentralizedOutput,
+	createUserSignMessageWithPublicOutput,
 	type IkaClient,
 	type SharedDWallet,
 } from "@ika.xyz/sdk";
@@ -14,6 +14,7 @@ import { Transaction } from "@mysten/sui/transactions";
 import {
 	createIkaClient,
 	createSuiClient,
+	delay,
 	executeTransaction,
 	getIkaCoin,
 	mkSigner,
@@ -77,6 +78,9 @@ export async function createUserSigMessage(
 	message: Uint8Array,
 ): Promise<Uint8Array> {
 	const dWallet = await ikaClient.getDWalletInParticularState(dwalletId, "Active");
+	// wait 10s to avoid "Many Request" error when we use sui testnet
+	await delay(10000);
+	// TODO: We should cache protocol public parameters
 	const protocolPublicParameters = await ikaClient.getProtocolPublicParameters(
 		dWallet,
 		Curve.SECP256K1,
@@ -85,14 +89,14 @@ export async function createUserSigMessage(
 	const userSecretKeyShare = new Uint8Array(dWallet.public_user_secret_key_share as number[]);
 	const presign = await ikaClient.getPresign(presignId);
 
-	return createUserSignMessageWithCentralizedOutput(
+	return createUserSignMessageWithPublicOutput(
 		protocolPublicParameters,
 		centralizedDkgOutput,
 		userSecretKeyShare,
 		new Uint8Array(presign.state.Completed?.presign as number[]),
 		message,
 		Hash.SHA256,
-		SignatureAlgorithm.ECDSASecp256k1,
+		SignatureAlgorithm.Taproot,
 		Curve.SECP256K1,
 	);
 }
@@ -163,15 +167,14 @@ export async function getSignHash(
  * @param config The configuration object containing IDs like `packageId` and `nbtc` object ID.
  */
 export async function requestUtxoSig(
+	suiClient: SuiClient,
+	ikaClient: IkaClient,
 	redeemId: number,
 	inputId: number,
 	presignId: string,
 	msgCentralSig: Uint8Array,
 	config: Config,
 ) {
-	let suiClient = createSuiClient();
-	let ikaClient = createIkaClient(suiClient);
-	await ikaClient.initialize();
 	const signer = mkSigner();
 
 	let tx = new Transaction();

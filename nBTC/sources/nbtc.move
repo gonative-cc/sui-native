@@ -9,7 +9,7 @@ use ika::ika::IKA;
 use ika_dwallet_2pc_mpc::coordinator::DWalletCoordinator;
 use ika_dwallet_2pc_mpc::coordinator_inner::{DWalletCap, UnverifiedPresignCap};
 use nbtc::config::{Self, Config};
-use nbtc::nbtc_utxo::{Self, Utxo, validate_utxos};
+use nbtc::nbtc_utxo::{Self, validate_utxos};
 use nbtc::redeem_request::{Self, RedeemRequest};
 use nbtc::storage::{Storage, BtcDWallet, create_storage, create_dwallet};
 use nbtc::verify_payment::verify_payment;
@@ -158,15 +158,20 @@ public struct RedeemRequestEvent has copy, drop {
     created_at: u64,
 }
 
-public struct RedeemSigCreatedEvent has copy, drop {
-    redeem_id: u64,
-    input_id: u64,
-    is_fully_signed: bool,
-}
-
 public struct RedeemRequestProposeEvent has copy, drop {
     redeem_id: u64,
     utxo_ids: vector<u64>,
+}
+
+public struct RedeemSigCreatedEvent has copy, drop {
+    redeem_id: u64,
+    input_id: u64,
+}
+
+public struct RedeemWithdrawReadyEvent has copy, drop {
+    redeem_id: u64,
+    tx_id: vector<u8>,
+    tx_raw: vector<u8>,
 }
 
 /// Event emitted when nBTC is burned
@@ -578,13 +583,10 @@ public fun finalize_redeem(
     let mut r = contract.redeem_requests.remove(redeem_id);
     assert!(r.status().is_signed(), ENotSigned);
 
-    let tx = r.compose_tx(&contract.storage);
-    // TODO:: we should store tx_id in redeem request
-    let tx_id = tx.tx_id();
+    let tx_id = r.btc_tx_id();
     assert!(light_client.verify_tx(height, tx_id, proof, tx_index), ERedeemTxNotConfirmed);
 
     // Burn UTXOs and add a new remainder UTXO
-
     let spent_utxos_ids = r.utxo_ids();
 
     spent_utxos_ids.length().do!(|i| {
@@ -600,7 +602,7 @@ public fun finalize_redeem(
     let burn_amount = coin_to_burn.value();
     contract.cap.burn(coin_to_burn);
 
-    let outputs = tx.outputs();
+    let outputs = r.outputs();
     if (outputs.length() > 1) {
         let change_output = &outputs[1];
         assert!(change_output.script_pubkey() == lockscript, EInvalidChangeRecipient);
@@ -618,14 +620,16 @@ public fun finalize_redeem(
 
 /// Batch record multiple signatures for a redeem request in a single tx.
 /// Takes a single redeem_id and vectors of input_ids and sign_ids.
-/// Returns vector of booleans indicating which signatures were newly recorded in this call.
+/// * `sign_ids` - IKA sign session IDs returned from `request_utxo_sig` calls
+/// Emits a RedeemSigCreatedEvent for each newly recorded signature.
+/// Emits a RedeemWithdrawReadyEvent when all signatures are recorded.
 public fun record_signature(
     contract: &mut NbtcContract,
     dwallet_coordinator: &DWalletCoordinator,
     redeem_id: u64,
     input_ids: vector<u64>,
     sign_ids: vector<ID>,
-): vector<bool> {
+) {
     assert!(contract.version == VERSION, EVersionMismatch);
     assert!(
         object::id(dwallet_coordinator) == contract.config.dwallet_coordinator(),
@@ -634,26 +638,29 @@ public fun record_signature(
     assert!(input_ids.length() == sign_ids.length(), EInputSignIdLengthMismatch);
 
     let r = &mut contract.redeem_requests[redeem_id];
-    let mut results = vector::empty<bool>();
 
     input_ids.length().do!(|i| {
         let input_id = input_ids[i];
-        let signature_existed_before = !r.has_signature(input_id);
-        results.push_back(signature_existed_before);
+        let no_signature_for_input = !r.has_signature(input_id);
 
-        if (signature_existed_before) {
+        if (no_signature_for_input) {
             r.record_signature(dwallet_coordinator, input_id, sign_ids[i]);
-
-            let is_fully_signed = r.status().is_signed();
             event::emit(RedeemSigCreatedEvent {
                 redeem_id,
                 input_id,
-                is_fully_signed,
             });
         }
     });
 
-    results
+    if (r.status().is_signed()) {
+        let tx = r.compose_tx(&contract.storage);
+        let tx_raw = tx::serialize_segwit(&tx);
+        event::emit(RedeemWithdrawReadyEvent {
+            redeem_id,
+            tx_id: r.btc_tx_id(),
+            tx_raw,
+        });
+    };
 }
 
 // TODO: update event emitted to include the data from the redeem request
@@ -898,16 +905,13 @@ public fun redeem_duration(contract: &NbtcContract): u64 {
 }
 
 #[test_only]
-use nbtc::nbtc_utxo::UtxoStore;
-
-#[test_only]
 /// Adds UTXO to the active wallet
-public fun add_utxo_for_test(ctr: &mut NbtcContract, _idx: u64, utxo: Utxo) {
+public fun add_utxo_for_test(ctr: &mut NbtcContract, _idx: u64, utxo: nbtc_utxo::Utxo) {
     ctr.storage.utxo_store_mut().add(utxo);
 }
 
 #[test_only]
-public fun borrow_utxo_map_for_test(ctr: &NbtcContract): &UtxoStore {
+public fun borrow_utxo_map_for_test(ctr: &NbtcContract): &nbtc_utxo::UtxoStore {
     ctr.storage.utxo_store()
 }
 
@@ -961,4 +965,30 @@ public fun testing_mint(contract: &mut NbtcContract, amount: u64, ctx: &mut TxCo
 public fun set_dwallet_for_test(contract: &mut NbtcContract, dwallet_id: ID, dw: BtcDWallet) {
     contract.active_dwallet_ids.push_back(dwallet_id);
     contract.storage.add_dwallet(dw);
+}
+
+#[test_only]
+/// Helper functions to access event fields in tests
+public fun get_redeem_sig_created_event_redeem_id(event: &RedeemSigCreatedEvent): u64 {
+    event.redeem_id
+}
+
+#[test_only]
+public fun get_redeem_sig_created_event_input_id(event: &RedeemSigCreatedEvent): u64 {
+    event.input_id
+}
+
+#[test_only]
+public fun get_redeem_withdraw_ready_event_redeem_id(event: &RedeemWithdrawReadyEvent): u64 {
+    event.redeem_id
+}
+
+#[test_only]
+public fun get_redeem_withdraw_ready_event_tx_id(event: &RedeemWithdrawReadyEvent): vector<u8> {
+    event.tx_id
+}
+
+#[test_only]
+public fun get_redeem_withdraw_ready_event_tx_raw(event: &RedeemWithdrawReadyEvent): vector<u8> {
+    event.tx_raw
 }
