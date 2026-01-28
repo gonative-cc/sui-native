@@ -817,6 +817,8 @@ public fun add_active_dwallet(_: &AdminCap, contract: &mut NbtcContract, dwallet
 public fun deactive_dwallet(_: &AdminCap, contract: &mut NbtcContract, dwallet_id: ID) {
     let (exists, idx) = contract.active_dwallet_ids.index_of(&dwallet_id);
     assert!(exists, EInvalidDWallet);
+    // here we only remove DWallet from the active dwallets list. The supported wallets are still in 
+    // storage.dwallets
     contract.active_dwallet_ids.remove(idx);
 }
 
