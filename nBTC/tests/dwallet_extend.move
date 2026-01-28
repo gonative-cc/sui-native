@@ -3,13 +3,6 @@ extend module ika_dwallet_2pc_mpc::coordinator_inner;
 
 use ika_dwallet_2pc_mpc::pricing;
 
-public fun dwallet_cap_for_testing(dwallet_id: ID, ctx: &mut TxContext): DWalletCap {
-    DWalletCap {
-        dwallet_id,
-        id: object::new(ctx),
-    }
-}
-
 public fun dwallet_coordinator_internal(ctx: &mut TxContext): DWalletCoordinatorInner {
     let pricing = pricing::empty();
     let mut inner = DWalletCoordinatorInner {
