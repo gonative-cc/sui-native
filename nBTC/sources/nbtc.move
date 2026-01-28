@@ -115,8 +115,9 @@ public struct NbtcContract has key, store {
     // lock nbtc for redeem, this is a mapping from request id to nBTC redeem coin
     locked: Table<u64, Coin<NBTC>>,
     storage: Storage,
-    // should have one active_dwallet_id
-    active_dwallet_id: Option<ID>,
+    // Vector of active dwallet IDs.
+    // Older dwallets can be rotated back by removing and re-adding.
+    active_dwallet_ids: vector<ID>,
     next_redeem_req: u64,
 }
 
@@ -228,7 +229,7 @@ fun init__(witness: NBTC, config: Config, ctx: &mut TxContext): NbtcContract {
         redeem_requests: table::new<u64, RedeemRequest>(ctx),
         locked: table::new(ctx),
         storage: create_storage(ctx),
-        active_dwallet_id: option::none(),
+        active_dwallet_ids: vector::empty(),
         next_redeem_req: 0,
     }
 }
@@ -298,7 +299,7 @@ fun verify_deposit(
     let o = tx.outputs();
     let mut utxo_idx = vector[];
     let mut i = 0;
-    let dwallet_id = contract.active_dwallet_id();
+    let dwallet_id = contract.recommended_dwallet_id();
     while (i < vouts.length()) {
         let vout_idx = vouts[i];
         let o_amount = o[vout_idx as u64].amount();
@@ -314,15 +315,26 @@ fun verify_deposit(
 // Public methods
 //
 
-/// Returns the ID of the currently active dwallet.
+public fun active_dwallet_ids(contract: &NbtcContract): vector<ID> {
+    contract.active_dwallet_ids
+}
+
+/// Returns the ID of the current active dwallet (last element in the vector).
 /// Aborts if no dwallet has been set as active.
-public fun active_dwallet_id(contract: &NbtcContract): ID {
-    *contract.active_dwallet_id.borrow()
+public fun recommended_dwallet_id(contract: &NbtcContract): ID {
+    assert!(!contract.active_dwallet_ids.is_empty(), EInvalidDWallet);
+    contract.active_dwallet_ids[contract.active_dwallet_ids.length() - 1]
 }
 
 public fun active_dwallet(contract: &NbtcContract): &BtcDWallet {
-    let dwallet_id = contract.active_dwallet_id();
+    let dwallet_id = contract.recommended_dwallet_id();
     contract.storage.dwallet(dwallet_id)
+}
+
+/// Returns true if the given dwallet ID is in the active list
+public(package) fun is_active_dwallet(contract: &NbtcContract, dwallet_id: ID): bool {
+    let (exists, _) = contract.active_dwallet_ids.index_of(&dwallet_id);
+    exists
 }
 
 /// Mints nBTC tokens after verifying a Bitcoin transaction proof.
@@ -350,7 +362,7 @@ public fun mint(
     ctx: &mut TxContext,
 ) {
     assert!(contract.version == VERSION, EVersionMismatch);
-    let dwallet_id = contract.active_dwallet_id();
+    let dwallet_id = contract.recommended_dwallet_id();
     let (mut amount, recipient, utxo_ids) = contract.verify_deposit(
         light_client,
         dwallet_id,
@@ -415,7 +427,7 @@ public fun record_inactive_deposit(
     assert!(contract.version == VERSION, EVersionMismatch);
     assert!(ops_arg == 0 || ops_arg == MINT_OP_APPLY_FEE, EInvalidOpsArg);
     contract.assert_light_client(object::id(light_client));
-    assert!(dwallet_id != contract.active_dwallet_id.borrow(), EInvalidDWallet);
+    assert!(!contract.is_active_dwallet(dwallet_id), EInvalidDWallet);
 
     let deposit_spend_key = contract.storage.dwallet(dwallet_id).lockscript();
     let (amount, recipient, _utxo_idx) = contract.verify_deposit(
@@ -565,7 +577,7 @@ public fun finalize_redeem(
     assert!(contract.version == VERSION, EVersionMismatch);
     contract.assert_light_client(object::id(light_client));
 
-    let dwallet_id = contract.active_dwallet_id();
+    let dwallet_id = contract.recommended_dwallet_id();
     let lockscript = contract.storage.dwallet(dwallet_id).lockscript();
 
     let mut r = contract.redeem_requests.remove(redeem_id);
@@ -725,7 +737,7 @@ public fun withdraw_inactive_deposit(
     ctx: &mut TxContext,
 ): u64 {
     assert!(contract.version == VERSION, EVersionMismatch);
-    assert!(dwallet_id != contract.active_dwallet_id.borrow(), EInvalidDWallet);
+    assert!(!contract.is_active_dwallet(dwallet_id), EInvalidDWallet);
     let amount = contract.storage.remove_inactive_user_deposit(dwallet_id, ctx.sender());
     let deposit_spend_key = contract.storage.dwallet(dwallet_id).lockscript();
     event::emit(RedeemInactiveDepositEvent {
@@ -802,22 +814,19 @@ public fun add_dwallet(
     contract.storage.add_dwallet(dw);
 }
 
-public fun set_active_dwallet(_: &AdminCap, contract: &mut NbtcContract, dwallet_id: ID) {
+public fun add_active_dwallet(_: &AdminCap, contract: &mut NbtcContract, dwallet_id: ID) {
     assert!(contract.version == VERSION, EVersionMismatch);
     assert!(contract.storage.exist(dwallet_id), EInvalidDWallet);
-    // FIXME: make sure the previous one is not lost!
-    contract.active_dwallet_id = option::some(dwallet_id);
+    assert!(!contract.is_active_dwallet(dwallet_id), EInvalidDWallet);
+    contract.active_dwallet_ids.push_back(dwallet_id);
 }
 
-public fun remove_inactive_dwallet(_: &AdminCap, contract: &mut NbtcContract, dwallet_id: ID) {
-    assert!(contract.version == VERSION, EVersionMismatch);
-    // TODO: need to decide if we want to keep balance check. Technically, it's not needed
-    // if we can provide public signature to the merge_coins
-    // NOTE: we don't check inactive_user_balance here because this is out of our control and the
-    // spend key is recorded as a part of the Table key.
-
-    assert!(dwallet_id != contract.active_dwallet_id.borrow(), EInvalidDWallet);
-    contract.storage.remove_dwallet(dwallet_id);
+public fun deactive_dwallet(_: &AdminCap, contract: &mut NbtcContract, dwallet_id: ID) {
+    let (exists, idx) = contract.active_dwallet_ids.index_of(&dwallet_id);
+    assert!(exists, EInvalidDWallet);
+    // here we only remove DWallet from the active dwallets list. The supported wallets are still in
+    // storage.dwallets
+    contract.active_dwallet_ids.remove(idx);
 }
 
 public(package) fun add_utxo_to_contract(
@@ -954,7 +963,7 @@ public fun testing_mint(contract: &mut NbtcContract, amount: u64, ctx: &mut TxCo
 
 #[test_only]
 public fun set_dwallet_for_test(contract: &mut NbtcContract, dwallet_id: ID, dw: BtcDWallet) {
-    contract.active_dwallet_id = option::some(dwallet_id);
+    contract.active_dwallet_ids.push_back(dwallet_id);
     contract.storage.add_dwallet(dw);
 }
 

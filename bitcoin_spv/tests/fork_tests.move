@@ -3,7 +3,7 @@
 #[test_only]
 module bitcoin_spv::handle_fork_tests;
 
-use bitcoin_spv::header::{Self, BlockHeader};
+use bitcoin_lib::header::{Self, BlockHeader};
 use bitcoin_spv::light_client::{
     LightClient,
     new_light_client,
