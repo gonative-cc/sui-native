@@ -41,6 +41,8 @@ fun setup_redeem_test(
     let dw = storage::create_dwallet(
         dwallet_cap_for_testing(dwallet_id, temp_scenario.ctx()),
         lockscript,
+        0,
+        vector::empty(),
         vector::empty(),
         temp_scenario.ctx(),
     );

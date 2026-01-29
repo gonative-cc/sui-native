@@ -2,6 +2,7 @@ module bitcoin_lib::script;
 
 use bitcoin_lib::opcode;
 use bitcoin_lib::vector_utils::vector_slice;
+use std::hash::sha2_256;
 
 /// Checks if the script is a Pay-to-Script-Hash (P2SH) output.
 /// P2SH format: OP_HASH160 OP_DATA_20 <20-byte-hash> OP_EQUAL
@@ -149,4 +150,101 @@ public fun op_return(script: vector<u8>): Option<vector<u8>> {
     // Pos:     0        1            2-5         6+
     // Bytes:   1        1            4           len
     option::some(vector_slice(&script, 6, script.length()))
+}
+
+#[error]
+const EInvalidMerkleHashLength: vector<u8> = b"Invalid merkle hash length";
+
+const HASH_LENGTH: u64 = 32;
+
+/// Tagged hash helper function.
+/// Computes: hash(tag) = SHA256(SHA256(tag) || SHA256(tag))
+/// Used for Taproot tagged hashes: TapLeaf, TapBranch, TapTweak, TapSighash.
+/// # Returns
+/// * 32-byte tagged hash
+fun tag_hash(tag: vector<u8>, data: vector<u8>): vector<u8> {
+    let tag_hash = sha2_256(tag); // use constant
+    let mut hash_data = tag_hash;
+    hash_data.append(tag_hash);
+    hash_data.append(data);
+    sha2_256(hash_data)
+}
+
+/// Computes TapLeaf tagged hash.
+/// Used for leaf nodes in Taproot script merkle trees (MAST).
+/// Formula: tag_hash("TapLeaf", version || script)
+///
+/// # Returns 32-byte TapLeaf hash
+public fun tap_leaf_hash(version: u8, script: vector<u8>): vector<u8> {
+    let mut data = vector[version];
+    data.append(script);
+    tag_hash(b"TapLeaf", data)
+}
+
+/// Computes TapBranch tagged hash for internal nodes in Taproot script merkle trees (MAST).
+/// Follows BIP-341 specification.
+/// Formula: tag_hash("TapBranch", smaller || larger)
+/// where smaller and larger are sorted lexicographically.
+public(package) fun tap_branch_hash(a: vector<u8>, b: vector<u8>): vector<u8> {
+    let cmp = vector_compare(&a, &b);
+    let (smaller, larger) = if (cmp == 1) {
+        (a, b)
+    } else {
+        (b, a)
+    };
+    let mut data = smaller;
+    data.append(larger);
+    tag_hash(b"TapBranch", data)
+}
+
+/// Compares two vectors lexicographically.
+/// Returns:
+/// * 1 if a < b
+/// * 0 if a == b
+/// * 2 if a > b
+fun vector_compare(a: &vector<u8>, b: &vector<u8>): u8 {
+    let min_len = a.length().min(b.length());
+    let mut i = 0;
+    while (i < min_len) {
+        if (a[i] < b[i]) {
+            return 1
+        } else if (a[i] > b[i]) {
+            return 2
+        };
+        i = i + 1;
+    };
+    if (a.length() < b.length()) {
+        1
+    } else if (a.length() > b.length()) {
+        2
+    } else {
+        0
+    }
+}
+
+/// Verifies that a script hash belongs to a Taproot script merkle tree (MAST)
+/// using a merkle proof with Taproot tagged hashing based on BIP-341.
+///
+/// Note: TapBranch uses lexicographic ordering, so we don't need to track
+/// the leaf index. The merkle path alone determines the computation.
+///
+/// Arguments
+/// * `script_hash` - The script hash (leaf) to verify (32 bytes)
+/// * `merkle_path` - Vector of sibling hashes from leaf to root
+/// * `script_merkle_root` - Expected merkle root of the script tree (32 bytes)
+/// Returns `true` if the script hash is in the merkle tree, `false` otherwise
+/// ```
+public fun verify_script_merkle_proof(
+    script_hash: vector<u8>,
+    merkle_path: vector<vector<u8>>,
+    script_merkle_root: vector<u8>,
+): bool {
+    assert!(script_hash.length() == HASH_LENGTH, EInvalidMerkleHashLength);
+    assert!(script_merkle_root.length() == HASH_LENGTH, EInvalidMerkleHashLength);
+
+    let computed_root = merkle_path.fold!(script_hash, |child_hash, sibling_hash| {
+        assert!(sibling_hash.length() == HASH_LENGTH, EInvalidMerkleHashLength);
+        tap_branch_hash(child_hash, sibling_hash)
+    });
+    computed_root == script_merkle_root
 }

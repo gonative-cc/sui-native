@@ -503,6 +503,44 @@ public fun request_utxo_sig(
     );
 }
 
+/// Requests signature for taproot script path spending.
+/// Verifies the leaf script hash is valid in dWallet's merkle tree.
+public fun request_utxo_sig_for_tapscript(
+    contract: &NbtcContract,
+    dwallet_coordinator: &mut DWalletCoordinator,
+    redeem_id: u64,
+    input_id: u64, // UTXO input index to sign (0-based)
+    msg_central_sig: vector<u8>,
+    leaf_script_hash: vector<u8>,
+    merkle_path: vector<vector<u8>>,
+    presign: UnverifiedPresignCap,
+    payment_ika: &mut Coin<IKA>,
+    payment_sui: &mut Coin<SUI>,
+    ctx: &mut TxContext,
+) {
+    assert!(contract.version == VERSION, EVersionMismatch);
+    assert!(
+        object::id(dwallet_coordinator) == contract.config.dwallet_coordinator(),
+        EInvalidDWalletCoordinator,
+    );
+    let request = &contract.redeem_requests[redeem_id];
+    assert!(request.status().is_signing(), ENotReadlyForSign);
+    assert!(!request.has_signature(input_id), EInputAlreadyUsed);
+    request.request_utxo_sig_for_tapscript(
+        dwallet_coordinator,
+        &contract.storage,
+        redeem_id,
+        input_id,
+        msg_central_sig,
+        leaf_script_hash,
+        merkle_path,
+        presign,
+        payment_ika,
+        payment_sui,
+        ctx,
+    );
+}
+
 /// redeem initiates nBTC redemption and BTC withdraw process.
 /// Returns total amount of redeemed balance.
 public fun redeem(
@@ -796,6 +834,8 @@ public fun add_dwallet(
     contract: &mut NbtcContract,
     cap: DWalletCap,
     lockscript: vector<u8>,
+    control_byte: u8,
+    script_merkle_root: vector<u8>,
     user_key_share: vector<u8>,
     ctx: &mut TxContext,
 ) {
@@ -808,6 +848,8 @@ public fun add_dwallet(
     let dw = create_dwallet(
         cap,
         lockscript,
+        control_byte,
+        script_merkle_root,
         user_key_share,
         ctx,
     );
