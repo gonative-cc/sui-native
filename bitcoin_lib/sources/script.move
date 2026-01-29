@@ -177,39 +177,24 @@ fun tag_hash(tag: vector<u8>, data: vector<u8>): vector<u8> {
 
 /// Computes TapLeaf tagged hash.
 /// Used for leaf nodes in Taproot script merkle trees (MAST).
-///
-/// Generic utility following BIP-342 specification.
-///
 /// Formula: tag_hash("TapLeaf", version || script)
 ///
-/// # Arguments
-/// * `version` - Taproot script version (0xc0 for BIP-342)
-/// * `script` - Script bytes to hash
-///
-/// # Returns
-/// * 32-byte TapLeaf hash
+/// # Returns 32-byte TapLeaf hash
 public fun tap_leaf_hash(version: u8, script: vector<u8>): vector<u8> {
     let mut data = vector[version];
     data.append(script);
     tag_hash(b"TapLeaf", data)
 }
 
-/// Computes TapBranch tagged hash.
-/// Used for internal nodes in Taproot script merkle trees (MAST).
-///
-/// Generic utility following BIP-341 specification.
-/// Children are sorted lexicographically before hashing to ensure
-/// deterministic merkle tree construction.
-///
+/// Computes TapBranch tagged hash for internal nodes in Taproot script merkle trees (MAST).
+/// Follows BIP-341 specification.
 /// Formula: tag_hash("TapBranch", smaller || larger)
 /// where smaller and larger are sorted lexicographically.
 ///
-/// # Arguments
+/// Arguments
 /// * `a` - First child hash (32 bytes)
 /// * `b` - Second child hash (32 bytes)
-///
-/// # Returns
-/// * 32-byte TapBranch hash
+/// Returns 32-byte TapBranch hash
 public fun tap_branch_hash(a: vector<u8>, b: vector<u8>): vector<u8> {
     let cmp = vector_compare(&a, &b);
     let (smaller, larger) = if (cmp == 1) {
@@ -248,23 +233,16 @@ fun vector_compare(a: &vector<u8>, b: &vector<u8>): u8 {
 }
 
 /// Verifies that a script hash belongs to a Taproot script merkle tree (MAST)
-/// using a merkle proof with Taproot tagged hashing.
-///
-/// This function implements Taproot BIP-341 tagged hashing for script tree
-/// verification, using TapBranch hashes instead of double SHA256.
+/// using a merkle proof with Taproot tagged hashing based on BIP-341.
 ///
 /// Note: TapBranch uses lexicographic ordering, so we don't need to track
 /// the leaf index. The merkle path alone determines the computation.
 ///
-/// # Arguments
+/// Arguments
 /// * `script_hash` - The script hash (leaf) to verify (32 bytes)
 /// * `merkle_path` - Vector of sibling hashes from leaf to root
 /// * `script_merkle_root` - Expected merkle root of the script tree (32 bytes)
-///
-/// # Returns
-/// * `true` if the script hash is in the merkle tree
-/// * `false` otherwise
-///
+/// Returns `true` if the script hash is in the merkle tree, `false` otherwise
 /// ```
 public fun verify_script_merkle_proof(
     script_hash: vector<u8>,

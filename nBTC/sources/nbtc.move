@@ -493,19 +493,6 @@ public fun request_utxo_sig(
 
 /// Requests signature for taproot script path spending.
 /// Verifies the leaf script hash is valid in dWallet's merkle tree.
-///
-/// # Arguments
-/// * `contract` - The nBTC contract
-/// * `dwallet_coordinator` - Ika dWallet coordinator for signing
-/// * `redeem_id` - The redeem request ID
-/// * `input_id` - The UTXO input index to sign (0-based)
-/// * `msg_central_sig` - Central signature message
-/// * `leaf_script_hash` - Taproot leaf script hash (32 bytes)
-/// * `merkle_path` - Merkle proof path from leaf to root
-/// * `presign` - Presign capability for Ika signing
-/// * `payment_ika` - IKA coin for paying signing fees
-/// * `payment_sui` - SUI coin for paying signing fees
-///
 public fun request_utxo_sig_for_tapscript(
     contract: &NbtcContract,
     dwallet_coordinator: &mut DWalletCoordinator,
