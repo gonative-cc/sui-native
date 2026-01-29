@@ -497,7 +497,7 @@ public fun request_utxo_sig_for_tapscript(
     contract: &NbtcContract,
     dwallet_coordinator: &mut DWalletCoordinator,
     redeem_id: u64,
-    input_id: u64,
+    input_id: u64,   // UTXO input index to sign (0-based)
     msg_central_sig: vector<u8>,
     leaf_script_hash: vector<u8>,
     merkle_path: vector<vector<u8>>,
