@@ -160,11 +160,6 @@ const HASH_LENGTH: u64 = 32;
 /// Tagged hash helper function.
 /// Computes: hash(tag) = SHA256(SHA256(tag) || SHA256(tag))
 /// Used for Taproot tagged hashes: TapLeaf, TapBranch, TapTweak, TapSighash.
-///
-/// # Arguments
-/// * `tag` - Tag string (e.g., "TapLeaf", "TapBranch")
-/// * `data` - Data to hash
-///
 /// # Returns
 /// * 32-byte tagged hash
 fun tag_hash(tag: vector<u8>, data: vector<u8>): vector<u8> {
@@ -190,12 +185,7 @@ public fun tap_leaf_hash(version: u8, script: vector<u8>): vector<u8> {
 /// Follows BIP-341 specification.
 /// Formula: tag_hash("TapBranch", smaller || larger)
 /// where smaller and larger are sorted lexicographically.
-///
-/// Arguments
-/// * `a` - First child hash (32 bytes)
-/// * `b` - Second child hash (32 bytes)
-/// Returns 32-byte TapBranch hash
-public fun tap_branch_hash(a: vector<u8>, b: vector<u8>): vector<u8> {
+public(package) fun tap_branch_hash(a: vector<u8>, b: vector<u8>): vector<u8> {
     let cmp = vector_compare(&a, &b);
     let (smaller, larger) = if (cmp == 1) {
         (a, b)

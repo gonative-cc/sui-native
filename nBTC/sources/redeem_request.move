@@ -70,6 +70,14 @@ public struct RequestSignatureEvent has copy, drop {
     input_id: u64,
 }
 
+/// Event emitted when Ika sign request for a given redeem request input is sent.
+/// Use for taproot script spending
+public struct RequestSignatureTaprootEvent has copy, drop {
+    redeem_id: u64,
+    sign_id: ID, // IKA sign session ID
+    input_id: u64,
+    sig_hash: vector<u8>,
+}
 // ========== RedeemStatus methods ================
 
 public fun is_resolving(status: &RedeemStatus): bool {
@@ -218,18 +226,6 @@ public(package) fun request_utxo_sig(
 /// Requests signature from Ika Network for taproot script path spending.
 /// Verifies the leaf script hash is in dWallet's merkle tree before signing.
 ///
-/// # Arguments
-/// * `r` - The redeem request
-/// * `dwallet_coordinator` - Ika dWallet coordinator
-/// * `storage` - Contract storage containing dWallet data
-/// * `redeem_id` - The redeem request ID
-/// * `input_id` - The UTXO input index to sign
-/// * `msg_central_sig` - Central signature message
-/// * `leaf_script_hash` - Taproot leaf script hash (32 bytes)
-/// * `merkle_path` - Merkle proof path from leaf to root
-/// * `presign` - Presign capability for Ika signing
-/// * `payment_ika` - IKA payment coin
-/// * `payment_sui` - SUI payment coin
 public(package) fun request_utxo_sig_for_tapscript(
     r: &RedeemRequest,
     dwallet_coordinator: &mut DWalletCoordinator,
@@ -277,20 +273,15 @@ public(package) fun request_utxo_sig_for_tapscript(
         ctx,
     );
 
-    event::emit(RequestSignatureEvent {
+    event::emit(RequestSignatureTaprootEvent {
         redeem_id,
         sign_id,
         input_id,
+        sig_hash,
     });
 }
 
 /// Computes sighash for taproot script path spending with the provided leaf hash.
-///
-/// # Arguments
-/// * `r` - The redeem request containing transaction data
-/// * `input_id` - The UTXO input index (0-based)
-/// * `leaf_hash` - The Taproot leaf script hash (32 bytes)
-/// * `storage` - Contract storage for accessing UTXO lock scripts
 ///
 /// # Returns
 /// * `vector<u8>` - The sighash for the specified input
