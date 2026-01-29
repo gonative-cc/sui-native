@@ -36,6 +36,9 @@ export async function initialization(dwalletId: string, config: Config) {
 			arguments: {
 				_: config.adminCap,
 				contract: config.nbtc,
+				// TODO: Setup controlByte and scriptMerkleRoot
+				controlByte: 0,
+				scriptMerkleRoot: Array.from([]),
 				cap: dwalletCap,
 				lockscript: Array.from(lockscript),
 				userKeyShare: Array.from(dWallet.public_user_secret_key_share!),
