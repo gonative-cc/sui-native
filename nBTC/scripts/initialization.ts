@@ -30,6 +30,7 @@ export async function initialization(dwalletId: string, config: Config) {
 
 	let tx = new Transaction();
 
+
 	// add dwallet to nbtc
 	tx.add(
 		nBTCContractModule.addDwallet({
@@ -42,16 +43,6 @@ export async function initialization(dwalletId: string, config: Config) {
 				cap: dwalletCap,
 				lockscript: Array.from(lockscript),
 				userKeyShare: Array.from(dWallet.public_user_secret_key_share!),
-			},
-		}),
-	);
-
-	tx.add(
-		nBTCContractModule.addActiveDwallet({
-			arguments: {
-				_: config.adminCap,
-				contract: config.nbtc,
-				dwalletId: dwalletId,
 			},
 		}),
 	);
