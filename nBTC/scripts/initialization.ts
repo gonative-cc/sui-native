@@ -30,7 +30,6 @@ export async function initialization(dwalletId: string, config: Config) {
 
 	let tx = new Transaction();
 
-
 	// add dwallet to nbtc
 	tx.add(
 		nBTCContractModule.addDwallet({
