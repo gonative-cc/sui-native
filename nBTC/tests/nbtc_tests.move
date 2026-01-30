@@ -175,7 +175,7 @@ fun test_nbtc_mint() {
         0,
     );
 
-    let balance = ctr.active_dwallet().total_deposit();
+    let balance = ctr.storage().recommended_dwallet().total_deposit();
     let total_amount_expected = 2 * get_valid_mint_data().expected_amount;
     assert_eq!(balance, total_amount_expected);
     destroy(lc);
@@ -214,7 +214,7 @@ fun test_mint_with_fee() {
 
     // mint with fallback should take fee as well.
     assert_eq!(ctr.get_fees_collected(), 2*ctr.config().mint_fee());
-    let total_amount = ctr.active_dwallet().total_deposit();
+    let total_amount = ctr.storage().recommended_dwallet().total_deposit();
     let total_amount_expected =
         get_fallback_mint_data().expected_amount +
         get_valid_mint_data().expected_amount;

@@ -11,6 +11,8 @@ const MAX_U64: u64 = 0xFFFFFFFFFFFFFFFF;
 const EDwalletNotFound: vector<u8> = b"DWallet not found";
 #[error]
 const EBalanceNotEmpty: vector<u8> = b"balance not empty";
+#[error]
+const ENoDwalletInStore: vector<u8> = b"dwallets list is empty";
 
 public struct BtcDWallet has store {
     cap: DWalletCap,
@@ -123,6 +125,10 @@ public fun verify_taproot_script(
     )
 }
 
+public fun is_inactive(store: &Storage, dwallet_id: ID): bool {
+    store.dwallet_trash.contains(dwallet_id)
+}
+
 // NOTE: It's OK to do linear search because we are limiting amount of dwallets to 10-20 max
 /// returns MAX_U64 if the idx doesn't exist.
 fun dwallet_idx(store: &Storage, dwallet_id: ID): u64 {
@@ -153,17 +159,23 @@ public fun dwallet(store: &Storage, dwallet_id: ID): &BtcDWallet {
     &store.dwallets[i]
 }
 
+public fun dwallet_id(btcDwallet: &BtcDWallet): ID {
+    btcDwallet.cap.dwallet_id()
+}
+
+/// Returns the ID of the current active dwallet (last element in the vector).
+/// Aborts if no dwallet has been set as active.
+public fun recommended_dwallet(store: &Storage): &BtcDWallet {
+    assert!(!store.dwallets.is_empty(), ENoDwalletInStore);
+    let dwallet = &store.dwallets[store.dwallets.length() - 1];
+    dwallet
+}
+
 // Must not be exported outside of the package!
 public(package) fun dwallet_mut(store: &mut Storage, dwallet_id: ID): &mut BtcDWallet {
     let i = store.dwallet_idx_assert(dwallet_id);
     &mut store.dwallets[i]
 }
-
-// // NOTE: Never export this function publicly!
-// public(package) fun dwallet_cap(store: &Storage, dwallet_id: ID): &DWalletCap {
-//     let i = store.dwallet_idx_assert(dwallet_id);
-//     &store.dwallets[i]
-// }
 
 public(package) fun add_dwallet(store: &mut Storage, d: BtcDWallet) {
     store.dwallets.push_back(d);

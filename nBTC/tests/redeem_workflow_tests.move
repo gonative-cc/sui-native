@@ -206,7 +206,7 @@ fun test_propose_utxos_unlocks_old_and_locks_new() {
         false,
     );
 
-    let dwallet_id = ctr.recommended_dwallet_id();
+    let dwallet_id = ctr.storage().recommended_dwallet().dwallet_id();
     let utxo_1 = new_utxo(x"02", 1, 1000, dwallet_id);
     ctr.add_utxo_for_test(1, utxo_1);
 
@@ -455,7 +455,7 @@ fun test_finalize_redeem_with_multiple_utxos() {
         false,
     );
 
-    let dwallet_id = ctr.recommended_dwallet_id();
+    let dwallet_id = ctr.storage().recommended_dwallet().dwallet_id();
     let utxo_2 = new_utxo(
         x"02ce677fd511851bb6cdacebed863d12dfd231d810e8e9fcba6e791001adf3a6",
         1,
