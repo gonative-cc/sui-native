@@ -52,7 +52,7 @@ public struct RedeemRequest has store {
     btc_tx_id: vector<u8>,
     outputs: vector<Output>,
     sig_hashes: vector<vector<u8>>,
-    sign_ids: Table<ID, u64>, // Tracks IKA sign session IDs for this redeem request
+    sign_ids: Table<ID, u64>, // Maps Ika sign session IDs -> input_id to make sure we correctly validate signatures for inputs.
     signatures: vector<vector<u8>>,
     created_at: u64,
     signed_input: u64,
