@@ -10,8 +10,6 @@ const MAX_U64: u64 = 0xFFFFFFFFFFFFFFFF;
 #[error]
 const EDwalletNotFound: vector<u8> = b"DWallet not found";
 #[error]
-const EBalanceNotEmpty: vector<u8> = b"balance not empty";
-#[error]
 const ENoDwalletInStore: vector<u8> = b"dwallets list is empty";
 
 public struct BtcDWallet has store {
@@ -29,7 +27,7 @@ public struct Storage has key, store {
     id: UID,
     dwallets: vector<BtcDWallet>,
     /// Store unactive / old dwallets
-    dwallet_trash: Table<ID, DWalletCap>,
+    dwallet_trash: Table<ID, BtcDWallet>,
     utxo_store: UtxoStore,
 }
 
@@ -38,7 +36,7 @@ public(package) fun create_storage(ctx: &mut TxContext): Storage {
     Storage {
         id: object::new(ctx),
         dwallets: vector<BtcDWallet>[],
-        dwallet_trash: table::new<ID, DWalletCap>(ctx),
+        dwallet_trash: table::new(ctx),
         utxo_store: new_utxo_store(ctx),
     }
 }
@@ -155,6 +153,9 @@ public(package) fun exist(store: &Storage, dwallet_id: ID): bool {
 }
 
 public fun dwallet(store: &Storage, dwallet_id: ID): &BtcDWallet {
+    if (store.dwallet_trash.contains(dwallet_id)) {
+        return &store.dwallet_trash[dwallet_id]
+    };
     let i = store.dwallet_idx_assert(dwallet_id);
     &store.dwallets[i]
 }
@@ -181,23 +182,11 @@ public(package) fun add_dwallet(store: &mut Storage, d: BtcDWallet) {
     store.dwallets.push_back(d);
 }
 
-/// Removes dwallet metadata and moves dwallet to the trash.
-/// Aborts if the balance is not zero.
-public(package) fun remove_dwallet(store: &mut Storage, dwallet_id: ID) {
+public(package) fun deactive_dwallet(store: &mut Storage, dwallet_id: ID) {
     let i = store.dwallet_idx_assert(dwallet_id);
-    let BtcDWallet {
-        cap,
-        inactive_deposits,
-        total_deposit,
-        lockscript: _,
-        control_byte: _,
-        script_merkle_root: _,
-        user_key_share: _,
-    } = store.dwallets.swap_remove(i);
-    assert!(total_deposit == 0, EBalanceNotEmpty);
-    inactive_deposits.destroy_empty();
-
-    store.dwallet_trash.add(dwallet_id, cap);
+    let dwallet = store.dwallets.swap_remove(i);
+    let dwallet_id = dwallet.cap.dwallet_id();
+    store.dwallet_trash.add(dwallet_id, dwallet);
 }
 
 public(package) fun increase_total_deposit(store: &mut Storage, dwallet_id: ID, amount: u64) {

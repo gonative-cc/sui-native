@@ -828,7 +828,7 @@ public fun add_dwallet(
 }
 
 public fun deactive_dwallet(_: &AdminCap, contract: &mut NbtcContract, dwallet_id: ID) {
-    contract.storage.remove_dwallet(dwallet_id);
+    contract.storage.deactive_dwallet(dwallet_id);
 }
 
 public(package) fun add_utxo_to_contract(
