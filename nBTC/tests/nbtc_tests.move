@@ -123,7 +123,7 @@ public fun setup_with_dwallet(
         scenario.ctx(),
     );
 
-    ctr.set_dwallet_for_test(dwallet_id, dw);
+    ctr.set_dwallet_for_test(dw);
 
     (lc, ctr, dwallet_coordinator, scenario)
 }

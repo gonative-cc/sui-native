@@ -964,11 +964,7 @@ public fun testing_mint(contract: &mut NbtcContract, amount: u64, ctx: &mut TxCo
 }
 
 #[test_only]
-public fun set_dwallet_for_test(
-    contract: &mut NbtcContract,
-    _dwallet_id: ID,
-    dw: storage::BtcDWallet,
-) {
+public fun set_dwallet_for_test(contract: &mut NbtcContract, dw: storage::BtcDWallet) {
     contract.storage.add_dwallet(dw);
 }
 
