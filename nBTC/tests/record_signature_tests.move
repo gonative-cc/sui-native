@@ -1,11 +1,7 @@
 #[test_only]
 module nbtc::record_signature_tests;
 
-use ika_dwallet_2pc_mpc::coordinator::{
-    set_signature_for_testing,
-    add_sign_session_for_testing,
-    DWalletCoordinator
-};
+use ika_dwallet_2pc_mpc::coordinator::{set_signature_for_testing, DWalletCoordinator};
 use nbtc::nbtc::{
     NBTC,
     RedeemSigCreatedEvent,
@@ -78,7 +74,7 @@ fun setup_redeem_in_signing_state(
 
     // Add sign session to coordinator for testing record_signature
     let sign_id = sui::object::id_from_address(@0x2);
-    add_sign_session_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id, scenario.ctx());
+    dwallet_coordinator.add_sign_session_for_testing(dwallet_id, sign_id, scenario.ctx());
 
     // Add sign_id mapping for testing
     ctr.redeem_request_mut(redeem_id).add_sign_id_for_test(sign_id, 0);
@@ -101,7 +97,7 @@ fun test_record_signature_returns_true_on_first_call() {
 
     // Use set_signature_for_testing to mock the signature in coordinator
     let dwallet_id = ctr.recommended_dwallet_id();
-    set_signature_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id, MOCK_SIGNATURE);
+    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id, MOCK_SIGNATURE);
 
     // Now call the real batch record_signature function
     ctr.record_signature(&dwallet_coordinator, redeem_id, vector[0], vector[sign_id]);
@@ -132,7 +128,7 @@ fun test_record_signature_returns_false_when_already_recorded() {
 
     // Use set_signature_for_testing to mock the signature
     let dwallet_id = ctr.recommended_dwallet_id();
-    set_signature_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id, MOCK_SIGNATURE);
+    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id, MOCK_SIGNATURE);
 
     // First call - should record signature
     ctr.record_signature(
@@ -176,7 +172,7 @@ fun test_record_signature_multiple_calls_safe() {
 
     // Use set_signature_for_testing to mock the signature
     let dwallet_id = ctr.recommended_dwallet_id();
-    set_signature_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id, MOCK_SIGNATURE);
+    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id, MOCK_SIGNATURE);
 
     // First call - should record signature
     ctr.record_signature(
@@ -234,7 +230,7 @@ fun test_record_signature_event_emission() {
 
     // Use set_signature_for_testing to mock the signature
     let dwallet_id = ctr.recommended_dwallet_id();
-    set_signature_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id, MOCK_SIGNATURE);
+    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id, MOCK_SIGNATURE);
 
     // First call - should emit event
     ctr.record_signature(
@@ -309,10 +305,10 @@ fun test_record_signature_with_multiple_inputs() {
 
     // Add sign sessions for both inputs
     let sign_id1 = sui::object::id_from_address(@0x2);
-    add_sign_session_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id1, scenario.ctx());
+    dwallet_coordinator.add_sign_session_for_testing(dwallet_id, sign_id1, scenario.ctx());
 
     let sign_id2 = sui::object::id_from_address(@0x3);
-    add_sign_session_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id2, scenario.ctx());
+    dwallet_coordinator.add_sign_session_for_testing(dwallet_id, sign_id2, scenario.ctx());
 
     // Add sign_id mappings for testing
     let request = ctr.redeem_request_mut(redeem_id);
@@ -320,7 +316,7 @@ fun test_record_signature_with_multiple_inputs() {
     request.add_sign_id_for_test(sign_id2, 1);
 
     // Record signature for input 0
-    set_signature_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id1, MOCK_SIGNATURE);
+    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id1, MOCK_SIGNATURE);
     ctr.record_signature(
         &dwallet_coordinator,
         redeem_id,
@@ -337,7 +333,7 @@ fun test_record_signature_with_multiple_inputs() {
     );
 
     // Record signature for input 1
-    set_signature_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id2, MOCK_SIGNATURE);
+    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id2, MOCK_SIGNATURE);
     ctr.record_signature(
         &dwallet_coordinator,
         redeem_id,
@@ -406,10 +402,10 @@ fun test_record_signature_batch() {
 
     // Add sign sessions for both inputs
     let sign_id1 = sui::object::id_from_address(@0x2);
-    add_sign_session_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id1, scenario.ctx());
+    dwallet_coordinator.add_sign_session_for_testing(dwallet_id, sign_id1, scenario.ctx());
 
     let sign_id2 = sui::object::id_from_address(@0x3);
-    add_sign_session_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id2, scenario.ctx());
+    dwallet_coordinator.add_sign_session_for_testing(dwallet_id, sign_id2, scenario.ctx());
 
     // Add sign_id mappings for testing
     let request = ctr.redeem_request_mut(redeem_id);
@@ -417,8 +413,8 @@ fun test_record_signature_batch() {
     request.add_sign_id_for_test(sign_id2, 1);
 
     // Set signatures for both inputs
-    set_signature_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id1, MOCK_SIGNATURE);
-    set_signature_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id2, MOCK_SIGNATURE);
+    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id1, MOCK_SIGNATURE);
+    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id2, MOCK_SIGNATURE);
 
     // Record both signatures in one batch call
     ctr.record_signature(
@@ -432,6 +428,78 @@ fun test_record_signature_batch() {
     let request = ctr.redeem_request(redeem_id);
     assert_eq!(request.has_signature(0), true);
     assert_eq!(request.has_signature(1), true);
+
+    clock.destroy_for_testing();
+    destroy(lc);
+    destroy(ctr);
+    destroy(dwallet_coordinator);
+    scenario.end();
+}
+
+#[test, expected_failure(abort_code = nbtc::redeem_request::EInvalidSignID)]
+fun test_record_signature_fails_with_mismatched_sign_id() {
+    let dwallet_id = MOCK_DWALLET_ID!();
+    let (lc, mut ctr, mut dwallet_coordinator, mut scenario) = setup(
+        NBTC_TAPROOT_SCRIPT!(),
+        ADMIN!(),
+        dwallet_id,
+    );
+
+    // Add two UTXOs
+    let utxo1 = new_utxo(TX_HASH!(), 0, 1000, dwallet_id);
+    ctr.add_utxo_for_test(0, utxo1);
+
+    let utxo2 = new_utxo(
+        x"02ce677fd511851bb6cdacebed863d12dfd231d810e8e9fcba6e791001adf3a6",
+        1,
+        1000,
+        dwallet_id,
+    );
+    ctr.add_utxo_for_test(1, utxo2);
+
+    let nbtc_coin = mint_for_testing<NBTC>(1500, scenario.ctx());
+    let mut clock = clock::create_for_testing(scenario.ctx());
+    let redeem_id = ctr.redeem(
+        nbtc_coin,
+        RECEIVER_SCRIPT!(),
+        REDEEM_FEE!(),
+        &clock,
+        scenario.ctx(),
+    );
+
+    // Move to signing state with both UTXOs
+    ctr.propose_utxos(redeem_id, vector[0, 1], &clock);
+    clock.increment_for_testing(ctr.redeem_duration() + 1);
+    ctr.solve_redeem_request(redeem_id, &clock);
+
+    // Add sign sessions for both inputs
+    let sign_id1 = sui::object::id_from_address(@0x2);
+    dwallet_coordinator.add_sign_session_for_testing(dwallet_id, sign_id1, scenario.ctx());
+
+    let sign_id2 = sui::object::id_from_address(@0x3);
+    dwallet_coordinator.add_sign_session_for_testing(dwallet_id, sign_id2, scenario.ctx());
+
+    // Add sign_id mappings with mismatched input_ids
+    let request = ctr.redeem_request_mut(redeem_id);
+    request.add_sign_id_for_test(sign_id1, 0);
+    request.add_sign_id_for_test(sign_id2, 1);
+
+    // Set signature for sign_id1
+    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id1, MOCK_SIGNATURE);
+
+    // Try to record signature for input 1 using sign_id1 (which maps to input 0)
+    // This should fail with EInvalidSignID
+    ctr.record_signature(
+        &dwallet_coordinator,
+        redeem_id,
+        vector[1],
+        vector[sign_id1],
+    );
+
+    // Verify that signature for input 1 was NOT recorded
+    let request = ctr.redeem_request(redeem_id);
+    assert_eq!(request.has_signature(0), false);
+    assert_eq!(request.has_signature(1), false);
 
     clock.destroy_for_testing();
     destroy(lc);
