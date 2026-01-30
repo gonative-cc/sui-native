@@ -24,6 +24,8 @@ const EInvalidIkaSchnorrLength: vector<u8> = b"invalid schnorr signature length 
 const EUnsupportedLockscript: vector<u8> = b"unsupported lockscript";
 #[error]
 const EInvalidLeafHash: vector<u8> = b"invalid leaf hash for taproot script spending";
+#[error]
+const EInvalidSignID: vector<u8> = b"invalid sign ID for input";
 
 // signature algorithm
 const TAPROOT: u32 = 1;
@@ -50,7 +52,7 @@ public struct RedeemRequest has store {
     btc_tx_id: vector<u8>,
     outputs: vector<Output>,
     sig_hashes: vector<vector<u8>>,
-    sign_ids: Table<ID, bool>, // Tracks IKA sign session IDs for this redeem request
+    sign_ids: Table<ID, u64>, // Tracks IKA sign session IDs for this redeem request
     signatures: vector<vector<u8>>,
     created_at: u64,
     signed_input: u64,
@@ -336,7 +338,7 @@ public(package) fun set_sign_request_metadata(
         let s = &mut r.sig_hashes[input_id];
         *s = sig_hash;
     };
-    r.sign_ids.add(sign_id, true);
+    r.sign_ids.add(sign_id, input_id);
 }
 
 // returns Bitcoin withdraw transaction
@@ -483,6 +485,7 @@ public(package) fun record_signature(
     input_id: u64,
     sign_id: ID,
 ) {
+    assert!(r.sign_ids[sign_id] == input_id, EInvalidSignID);
     let utxo = r.utxo_at(input_id);
     let dwallet_id = utxo.dwallet_id();
     let signature = get_signature(dwallet_coordinator, dwallet_id, sign_id);
@@ -545,6 +548,6 @@ public fun update_to_signed_for_test(r: &mut RedeemRequest, signatures: vector<v
 }
 
 #[test_only]
-public fun add_sign_id_for_test(r: &mut RedeemRequest, sign_id: ID) {
-    r.sign_ids.add(sign_id, true);
+public fun add_sign_id_for_test(r: &mut RedeemRequest, sign_id: ID, input_id: u64) {
+    r.sign_ids.add(sign_id, input_id);
 }

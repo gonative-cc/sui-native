@@ -80,6 +80,9 @@ fun setup_redeem_in_signing_state(
     let sign_id = sui::object::id_from_address(@0x2);
     add_sign_session_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id, scenario.ctx());
 
+    // Add sign_id mapping for testing
+    ctr.redeem_request_mut(redeem_id).add_sign_id_for_test(sign_id, 0);
+
     (lc, ctr, dwallet_coordinator, redeem_id, sign_id, scenario, clock)
 }
 
@@ -311,6 +314,11 @@ fun test_record_signature_with_multiple_inputs() {
     let sign_id2 = sui::object::id_from_address(@0x3);
     add_sign_session_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id2, scenario.ctx());
 
+    // Add sign_id mappings for testing
+    let request = ctr.redeem_request_mut(redeem_id);
+    request.add_sign_id_for_test(sign_id1, 0);
+    request.add_sign_id_for_test(sign_id2, 1);
+
     // Record signature for input 0
     set_signature_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id1, MOCK_SIGNATURE);
     ctr.record_signature(
@@ -402,6 +410,11 @@ fun test_record_signature_batch() {
 
     let sign_id2 = sui::object::id_from_address(@0x3);
     add_sign_session_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id2, scenario.ctx());
+
+    // Add sign_id mappings for testing
+    let request = ctr.redeem_request_mut(redeem_id);
+    request.add_sign_id_for_test(sign_id1, 0);
+    request.add_sign_id_for_test(sign_id2, 1);
 
     // Set signatures for both inputs
     set_signature_for_testing(&mut dwallet_coordinator, dwallet_id, sign_id1, MOCK_SIGNATURE);
