@@ -129,7 +129,7 @@ public fun verify_taproot_script(
     )
 }
 
-public fun is_inactive(store: &Storage, dwallet_id: ID): bool {
+public fun is_deactive(store: &Storage, dwallet_id: ID): bool {
     store.dwallet_trash.contains(dwallet_id)
 }
 
@@ -208,7 +208,7 @@ public(package) fun add_dwallet(store: &mut Storage, d: BtcDWallet) {
 
 public(package) fun deactivate_dwallet(store: &mut Storage, dwallet_id: ID) {
     let i = store.dwallet_idx_assert(dwallet_id);
-    let dwallet = store.dwallets.swap_remove(i);
+    let dwallet = store.dwallets.remove(i);
     let dwallet_id = dwallet.cap.dwallet_id();
     store.dwallet_trash.add(dwallet_id, dwallet);
 }
