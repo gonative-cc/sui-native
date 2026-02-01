@@ -205,7 +205,7 @@ public(package) fun add_dwallet(store: &mut Storage, d: BtcDWallet) {
     store.dwallets.push_back(d);
 }
 
-public(package) fun deactive_dwallet(store: &mut Storage, dwallet_id: ID) {
+public(package) fun deactivate_dwallet(store: &mut Storage, dwallet_id: ID) {
     let i = store.dwallet_idx_assert(dwallet_id);
     let dwallet = store.dwallets.swap_remove(i);
     let dwallet_id = dwallet.cap.dwallet_id();
