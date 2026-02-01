@@ -337,7 +337,7 @@ public fun mint(
     ctx: &mut TxContext,
 ) {
     assert!(contract.version == VERSION, EVersionMismatch);
-    let dwallet_id = contract.storage.dwallet_id_by_btcaddr(dwallet_btcaddr);
+    let dwallet_id = contract.storage.dwallet_id_by_addr(dwallet_btcaddr);
     let (mut amount, recipient, utxo_ids) = contract.verify_deposit(
         light_client,
         dwallet_id,
