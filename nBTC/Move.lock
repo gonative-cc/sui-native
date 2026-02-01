@@ -29,19 +29,19 @@ manifest_digest = "64A1B483E5DDE6BD3A68171A6E45B9BE27CE60D21FBDDE7898320A7D5088F
 deps = { bitcoin_lib = "bitcoin_lib", std = "MoveStdlib", sui = "Sui" }
 
 [pinned.testnet.ika]
-source = { git = "https://github.com/dwallet-labs/ika.git", subdir = "deployed_contracts/testnet/ika", rev = "b51dbf8b417e924acf736433effb5374c7935854" }
+source = { git = "https://github.com/dwallet-labs/ika.git", subdir = "deployed_contracts/testnet/ika", rev = "9ca4b777844c134fdfc67685916b3b814532f050" }
 use_environment = "testnet"
 manifest_digest = "5745706258F61D6CE210904B3E6AE87A73CE9D31A6F93BE4718C442529332A87"
 deps = { std = "MoveStdlib", sui = "Sui" }
 
 [pinned.testnet.ika_common]
-source = { git = "https://github.com/dwallet-labs/ika.git", subdir = "deployed_contracts/testnet/ika_common", rev = "b51dbf8b417e924acf736433effb5374c7935854" }
+source = { git = "https://github.com/dwallet-labs/ika.git", subdir = "deployed_contracts/testnet/ika_common", rev = "9ca4b777844c134fdfc67685916b3b814532f050" }
 use_environment = "testnet"
 manifest_digest = "35792110B41766BEA1031D5709EBBC0CAFB92F0A0FE4F10946CC8EC513B6B6D4"
 deps = { ika = "ika", std = "MoveStdlib", sui = "Sui" }
 
 [pinned.testnet.ika_dwallet_2pc_mpc]
-source = { git = "https://github.com/dwallet-labs/ika.git", subdir = "deployed_contracts/testnet/ika_dwallet_2pc_mpc", rev = "b51dbf8b417e924acf736433effb5374c7935854" }
+source = { git = "https://github.com/dwallet-labs/ika.git", subdir = "deployed_contracts/testnet/ika_dwallet_2pc_mpc", rev = "9ca4b777844c134fdfc67685916b3b814532f050" }
 use_environment = "testnet"
 manifest_digest = "5AD0AECEAA21ED1EFC82E9CC80C9A1599D2991B9AB2CED0851E73B8A59E36932"
 deps = { ika = "ika", ika_common = "ika_common", std = "MoveStdlib", sui = "Sui" }
