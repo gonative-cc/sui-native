@@ -318,6 +318,8 @@ fun verify_deposit(
 ///   - Pass `1` to apply minting fees.
 ///   - Pass `0` to skip minting fees (for special cases or admin operations).
 /// * `dwallet_btcaddr`: the dwallet BTC address to deposit BTC into.
+///   Must be a Taproot (P2TR) address format (e.g., "tb1q..." for testnet or "bc1p..." for mainnet).
+///   Other Bitcoin address formats (P2PKH, P2SH, P2WPKH) are not supported.
 /// Emits `MintEvent` if successful.
 public fun mint(
     contract: &mut NbtcContract,
