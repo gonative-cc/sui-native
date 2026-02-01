@@ -400,7 +400,7 @@ public fun record_inactive_deposit(
     assert!(contract.version == VERSION, EVersionMismatch);
     assert!(ops_arg == 0 || ops_arg == MINT_OP_APPLY_FEE, EInvalidOpsArg);
     contract.assert_light_client(object::id(light_client));
-    assert!(contract.storage().is_inactive(dwallet_id), EDWalletNotInactive);
+    assert!(contract.storage.is_inactive(dwallet_id), EDWalletNotInactive);
 
     let deposit_spend_key = contract.storage.dwallet(dwallet_id).lockscript();
     let (amount, recipient, _utxo_idx) = contract.verify_deposit(
@@ -587,10 +587,6 @@ public fun finalize_redeem(
 ) {
     assert!(contract.version == VERSION, EVersionMismatch);
     contract.assert_light_client(object::id(light_client));
-    let btc_dwallet = contract.storage.recommended_dwallet();
-
-    let dwallet_id = btc_dwallet.dwallet_id();
-    let lockscript = btc_dwallet.lockscript();
 
     let mut r = contract.redeem_requests.remove(redeem_id);
     assert!(r.status().is_signed(), ENotSigned);
@@ -616,6 +612,10 @@ public fun finalize_redeem(
 
     let outputs = r.outputs();
     if (outputs.length() > 1) {
+        let dwallet_for_reminder = contract.storage.recommended_dwallet();
+        let dwallet_id = dwallet_for_reminder.dwallet_id();
+        let lockscript = dwallet_for_reminder.lockscript();
+
         let change_output = &outputs[1];
         assert!(change_output.script_pubkey() == lockscript, EInvalidChangeRecipient);
         let change_utxo = nbtc_utxo::new_utxo(tx_id, 1, change_output.amount(), dwallet_id);
