@@ -129,7 +129,7 @@ public fun verify_taproot_script(
     )
 }
 
-public fun is_deactive(store: &Storage, dwallet_id: ID): bool {
+public fun is_inactive(store: &Storage, dwallet_id: ID): bool {
     store.dwallet_trash.contains(dwallet_id)
 }
 
@@ -159,8 +159,8 @@ public(package) fun exist(store: &Storage, dwallet_id: ID): bool {
 }
 
 public fun dwallet(store: &Storage, dwallet_id: ID): &BtcDWallet {
-    if (store.dwallet_trash.contains(dwallet_id)) {
-        return &store.dwallet_trash[dwallet_id]
+    if (store.is_inactive(dwallet_id)) {
+        return store.inactive_dwallet(dwallet_id)
     };
     let i = store.dwallet_idx_assert(dwallet_id);
     &store.dwallets[i]
@@ -187,6 +187,13 @@ public fun dwallet_id_by_addr(store: &Storage, addr: String): ID {
     });
     assert!(option::is_some(&idx), EDwalletByBtcAddrNotFound);
     store.dwallets[option::destroy_some(idx)].cap.dwallet_id()
+}
+
+/// Returns an inactive dwallet by ID.
+/// Aborts if dwallet is not inactive.
+public fun inactive_dwallet(store: &Storage, dwallet_id: ID): &BtcDWallet {
+    assert!(store.dwallet_trash.contains(dwallet_id), EDwalletNotFound);
+    &store.dwallet_trash[dwallet_id]
 }
 
 // returns mutable reference to an active dwallet.
