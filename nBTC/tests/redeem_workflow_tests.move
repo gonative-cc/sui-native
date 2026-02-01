@@ -15,6 +15,7 @@ use nbtc::test_constants::{
     TX_HASH,
     REDEEM_FEE
 };
+use std::string;
 use std::unit_test::{assert_eq, destroy};
 use sui::clock;
 use sui::coin::mint_for_testing;
@@ -44,6 +45,7 @@ fun setup_redeem_test(
         0,
         vector::empty(),
         vector::empty(),
+        string::utf8(b"tb1qtestaddress"),
         temp_scenario.ctx(),
     );
     temp_scenario.end();

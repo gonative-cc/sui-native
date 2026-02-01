@@ -3,12 +3,15 @@ module nbtc::storage;
 use bitcoin_lib::script::verify_script_merkle_proof;
 use ika_dwallet_2pc_mpc::coordinator_inner::DWalletCap;
 use nbtc::nbtc_utxo::{UtxoStore, new_utxo_store};
+use std::string::String;
 use sui::table::{Self, Table};
 
 const MAX_U64: u64 = 0xFFFFFFFFFFFFFFFF;
 
 #[error]
 const EDwalletNotFound: vector<u8> = b"DWallet not found";
+#[error]
+const EDwalletByBtcAddrNotFound: vector<u8> = b"DWallet with btcaddr not found";
 #[error]
 const ENoDwalletInStore: vector<u8> = b"dwallets list is empty";
 
@@ -21,6 +24,7 @@ public struct BtcDWallet has store {
     user_key_share: vector<u8>, // "user share" of dwallet
     /// map user address to amount they deposit/mint
     inactive_deposits: Table<address, u64>,
+    btcaddr: String, // bitcoin address for this dwallet
 }
 
 public struct Storage has key, store {
@@ -47,6 +51,7 @@ public(package) fun create_dwallet(
     control_byte: u8,
     script_merkle_root: vector<u8>,
     user_key_share: vector<u8>,
+    btcaddr: String,
     ctx: &mut TxContext,
 ): BtcDWallet {
     BtcDWallet {
@@ -57,6 +62,7 @@ public(package) fun create_dwallet(
         total_deposit: 0,
         user_key_share,
         inactive_deposits: table::new(ctx),
+        btcaddr,
     }
 }
 
@@ -172,10 +178,27 @@ public fun recommended_dwallet(store: &Storage): &BtcDWallet {
     dwallet
 }
 
+/// Returns ID of dwallet by bitcoin address.
+/// Searches active dwallets.
+/// Aborts if not found.
+public fun dwallet_id_by_btcaddr(store: &Storage, addr: String): ID {
+    let idx = vector::find_index!(&store.dwallets, |dw: &BtcDWallet| {
+        dw.btcaddr == addr
+    });
+    assert!(option::is_some(&idx), EDwalletByBtcAddrNotFound);
+    store.dwallets[option::destroy_some(idx)].cap.dwallet_id()
+}
+
 // Must not be exported outside of the package!
 public(package) fun dwallet_mut(store: &mut Storage, dwallet_id: ID): &mut BtcDWallet {
     let i = store.dwallet_idx_assert(dwallet_id);
     &mut store.dwallets[i]
+}
+
+// Must not be exported outside of the package!
+public(package) fun dwallet_mut_inactive(store: &mut Storage, dwallet_id: ID): &mut BtcDWallet {
+    assert!(store.dwallet_trash.contains(dwallet_id), EDwalletNotFound);
+    table::borrow_mut(&mut store.dwallet_trash, dwallet_id)
 }
 
 public(package) fun add_dwallet(store: &mut Storage, d: BtcDWallet) {
@@ -216,7 +239,7 @@ public(package) fun remove_inactive_user_deposit(
     dwallet_id: ID,
     user: address,
 ): u64 {
-    let d = store.dwallet_mut(dwallet_id);
+    let d = store.dwallet_mut_inactive(dwallet_id);
     let amount = d.inactive_deposits.remove(user);
     d.total_deposit = d.total_deposit - amount;
     amount

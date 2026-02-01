@@ -11,8 +11,9 @@ use ika_dwallet_2pc_mpc::coordinator_inner::{DWalletCap, UnverifiedPresignCap};
 use nbtc::config::{Self, Config};
 use nbtc::nbtc_utxo::{Self, validate_utxos};
 use nbtc::redeem_request::{Self, RedeemRequest};
-use nbtc::storage::{Self, Storage, create_storage, create_dwallet};
+use nbtc::storage::{Storage, create_storage, create_dwallet, BtcDWallet};
 use nbtc::verify_payment::verify_payment;
+use std::string::String;
 use sui::address;
 use sui::balance::{Self, Balance};
 use sui::clock::Clock;
@@ -49,7 +50,7 @@ const MINT_OP_APPLY_FEE: u32 = 1;
 #[error]
 const EInvalidArguments: vector<u8> = b"Function arguments are not valid";
 #[error]
-const EInvalidDWallet: vector<u8> = b"Invalid DWallet ID";
+const EDWalletNotInactive: vector<u8> = b"DWallet is not inactive";
 #[error]
 const ETxAlreadyUsed: vector<u8> = b"The Bitcoin transaction ID has been already used for minting";
 #[error]
@@ -316,10 +317,12 @@ fun verify_deposit(
 /// * `ops_arg`: operation argument controlling fee application.
 ///   - Pass `1` to apply minting fees.
 ///   - Pass `0` to skip minting fees (for special cases or admin operations).
+/// * `dwallet_btcaddr`: the dwallet BTC address to deposit BTC into.
 /// Emits `MintEvent` if successful.
 public fun mint(
     contract: &mut NbtcContract,
     light_client: &LightClient,
+    dwallet_btcaddr: String,
     tx_bytes: vector<u8>,
     proof: vector<vector<u8>>,
     height: u64,
@@ -332,7 +335,7 @@ public fun mint(
     ctx: &mut TxContext,
 ) {
     assert!(contract.version == VERSION, EVersionMismatch);
-    let dwallet_id = contract.storage.recommended_dwallet().dwallet_id();
+    let dwallet_id = contract.storage.dwallet_id_by_btcaddr(dwallet_btcaddr);
     let (mut amount, recipient, utxo_ids) = contract.verify_deposit(
         light_client,
         dwallet_id,
@@ -381,7 +384,7 @@ public fun mint(
 /// by mistake used an old, inactive bitcoin deposit key) and recover that using
 /// `redeem_from_inactive` function call.
 /// Arguments are same as to `mint` with one extra argument:
-/// * `deposit_spend_key`: bitcoin spend pub key the user used for the UTXO nBTC deposit.
+/// * `dwallet_id`: the dwallet ID to deposit BTC into (must be inactive).
 /// Emits `InactiveDepositEvent`.
 public fun record_inactive_deposit(
     contract: &mut NbtcContract,
@@ -397,7 +400,7 @@ public fun record_inactive_deposit(
     assert!(contract.version == VERSION, EVersionMismatch);
     assert!(ops_arg == 0 || ops_arg == MINT_OP_APPLY_FEE, EInvalidOpsArg);
     contract.assert_light_client(object::id(light_client));
-    assert!(!contract.storage().is_inactive(dwallet_id), EInvalidDWallet);
+    assert!(contract.storage().is_inactive(dwallet_id), EDWalletNotInactive);
 
     let deposit_spend_key = contract.storage.dwallet(dwallet_id).lockscript();
     let (amount, recipient, _utxo_idx) = contract.verify_deposit(
@@ -739,6 +742,7 @@ public fun propose_utxos(
 /// Allows user to withdraw back deposited BTC that used an inactive deposit spend key.
 /// When user deposits to an inactive Bitcoin key, nBTC is not minted.
 /// See docs of the record_inactive_deposit function.
+/// * `dwallet_id`: the dwallet ID (must be inactive).
 public fun withdraw_inactive_deposit(
     contract: &mut NbtcContract,
     bitcoin_recipient: vector<u8>,
@@ -746,7 +750,7 @@ public fun withdraw_inactive_deposit(
     ctx: &mut TxContext,
 ): u64 {
     assert!(contract.version == VERSION, EVersionMismatch);
-    assert!(contract.storage.is_inactive(dwallet_id), EInvalidDWallet);
+    assert!(contract.storage().is_inactive(dwallet_id), EDWalletNotInactive);
     let amount = contract.storage.remove_inactive_user_deposit(dwallet_id, ctx.sender());
     let deposit_spend_key = contract.storage.dwallet(dwallet_id).lockscript();
     event::emit(RedeemInactiveDepositEvent {
@@ -808,6 +812,7 @@ public fun add_dwallet(
     control_byte: u8,
     script_merkle_root: vector<u8>,
     user_key_share: vector<u8>,
+    btcaddr: String,
     ctx: &mut TxContext,
 ) {
     assert!(contract.version == VERSION, EVersionMismatch);
@@ -822,6 +827,7 @@ public fun add_dwallet(
         control_byte,
         script_merkle_root,
         user_key_share,
+        btcaddr,
         ctx,
     );
     contract.storage.add_dwallet(dw);
@@ -964,7 +970,7 @@ public fun testing_mint(contract: &mut NbtcContract, amount: u64, ctx: &mut TxCo
 }
 
 #[test_only]
-public fun set_dwallet_for_test(contract: &mut NbtcContract, dw: storage::BtcDWallet) {
+public fun set_dwallet_for_test(contract: &mut NbtcContract, dw: BtcDWallet) {
     contract.storage.add_dwallet(dw);
 }
 

@@ -10,6 +10,7 @@ use ika_dwallet_2pc_mpc::coordinator_inner::{dwallet_coordinator_internal, dwall
 use nbtc::nbtc::{Self, NbtcContract, EMintAmountIsZero, ETxAlreadyUsed, EAlreadyUpdated, NBTC};
 use nbtc::storage::{Self, BtcDWallet};
 use nbtc::test_constants::{MOCK_DWALLET_ID, NBTC_SCRIPT_PUBKEY, FALLBACK_ADDR};
+use std::string::{Self, String};
 use std::unit_test::{assert_eq, destroy};
 use sui::address;
 use sui::coin::Coin;
@@ -43,12 +44,23 @@ fun mint_and_assert(
     scenario: &mut Scenario,
     ctr: &mut NbtcContract,
     lc: &LightClient,
+    dwallet_btcaddr: String,
     data: TestData,
     sender: address,
     ops_arg: u32,
 ) {
     let TestData { tx_bytes, proof, height, tx_index, expected_recipient, expected_amount } = data;
-    ctr.mint(lc, tx_bytes, proof, height, tx_index, vector[], ops_arg, scenario.ctx());
+    ctr.mint(
+        lc,
+        dwallet_btcaddr,
+        tx_bytes,
+        proof,
+        height,
+        tx_index,
+        vector[],
+        ops_arg,
+        scenario.ctx(),
+    );
     test_scenario::next_tx(scenario, sender);
 
     let coin = take_from_address<Coin<NBTC>>(scenario, expected_recipient);
@@ -141,6 +153,7 @@ public fun setup(
         0,
         vector::empty(),
         vector::empty(),
+        string::utf8(b"tb1qtestaddress"),
         scenario.ctx(),
     );
     scenario.end();
@@ -160,6 +173,7 @@ fun test_nbtc_mint() {
         &mut scenario,
         &mut ctr,
         &lc,
+        string::utf8(b"tb1qtestaddress"),
         get_valid_mint_data(),
         sender,
         0,
@@ -170,6 +184,7 @@ fun test_nbtc_mint() {
         &mut scenario,
         &mut ctr,
         &lc,
+        string::utf8(b"tb1qtestaddress"),
         get_fallback_mint_data(),
         sender,
         0,
@@ -197,6 +212,7 @@ fun test_mint_with_fee() {
         &mut scenario,
         &mut ctr,
         &lc,
+        string::utf8(b"tb1qtestaddress"),
         get_valid_mint_data(),
         sender,
         1,
@@ -207,6 +223,7 @@ fun test_mint_with_fee() {
         &mut scenario,
         &mut ctr,
         &lc,
+        string::utf8(b"tb1qtestaddress"),
         get_fallback_mint_data(),
         sender,
         1,
@@ -239,6 +256,7 @@ fun test_nbtc_mint_fail_amount_is_zero() {
 
     ctr.mint(
         &lc,
+        string::utf8(b"tb1qtestaddress"),
         data.tx_bytes,
         data.proof,
         data.height,
@@ -268,6 +286,7 @@ fun test_nbtc_mint_fail_tx_already_used() {
     // First mint, should succeed
     ctr.mint(
         &lc,
+        string::utf8(b"tb1qtestaddress"),
         data.tx_bytes,
         data.proof,
         data.height,
@@ -280,6 +299,7 @@ fun test_nbtc_mint_fail_tx_already_used() {
     // Second mint (double spend), should fail
     ctr.mint(
         &lc,
+        string::utf8(b"tb1qtestaddress"),
         data.tx_bytes,
         data.proof,
         data.height,
