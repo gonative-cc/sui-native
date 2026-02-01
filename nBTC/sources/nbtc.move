@@ -614,10 +614,10 @@ public fun finalize_redeem(
     if (outputs.length() > 1) {
         let dwallet_for_reminder = contract.storage.recommended_dwallet();
         let dwallet_id = dwallet_for_reminder.dwallet_id();
-        let lockscript = dwallet_for_reminder.lockscript();
+        let reminder_lockscript = dwallet_for_reminder.lockscript();
 
         let change_output = &outputs[1];
-        assert!(change_output.script_pubkey() == lockscript, EInvalidChangeRecipient);
+        assert!(change_output.script_pubkey() == reminder_lockscript, EInvalidChangeRecipient);
         let change_utxo = nbtc_utxo::new_utxo(tx_id, 1, change_output.amount(), dwallet_id);
         contract.storage.utxo_store_mut().add(change_utxo);
     };
