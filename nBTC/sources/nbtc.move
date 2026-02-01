@@ -530,9 +530,9 @@ public fun redeem(
 
     assert!(coin.value() > fee, EInvalidArguments);
     let sender = ctx.sender();
-    let lockscript = contract.storage.recommended_dwallet().lockscript();
+    let remainder_lockscript = contract.storage.recommended_dwallet().lockscript();
     let r = redeem_request::new(
-        lockscript,
+        remainder_lockscript,
         sender,
         recipient_script,
         coin.value(),
