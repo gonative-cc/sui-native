@@ -611,7 +611,10 @@ public fun finalize_redeem(
     contract.cap.burn(coin_to_burn);
 
     let outputs = r.outputs();
-    if (outputs.length() > 1) {
+    // We only have 2 outputs in redeem tx:
+    // - first output for redeemer
+    // - second output sends the change back to nbtc dwallet(if exists)
+    if (outputs.length() == 2) {
         let dwallet_for_reminder = contract.storage.recommended_dwallet();
         let dwallet_id = dwallet_for_reminder.dwallet_id();
         let reminder_lockscript = dwallet_for_reminder.lockscript();
