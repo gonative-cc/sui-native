@@ -181,7 +181,7 @@ public fun recommended_dwallet(store: &Storage): &BtcDWallet {
 /// Returns ID of dwallet by bitcoin address.
 /// Searches active dwallets.
 /// Aborts if not found.
-public fun dwallet_id_by_btcaddr(store: &Storage, addr: String): ID {
+public fun dwallet_id_by_addr(store: &Storage, addr: String): ID {
     let idx = vector::find_index!(&store.dwallets, |dw: &BtcDWallet| {
         dw.btcaddr == addr
     });
