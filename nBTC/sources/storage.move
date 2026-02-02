@@ -3,6 +3,7 @@ module nbtc::storage;
 use bitcoin_lib::script::verify_script_merkle_proof;
 use ika_dwallet_2pc_mpc::coordinator_inner::DWalletCap;
 use nbtc::nbtc_utxo::{UtxoStore, new_utxo_store};
+use std::string::String;
 use sui::table::{Self, Table};
 
 const MAX_U64: u64 = 0xFFFFFFFFFFFFFFFF;
@@ -10,7 +11,9 @@ const MAX_U64: u64 = 0xFFFFFFFFFFFFFFFF;
 #[error]
 const EDwalletNotFound: vector<u8> = b"DWallet not found";
 #[error]
-const EBalanceNotEmpty: vector<u8> = b"balance not empty";
+const EDwalletByBtcAddrNotFound: vector<u8> = b"DWallet with btcaddr not found";
+#[error]
+const ENoDwalletInStore: vector<u8> = b"dwallets list is empty";
 
 public struct BtcDWallet has store {
     cap: DWalletCap,
@@ -21,13 +24,14 @@ public struct BtcDWallet has store {
     user_key_share: vector<u8>, // "user share" of dwallet
     /// map user address to amount they deposit/mint
     inactive_deposits: Table<address, u64>,
+    btcaddr: String, // bitcoin address for this dwallet
 }
 
 public struct Storage has key, store {
     id: UID,
     dwallets: vector<BtcDWallet>,
     /// Store unactive / old dwallets
-    dwallet_trash: Table<ID, DWalletCap>,
+    dwallet_trash: Table<ID, BtcDWallet>,
     utxo_store: UtxoStore,
 }
 
@@ -36,7 +40,7 @@ public(package) fun create_storage(ctx: &mut TxContext): Storage {
     Storage {
         id: object::new(ctx),
         dwallets: vector<BtcDWallet>[],
-        dwallet_trash: table::new<ID, DWalletCap>(ctx),
+        dwallet_trash: table::new(ctx),
         utxo_store: new_utxo_store(ctx),
     }
 }
@@ -47,6 +51,7 @@ public(package) fun create_dwallet(
     control_byte: u8,
     script_merkle_root: vector<u8>,
     user_key_share: vector<u8>,
+    btcaddr: String,
     ctx: &mut TxContext,
 ): BtcDWallet {
     BtcDWallet {
@@ -57,6 +62,7 @@ public(package) fun create_dwallet(
         total_deposit: 0,
         user_key_share,
         inactive_deposits: table::new(ctx),
+        btcaddr,
     }
 }
 
@@ -123,6 +129,10 @@ public fun verify_taproot_script(
     )
 }
 
+public fun is_inactive(store: &Storage, dwallet_id: ID): bool {
+    store.dwallet_trash.contains(dwallet_id)
+}
+
 // NOTE: It's OK to do linear search because we are limiting amount of dwallets to 10-20 max
 /// returns MAX_U64 if the idx doesn't exist.
 fun dwallet_idx(store: &Storage, dwallet_id: ID): u64 {
@@ -148,44 +158,70 @@ public(package) fun exist(store: &Storage, dwallet_id: ID): bool {
     i != MAX_U64
 }
 
-public fun dwallet(store: &Storage, dwallet_id: ID): &BtcDWallet {
+public fun active_dwallet(store: &Storage, dwallet_id: ID): &BtcDWallet {
     let i = store.dwallet_idx_assert(dwallet_id);
     &store.dwallets[i]
 }
 
-// Must not be exported outside of the package!
+/// Returns an inactive dwallet by ID.
+/// Aborts if dwallet is not inactive.
+public fun inactive_dwallet(store: &Storage, dwallet_id: ID): &BtcDWallet {
+    assert!(store.dwallet_trash.contains(dwallet_id), EDwalletNotFound);
+    &store.dwallet_trash[dwallet_id]
+}
+
+public fun dwallet(store: &Storage, dwallet_id: ID): &BtcDWallet {
+    if (store.is_inactive(dwallet_id)) {
+        return store.inactive_dwallet(dwallet_id)
+    };
+    store.active_dwallet(dwallet_id)
+}
+
+public fun dwallet_id(btcDwallet: &BtcDWallet): ID {
+    btcDwallet.cap.dwallet_id()
+}
+
+/// Returns the ID of the current active dwallet (last element in the vector).
+/// Aborts if no dwallet has been set as active.
+public fun recommended_dwallet(store: &Storage): &BtcDWallet {
+    assert!(!store.dwallets.is_empty(), ENoDwalletInStore);
+    let dwallet = &store.dwallets[store.dwallets.length() - 1];
+    dwallet
+}
+
+/// Returns ID of dwallet by bitcoin address.
+/// Searches active dwallets.
+/// Aborts if not found.
+public fun dwallet_id_by_addr(store: &Storage, addr: String): ID {
+    let idx = vector::find_index!(&store.dwallets, |dw: &BtcDWallet| {
+        dw.btcaddr == addr
+    });
+    assert!(option::is_some(&idx), EDwalletByBtcAddrNotFound);
+    store.dwallets[option::destroy_some(idx)].cap.dwallet_id()
+}
+
+// returns mutable reference to an active dwallet.
+// NOTE: Must not be exported outside of the package!
 public(package) fun dwallet_mut(store: &mut Storage, dwallet_id: ID): &mut BtcDWallet {
     let i = store.dwallet_idx_assert(dwallet_id);
     &mut store.dwallets[i]
 }
 
-// // NOTE: Never export this function publicly!
-// public(package) fun dwallet_cap(store: &Storage, dwallet_id: ID): &DWalletCap {
-//     let i = store.dwallet_idx_assert(dwallet_id);
-//     &store.dwallets[i]
-// }
+// Must not be exported outside of the package!
+public(package) fun dwallet_mut_inactive(store: &mut Storage, dwallet_id: ID): &mut BtcDWallet {
+    assert!(store.dwallet_trash.contains(dwallet_id), EDwalletNotFound);
+    table::borrow_mut(&mut store.dwallet_trash, dwallet_id)
+}
 
 public(package) fun add_dwallet(store: &mut Storage, d: BtcDWallet) {
     store.dwallets.push_back(d);
 }
 
-/// Removes dwallet metadata and moves dwallet to the trash.
-/// Aborts if the balance is not zero.
-public(package) fun remove_dwallet(store: &mut Storage, dwallet_id: ID) {
+public(package) fun deactivate_dwallet(store: &mut Storage, dwallet_id: ID) {
     let i = store.dwallet_idx_assert(dwallet_id);
-    let BtcDWallet {
-        cap,
-        inactive_deposits,
-        total_deposit,
-        lockscript: _,
-        control_byte: _,
-        script_merkle_root: _,
-        user_key_share: _,
-    } = store.dwallets.swap_remove(i);
-    assert!(total_deposit == 0, EBalanceNotEmpty);
-    inactive_deposits.destroy_empty();
-
-    store.dwallet_trash.add(dwallet_id, cap);
+    let dwallet = store.dwallets.remove(i);
+    let dwallet_id = dwallet.cap.dwallet_id();
+    store.dwallet_trash.add(dwallet_id, dwallet);
 }
 
 public(package) fun increase_total_deposit(store: &mut Storage, dwallet_id: ID, amount: u64) {
@@ -215,7 +251,7 @@ public(package) fun remove_inactive_user_deposit(
     dwallet_id: ID,
     user: address,
 ): u64 {
-    let d = store.dwallet_mut(dwallet_id);
+    let d = store.dwallet_mut_inactive(dwallet_id);
     let amount = d.inactive_deposits.remove(user);
     d.total_deposit = d.total_deposit - amount;
     amount

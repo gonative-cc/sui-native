@@ -7,6 +7,7 @@ use nbtc::nbtc_utxo::new_utxo;
 use nbtc::redeem_request;
 use nbtc::storage;
 use nbtc::test_constants::MOCK_DWALLET_ID;
+use std::string;
 use std::unit_test::{assert_eq, destroy};
 use sui::clock;
 
@@ -55,6 +56,7 @@ fun raw_withdraw_tx_signed_tests() {
             0,
             vector::empty(),
             vector::empty(),
+            string::utf8(b"tb1qtestaddress"),
             scenario.ctx(),
         ),
     );
