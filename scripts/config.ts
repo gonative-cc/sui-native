@@ -35,7 +35,6 @@ export interface LightClientConfig {
 	confirmationDepth: number;
 }
 
-
 export async function fetchBlockHeader(blockHash: string): Promise<string> {
 	const url = `${INDEXER_URL}/api/block/${blockHash}/header`;
 	const response = await fetch(url);

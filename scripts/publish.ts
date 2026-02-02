@@ -29,7 +29,8 @@ export async function publishPackage(
 
 	$.cwd = packagePath;
 	const suiCommand = getSuiCommand();
-	const result = await $`${suiCommand} client publish --gas-budget 1000000000 --json --silence-warnings`;
+	const result =
+		await $`${suiCommand} client publish --gas-budget 1000000000 --json --silence-warnings`;
 	const jsonStart = result.stdout.indexOf("{");
 	if (jsonStart === -1) {
 		throw new Error("No JSON found in publish output");

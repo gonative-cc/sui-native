@@ -54,7 +54,11 @@ async function main(): Promise<void> {
 	const bitcoinSpvPublishedId = getPublishedPackageId("bitcoin_spv", network);
 
 	// Check for mismatch between deploy-info and Published.toml
-	if (deployInfo.bitcoin_lib_pkg && bitcoinLibPublishedId && deployInfo.bitcoin_lib_pkg !== bitcoinLibPublishedId) {
+	if (
+		deployInfo.bitcoin_lib_pkg &&
+		bitcoinLibPublishedId &&
+		deployInfo.bitcoin_lib_pkg !== bitcoinLibPublishedId
+	) {
 		console.error(`\n⚠️  Mismatch detected for bitcoin_lib:`);
 		console.error(`   deploy-information.json: ${deployInfo.bitcoin_lib_pkg}`);
 		console.error(`   Published.toml:        ${bitcoinLibPublishedId}`);
