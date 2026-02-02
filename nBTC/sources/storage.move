@@ -166,7 +166,6 @@ public fun active_dwallet(store: &Storage, dwallet_id: ID): &BtcDWallet {
 /// Returns an inactive dwallet by ID.
 /// Aborts if dwallet is not inactive.
 public fun inactive_dwallet(store: &Storage, dwallet_id: ID): &BtcDWallet {
-    assert!(store.dwallet_trash.contains(dwallet_id), EDwalletNotFound);
     &store.dwallet_trash[dwallet_id]
 }
 
