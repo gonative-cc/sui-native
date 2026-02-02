@@ -51,16 +51,28 @@ async function main(): Promise<void> {
 
 	// Check and publish bitcoin_lib if needed
 	if (!deployInfo.bitcoin_lib_pkg) {
-		console.log("bitcoin_lib not in deploy-info, deploying...");
-		await publishPackage("bitcoin_lib", network, false);
+		const publishedId = getPublishedPackageId("bitcoin_lib", network);
+		if (publishedId) {
+			console.log(`bitcoin_lib found in Published.toml: ${publishedId}`);
+			deployInfo.bitcoin_lib_pkg = publishedId;
+		} else {
+			console.log("bitcoin_lib not in deploy-info or Published.toml, deploying...");
+			await publishPackage("bitcoin_lib", network, false);
+		}
 	} else {
 		console.log(`Using existing bitcoin_lib from deploy-info: ${deployInfo.bitcoin_lib_pkg}`);
 	}
 
 	// Check and publish bitcoin_spv if needed
 	if (!deployInfo.lc_pkg) {
-		console.log("bitcoin_spv not in deploy-info, deploying...");
-		await publishPackage("bitcoin_spv", network, false);
+		const publishedId = getPublishedPackageId("bitcoin_spv", network);
+		if (publishedId) {
+			console.log(`bitcoin_spv found in Published.toml: ${publishedId}`);
+			deployInfo.lc_pkg = publishedId;
+		} else {
+			console.log("bitcoin_spv not in deploy-info or Published.toml, deploying...");
+			await publishPackage("bitcoin_spv", network, false);
+		}
 	} else {
 		console.log(`Using existing bitcoin_spv from deploy-info: ${deployInfo.lc_pkg}`);
 	}
