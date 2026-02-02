@@ -6,13 +6,14 @@ module nbtc::verify_payment_tests;
 use bitcoin_lib::header;
 use bitcoin_lib::tx;
 use bitcoin_spv::light_client::new_light_client;
+use nbtc::test_constants::ADMIN;
 use nbtc::verify_payment::{verify_payment, ETxNotInBlock};
 use std::unit_test::assert_eq;
 use sui::test_scenario;
 
 #[test]
 fun verify_payment_happy_cases() {
-    let sender = @0x01;
+    let sender = ADMIN!();
     let mut scenario = test_scenario::begin(sender);
     let start_block_height = 325001;
     let headers = vector[
@@ -74,7 +75,7 @@ fun verify_payment_happy_cases() {
 
 #[test]
 fun verify_payment_with_P2WPHK_output_happy_cases() {
-    let sender = @0x01;
+    let sender = ADMIN!();
     let mut scenario = test_scenario::begin(sender);
     let start_block_height = 0;
     let headers = vector[
@@ -123,7 +124,7 @@ fun verify_payment_with_P2WPHK_output_happy_cases() {
 
 #[test]
 fun verify_payment_with_mutiple_op_return_happy_cases() {
-    let sender = @0x01;
+    let sender = ADMIN!();
     let mut scenario = test_scenario::begin(sender);
     let start_block_height = 0;
     let headers = vector[
@@ -173,7 +174,7 @@ fun verify_payment_with_mutiple_op_return_happy_cases() {
 
 #[test, expected_failure(abort_code = ETxNotInBlock)]
 fun verify_payment_for_tx_not_in_block_shoul_fail() {
-    let sender = @0x01;
+    let sender = ADMIN!();
     let mut scenario = test_scenario::begin(sender);
     let start_block_height = 325001;
     let headers = vector[
@@ -228,7 +229,7 @@ fun verify_payment_for_tx_not_in_block_shoul_fail() {
 
 #[test, expected_failure(abort_code = ETxNotInBlock)]
 fun verify_payment_on_block_not_finalize_should_fail() {
-    let sender = @0x01;
+    let sender = ADMIN!();
     let mut scenario = test_scenario::begin(sender);
     let start_block_height = 325001;
     let headers = vector[

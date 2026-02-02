@@ -9,7 +9,14 @@ use ika_dwallet_2pc_mpc::coordinator::{coordinator_for_test, DWalletCoordinator}
 use ika_dwallet_2pc_mpc::coordinator_inner::{dwallet_coordinator_internal, dwallet_cap_for_testing};
 use nbtc::nbtc::{Self, NbtcContract, EMintAmountIsZero, ETxAlreadyUsed, EAlreadyUpdated, NBTC};
 use nbtc::storage::{Self, BtcDWallet};
-use nbtc::test_constants::{MOCK_DWALLET_ID, NBTC_SCRIPT_PUBKEY, FALLBACK_ADDR};
+use nbtc::test_constants::{
+    MOCK_DWALLET_ID,
+    NBTC_SCRIPT_PUBKEY,
+    FALLBACK_ADDR,
+    ADMIN,
+    ALTERNATIVE_NBTC_SCRIPT,
+    TEST_SIGN_ID_1
+};
 use std::string::{Self, String};
 use std::unit_test::{assert_eq, destroy};
 use sui::address;
@@ -109,7 +116,7 @@ public fun setup_with_dwallet(
     let mut dwallet_coordinator = coordinator_for_test(scenario.ctx(), coordinator_inner);
 
     // Add dwallet to coordinator
-    let dwallet_cap_id = object::id_from_address(@0x1);
+    let dwallet_cap_id = TEST_SIGN_ID_1!();
     dwallet_coordinator.add_dwallet_for_testing(
         dwallet_id,
         dwallet_cap_id,
@@ -162,7 +169,7 @@ public fun setup(
 
 #[test]
 fun test_nbtc_mint() {
-    let sender = @0x1;
+    let sender = ADMIN!();
     let (lc, mut ctr, dwallet_coordinator, mut scenario) = setup(
         NBTC_SCRIPT_PUBKEY!(),
         sender,
@@ -201,7 +208,7 @@ fun test_nbtc_mint() {
 
 #[test]
 fun test_mint_with_fee() {
-    let sender = @0x1;
+    let sender = ADMIN!();
     let (lc, mut ctr, dwallet_coordinator, mut scenario) = setup(
         NBTC_SCRIPT_PUBKEY!(),
         sender,
@@ -245,10 +252,10 @@ fun test_mint_with_fee() {
 #[test]
 #[expected_failure(abort_code = EMintAmountIsZero)]
 fun test_nbtc_mint_fail_amount_is_zero() {
-    let sender = @0x1;
+    let sender = ADMIN!();
     // Use a different treasury address so the payment to our main treasury is not found.
     let (lc, mut ctr, dwallet_coordinator, mut scenario) = setup(
-        x"76a914509a651dd392e1bc125323f629b67d65cca3d4ff88ac",
+        ALTERNATIVE_NBTC_SCRIPT!(),
         sender,
         MOCK_DWALLET_ID!(),
     );
@@ -275,7 +282,7 @@ fun test_nbtc_mint_fail_amount_is_zero() {
 #[test]
 #[expected_failure(abort_code = ETxAlreadyUsed)]
 fun test_nbtc_mint_fail_tx_already_used() {
-    let sender = @0x1;
+    let sender = ADMIN!();
     let (lc, mut ctr, dwallet_coordinator, mut scenario) = setup(
         NBTC_SCRIPT_PUBKEY!(),
         sender,
@@ -317,7 +324,7 @@ fun test_nbtc_mint_fail_tx_already_used() {
 
 #[test, expected_failure(abort_code = EAlreadyUpdated)]
 fun test_update_version_fail() {
-    let sender = @0x01;
+    let sender = ADMIN!();
     let (_lc, mut ctr, _dwallet_coordinator, _scenario) = setup(
         NBTC_SCRIPT_PUBKEY!(),
         sender,
