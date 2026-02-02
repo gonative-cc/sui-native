@@ -16,15 +16,16 @@ use nbtc::test_constants::{
     ADMIN,
     RECEIVER_SCRIPT,
     TX_HASH,
-    REDEEM_FEE
+    REDEEM_FEE,
+    MOCK_SIGNATURE,
+    TX_HASH_2,
+    TEST_SIGN_ID_1,
+    TEST_SIGN_ID_2
 };
 use std::unit_test::{assert_eq, destroy};
 use sui::clock;
 use sui::coin::mint_for_testing;
 use sui::event;
-
-const MOCK_SIGNATURE: vector<u8> =
-    x"b693a0797b24bae12ed0516a2f5ba765618dca89b75e498ba5b745b71644362298a45ca39230d10a02ee6290a91cebf9839600f7e35158a447ea182ea0e022ae";
 
 #[test_only]
 /// Setup a redeem request in the signing state with one UTXO
@@ -73,7 +74,7 @@ fun setup_redeem_in_signing_state(
     ctr.solve_redeem_request(redeem_id, &clock);
 
     // Add sign session to coordinator for testing record_signature
-    let sign_id = sui::object::id_from_address(@0x2);
+    let sign_id = TEST_SIGN_ID_1!();
     dwallet_coordinator.add_sign_session_for_testing(dwallet_id, sign_id, scenario.ctx());
 
     // Add sign_id mapping for testing
@@ -97,7 +98,7 @@ fun test_record_signature_returns_true_on_first_call() {
 
     // Use set_signature_for_testing to mock the signature in coordinator
     let dwallet_id = ctr.storage().recommended_dwallet().dwallet_id();
-    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id, MOCK_SIGNATURE);
+    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id, MOCK_SIGNATURE!());
 
     // Now call the real batch record_signature function
     ctr.record_signature(&dwallet_coordinator, redeem_id, vector[0], vector[sign_id]);
@@ -128,7 +129,7 @@ fun test_record_signature_returns_false_when_already_recorded() {
 
     // Use set_signature_for_testing to mock the signature
     let dwallet_id = ctr.storage().recommended_dwallet().dwallet_id();
-    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id, MOCK_SIGNATURE);
+    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id, MOCK_SIGNATURE!());
 
     // First call - should record signature
     ctr.record_signature(
@@ -172,7 +173,7 @@ fun test_record_signature_multiple_calls_safe() {
 
     // Use set_signature_for_testing to mock the signature
     let dwallet_id = ctr.storage().recommended_dwallet().dwallet_id();
-    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id, MOCK_SIGNATURE);
+    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id, MOCK_SIGNATURE!());
 
     // First call - should record signature
     ctr.record_signature(
@@ -230,7 +231,7 @@ fun test_record_signature_event_emission() {
 
     // Use set_signature_for_testing to mock the signature
     let dwallet_id = ctr.storage().recommended_dwallet().dwallet_id();
-    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id, MOCK_SIGNATURE);
+    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id, MOCK_SIGNATURE!());
 
     // First call - should emit event
     ctr.record_signature(
@@ -281,7 +282,7 @@ fun test_record_signature_with_multiple_inputs() {
     ctr.add_utxo_for_test(0, utxo1);
 
     let utxo2 = new_utxo(
-        x"02ce677fd511851bb6cdacebed863d12dfd231d810e8e9fcba6e791001adf3a6",
+        TX_HASH_2!(),
         1,
         1000,
         dwallet_id,
@@ -304,10 +305,10 @@ fun test_record_signature_with_multiple_inputs() {
     ctr.solve_redeem_request(redeem_id, &clock);
 
     // Add sign sessions for both inputs
-    let sign_id1 = sui::object::id_from_address(@0x2);
+    let sign_id1 = TEST_SIGN_ID_1!();
     dwallet_coordinator.add_sign_session_for_testing(dwallet_id, sign_id1, scenario.ctx());
 
-    let sign_id2 = sui::object::id_from_address(@0x3);
+    let sign_id2 = TEST_SIGN_ID_2!();
     dwallet_coordinator.add_sign_session_for_testing(dwallet_id, sign_id2, scenario.ctx());
 
     // Add sign_id mappings for testing
@@ -316,7 +317,7 @@ fun test_record_signature_with_multiple_inputs() {
     request.add_sign_id_for_test(sign_id2, 1);
 
     // Record signature for input 0
-    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id1, MOCK_SIGNATURE);
+    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id1, MOCK_SIGNATURE!());
     ctr.record_signature(
         &dwallet_coordinator,
         redeem_id,
@@ -333,7 +334,7 @@ fun test_record_signature_with_multiple_inputs() {
     );
 
     // Record signature for input 1
-    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id2, MOCK_SIGNATURE);
+    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id2, MOCK_SIGNATURE!());
     ctr.record_signature(
         &dwallet_coordinator,
         redeem_id,
@@ -378,7 +379,7 @@ fun test_record_signature_batch() {
     ctr.add_utxo_for_test(0, utxo1);
 
     let utxo2 = new_utxo(
-        x"02ce677fd511851bb6cdacebed863d12dfd231d810e8e9fcba6e791001adf3a6",
+        TX_HASH_2!(),
         1,
         1000,
         dwallet_id,
@@ -401,10 +402,10 @@ fun test_record_signature_batch() {
     ctr.solve_redeem_request(redeem_id, &clock);
 
     // Add sign sessions for both inputs
-    let sign_id1 = sui::object::id_from_address(@0x2);
+    let sign_id1 = TEST_SIGN_ID_1!();
     dwallet_coordinator.add_sign_session_for_testing(dwallet_id, sign_id1, scenario.ctx());
 
-    let sign_id2 = sui::object::id_from_address(@0x3);
+    let sign_id2 = TEST_SIGN_ID_2!();
     dwallet_coordinator.add_sign_session_for_testing(dwallet_id, sign_id2, scenario.ctx());
 
     // Add sign_id mappings for testing
@@ -413,8 +414,8 @@ fun test_record_signature_batch() {
     request.add_sign_id_for_test(sign_id2, 1);
 
     // Set signatures for both inputs
-    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id1, MOCK_SIGNATURE);
-    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id2, MOCK_SIGNATURE);
+    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id1, MOCK_SIGNATURE!());
+    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id2, MOCK_SIGNATURE!());
 
     // Record both signatures in one batch call
     ctr.record_signature(
@@ -450,7 +451,7 @@ fun test_record_signature_fails_with_mismatched_sign_id() {
     ctr.add_utxo_for_test(0, utxo1);
 
     let utxo2 = new_utxo(
-        x"02ce677fd511851bb6cdacebed863d12dfd231d810e8e9fcba6e791001adf3a6",
+        TX_HASH_2!(),
         1,
         1000,
         dwallet_id,
@@ -473,10 +474,10 @@ fun test_record_signature_fails_with_mismatched_sign_id() {
     ctr.solve_redeem_request(redeem_id, &clock);
 
     // Add sign sessions for both inputs
-    let sign_id1 = sui::object::id_from_address(@0x2);
+    let sign_id1 = TEST_SIGN_ID_1!();
     dwallet_coordinator.add_sign_session_for_testing(dwallet_id, sign_id1, scenario.ctx());
 
-    let sign_id2 = sui::object::id_from_address(@0x3);
+    let sign_id2 = TEST_SIGN_ID_2!();
     dwallet_coordinator.add_sign_session_for_testing(dwallet_id, sign_id2, scenario.ctx());
 
     // Add sign_id mappings with mismatched input_ids
@@ -485,7 +486,7 @@ fun test_record_signature_fails_with_mismatched_sign_id() {
     request.add_sign_id_for_test(sign_id2, 1);
 
     // Set signature for sign_id1
-    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id1, MOCK_SIGNATURE);
+    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id1, MOCK_SIGNATURE!());
 
     // Try to record signature for input 1 using sign_id1 (which maps to input 0)
     // This should fail with EInvalidSignID

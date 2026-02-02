@@ -10,18 +10,20 @@ use nbtc::storage;
 use nbtc::test_constants::{
     MOCK_DWALLET_ID,
     NBTC_SCRIPT_PUBKEY,
+    NBTC_TAPROOT_SCRIPT,
     ADMIN,
     RECEIVER_SCRIPT,
     TX_HASH,
-    REDEEM_FEE
+    REDEEM_FEE,
+    MOCK_SIGNATURE,
+    TX_HASH_2,
+    TX_HASH_3,
+    TX_HASH_4
 };
 use std::string;
 use std::unit_test::{assert_eq, destroy};
 use sui::clock;
 use sui::coin::mint_for_testing;
-
-const NBTC_TAPROOT_SCRIPT: vector<u8> =
-    x"51200f0c8db753acbd17343a39c2f3f4e35e4be6da749f9e35137ab220e7b238a667";
 
 #[test_only]
 fun setup_redeem_test(
@@ -76,8 +78,7 @@ fun setup_redeem_test(
         ctr.solve_redeem_request(redeem_id, &clock);
 
         let request_mut = ctr.redeem_request_mut(redeem_id);
-        let mock_sig =
-            x"b693a0797b24bae12ed0516a2f5ba765618dca89b75e498ba5b745b71644362298a45ca39230d10a02ee6290a91cebf9839600f7e35158a447ea182ea0e022ae";
+        let mock_sig = MOCK_SIGNATURE!();
         request_mut.update_to_signed_for_test(vector[mock_sig]);
     };
 
@@ -209,13 +210,13 @@ fun test_propose_utxos_unlocks_old_and_locks_new() {
     );
 
     let dwallet_id = ctr.storage().recommended_dwallet().dwallet_id();
-    let utxo_1 = new_utxo(x"02", 1, 1000, dwallet_id);
+    let utxo_1 = new_utxo(TX_HASH_2!(), 1, 1000, dwallet_id);
     ctr.add_utxo_for_test(1, utxo_1);
 
-    let utxo_2 = new_utxo(x"03", 0, 1000, dwallet_id);
+    let utxo_2 = new_utxo(TX_HASH_3!(), 0, 1000, dwallet_id);
     ctr.add_utxo_for_test(2, utxo_2);
 
-    let utxo_3 = new_utxo(x"04", 1, 1000, dwallet_id);
+    let utxo_3 = new_utxo(TX_HASH_4!(), 1, 1000, dwallet_id);
     ctr.add_utxo_for_test(3, utxo_3);
 
     let sol1 = vector[0, 1];
@@ -257,7 +258,7 @@ fun test_two_requests_cannot_share_utxos() {
     let utxo_1 = new_utxo(TX_HASH!(), 0, 2000, dwallet_id);
     ctr.add_utxo_for_test(0, utxo_1);
 
-    let utxo_2 = new_utxo(x"01", 1, 2000, dwallet_id);
+    let utxo_2 = new_utxo(TX_HASH!(), 1, 2000, dwallet_id);
     ctr.add_utxo_for_test(1, utxo_2);
 
     let nbtc_coin_1 = mint_for_testing<NBTC>(1000, scenario.ctx());
@@ -299,10 +300,10 @@ fun test_cannot_propose_overlapping_locked_utxos() {
     let utxo_1 = new_utxo(TX_HASH!(), 0, 2000, dwallet_id);
     ctr.add_utxo_for_test(0, utxo_1);
 
-    let utxo_2 = new_utxo(x"01", 1, 2000, dwallet_id);
+    let utxo_2 = new_utxo(TX_HASH!(), 1, 2000, dwallet_id);
     ctr.add_utxo_for_test(1, utxo_2);
 
-    let utxo_3 = new_utxo(x"02", 2, 2000, dwallet_id);
+    let utxo_3 = new_utxo(TX_HASH_2!(), 2, 2000, dwallet_id);
     ctr.add_utxo_for_test(2, utxo_3);
 
     let clock = clock::create_for_testing(scenario.ctx());
@@ -336,7 +337,7 @@ fun test_finalize_redeem_burns_nbtc_and_removes_utxos() {
     let (mut lc, mut ctr, redeem_id, scenario, clock) = setup_redeem_test(
         2500,
         1000,
-        NBTC_TAPROOT_SCRIPT,
+        NBTC_TAPROOT_SCRIPT!(),
         true,
     );
 
@@ -377,7 +378,7 @@ fun test_finalize_redeem_no_change() {
     let (mut lc, mut ctr, redeem_id, scenario, clock) = setup_redeem_test(
         1000,
         1000,
-        NBTC_TAPROOT_SCRIPT,
+        NBTC_TAPROOT_SCRIPT!(),
         true,
     );
 
@@ -423,7 +424,7 @@ fun test_finalize_redeem_fails_when_already_confirmed() {
     let (mut lc, mut ctr, redeem_id, _scenario, _clock) = setup_redeem_test(
         2500,
         1000,
-        NBTC_TAPROOT_SCRIPT,
+        NBTC_TAPROOT_SCRIPT!(),
         true,
     );
 
@@ -453,13 +454,13 @@ fun test_finalize_redeem_with_multiple_utxos() {
     let (mut lc, mut ctr, redeem_id, scenario, mut clock) = setup_redeem_test(
         1000,
         1000,
-        NBTC_TAPROOT_SCRIPT,
+        NBTC_TAPROOT_SCRIPT!(),
         false,
     );
 
     let dwallet_id = ctr.storage().recommended_dwallet().dwallet_id();
     let utxo_2 = new_utxo(
-        x"02ce677fd511851bb6cdacebed863d12dfd231d810e8e9fcba6e791001adf3a6",
+        TX_HASH_2!(),
         1,
         800,
         dwallet_id,
@@ -471,8 +472,7 @@ fun test_finalize_redeem_with_multiple_utxos() {
     ctr.solve_redeem_request(redeem_id, &clock);
 
     let request_mut = ctr.redeem_request_mut(redeem_id);
-    let mock_sig =
-        x"b693a0797b24bae12ed0516a2f5ba765618dca89b75e498ba5b745b71644362298a45ca39230d10a02ee6290a91cebf9839600f7e35158a447ea182ea0e022ae";
+    let mock_sig = MOCK_SIGNATURE!();
     request_mut.update_to_signed_for_test(vector[mock_sig, mock_sig]);
 
     let r = ctr.redeem_request(redeem_id);

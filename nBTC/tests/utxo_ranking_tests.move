@@ -2,14 +2,14 @@
 module nbtc::utxo_ranking_tests;
 
 use nbtc::nbtc_utxo::{new_utxo, utxo_ranking, new_utxo_store};
-use nbtc::test_constants::{MOCK_DWALLET_ID, MOCK_DWALLET_ID_2};
+use nbtc::test_constants::{MOCK_DWALLET_ID, MOCK_DWALLET_ID_2, ADMIN};
 use std::unit_test::{assert_eq, destroy};
 use sui::test_scenario;
 
 // Multiple UTXOs with exact match vs fewer UTXOs with change
 #[test]
 fun exact_match_wins_over_change() {
-    let mut scenario = test_scenario::begin(@0x1);
+    let mut scenario = test_scenario::begin(ADMIN!());
     let ctx = scenario.ctx();
 
     let mut utxo_map = new_utxo_store(ctx);
@@ -94,7 +94,7 @@ fun exact_match_wins_over_change() {
 // 0.6 + 0.4 BTC (inactive keys) vs 1.1 BTC (active key)
 #[test]
 fun inactive_keys_with_exact_match_rank_above() {
-    let mut scenario = test_scenario::begin(@0x1);
+    let mut scenario = test_scenario::begin(ADMIN!());
     let ctx = scenario.ctx();
 
     let mut utxo_map = new_utxo_store(ctx);
@@ -196,7 +196,7 @@ fun inactive_keys_with_exact_match_rank_above() {
 // 1.1 BTC (with change) vs 5×0.2 BTC (exact match)
 #[test]
 fun minimize_inputs_priority() {
-    let mut scenario = test_scenario::begin(@0x1);
+    let mut scenario = test_scenario::begin(ADMIN!());
     let ctx = scenario.ctx();
 
     let mut utxo_map = new_utxo_store(ctx);
@@ -273,7 +273,7 @@ fun minimize_inputs_priority() {
 // Dust change vs clean change
 #[test]
 fun dust_penalized() {
-    let mut scenario = test_scenario::begin(@0x1);
+    let mut scenario = test_scenario::begin(ADMIN!());
     let ctx = scenario.ctx();
 
     let mut utxo_map = new_utxo_store(ctx);
