@@ -17,10 +17,8 @@ use nbtc::test_constants::{
     REDEEM_FEE,
     MOCK_SIGNATURE,
     TX_HASH_2,
-    UTXO_HASH_1,
-    UTXO_HASH_2,
-    UTXO_HASH_3,
-    UTXO_HASH_4
+    TX_HASH_3,
+    TX_HASH_4
 };
 use std::string;
 use std::unit_test::{assert_eq, destroy};
@@ -212,13 +210,13 @@ fun test_propose_utxos_unlocks_old_and_locks_new() {
     );
 
     let dwallet_id = ctr.storage().recommended_dwallet().dwallet_id();
-    let utxo_1 = new_utxo(UTXO_HASH_2!(), 1, 1000, dwallet_id);
+    let utxo_1 = new_utxo(TX_HASH_2!(), 1, 1000, dwallet_id);
     ctr.add_utxo_for_test(1, utxo_1);
 
-    let utxo_2 = new_utxo(UTXO_HASH_3!(), 0, 1000, dwallet_id);
+    let utxo_2 = new_utxo(TX_HASH_3!(), 0, 1000, dwallet_id);
     ctr.add_utxo_for_test(2, utxo_2);
 
-    let utxo_3 = new_utxo(UTXO_HASH_4!(), 1, 1000, dwallet_id);
+    let utxo_3 = new_utxo(TX_HASH_4!(), 1, 1000, dwallet_id);
     ctr.add_utxo_for_test(3, utxo_3);
 
     let sol1 = vector[0, 1];
@@ -260,7 +258,7 @@ fun test_two_requests_cannot_share_utxos() {
     let utxo_1 = new_utxo(TX_HASH!(), 0, 2000, dwallet_id);
     ctr.add_utxo_for_test(0, utxo_1);
 
-    let utxo_2 = new_utxo(UTXO_HASH_1!(), 1, 2000, dwallet_id);
+    let utxo_2 = new_utxo(TX_HASH!(), 1, 2000, dwallet_id);
     ctr.add_utxo_for_test(1, utxo_2);
 
     let nbtc_coin_1 = mint_for_testing<NBTC>(1000, scenario.ctx());
@@ -302,10 +300,10 @@ fun test_cannot_propose_overlapping_locked_utxos() {
     let utxo_1 = new_utxo(TX_HASH!(), 0, 2000, dwallet_id);
     ctr.add_utxo_for_test(0, utxo_1);
 
-    let utxo_2 = new_utxo(UTXO_HASH_1!(), 1, 2000, dwallet_id);
+    let utxo_2 = new_utxo(TX_HASH!(), 1, 2000, dwallet_id);
     ctr.add_utxo_for_test(1, utxo_2);
 
-    let utxo_3 = new_utxo(UTXO_HASH_2!(), 2, 2000, dwallet_id);
+    let utxo_3 = new_utxo(TX_HASH_2!(), 2, 2000, dwallet_id);
     ctr.add_utxo_for_test(2, utxo_3);
 
     let clock = clock::create_for_testing(scenario.ctx());

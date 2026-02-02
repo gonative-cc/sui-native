@@ -29,10 +29,6 @@ public macro fun ADMIN(): address {
     @0xad
 }
 
-public macro fun TX_HASH(): vector<u8> {
-    x"06ce677fd511851bb6cdacebed863d12dfd231d810e8e9fcba6e791001adf3a6"
-}
-
 public macro fun REDEEM_FEE(): u64 {
     150
 }
@@ -46,9 +42,22 @@ public macro fun MOCK_SIGNATURE(): vector<u8> {
     x"b693a0797b24bae12ed0516a2f5ba765618dca89b75e498ba5b745b71644362298a45ca39230d10a02ee6290a91cebf9839600f7e35158a447ea182ea0e022ae"
 }
 
+public macro fun TX_HASH(): vector<u8> {
+    x"06ce677fd511851bb6cdacebed863d12dfd231d810e8e9fcba6e791001adf3a6"
+}
+
 // Secondary transaction hash for multi-input tests
 public macro fun TX_HASH_2(): vector<u8> {
     x"02ce677fd511851bb6cdacebed863d12dfd231d810e8e9fcba6e791001adf3a6"
+}
+
+// Additional transaction hashes for multi-UTXO tests
+public macro fun TX_HASH_3(): vector<u8> {
+    x"c22646a7af0b3862c27dadab84cfb4a58dd9e1e4a417e7517bff7f05ae4c575e"
+}
+
+public macro fun TX_HASH_4(): vector<u8> {
+    x"2879c6bf4c92618ae198e516c9414629ad7499bd94fe71a3f1614b76ab4fe3c6"
 }
 
 public macro fun TEST_SIGN_ID_1(): ID {
@@ -57,23 +66,6 @@ public macro fun TEST_SIGN_ID_1(): ID {
 
 public macro fun TEST_SIGN_ID_2(): ID {
     object::id_from_address(@0x3)
-}
-
-// Simple UTXO identifiers for tests
-public macro fun UTXO_HASH_1(): vector<u8> {
-    x"01"
-}
-
-public macro fun UTXO_HASH_2(): vector<u8> {
-    x"02"
-}
-
-public macro fun UTXO_HASH_3(): vector<u8> {
-    x"03"
-}
-
-public macro fun UTXO_HASH_4(): vector<u8> {
-    x"04"
 }
 
 // Alternative script for different treasury address

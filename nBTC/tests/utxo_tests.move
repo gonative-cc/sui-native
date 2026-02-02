@@ -2,7 +2,7 @@
 module nbtc::utxo_tests;
 
 use nbtc::nbtc_utxo;
-use nbtc::test_constants::{MOCK_DWALLET_ID, ADMIN, UTXO_HASH_1, UTXO_HASH_2};
+use nbtc::test_constants::{MOCK_DWALLET_ID, ADMIN, TX_HASH, TX_HASH_2};
 use std::unit_test::{assert_eq, destroy};
 use sui::test_scenario as ts;
 
@@ -13,10 +13,10 @@ fun validate_utxos_working_case() {
 
     let mut onchain_utxos = nbtc_utxo::new_utxo_store(ctx);
 
-    let utxo_1 = nbtc_utxo::new_utxo(UTXO_HASH_1!(), 0, 50000, MOCK_DWALLET_ID!());
+    let utxo_1 = nbtc_utxo::new_utxo(TX_HASH!(), 0, 50000, MOCK_DWALLET_ID!());
     onchain_utxos.add(utxo_1);
 
-    let utxo_2 = nbtc_utxo::new_utxo(UTXO_HASH_2!(), 1, 30000, MOCK_DWALLET_ID!());
+    let utxo_2 = nbtc_utxo::new_utxo(TX_HASH_2!(), 1, 30000, MOCK_DWALLET_ID!());
     onchain_utxos.add(utxo_2);
 
     let proposed_indices = vector[0, 1];
@@ -42,7 +42,7 @@ fun validate_utxos_empty_indices() {
 
     let mut onchain_utxos = nbtc_utxo::new_utxo_store(ctx);
 
-    let utxo = nbtc_utxo::new_utxo(UTXO_HASH_1!(), 0, 50000, MOCK_DWALLET_ID!());
+    let utxo = nbtc_utxo::new_utxo(TX_HASH!(), 0, 50000, MOCK_DWALLET_ID!());
     onchain_utxos.add(utxo);
 
     let proposed_indices = vector[];
@@ -81,7 +81,7 @@ fun validate_utxos_insufficient_amount() {
 
     let mut onchain_utxos = nbtc_utxo::new_utxo_store(ctx);
 
-    let utxo = nbtc_utxo::new_utxo(UTXO_HASH_1!(), 0, 50000, MOCK_DWALLET_ID!());
+    let utxo = nbtc_utxo::new_utxo(TX_HASH!(), 0, 50000, MOCK_DWALLET_ID!());
     onchain_utxos.add(utxo);
 
     let proposed_indices = vector[0];
@@ -103,7 +103,7 @@ fun validate_utxos_exact_match() {
 
     let mut onchain_utxos = nbtc_utxo::new_utxo_store(ctx);
 
-    let utxo = nbtc_utxo::new_utxo(UTXO_HASH_1!(), 0, 50000, MOCK_DWALLET_ID!());
+    let utxo = nbtc_utxo::new_utxo(TX_HASH!(), 0, 50000, MOCK_DWALLET_ID!());
     onchain_utxos.add(utxo);
 
     let proposed_indices = vector[0];
@@ -128,7 +128,7 @@ fun test_locked_utxo_cannot_be_used_by_other_request() {
 
     let mut utxo_store = nbtc_utxo::new_utxo_store(ctx);
 
-    let utxo = nbtc_utxo::new_utxo(UTXO_HASH_1!(), 0, 100000, MOCK_DWALLET_ID!());
+    let utxo = nbtc_utxo::new_utxo(TX_HASH!(), 0, 100000, MOCK_DWALLET_ID!());
     utxo_store.add(utxo);
     nbtc_utxo::lock_utxo(&mut utxo_store, 0, 1);
 
@@ -149,10 +149,10 @@ fun test_same_request_can_reuse_locked_utxos() {
 
     let mut utxo_store = nbtc_utxo::new_utxo_store(ctx);
 
-    let utxo_1 = nbtc_utxo::new_utxo(UTXO_HASH_1!(), 0, 60000, MOCK_DWALLET_ID!());
+    let utxo_1 = nbtc_utxo::new_utxo(TX_HASH!(), 0, 60000, MOCK_DWALLET_ID!());
     utxo_store.add(utxo_1);
 
-    let utxo_2 = nbtc_utxo::new_utxo(UTXO_HASH_2!(), 1, 40000, MOCK_DWALLET_ID!());
+    let utxo_2 = nbtc_utxo::new_utxo(TX_HASH_2!(), 1, 40000, MOCK_DWALLET_ID!());
     utxo_store.add(utxo_2);
 
     nbtc_utxo::lock_utxo(&mut utxo_store, 0, 5);
