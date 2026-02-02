@@ -615,7 +615,7 @@ public fun finalize_redeem(
     let outputs = r.outputs();
     // We only have 2 outputs in redeem tx:
     // - first output for redeemer
-    // - second output sends the change back to nbtc dwallet(if exists)
+    // - second (optional) to send back the reminader
     if (outputs.length() == 2) {
         let dwallet_for_reminder = contract.storage.recommended_dwallet();
         let dwallet_id = dwallet_for_reminder.dwallet_id();
