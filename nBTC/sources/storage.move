@@ -158,6 +158,18 @@ public(package) fun exist(store: &Storage, dwallet_id: ID): bool {
     i != MAX_U64
 }
 
+public fun active_dwallet(store: &Storage, dwallet_id: ID): &BtcDWallet {
+    let i = store.dwallet_idx_assert(dwallet_id);
+    &store.dwallets[i]
+}
+
+/// Returns an inactive dwallet by ID.
+/// Aborts if dwallet is not inactive.
+public fun inactive_dwallet(store: &Storage, dwallet_id: ID): &BtcDWallet {
+    assert!(store.dwallet_trash.contains(dwallet_id), EDwalletNotFound);
+    &store.dwallet_trash[dwallet_id]
+}
+
 public fun dwallet(store: &Storage, dwallet_id: ID): &BtcDWallet {
     if (store.is_inactive(dwallet_id)) {
         return store.inactive_dwallet(dwallet_id)
@@ -167,11 +179,6 @@ public fun dwallet(store: &Storage, dwallet_id: ID): &BtcDWallet {
 
 public fun dwallet_id(btcDwallet: &BtcDWallet): ID {
     btcDwallet.cap.dwallet_id()
-}
-
-public fun active_dwallet(store: &Storage, dwallet_id: ID): &BtcDWallet {
-    let i = store.dwallet_idx_assert(dwallet_id);
-    &store.dwallets[i]
 }
 
 /// Returns the ID of the current active dwallet (last element in the vector).
@@ -191,13 +198,6 @@ public fun dwallet_id_by_addr(store: &Storage, addr: String): ID {
     });
     assert!(option::is_some(&idx), EDwalletByBtcAddrNotFound);
     store.dwallets[option::destroy_some(idx)].cap.dwallet_id()
-}
-
-/// Returns an inactive dwallet by ID.
-/// Aborts if dwallet is not inactive.
-public fun inactive_dwallet(store: &Storage, dwallet_id: ID): &BtcDWallet {
-    assert!(store.dwallet_trash.contains(dwallet_id), EDwalletNotFound);
-    &store.dwallet_trash[dwallet_id]
 }
 
 // returns mutable reference to an active dwallet.
