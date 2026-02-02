@@ -16,7 +16,8 @@
 		"generate-ts": "cd sdk && bun run sui-ts-codegen generate",
 		"publish": "bun run scripts/publish.ts",
 		"deploy-nbtc": "bun run scripts/deploy-nbtc.ts",
-		"deploy:clean": "rm -f deploy-information.json && echo 'Deployment information cleared'"
+		"deploy:clean": "rm -f deploy-information.json && echo 'Deployment information cleared'",
+		"publish:clean": "bun run scripts/clean-published.ts"
 	},
 	"dependencies": {
 		"@ika.xyz/sdk": "^0.2.7",

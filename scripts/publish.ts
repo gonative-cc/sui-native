@@ -12,19 +12,16 @@ const Packages = ["bitcoin_lib", "bitcoin_spv", "nBTC"];
 export async function publishPackage(
 	packageName: string,
 	network: Network,
-	force: boolean,
 	prePublish?: () => void | Promise<void>,
 ): Promise<SuiTransactionBlockResponse | null> {
-	if (!force) {
-		const publishedId = getPublishedPackageId(packageName, network);
-		if (publishedId) {
-			console.log(`${packageName} already published at ${publishedId}`);
-			return null;
-		}
+	const publishedId = getPublishedPackageId(packageName, network);
+	if (publishedId) {
+		console.log(`${packageName} already published at ${publishedId}`);
+		return null;
 	}
 
 	const packagePath = join(PROJECT_ROOT, packageName);
-	console.log(`Publishing ${packageName}${force ? " (republish)" : ""}...`);
+	console.log(`Publishing ${packageName}...`);
 
 	if (prePublish) {
 		await prePublish();
@@ -32,15 +29,17 @@ export async function publishPackage(
 
 	$.cwd = packagePath;
 	const suiCommand = getSuiCommand();
-	const result = await $`${suiCommand} client publish --gas-budget 1000000000 --json`;
-	return JSON.parse(result.stdout) as SuiTransactionBlockResponse;
+	const result = await $`${suiCommand} client publish --gas-budget 1000000000 --json --silence-warnings`;
+	const jsonStart = result.stdout.indexOf("{");
+	if (jsonStart === -1) {
+		throw new Error("No JSON found in publish output");
+	}
+	return JSON.parse(result.stdout.slice(jsonStart)) as SuiTransactionBlockResponse;
 }
 
 async function publishWithDependencies(
 	packageName: string,
 	network: Network,
-	force: boolean,
-	forceAll: boolean,
 	prePublish?: () => void | Promise<void>,
 ): Promise<void> {
 	const packageIndex = Packages.indexOf(packageName);
@@ -53,27 +52,24 @@ async function publishWithDependencies(
 	for (let i = 0; i < packageIndex; i++) {
 		const dep = Packages[i]!;
 		const depId = getPublishedPackageId(dep, network);
-		if (!depId || forceAll) {
-			console.log(`Deploying dependency ${dep} first...`);
-			await publishPackage(dep, network, forceAll);
-		} else {
+		if (depId) {
 			console.log(`Dependency ${dep} already published at ${depId}`);
+		} else {
+			console.log(`Deploying dependency ${dep} first...`);
+			await publishPackage(dep, network);
 		}
 	}
 
-	await publishPackage(packageName, network, force, prePublish);
+	await publishPackage(packageName, network, prePublish);
 }
 
 async function main(): Promise<void> {
 	const args = process.argv.slice(2);
-	const force = args.includes("--republish") || args.includes("-f");
-	const forceAll = args.includes("--force-all");
-
 	const packageArg = args.find((arg) => !arg.startsWith("-"));
 	const packagesToPublish = packageArg ? [packageArg] : Packages;
 
 	const network = await getActiveNetwork();
-	console.log(`Active network: ${network}${forceAll ? " (force all)" : ""}`);
+	console.log(`Active network: ${network}`);
 	console.log(`Publishing: ${packagesToPublish.join(", ")}`);
 
 	try {
@@ -83,7 +79,7 @@ async function main(): Promise<void> {
 					? () => updateNBTCToml(network)
 					: undefined;
 
-			await publishWithDependencies(pkg, network, force, forceAll, prePublish);
+			await publishWithDependencies(pkg, network, prePublish);
 		}
 		console.log("Publishing completed");
 	} catch (error) {

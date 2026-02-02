@@ -17,7 +17,7 @@ export function getPublishedPackageId(packagePath: string, network: string): str
 	try {
 		const publishedToml = join(PROJECT_ROOT, packagePath, "Published.toml");
 		const parsed = toml.parse(readFileSync(publishedToml, "utf-8")) as any;
-		const envSection = parsed[`published.${network}`];
+		const envSection = parsed.published?.[network];
 		return envSection?.["published-at"] || null;
 	} catch (error) {
 		return null;
