@@ -162,12 +162,16 @@ public fun dwallet(store: &Storage, dwallet_id: ID): &BtcDWallet {
     if (store.is_inactive(dwallet_id)) {
         return store.inactive_dwallet(dwallet_id)
     };
-    let i = store.dwallet_idx_assert(dwallet_id);
-    &store.dwallets[i]
+    store.active_dwallet(dwallet_id)
 }
 
 public fun dwallet_id(btcDwallet: &BtcDWallet): ID {
     btcDwallet.cap.dwallet_id()
+}
+
+public fun active_dwallet(store: &Storage, dwallet_id: ID): &BtcDWallet {
+    let i = store.dwallet_idx_assert(dwallet_id);
+    &store.dwallets[i]
 }
 
 /// Returns the ID of the current active dwallet (last element in the vector).

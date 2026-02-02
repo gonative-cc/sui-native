@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: MPL-2.
 
 module nbtc::nbtc;
 
@@ -367,7 +367,7 @@ public fun mint(
     let utxo = contract.storage.utxo_store().get_utxo(utxo_ids[0]);
     let btc_tx_id = utxo.tx_id();
     let btc_vout = utxo.vout();
-    let btc_script_publickey = contract.storage.dwallet(dwallet_id).lockscript();
+    let btc_script_publickey = contract.storage.active_dwallet(dwallet_id).lockscript();
     event::emit(MintEvent {
         recipient,
         fee: fee_amount,
