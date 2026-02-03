@@ -53,7 +53,7 @@ bun run deploy-nbtc
 To force republish packages (delete Published.toml files):
 
 ```bash
-bun run publish:clean
+bun run publish:cleanup
 bun run deploy-nbtc
 ```
 
