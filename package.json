@@ -17,7 +17,7 @@
 		"publish": "bun run scripts/publish.ts",
 		"deploy-nbtc": "bun run scripts/deploy-nbtc.ts",
 		"deploy:cleanup": "rm -f deploy-information.json && echo 'Deployment information cleared'",
-		"publish:cleanup": "bun run scripts/clean-published.ts"
+		"publish:cleanup": "bun run scripts/cleanup-published.ts"
 	},
 	"dependencies": {
 		"@ika.xyz/sdk": "^0.2.7",

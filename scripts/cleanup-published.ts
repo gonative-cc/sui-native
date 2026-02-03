@@ -5,7 +5,7 @@ import { PROJECT_ROOT } from "./utils";
 
 const Packages = ["bitcoin_lib", "bitcoin_spv", "nBTC"];
 
-function main(): Promise<void> {
+function main(): void {
 	const args = process.argv.slice(2);
 	const packageArg = args.find((arg) => !arg.startsWith("-"));
 	const packagesToClean = packageArg ? [packageArg] : Packages;

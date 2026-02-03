@@ -46,7 +46,7 @@ The deployment process saves state to `deploy-information.json` in the project r
 To start with a fresh deployment:
 
 ```bash
-bun run deploy:clean
+bun run deploy:cleanup
 bun run deploy-nbtc
 ```
 
