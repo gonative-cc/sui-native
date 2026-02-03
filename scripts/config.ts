@@ -6,6 +6,24 @@ import { getActiveNetwork, PROJECT_ROOT } from "./utils";
 
 const INDEXER_URL = process.env.INDEXER_URL || "http://localhost:8080/regtest";
 
+/**
+ * Retrieves the published package ID from Published.toml for a specific package and network.
+ *
+ * @param packagePath - The directory path of the Move package (e.g., "bitcoin_lib", "bitcoin_spv")
+ * @param network - The network name (e.g., "testnet", "mainnet", "devnet")
+ * @returns The package ID string if found, null otherwise
+ */
+export function getPublishedPackageId(packagePath: string, network: string): string | null {
+	try {
+		const publishedToml = join(PROJECT_ROOT, packagePath, "Published.toml");
+		const parsed = toml.parse(readFileSync(publishedToml, "utf-8")) as any;
+		const envSection = parsed.published?.[network];
+		return envSection?.["published-at"] || null;
+	} catch (error) {
+		return null;
+	}
+}
+
 export interface LightClientConfig {
 	spvPackageId: string;
 	bitcoinLibPackageId: string;
@@ -15,32 +33,6 @@ export interface LightClientConfig {
 	btcHeight: number;
 	parentChainWork: string;
 	confirmationDepth: number;
-}
-
-/**
- * Retrieves the published package ID from Move.lock for a specific package and network.
- * Uses PROJECT_ROOT to ensure consistent path resolution regardless of execution directory.
- *
- * @param packagePath - The directory path of the Move package (e.g., "bitcoin_lib", "bitcoin_spv")
- * @param network - The network name (e.g., "testnet", "mainnet", "devnet")
- * @returns The package ID string if found, null otherwise
- * @throws {Error} If Move.lock file doesn't exist or cannot be parsed
- *
- * @example
- * const pkgId = getPublishedPackageId("bitcoin_lib", "testnet");
- * // Returns: "0x123..." or null
- */
-export function getPublishedPackageId(packagePath: string, network: string): string | null {
-	try {
-		const moveLock = join(PROJECT_ROOT, packagePath, "Move.lock");
-		const parsed = toml.parse(readFileSync(moveLock, "utf-8")) as any;
-		const envSection = parsed.env?.[network];
-		return envSection?.["latest-published-id"] || null;
-	} catch (error) {
-		throw new Error(
-			`Failed to read Move.lock for package "${packagePath}": ${(error as Error).message}`,
-		);
-	}
 }
 
 export async function fetchBlockHeader(blockHash: string): Promise<string> {
@@ -114,7 +106,7 @@ export async function generateConfig(
 	if (bitcoinLibId && bitcoinSpvId) {
 		console.log("Using package IDs from deploy-information.json");
 	} else {
-		// If not found in deploy-info, try Move.lock
+		// If not found in deploy-info, try Published.toml first
 		if (!bitcoinLibId) {
 			bitcoinLibId = getPublishedPackageId("bitcoin_lib", network);
 		}

@@ -49,20 +49,53 @@ async function main(): Promise<void> {
 		// File doesn't exist, start fresh
 	}
 
-	// Check and publish bitcoin_lib if needed
-	if (!deployInfo.bitcoin_lib_pkg) {
-		console.log("bitcoin_lib not in deploy-info, deploying...");
-		await publishPackage("bitcoin_lib", network, false);
-	} else {
-		console.log(`Using existing bitcoin_lib from deploy-info: ${deployInfo.bitcoin_lib_pkg}`);
+	// Get package IDs from Published.toml
+	const bitcoinLibPublishedId = getPublishedPackageId("bitcoin_lib", network);
+	const bitcoinSpvPublishedId = getPublishedPackageId("bitcoin_spv", network);
+
+	// Check for mismatch between deploy-info and Published.toml
+	if (
+		deployInfo.bitcoin_lib_pkg &&
+		bitcoinLibPublishedId &&
+		deployInfo.bitcoin_lib_pkg !== bitcoinLibPublishedId
+	) {
+		console.error(`\n⚠️  Mismatch detected for bitcoin_lib:`);
+		console.error(`   deploy-information.json: ${deployInfo.bitcoin_lib_pkg}`);
+		console.error(`   Published.toml:        ${bitcoinLibPublishedId}`);
+		console.error(`\nPlease check your data or delete deploy-information.json to redeploy.\n`);
+		process.exit(1);
 	}
 
-	// Check and publish bitcoin_spv if needed
-	if (!deployInfo.lc_pkg) {
-		console.log("bitcoin_spv not in deploy-info, deploying...");
-		await publishPackage("bitcoin_spv", network, false);
+	if (deployInfo.lc_pkg && bitcoinSpvPublishedId && deployInfo.lc_pkg !== bitcoinSpvPublishedId) {
+		console.error(`\n⚠️  Mismatch detected for bitcoin_spv:`);
+		console.error(`   deploy-information.json: ${deployInfo.lc_pkg}`);
+		console.error(`   Published.toml:        ${bitcoinSpvPublishedId}`);
+		console.error(`\nPlease check your data or delete deploy-information.json to redeploy.\n`);
+		process.exit(1);
+	}
+
+	// Publish bitcoin_lib if not in Published.toml
+	if (!bitcoinLibPublishedId) {
+		console.log("bitcoin_lib not in Published.toml, deploying...");
+		await publishPackage("bitcoin_lib", network);
 	} else {
-		console.log(`Using existing bitcoin_spv from deploy-info: ${deployInfo.lc_pkg}`);
+		console.log(`bitcoin_lib found in Published.toml: ${bitcoinLibPublishedId}`);
+		deployInfo.bitcoin_lib_pkg = bitcoinLibPublishedId;
+	}
+
+	// Publish bitcoin_spv if not in Published.toml
+	if (!bitcoinSpvPublishedId) {
+		console.log("bitcoin_spv not in Published.toml, deploying...");
+		await publishPackage("bitcoin_spv", network);
+	} else {
+		console.log(`bitcoin_spv found in Published.toml: ${bitcoinSpvPublishedId}`);
+		deployInfo.lc_pkg = bitcoinSpvPublishedId;
+	}
+
+	// Write deploy-info.json if we have package IDs from Published.toml
+	if (bitcoinLibPublishedId || bitcoinSpvPublishedId) {
+		deployInfo.sui_network = network;
+		await fs.writeFile(DEPLOY_INFO_FILE, JSON.stringify(deployInfo, null, 2), "utf-8");
 	}
 
 	const config = await generateConfig();
@@ -98,15 +131,34 @@ async function main(): Promise<void> {
 	let nbtcAdminCap: string | undefined;
 	let nbtcPkg: string | undefined;
 
-	if (deployInfo.nbtc_pkg) {
+	const nbtcPublishedId = getPublishedPackageId("nBTC", network);
+
+	// Check for nBTC mismatch between deploy-info and Published.toml
+	if (deployInfo.nbtc_pkg && nbtcPublishedId && deployInfo.nbtc_pkg !== nbtcPublishedId) {
+		console.error(`\n⚠️  Mismatch detected for nBTC:`);
+		console.error(`   deploy-information.json: ${deployInfo.nbtc_pkg}`);
+		console.error(`   Published.toml:        ${nbtcPublishedId}`);
+		console.error(`\nPlease check your data or delete deploy-information.json to redeploy.\n`);
+		process.exit(1);
+	}
+
+	if (nbtcPublishedId) {
+		console.log(`\nnBTC found in Published.toml: ${nbtcPublishedId}`);
+		if (!deployInfo.nbtc_pkg) {
+			deployInfo.nbtc_pkg = nbtcPublishedId;
+		}
+		nbtcPkg = nbtcPublishedId;
+		nbtcContract = deployInfo.nbtc_contract;
+		nbtcAdminCap = deployInfo.nbtc_admin_cap;
+	} else if (deployInfo.nbtc_pkg) {
+		console.log("\nUsing existing nBTC package from deploy-info");
 		nbtcPkg = deployInfo.nbtc_pkg;
 		nbtcContract = deployInfo.nbtc_contract;
 		nbtcAdminCap = deployInfo.nbtc_admin_cap;
-		console.log("\nUsing existing nBTC package");
 	} else {
 		console.log("\nPublishing nBTC package...");
 		const fallbackAddr = loadSigner().toSuiAddress();
-		const publishResult = await publishPackage("nBTC", network, true, () =>
+		const publishResult = await publishPackage("nBTC", network, () =>
 			updateNBTCTomlWithValues(lcContract!, fallbackAddr),
 		);
 

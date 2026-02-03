@@ -14,7 +14,8 @@ bun run deploy-nbtc
 
 This script:
 
-- Checks for existing deployments in `deploy-information.json`
+- Reads package IDs from `Published.toml` for already deployed packages
+- Checks for mismatches between `deploy-information.json` and `Published.toml`
 - Deploys or reuses the Bitcoin Light Client
 - Publishes the nBTC package with proper configuration
 - Creates and initializes a dWallet
@@ -45,9 +46,18 @@ The deployment process saves state to `deploy-information.json` in the project r
 To start with a fresh deployment:
 
 ```bash
-bun run deploy:clean
+bun run deploy:cleanup
 bun run deploy-nbtc
 ```
+
+To force republish packages (delete Published.toml files):
+
+```bash
+bun run publish:cleanup
+bun run deploy-nbtc
+```
+
+**Note**: If `deploy-information.json` and `Published.toml` have mismatched package IDs, the script will display an error. Either fix the mismatch or delete `deploy-information.json`.
 
 ## Environment Variables
 
