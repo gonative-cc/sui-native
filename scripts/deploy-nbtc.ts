@@ -34,6 +34,7 @@ interface DeployInformation {
 	sui_fallback_address?: string;
 	btc_address?: string;
 	dwallet_id?: string;
+	height?: number;
 }
 
 async function main(): Promise<void> {
@@ -98,7 +99,7 @@ async function main(): Promise<void> {
 		await fs.writeFile(DEPLOY_INFO_FILE, JSON.stringify(deployInfo, null, 2), "utf-8");
 	}
 
-	const config = await generateConfig();
+	const config = await generateConfig(deployInfo.height);
 
 	if (deployInfo.sui_network && deployInfo.sui_network !== network) {
 		throw new Error(
