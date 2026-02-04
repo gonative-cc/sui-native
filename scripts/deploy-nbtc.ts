@@ -34,7 +34,7 @@ interface DeployInformation {
 	sui_fallback_address?: string;
 	btc_address?: string;
 	dwallet_id?: string;
-	height?: number
+	height?: number;
 }
 
 async function main(): Promise<void> {
