@@ -38,6 +38,7 @@ The deployment process saves state to `deploy-information.json` in the project r
   "sui_fallback_address": "0x...fallback_sui_address", // Fallback Sui address for invalid mint OP_RETURN
   "btc_address": "bcrt1q...dwallet_btc_address", // dWallet Bitcoin deposit address
   "dwallet_id": "0x...dwallet_object_id" // dWallet object ID for Bitcoin operations
+  "height": 0, // spv init height
 }
 ```
 
