@@ -44,6 +44,7 @@ public struct RedeemRequest has store {
     /// Bitcoin spent key (address)
     recipient_script: vector<u8>,
     nbtc_spend_script: vector<u8>,
+    nbtc_dwallet_id: ID,
     status: RedeemStatus,
     amount: u64,
     fee: u64,
@@ -135,6 +136,10 @@ public fun outputs(r: &RedeemRequest): &vector<output::Output> {
 
 public fun btc_tx_id(r: &RedeemRequest): vector<u8> {
     r.btc_tx_id
+}
+
+public fun nbtc_dwallet_id(r: &RedeemRequest): ID {
+    r.nbtc_dwallet_id
 }
 
 public(package) fun move_to_signing_status(
@@ -444,6 +449,7 @@ public(package) fun set_utxos(r: &mut RedeemRequest, utxo_ids: vector<u64>) {
 
 public fun new(
     nbtc_spend_script: vector<u8>,
+    nbtc_dwallet_id: ID,
     redeemer: address,
     recipient_script: vector<u8>,
     amount: u64,
@@ -467,6 +473,7 @@ public fun new(
         outputs: vector::empty(),
         created_at,
         signed_input: 0,
+        nbtc_dwallet_id,
     }
 }
 
@@ -518,6 +525,7 @@ public(package) fun destroy_confirmed(r: RedeemRequest) {
         redeemer: _,
         recipient_script: _,
         nbtc_spend_script: _,
+        nbtc_dwallet_id: _,
         status: _,
         amount: _,
         fee: _,

@@ -81,8 +81,6 @@ const ENotSigned: vector<u8> = b"redeem request is not signed";
 #[error]
 const ERedeemTxNotConfirmed: vector<u8> = b"Bitcoin redeem tx not confirmed via SPV";
 #[error]
-const EInvalidChangeRecipient: vector<u8> = b"Invalid change recipient";
-#[error]
 const EInputSignIdLengthMismatch: vector<u8> =
     b"input_ids and sign_ids vectors must have the same length";
 
@@ -533,8 +531,10 @@ public fun redeem(
     assert!(coin.value() > fee, EInvalidArguments);
     let sender = ctx.sender();
     let remainder_lockscript = contract.storage.recommended_dwallet().lockscript();
+    let dwallet = contract.storage.recommended_dwallet();
     let r = redeem_request::new(
         remainder_lockscript,
+        dwallet.dwallet_id(),
         sender,
         recipient_script,
         coin.value(),
@@ -617,13 +617,13 @@ public fun finalize_redeem(
     // - first output for redeemer
     // - second (optional) to send back the reminader
     if (outputs.length() == 2) {
-        let dwallet_for_reminder = contract.storage.recommended_dwallet();
-        let dwallet_id = dwallet_for_reminder.dwallet_id();
-        let reminder_lockscript = dwallet_for_reminder.lockscript();
-
         let change_output = &outputs[1];
-        assert!(change_output.script_pubkey() == reminder_lockscript, EInvalidChangeRecipient);
-        let change_utxo = nbtc_utxo::new_utxo(tx_id, 1, change_output.amount(), dwallet_id);
+        let change_utxo = nbtc_utxo::new_utxo(
+            tx_id,
+            1,
+            change_output.amount(),
+            r.nbtc_dwallet_id(),
+        );
         contract.storage.utxo_store_mut().add(change_utxo);
     };
 
@@ -939,9 +939,11 @@ public fun create_redeem_request_for_testing(
     created_at: u64,
     ctx: &mut TxContext,
 ) {
-    let remainder_lockscript = contract.storage.recommended_dwallet().lockscript();
+    let recommended_dwallet = contract.storage.recommended_dwallet();
+    let remainder_lockscript = recommended_dwallet.lockscript();
     let r = redeem_request::new(
         remainder_lockscript,
+        recommended_dwallet.dwallet_id(),
         redeemer,
         recipient_script,
         amount,
