@@ -4,7 +4,6 @@ import { readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 import { getNetworkConfig, Network } from "@ika.xyz/sdk";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
-import * as toml from "smol-toml";
 
 export const SCRIPT_DIR = new URL(".", import.meta.url).pathname;
 export const PROJECT_ROOT = join(SCRIPT_DIR, "..");
@@ -22,7 +21,6 @@ export async function getActiveNetwork(): Promise<Network> {
 export function loadSigner(): Ed25519Keypair {
 	const mnemonic = process.env.MNEMONIC;
 	const encodedSk = process.env.ENCODE_SK;
-
 	if (!mnemonic && !encodedSk) {
 		throw new Error("Please set either ENCODE_SK or MNEMONIC in .env");
 	}

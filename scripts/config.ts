@@ -36,7 +36,7 @@ export interface LightClientConfig {
 }
 
 export async function fetchBlockHeader(blockHash: string): Promise<string> {
-	const url = `${INDEXER_URL}/api/block/${blockHash}/header`;
+	const url = `${INDEXER_URL}/block/${blockHash}/header`;
 	const response = await fetch(url);
 	if (!response.ok) {
 		throw new Error(`Failed to fetch block ${blockHash}: ${response.statusText}`);
@@ -46,7 +46,7 @@ export async function fetchBlockHeader(blockHash: string): Promise<string> {
 }
 
 export async function getBlockByHeight(height: number): Promise<string> {
-	const url = `${INDEXER_URL}/api/block-height/${height}`;
+	const url = `${INDEXER_URL}/block-height/${height}`;
 	const response = await fetch(url);
 	if (!response.ok) {
 		throw new Error(`Failed to fetch block at height ${height}: ${response.statusText}`);
@@ -55,7 +55,7 @@ export async function getBlockByHeight(height: number): Promise<string> {
 }
 
 export async function getTipHeight(): Promise<number> {
-	const url = `${INDEXER_URL}/api/blocks/tip/height`;
+	const url = `${INDEXER_URL}/blocks/tip/height`;
 	const response = await fetch(url);
 	if (!response.ok) {
 		throw new Error(`Failed to fetch tip height: ${response.statusText}`);
