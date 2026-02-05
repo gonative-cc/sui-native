@@ -1,0 +1,26 @@
+name: Trigger Relayer on SPV Change
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'bitcoin_spv/**'
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Dispatch to Relayer
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Make sure the script is executable
+          chmod +x ./contrib/trigger_relayer_ci.sh
+          # Execute the script
+          ./contrib/trigger_relayer_ci.sh
