@@ -41,6 +41,7 @@ fun raw_withdraw_tx_signed_tests() {
     let clock = clock::create_for_testing(scenario.ctx());
     let mut r = redeem_request::new(
         nbtc_spend_key,
+        MOCK_DWALLET_ID!(),
         sender,
         btc_receiver,
         amount,
