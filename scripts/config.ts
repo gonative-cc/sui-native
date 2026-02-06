@@ -20,11 +20,9 @@ export interface DeployInformation {
 	header_count?: number;
 }
 
+const INDEXER_URL = process.env.INDEXER_URL || "http://localhost:8080/regtest";
 const DEPLOY_INFO_FILE = join(PROJECT_ROOT, "deploy-information.json");
 
-/**
- * Reads deployment information from file, returns empty object if file doesn't exist or is invalid
- */
 export function readDeployInformation(): DeployInformation {
 	try {
 		const content = readFileSync(DEPLOY_INFO_FILE, "utf-8");
@@ -34,9 +32,6 @@ export function readDeployInformation(): DeployInformation {
 	}
 }
 
-/**
- * Writes deployment information to file
- */
 export function writeDeployInformation(deployInfo: DeployInformation): void {
 	writeFileSync(DEPLOY_INFO_FILE, JSON.stringify(deployInfo, null, 2), "utf-8");
 }
@@ -71,7 +66,6 @@ export function checkPackageMismatch(
 	}
 }
 
-const INDEXER_URL = process.env.INDEXER_URL || "http://localhost:8080/regtest";
 
 /**
  * Retrieves the published package ID from Published.toml for a specific package and network.
