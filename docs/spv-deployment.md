@@ -24,7 +24,7 @@ This guide explains how to deploy a new Bitcoin SPV (Simplified Payment Verifica
    To publish packages:
 
    ```bash
-   # when we bitcoin_spv, the scripts auto deploy bitcoin_lib
+   # when we publish bitcoin_spv, the scripts auto-deploy bitcoin_lib
    bun run scripts/publish.ts bitcoin_spv
    ```
 
