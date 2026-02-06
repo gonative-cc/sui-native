@@ -31,7 +31,6 @@ If they are not you can use the following script to publish them
 
 ## Deployment
 
-### Method 1: Create SPV Light Client (Recommended)
 
 Deploy just the SPV light client using published packages:
 
