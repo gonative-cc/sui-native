@@ -41,8 +41,6 @@ bun run deploy:spv
 
 ## Configuration
 
-### Deployment Information File
-
 The deployment process uses `deploy-information.json` to store configuration:
 
 ```json
