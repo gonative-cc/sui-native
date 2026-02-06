@@ -78,7 +78,7 @@ The light client requires trusted Bitcoin block headers:
 
 ## Deployment Process
 
-1. **Configuration Loading**:
+1. Configuration Loading:
    - Reads `deploy-information.json` (creates if missing)
    - Validates network consistency
    - Fetches package IDs from `Published.toml`
