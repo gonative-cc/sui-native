@@ -1,6 +1,6 @@
 # SPV Light Client Deployment Guide
 
-This guide explains how to deploy a new Bitcoin SPV (Simplified Payment Verification) light client on Sui network.
+This guide explains how to deploy a new Bitcoin SPV (Simplified Payment Verification) light client on the Sui network.
 
 ## Prerequisites
 
