@@ -95,6 +95,14 @@ export interface LightClientConfig {
 	confirmationDepth: number;
 }
 
+function getIndexerURL(): URL {
+	try {
+		return new URL(INDEXER_URL);
+	} catch (error) {
+		throw new Error(`Invalid INDEXER_URL configuration: ${INDEXER_URL}`);
+	}
+}
+
 export async function fetchBlockHeader(blockHash: string): Promise<string> {
 	const url = `${INDEXER_URL}/block/${blockHash}/header`;
 	const response = await fetch(url);
@@ -115,7 +123,7 @@ export async function getBlockByHeight(height: number): Promise<string> {
 }
 
 export async function getTipHeight(): Promise<number> {
-	const url = `${INDEXER_URL}/blocks/tip/height`;
+	const url = new URL(`blocks/tip/height`, getIndexerURL()).toString();
 	const response = await fetch(url);
 	if (!response.ok) {
 		throw new Error(`Failed to fetch tip height: ${response.statusText}`);
