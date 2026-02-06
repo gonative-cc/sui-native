@@ -97,7 +97,7 @@ export interface LightClientConfig {
 
 function getIndexerURL(path: string): string {
 	try {
-		return (new URL(path, new URL(INDEXER_URL))).toString();
+		return new URL(path, new URL(INDEXER_URL)).toString();
 	} catch (error) {
 		throw new Error(`Invalid INDEXER_URL configuration: ${INDEXER_URL}`);
 	}
