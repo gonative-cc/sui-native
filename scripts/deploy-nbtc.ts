@@ -81,9 +81,11 @@ async function main(): Promise<void> {
 		deployInfo.sui_network = network;
 		deployInfo.btc_network = "regtest";
 		deployInfo.sui_fallback_address = signer.toSuiAddress();
+		// Store the height used for light client creation
+		deployInfo.height = config.btcHeight;
 		// Set default header count if not already present
 		if (!deployInfo.header_count) {
-			deployInfo.header_count = 11;
+			deployInfo.header_count = config.headers.length;
 		}
 		writeDeployInformation(deployInfo);
 		bitcoinLibPkg = deployInfo.bitcoin_lib_pkg;
@@ -148,7 +150,8 @@ async function main(): Promise<void> {
 
 	let dwalletId = deployInfo.dwallet_id;
 	if (!dwalletId) {
-		console.log("\nCreating dWallet...");
+
+		console.log("Creating dWallet...");
 
 		const suiClient = createSuiClient(nbtcPkg!);
 		const ikaClient = createIkaClient(suiClient);
