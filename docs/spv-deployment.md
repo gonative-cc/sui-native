@@ -4,8 +4,9 @@ This guide explains how to deploy a new Bitcoin SPV (Simplified Payment Verifica
 
 ## Prerequisites
 
-1. **Environment Setup**:
-   - Create `.env` file with your Sui wallet credentials:
+### Environment Setup
+
+Create `.env` file with your key to sign Sui transactions:
 
    ```env
    # Bitcoin Indexer URL (optional, defaults to regtest)
