@@ -18,16 +18,16 @@ Create `.env` file with your key to sign Sui transactions:
    WALLET_KEY="base64-encoded private key"
    ```
 
-2. **Published Packages**:
+### Dependencies. 
+
+The following packages must be published:
    - `bitcoin_lib` package must be published
    - `bitcoin_spv` package must be published
 
-   To publish packages:
+If they are not you can use the following script to publish them
 
    ```bash
-   # when we publish bitcoin_spv, the scripts auto-deploy bitcoin_lib
    bun run scripts/publish.ts bitcoin_spv
-   ```
 
 ## Deployment
 
