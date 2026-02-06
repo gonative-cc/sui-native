@@ -2,7 +2,12 @@ import { fromHex } from "@mysten/sui/utils";
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
 import { Transaction } from "@mysten/sui/transactions";
 import "dotenv/config";
-import { generateConfig, type LightClientConfig, readDeployInformation, writeDeployInformation } from "./config";
+import {
+	generateConfig,
+	type LightClientConfig,
+	readDeployInformation,
+	writeDeployInformation,
+} from "./config";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { loadSigner } from "./utils";
 

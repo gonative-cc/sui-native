@@ -1,6 +1,14 @@
 #!/usr/bin/env bun
 import "dotenv/config";
-import { generateConfig, getPublishedPackageId, DeployInformation, readDeployInformation, writeDeployInformation, validateDeployNetwork, checkPackageMismatch } from "./config";
+import {
+	generateConfig,
+	getPublishedPackageId,
+	DeployInformation,
+	readDeployInformation,
+	writeDeployInformation,
+	validateDeployNetwork,
+	checkPackageMismatch,
+} from "./config";
 import { loadSigner, updateNBTCTomlWithValues, getActiveNetwork, PROJECT_ROOT } from "./utils";
 import { createLightClientAndGetId } from "./create_light_client";
 import { publishPackage } from "./publish";
@@ -150,7 +158,6 @@ async function main(): Promise<void> {
 
 	let dwalletId = deployInfo.dwallet_id;
 	if (!dwalletId) {
-
 		console.log("Creating dWallet...");
 
 		const suiClient = createSuiClient(nbtcPkg!);

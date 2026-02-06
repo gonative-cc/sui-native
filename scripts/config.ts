@@ -46,10 +46,10 @@ export function writeDeployInformation(deployInfo: DeployInformation): void {
  */
 export async function validateDeployNetwork(deployInfo: DeployInformation): Promise<void> {
 	const network = await getActiveNetwork();
-	
+
 	if (deployInfo.sui_network && deployInfo.sui_network !== network) {
 		throw new Error(
-			`Deployment information exists for network '${deployInfo.sui_network}', but current network is '${network}'. Delete deploy-information.json in project root to reset.`
+			`Deployment information exists for network '${deployInfo.sui_network}', but current network is '${network}'. Delete deploy-information.json in project root to reset.`,
 		);
 	}
 }
@@ -60,7 +60,7 @@ export async function validateDeployNetwork(deployInfo: DeployInformation): Prom
 export function checkPackageMismatch(
 	pkgName: string,
 	deployId: string | undefined,
-	publishedId: string | null
+	publishedId: string | null,
 ): void {
 	if (deployId && publishedId && deployId !== publishedId) {
 		console.error(`\n⚠️  Mismatch detected for ${pkgName}:`);
@@ -154,7 +154,7 @@ export async function fetchHeadersByHeight(startHeight: number, count: number): 
 export async function generateConfig(): Promise<LightClientConfig> {
 	const network = await getActiveNetwork();
 	const deployInfo = readDeployInformation();
-	
+
 	// Validate network matches
 	await validateDeployNetwork(deployInfo);
 

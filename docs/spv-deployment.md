@@ -96,4 +96,3 @@ The light client requires trusted Bitcoin block headers:
    - Saves light client contract ID to `deploy-information.json`
    - Records height and header count used
    - Updates package IDs if from Published.toml
-
