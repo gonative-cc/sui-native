@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 import "dotenv/config";
-import { generateConfig, getPublishedPackageId } from "./config";
+import { generateConfig, getPublishedPackageId, DeployInformation, readDeployInformation, writeDeployInformation, validateDeployNetwork, checkPackageMismatch } from "./config";
 import { loadSigner, updateNBTCTomlWithValues, getActiveNetwork, PROJECT_ROOT } from "./utils";
 import { createLightClientAndGetId } from "./create_light_client";
 import { publishPackage } from "./publish";
@@ -20,61 +20,20 @@ import type {
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 
-const DEPLOY_INFO_FILE = path.join(PROJECT_ROOT, "deploy-information.json");
-
-export interface DeployInformation {
-	btc_network?: string;
-	sui_network?: string;
-	bitcoin_lib_pkg?: string;
-	nbtc_pkg?: string;
-	nbtc_contract?: string;
-	nbtc_admin_cap?: string;
-	lc_pkg?: string;
-	lc_contract?: string;
-	sui_fallback_address?: string;
-	btc_address?: string;
-	dwallet_id?: string;
-	height?: number;
-	header_count?: number;
-}
-
 async function main(): Promise<void> {
 	console.log("Starting nBTC deployment...\n");
 
 	const network = await getActiveNetwork();
 
-	let deployInfo: DeployInformation = {};
-	try {
-		const content = await fs.readFile(DEPLOY_INFO_FILE, "utf-8");
-		deployInfo = JSON.parse(content);
-	} catch (error) {
-		// File doesn't exist, start fresh
-	}
+	const deployInfo = readDeployInformation();
 
 	// Get package IDs from Published.toml
 	const bitcoinLibPublishedId = getPublishedPackageId("bitcoin_lib", network);
 	const bitcoinSpvPublishedId = getPublishedPackageId("bitcoin_spv", network);
 
-	// Check for mismatch between deploy-info and Published.toml
-	if (
-		deployInfo.bitcoin_lib_pkg &&
-		bitcoinLibPublishedId &&
-		deployInfo.bitcoin_lib_pkg !== bitcoinLibPublishedId
-	) {
-		console.error(`\n⚠️  Mismatch detected for bitcoin_lib:`);
-		console.error(`   deploy-information.json: ${deployInfo.bitcoin_lib_pkg}`);
-		console.error(`   Published.toml:        ${bitcoinLibPublishedId}`);
-		console.error(`\nPlease check your data or delete deploy-information.json to redeploy.\n`);
-		process.exit(1);
-	}
-
-	if (deployInfo.lc_pkg && bitcoinSpvPublishedId && deployInfo.lc_pkg !== bitcoinSpvPublishedId) {
-		console.error(`\n⚠️  Mismatch detected for bitcoin_spv:`);
-		console.error(`   deploy-information.json: ${deployInfo.lc_pkg}`);
-		console.error(`   Published.toml:        ${bitcoinSpvPublishedId}`);
-		console.error(`\nPlease check your data or delete deploy-information.json to redeploy.\n`);
-		process.exit(1);
-	}
+	// Check for mismatches
+	checkPackageMismatch("bitcoin_lib", deployInfo.bitcoin_lib_pkg, bitcoinLibPublishedId);
+	checkPackageMismatch("bitcoin_spv", deployInfo.lc_pkg, bitcoinSpvPublishedId);
 
 	// Publish bitcoin_lib if not in Published.toml
 	if (!bitcoinLibPublishedId) {
@@ -97,7 +56,7 @@ async function main(): Promise<void> {
 	// Write deploy-info.json if we have package IDs from Published.toml
 	if (bitcoinLibPublishedId || bitcoinSpvPublishedId) {
 		deployInfo.sui_network = network;
-		await fs.writeFile(DEPLOY_INFO_FILE, JSON.stringify(deployInfo, null, 2), "utf-8");
+		writeDeployInformation(deployInfo);
 	}
 
 	const config = await generateConfig();
@@ -126,7 +85,7 @@ async function main(): Promise<void> {
 		if (!deployInfo.header_count) {
 			deployInfo.header_count = 11;
 		}
-		await fs.writeFile(DEPLOY_INFO_FILE, JSON.stringify(deployInfo, null, 2), "utf-8");
+		writeDeployInformation(deployInfo);
 		bitcoinLibPkg = deployInfo.bitcoin_lib_pkg;
 	} else {
 		console.log("\nUsing existing light client");
@@ -139,14 +98,8 @@ async function main(): Promise<void> {
 
 	const nbtcPublishedId = getPublishedPackageId("nBTC", network);
 
-	// Check for nBTC mismatch between deploy-info and Published.toml
-	if (deployInfo.nbtc_pkg && nbtcPublishedId && deployInfo.nbtc_pkg !== nbtcPublishedId) {
-		console.error(`\n⚠️  Mismatch detected for nBTC:`);
-		console.error(`   deploy-information.json: ${deployInfo.nbtc_pkg}`);
-		console.error(`   Published.toml:        ${nbtcPublishedId}`);
-		console.error(`\nPlease check your data or delete deploy-information.json to redeploy.\n`);
-		process.exit(1);
-	}
+	// Check for nBTC mismatch
+	checkPackageMismatch("nBTC", deployInfo.nbtc_pkg, nbtcPublishedId);
 
 	if (nbtcPublishedId) {
 		console.log(`\nnBTC found in Published.toml: ${nbtcPublishedId}`);
@@ -190,7 +143,7 @@ async function main(): Promise<void> {
 		deployInfo.nbtc_pkg = nbtcPkg;
 		deployInfo.nbtc_contract = nbtcContract;
 		deployInfo.nbtc_admin_cap = nbtcAdminCap;
-		await fs.writeFile(DEPLOY_INFO_FILE, JSON.stringify(deployInfo, null, 2), "utf-8");
+		writeDeployInformation(deployInfo);
 	}
 
 	let dwalletId = deployInfo.dwallet_id;
@@ -215,7 +168,7 @@ async function main(): Promise<void> {
 
 		deployInfo.dwallet_id = dwalletId;
 		deployInfo.btc_address = btcAddress;
-		await fs.writeFile(DEPLOY_INFO_FILE, JSON.stringify(deployInfo, null, 2), "utf-8");
+		writeDeployInformation(deployInfo);
 	} else {
 		console.log("\nUsing existing dWallet");
 	}

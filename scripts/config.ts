@@ -1,9 +1,75 @@
 import "dotenv/config";
-import { readFileSync } from "fs";
+import { readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 import * as toml from "smol-toml";
 import { getActiveNetwork, PROJECT_ROOT } from "./utils";
-import { DeployInformation } from "./deploy-nbtc";
+
+export interface DeployInformation {
+	btc_network?: string;
+	sui_network?: string;
+	bitcoin_lib_pkg?: string;
+	nbtc_pkg?: string;
+	nbtc_contract?: string;
+	nbtc_admin_cap?: string;
+	lc_pkg?: string;
+	lc_contract?: string;
+	sui_fallback_address?: string;
+	btc_address?: string;
+	dwallet_id?: string;
+	height?: number;
+	header_count?: number;
+}
+
+const DEPLOY_INFO_FILE = join(PROJECT_ROOT, "deploy-information.json");
+
+/**
+ * Reads deployment information from file, returns empty object if file doesn't exist or is invalid
+ */
+export function readDeployInformation(): DeployInformation {
+	try {
+		const content = readFileSync(DEPLOY_INFO_FILE, "utf-8");
+		return JSON.parse(content);
+	} catch (error) {
+		return {};
+	}
+}
+
+/**
+ * Writes deployment information to file
+ */
+export function writeDeployInformation(deployInfo: DeployInformation): void {
+	writeFileSync(DEPLOY_INFO_FILE, JSON.stringify(deployInfo, null, 2), "utf-8");
+}
+
+/**
+ * Validates that network in deploy info matches current network
+ */
+export async function validateDeployNetwork(deployInfo: DeployInformation): Promise<void> {
+	const network = await getActiveNetwork();
+	
+	if (deployInfo.sui_network && deployInfo.sui_network !== network) {
+		throw new Error(
+			`Deployment information exists for network '${deployInfo.sui_network}', but current network is '${network}'. Delete deploy-information.json in project root to reset.`
+		);
+	}
+}
+
+/**
+ * Checks for package ID mismatches between deploy-info and Published.toml
+ */
+export function checkPackageMismatch(
+	pkgName: string,
+	deployId: string | undefined,
+	publishedId: string | null
+): void {
+	if (deployId && publishedId && deployId !== publishedId) {
+		console.error(`\n⚠️  Mismatch detected for ${pkgName}:`);
+		console.error(`   deploy-information.json: ${deployId}`);
+		console.error(`   Published.toml:        ${publishedId}`);
+		console.error(`\nPlease check your data or delete deploy-information.json to redeploy.\n`);
+		process.exit(1);
+	}
+}
 
 const INDEXER_URL = process.env.INDEXER_URL || "http://localhost:8080/regtest";
 
@@ -87,24 +153,10 @@ export async function fetchHeadersByHeight(startHeight: number, count: number): 
 
 export async function generateConfig(): Promise<LightClientConfig> {
 	const network = await getActiveNetwork();
-
-	const deployInfoPath = join(PROJECT_ROOT, "deploy-information.json");
-	let deployInfo: DeployInformation = {};
-
-	// Try to read and parse deploy-information.json, use empty object if file doesn't exist or is invalid
-	try {
-		const content = readFileSync(deployInfoPath, "utf-8");
-		deployInfo = JSON.parse(content);
-	} catch (error) {
-		console.log("No existing deploy-information.json found or invalid format, using defaults");
-	}
-
-	// Validate network matches if deploy-info has network info
-	if (deployInfo.sui_network && deployInfo.sui_network !== network) {
-		throw new Error(
-			`Deployment information exists for network '${deployInfo.sui_network}', but current network is '${network}'`,
-		);
-	}
+	const deployInfo = readDeployInformation();
+	
+	// Validate network matches
+	await validateDeployNetwork(deployInfo);
 
 	// Read height and count from deployment information with defaults
 	const startHeight = deployInfo.height ?? 0;
@@ -133,8 +185,8 @@ export async function generateConfig(): Promise<LightClientConfig> {
 	const headers = await fetchHeadersByHeight(startHeight, count);
 
 	return {
-		spvPackageId: bitcoinSpvId,
-		bitcoinLibPackageId: bitcoinLibId,
+		spvPackageId: bitcoinSpvId!,
+		bitcoinLibPackageId: bitcoinLibId!,
 		network,
 		headers,
 		btcNetwork: 2,

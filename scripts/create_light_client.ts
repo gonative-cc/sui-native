@@ -2,10 +2,9 @@ import { fromHex } from "@mysten/sui/utils";
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
 import { Transaction } from "@mysten/sui/transactions";
 import "dotenv/config";
-import { generateConfig, type LightClientConfig } from "./config";
+import { generateConfig, type LightClientConfig, DeployInformation } from "./config";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { loadSigner } from "./utils";
-import { DeployInformation } from "./deploy-nbtc";
 
 export function createLightClient(config: LightClientConfig, tx: Transaction): Transaction {
 	const headers = config.headers.map((headerData) =>
