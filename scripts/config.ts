@@ -95,16 +95,16 @@ export interface LightClientConfig {
 	confirmationDepth: number;
 }
 
-function getIndexerURL(): URL {
+function getIndexerURL(path: string): string {
 	try {
-		return new URL(INDEXER_URL);
+		return (new URL(path, new URL(INDEXER_URL))).toString();
 	} catch (error) {
 		throw new Error(`Invalid INDEXER_URL configuration: ${INDEXER_URL}`);
 	}
 }
 
 export async function fetchBlockHeader(blockHash: string): Promise<string> {
-	const url = `${INDEXER_URL}/block/${blockHash}/header`;
+	const url = getIndexerURL(`/block/${blockHash}/header`);
 	const response = await fetch(url);
 	if (!response.ok) {
 		throw new Error(`Failed to fetch block ${blockHash}: ${response.statusText}`);
@@ -114,7 +114,7 @@ export async function fetchBlockHeader(blockHash: string): Promise<string> {
 }
 
 export async function getBlockByHeight(height: number): Promise<string> {
-	const url = `${INDEXER_URL}/block-height/${height}`;
+	const url = getIndexerURL(`/block-height/${height}`);
 	const response = await fetch(url);
 	if (!response.ok) {
 		throw new Error(`Failed to fetch block at height ${height}: ${response.statusText}`);
@@ -123,7 +123,7 @@ export async function getBlockByHeight(height: number): Promise<string> {
 }
 
 export async function getTipHeight(): Promise<number> {
-	const url = new URL(`blocks/tip/height`, getIndexerURL()).toString();
+	const url = getIndexerURL(`blocks/tip/height`);
 	const response = await fetch(url);
 	if (!response.ok) {
 		throw new Error(`Failed to fetch tip height: ${response.statusText}`);
