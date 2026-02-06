@@ -12,7 +12,7 @@ Create `.env` file with your key to sign Sui transactions:
    # Bitcoin Indexer URL (optional, defaults to regtest)
    INDEXER_URL=http://localhost:8080/regtest
 
-   # Sui wallet credentials (one is required)
+   # Sui key for creating setup transactions
    MNEMONIC="your twelve word mnemonic phrase"
    # OR
    WALLET_KEY="base64-encoded private key"
