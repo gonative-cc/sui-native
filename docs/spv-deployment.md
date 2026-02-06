@@ -18,7 +18,7 @@ MNEMONIC="your twelve word mnemonic phrase"
 WALLET_KEY="base64-encoded private key"
 ```
 
-### Dependencies.
+### Dependencies
 
 The following packages must be published:
 
