@@ -20,13 +20,13 @@ export async function getActiveNetwork(): Promise<Network> {
 
 export function loadSigner(): Ed25519Keypair {
 	const mnemonic = process.env.MNEMONIC;
-	const encodedSk = process.env.ENCODE_SK;
-	if (!mnemonic && !encodedSk) {
-		throw new Error("Please set either ENCODE_SK or MNEMONIC in .env");
+	const walletSk = process.env.WALLET_SK;
+	if (!mnemonic && !walletSk) {
+		throw new Error("Please set either WALLET_SK or MNEMONIC in .env");
 	}
 
-	if (encodedSk) {
-		const sk = Buffer.from(encodedSk, "base64");
+	if (walletSk) {
+		const sk = Buffer.from(walletSk, "base64");
 		return Ed25519Keypair.fromSecretKey(sk.subarray(1));
 	}
 

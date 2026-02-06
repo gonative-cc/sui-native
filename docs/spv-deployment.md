@@ -8,26 +8,27 @@ This guide explains how to deploy a new Bitcoin SPV (Simplified Payment Verifica
 
 Create `.env` file with your key to sign Sui transactions:
 
-   ```env
-   # Bitcoin Indexer URL (optional, defaults to regtest)
-   INDEXER_URL=http://localhost:8080/regtest
+```env
+# Bitcoin Indexer URL (optional, defaults to regtest)
+INDEXER_URL=http://localhost:8080/regtest
 
-   # Sui key for creating setup transactions
-   MNEMONIC="your twelve word mnemonic phrase"
-   # OR
-   WALLET_KEY="base64-encoded private key"
-   ```
+# Sui key for creating setup transactions
+MNEMONIC="your twelve word mnemonic phrase"
+# OR
+WALLET_KEY="base64-encoded private key"
+```
 
-### Dependencies. 
+### Dependencies.
 
 The following packages must be published:
-   - `bitcoin_lib` package must be published
-   - `bitcoin_spv` package must be published
+
+- `bitcoin_lib` package must be published
+- `bitcoin_spv` package must be published
 
 If they are not you can use the following script to publish them
 
-   ```bash
-   bun run scripts/publish.ts bitcoin_spv
+````bash
+bun run scripts/publish.ts bitcoin_spv
 
 ## Deployment
 
@@ -36,7 +37,7 @@ Deploy just the SPV light client using published packages:
 
 ```bash
 bun run deploy:spv
-```
+````
 
 ## Configuration
 

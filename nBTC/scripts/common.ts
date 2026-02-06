@@ -64,15 +64,15 @@ export function createSuiClient(packageId?: string) {
 }
 
 export function mkSigner() {
-	if (process.env.ENCODE_SK) {
-		let sk = fromBase64(process.env.ENCODE_SK);
+	if (process.env.WALLET_SK) {
+		let sk = fromBase64(process.env.WALLET_SK);
 		return Ed25519Keypair.fromSecretKey(sk.slice(1));
 	}
 	if (process.env.MNEMONIC) {
 		return Ed25519Keypair.deriveKeypair(process.env.MNEMONIC);
 	}
 	throw new Error(
-		"Missing required environment variable: Please set either ENCODE_SK or MNEMONIC.",
+		"Missing required environment variable: Please set either WALLET_SK or MNEMONIC.",
 	);
 }
 

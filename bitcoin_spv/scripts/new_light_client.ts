@@ -11,22 +11,22 @@ import "dotenv/config";
 import type { AppConfig } from "./config";
 import { getLightClientConfig } from "./config";
 
-// Load signer from environment variables (MNEMONIC or ENCODE_SK)
+// Load signer from environment variables (MNEMONIC or WALLET_SK)
 function loadSigner(): Ed25519Keypair {
 	const mnemonic = process.env.MNEMONIC;
-	const encodedSk = process.env.ENCODE_SK;
+	const walletSk = process.env.WALLET_SK;
 
-	if (!mnemonic && !encodedSk) {
-		throw new Error("Please set either ENCODE_SK or MNEMONIC");
+	if (!mnemonic && !walletSk) {
+		throw new Error("Please set either WALLET_SK or MNEMONIC");
 	}
 
-	if (encodedSk) {
+	if (walletSk) {
 		try {
-			const sk = fromBase64(encodedSk);
+			const sk = fromBase64(walletSk);
 			return Ed25519Keypair.fromSecretKey(sk.slice(1));
 		} catch (error) {
 			throw new Error(
-				`Invalid ENCODE_SK format: ${error instanceof Error ? error.message : String(error)}`,
+				`Invalid WALLET_SK format: ${error instanceof Error ? error.message : String(error)}`,
 			);
 		}
 	}
