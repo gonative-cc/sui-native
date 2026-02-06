@@ -15,7 +15,7 @@ Create `.env` file with your key to sign Sui transactions:
    # Sui wallet credentials (one is required)
    MNEMONIC="your twelve word mnemonic phrase"
    # OR
-   ENCODE_SK="base64-encoded private key"
+   WALLET_KEY="base64-encoded private key"
    ```
 
 2. **Published Packages**:
