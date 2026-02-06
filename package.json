@@ -16,6 +16,7 @@
 		"generate-ts": "cd sdk && bun run sui-ts-codegen generate",
 		"publish": "bun run scripts/publish.ts",
 		"deploy-nbtc": "bun run scripts/deploy-nbtc.ts",
+		"deploy:spv": "bun run scripts/create_light_client.ts",
 		"deploy:cleanup": "rm -f deploy-information.json && echo 'Deployment information cleared'",
 		"publish:cleanup": "bun run scripts/cleanup-published.ts"
 	},
