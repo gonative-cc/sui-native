@@ -3,6 +3,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import * as toml from "smol-toml";
 import { getActiveNetwork, PROJECT_ROOT } from "./utils";
+import { DeployInformation } from "./deploy-nbtc";
 
 const INDEXER_URL = process.env.INDEXER_URL || "http://localhost:8080/regtest";
 
@@ -84,14 +85,19 @@ export async function fetchHeadersByHeight(startHeight: number, count: number): 
 	return headers;
 }
 
-export async function generateConfig(
-	startHeight: number = 0,
-	count: number = 11,
-): Promise<LightClientConfig> {
+export async function generateConfig(): Promise<LightClientConfig> {
 	const network = await getActiveNetwork();
 
 	const deployInfoPath = join(PROJECT_ROOT, "deploy-information.json");
-	const deployInfo = JSON.parse(readFileSync(deployInfoPath, "utf-8"));
+	let deployInfo: DeployInformation = {};
+
+	// Try to read and parse deploy-information.json, use empty object if file doesn't exist or is invalid
+	try {
+		const content = readFileSync(deployInfoPath, "utf-8");
+		deployInfo = JSON.parse(content);
+	} catch (error) {
+		console.log("No existing deploy-information.json found or invalid format, using defaults");
+	}
 
 	// Validate network matches if deploy-info has network info
 	if (deployInfo.sui_network && deployInfo.sui_network !== network) {
@@ -99,6 +105,10 @@ export async function generateConfig(
 			`Deployment information exists for network '${deployInfo.sui_network}', but current network is '${network}'`,
 		);
 	}
+
+	// Read height and count from deployment information with defaults
+	const startHeight = deployInfo.height ?? 0;
+	const count = deployInfo.header_count ?? 11;
 
 	let bitcoinLibId = deployInfo.bitcoin_lib_pkg || null;
 	let bitcoinSpvId = deployInfo.lc_pkg || null;

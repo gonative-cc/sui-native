@@ -22,7 +22,7 @@ import * as path from "node:path";
 
 const DEPLOY_INFO_FILE = path.join(PROJECT_ROOT, "deploy-information.json");
 
-interface DeployInformation {
+export interface DeployInformation {
 	btc_network?: string;
 	sui_network?: string;
 	bitcoin_lib_pkg?: string;
@@ -35,6 +35,7 @@ interface DeployInformation {
 	btc_address?: string;
 	dwallet_id?: string;
 	height?: number;
+	header_count?: number;
 }
 
 async function main(): Promise<void> {
@@ -99,7 +100,7 @@ async function main(): Promise<void> {
 		await fs.writeFile(DEPLOY_INFO_FILE, JSON.stringify(deployInfo, null, 2), "utf-8");
 	}
 
-	const config = await generateConfig(deployInfo.height);
+	const config = await generateConfig();
 
 	if (deployInfo.sui_network && deployInfo.sui_network !== network) {
 		throw new Error(
@@ -121,6 +122,10 @@ async function main(): Promise<void> {
 		deployInfo.sui_network = network;
 		deployInfo.btc_network = "regtest";
 		deployInfo.sui_fallback_address = signer.toSuiAddress();
+		// Set default header count if not already present
+		if (!deployInfo.header_count) {
+			deployInfo.header_count = 11;
+		}
 		await fs.writeFile(DEPLOY_INFO_FILE, JSON.stringify(deployInfo, null, 2), "utf-8");
 		bitcoinLibPkg = deployInfo.bitcoin_lib_pkg;
 	} else {
