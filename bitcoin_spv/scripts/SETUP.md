@@ -26,7 +26,7 @@ sui client publish
 ```env
 MNEMONIC='your mnemonic here'
 # or
-ENCODE_SK='base64-encoded private key'
+WALLET_SK='base64-encoded private key'
 ```
 
 1. Run the script:
@@ -52,6 +52,6 @@ Edit the `getLightClientConfig()` function in `config.ts`:
 
 ## Notes
 
-- Only MNEMONIC or ENCODE_SK need to be in .env file
+- Only MNEMONIC or WALLET_SK need to be in .env file
 - All other configuration is in config.ts for better type safety
 - Configuration is validated before deployment

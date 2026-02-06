@@ -64,7 +64,7 @@ bun run deploy-nbtc
 
 Copy `.env.example` to `.env` in the project root:
 
-- `MNEMONIC` or `ENCODE_SK` - Sui wallet credentials (one required)
+- `MNEMONIC` or `WALLET_SK` - Sui wallet credentials (one required)
 - `INDEXER_URL` - Bitcoin indexer URL
 
 For manual nBTC deployment only:

@@ -2,7 +2,12 @@ import { fromHex } from "@mysten/sui/utils";
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
 import { Transaction } from "@mysten/sui/transactions";
 import "dotenv/config";
-import { generateConfig, type LightClientConfig } from "./config";
+import {
+	generateConfig,
+	type LightClientConfig,
+	readDeployInformation,
+	writeDeployInformation,
+} from "./config";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { loadSigner } from "./utils";
 
@@ -91,6 +96,26 @@ async function main(): Promise<void> {
 	const result = await createLightClientAndGetId(config, signer);
 
 	console.log(`Transaction executed: ${result.digest}`);
+
+	// Update deployment information with light client details if we fetched from Published.toml
+	const deployInfo = readDeployInformation();
+
+	// Only update package IDs if they aren't already set (means they came from Published.toml)
+	if (!deployInfo.bitcoin_lib_pkg && config.bitcoinLibPackageId) {
+		deployInfo.bitcoin_lib_pkg = config.bitcoinLibPackageId;
+	}
+	if (!deployInfo.lc_pkg && config.spvPackageId) {
+		deployInfo.lc_pkg = config.spvPackageId;
+	}
+
+	// Always update light client contract, height, and network since we just created it
+	deployInfo.lc_contract = result.lightClientId;
+	deployInfo.height = config.btcHeight;
+	deployInfo.header_count = config.headers.length;
+	deployInfo.sui_network = network;
+
+	writeDeployInformation(deployInfo);
+	console.log("\n✅ Deployment information updated with light client details");
 }
 
 if (import.meta.main) {

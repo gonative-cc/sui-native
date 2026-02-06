@@ -1,10 +1,70 @@
 import "dotenv/config";
-import { readFileSync } from "fs";
+import { readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 import * as toml from "smol-toml";
 import { getActiveNetwork, PROJECT_ROOT } from "./utils";
 
+export interface DeployInformation {
+	btc_network?: string;
+	sui_network?: string;
+	bitcoin_lib_pkg?: string;
+	nbtc_pkg?: string;
+	nbtc_contract?: string;
+	nbtc_admin_cap?: string;
+	lc_pkg?: string;
+	lc_contract?: string;
+	sui_fallback_address?: string;
+	btc_address?: string;
+	dwallet_id?: string;
+	height?: number;
+	header_count?: number;
+}
+
 const INDEXER_URL = process.env.INDEXER_URL || "http://localhost:8080/regtest";
+const DEPLOY_INFO_FILE = join(PROJECT_ROOT, "deploy-information.json");
+
+export function readDeployInformation(): DeployInformation {
+	try {
+		const content = readFileSync(DEPLOY_INFO_FILE, "utf-8");
+		return JSON.parse(content);
+	} catch (error) {
+		return {};
+	}
+}
+
+export function writeDeployInformation(deployInfo: DeployInformation): void {
+	writeFileSync(DEPLOY_INFO_FILE, JSON.stringify(deployInfo, null, 2), "utf-8");
+}
+
+/**
+ * Validates that network in deploy info matches current network
+ */
+export async function validateDeployNetwork(deployInfo: DeployInformation): Promise<void> {
+	const network = await getActiveNetwork();
+
+	if (deployInfo.sui_network && deployInfo.sui_network !== network) {
+		throw new Error(
+			`Deployment information exists for network '${deployInfo.sui_network}', but current network is '${network}'. Delete deploy-information.json in project root to reset.`,
+		);
+	}
+}
+
+/**
+ * Checks for package ID mismatches between deploy-info and Published.toml
+ */
+export function checkPackageMismatch(
+	pkgName: string,
+	deployId: string | undefined,
+	publishedId: string | null,
+): void {
+	if (deployId && publishedId && deployId !== publishedId) {
+		console.error(`\n⚠️  Mismatch detected for ${pkgName}:`);
+		console.error(`   deploy-information.json: ${deployId}`);
+		console.error(`   Published.toml:        ${publishedId}`);
+		console.error(`\nPlease check your data or delete deploy-information.json to redeploy.\n`);
+		process.exit(1);
+	}
+}
 
 /**
  * Retrieves the published package ID from Published.toml for a specific package and network.
@@ -35,8 +95,16 @@ export interface LightClientConfig {
 	confirmationDepth: number;
 }
 
+function getIndexerURL(path: string): string {
+	try {
+		return new URL(path, new URL(INDEXER_URL)).toString();
+	} catch (error) {
+		throw new Error(`Invalid INDEXER_URL configuration: ${INDEXER_URL}`);
+	}
+}
+
 export async function fetchBlockHeader(blockHash: string): Promise<string> {
-	const url = `${INDEXER_URL}/block/${blockHash}/header`;
+	const url = getIndexerURL(`/block/${blockHash}/header`);
 	const response = await fetch(url);
 	if (!response.ok) {
 		throw new Error(`Failed to fetch block ${blockHash}: ${response.statusText}`);
@@ -46,7 +114,7 @@ export async function fetchBlockHeader(blockHash: string): Promise<string> {
 }
 
 export async function getBlockByHeight(height: number): Promise<string> {
-	const url = `${INDEXER_URL}/block-height/${height}`;
+	const url = getIndexerURL(`/block-height/${height}`);
 	const response = await fetch(url);
 	if (!response.ok) {
 		throw new Error(`Failed to fetch block at height ${height}: ${response.statusText}`);
@@ -55,7 +123,7 @@ export async function getBlockByHeight(height: number): Promise<string> {
 }
 
 export async function getTipHeight(): Promise<number> {
-	const url = `${INDEXER_URL}/blocks/tip/height`;
+	const url = getIndexerURL(`blocks/tip/height`);
 	const response = await fetch(url);
 	if (!response.ok) {
 		throw new Error(`Failed to fetch tip height: ${response.statusText}`);
@@ -84,21 +152,16 @@ export async function fetchHeadersByHeight(startHeight: number, count: number): 
 	return headers;
 }
 
-export async function generateConfig(
-	startHeight: number = 0,
-	count: number = 11,
-): Promise<LightClientConfig> {
+export async function generateConfig(): Promise<LightClientConfig> {
 	const network = await getActiveNetwork();
+	const deployInfo = readDeployInformation();
 
-	const deployInfoPath = join(PROJECT_ROOT, "deploy-information.json");
-	const deployInfo = JSON.parse(readFileSync(deployInfoPath, "utf-8"));
+	// Validate network matches
+	await validateDeployNetwork(deployInfo);
 
-	// Validate network matches if deploy-info has network info
-	if (deployInfo.sui_network && deployInfo.sui_network !== network) {
-		throw new Error(
-			`Deployment information exists for network '${deployInfo.sui_network}', but current network is '${network}'`,
-		);
-	}
+	// Read height and count from deployment information with defaults
+	const startHeight = deployInfo.height ?? 0;
+	const count = deployInfo.header_count ?? 11;
 
 	let bitcoinLibId = deployInfo.bitcoin_lib_pkg || null;
 	let bitcoinSpvId = deployInfo.lc_pkg || null;
@@ -123,8 +186,8 @@ export async function generateConfig(
 	const headers = await fetchHeadersByHeight(startHeight, count);
 
 	return {
-		spvPackageId: bitcoinSpvId,
-		bitcoinLibPackageId: bitcoinLibId,
+		spvPackageId: bitcoinSpvId!,
+		bitcoinLibPackageId: bitcoinLibId!,
 		network,
 		headers,
 		btcNetwork: 2,
