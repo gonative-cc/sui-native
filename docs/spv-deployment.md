@@ -58,7 +58,7 @@ The deployment process uses `deploy-information.json` to store configuration:
 }
 ```
 
-### Key Fields for SPV
+Here is the meaning of the fields:
 
 | Field             | Description                       | Default                   |
 | ----------------- | --------------------------------- | ------------------------- |
