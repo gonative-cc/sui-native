@@ -53,12 +53,12 @@ export function createSuiClient(packageId?: string) {
 		url: getFullnodeUrl("testnet"),
 		mvr: packageId
 			? {
-					overrides: {
-						packages: {
-							"@local-pkg/nbtc": packageId,
-						},
+				overrides: {
+					packages: {
+						"@local-pkg/nbtc": packageId,
 					},
-				}
+				},
+			}
 			: undefined,
 	});
 }
@@ -134,6 +134,7 @@ export async function createSharedDwallet(ikaClient: IkaClient, suiClient: SuiCl
 		userShareEncryptionKeys: keypair.userShareEncryptionKeys,
 	});
 	const identifier = createRandomSessionIdentifier();
+
 	const dkgRequestInput = await prepareDKGAsync(
 		ikaClient,
 		curve,
