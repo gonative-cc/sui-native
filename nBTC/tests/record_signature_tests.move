@@ -31,7 +31,7 @@ fun setup_redeem_in_signing_state(
     utxo_ids: vector<u64>,
     redeem_amount: u64,
     sign_ids: vector<ID>,
-    mock_signatures: vector<vector<u8>>
+    mock_signatures: vector<vector<u8>>,
 ): (
     bitcoin_spv::light_client::LightClient,
     nbtc::nbtc::NbtcContract,
@@ -92,7 +92,6 @@ fun test_record_signature_returns_true_on_first_call() {
         scenario,
         clock,
     ) = setup_redeem_in_signing_state(vector[0], 1000, vector[sign_id], vector[MOCK_SIGNATURE!()]);
-
 
     ctr.record_signature(&dwallet_coordinator, redeem_id, vector[0], vector[sign_id]);
 
