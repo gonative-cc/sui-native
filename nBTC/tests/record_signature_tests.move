@@ -33,12 +33,13 @@ use sui::event;
 fun setup_redeem_in_signing_state(
     utxo_amount: u64,
     redeem_amount: u64,
+    sign_ids: vector<ID>,
+    mock_signatures: vector<vector<u8>>
 ): (
     bitcoin_spv::light_client::LightClient,
     nbtc::nbtc::NbtcContract,
     DWalletCoordinator,
     u64,
-    ID,
     sui::test_scenario::Scenario,
     clock::Clock,
 ) {
@@ -73,34 +74,32 @@ fun setup_redeem_in_signing_state(
     clock.increment_for_testing(ctr.redeem_duration() + 1);
     ctr.solve_redeem_request(redeem_id, &clock);
 
-    // Add sign session to coordinator for testing record_signature
-    let sign_id = TEST_SIGN_ID_1!();
-    dwallet_coordinator.add_sign_session_for_testing(dwallet_id, sign_id, scenario.ctx());
+    sign_ids.length().do!(|i| {
+        let sign_id = sign_ids[i];
+        dwallet_coordinator.add_sign_session_for_testing(dwallet_id, sign_id, scenario.ctx());
 
-    // Add sign_id mapping for testing
-    ctr.redeem_request_mut(redeem_id).add_sign_id_for_test(sign_id, 0);
+        ctr.redeem_request_mut(redeem_id).add_sign_id_for_test(sign_id, 0);
 
-    (lc, ctr, dwallet_coordinator, redeem_id, sign_id, scenario, clock)
+        dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id, mock_signatures[i]);
+    });
+
+    (lc, ctr, dwallet_coordinator, redeem_id, scenario, clock)
 }
 
 #[test]
 /// Test that record_signature returns true when recording a new signature
 fun test_record_signature_returns_true_on_first_call() {
+    let sign_id = TEST_SIGN_ID_1!();
     let (
         lc,
         mut ctr,
-        mut dwallet_coordinator,
+        dwallet_coordinator,
         redeem_id,
-        sign_id,
         scenario,
         clock,
-    ) = setup_redeem_in_signing_state(2500, 1000);
+    ) = setup_redeem_in_signing_state(2500, 1000, vector[sign_id], vector[MOCK_SIGNATURE!()]);
 
-    // Use set_signature_for_testing to mock the signature in coordinator
-    let dwallet_id = ctr.storage().recommended_dwallet().dwallet_id();
-    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id, MOCK_SIGNATURE!());
 
-    // Now call the real batch record_signature function
     ctr.record_signature(&dwallet_coordinator, redeem_id, vector[0], vector[sign_id]);
 
     // Verify the signature was actually recorded
@@ -117,21 +116,16 @@ fun test_record_signature_returns_true_on_first_call() {
 #[test]
 /// Test that record_signature returns false when signature already recorded
 fun test_record_signature_returns_false_when_already_recorded() {
+    let sign_id = TEST_SIGN_ID_1!();
     let (
         lc,
         mut ctr,
-        mut dwallet_coordinator,
+        dwallet_coordinator,
         redeem_id,
-        sign_id,
         scenario,
         clock,
-    ) = setup_redeem_in_signing_state(2500, 1000);
+    ) = setup_redeem_in_signing_state(2500, 1000, vector[sign_id], vector[MOCK_SIGNATURE!()]);
 
-    // Use set_signature_for_testing to mock the signature
-    let dwallet_id = ctr.storage().recommended_dwallet().dwallet_id();
-    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id, MOCK_SIGNATURE!());
-
-    // First call - should record signature
     ctr.record_signature(
         &dwallet_coordinator,
         redeem_id,
@@ -161,21 +155,16 @@ fun test_record_signature_returns_false_when_already_recorded() {
 #[test]
 /// Test that calling record_signature multiple times is safe and idempotent
 fun test_record_signature_multiple_calls_safe() {
+    let sign_id = TEST_SIGN_ID_1!();
     let (
         lc,
         mut ctr,
-        mut dwallet_coordinator,
+        dwallet_coordinator,
         redeem_id,
-        sign_id,
         scenario,
         clock,
-    ) = setup_redeem_in_signing_state(2500, 1000);
+    ) = setup_redeem_in_signing_state(2500, 1000, vector[sign_id], vector[MOCK_SIGNATURE!()]);
 
-    // Use set_signature_for_testing to mock the signature
-    let dwallet_id = ctr.storage().recommended_dwallet().dwallet_id();
-    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id, MOCK_SIGNATURE!());
-
-    // First call - should record signature
     ctr.record_signature(
         &dwallet_coordinator,
         redeem_id,
@@ -219,21 +208,16 @@ fun test_record_signature_multiple_calls_safe() {
 #[test]
 /// Test that events are emitted correctly: once on first call, not on subsequent calls
 fun test_record_signature_event_emission() {
+    let sign_id = TEST_SIGN_ID_1!();
     let (
         lc,
         mut ctr,
-        mut dwallet_coordinator,
+        dwallet_coordinator,
         redeem_id,
-        sign_id,
         mut scenario,
         clock,
-    ) = setup_redeem_in_signing_state(2500, 1000);
+    ) = setup_redeem_in_signing_state(2500, 1000, vector[sign_id], vector[MOCK_SIGNATURE!()]);
 
-    // Use set_signature_for_testing to mock the signature
-    let dwallet_id = ctr.storage().recommended_dwallet().dwallet_id();
-    dwallet_coordinator.set_signature_for_testing(dwallet_id, sign_id, MOCK_SIGNATURE!());
-
-    // First call - should emit event
     ctr.record_signature(
         &dwallet_coordinator,
         redeem_id,
