@@ -6,7 +6,6 @@ import { Transaction as BtcTransaction } from "bitcoinjs-lib";
 import { BitcoinMerkleTree } from "./merkle";
 import {
 	readDeployInformation,
-	DeployInformation,
 } from "../../scripts/config";
 
 export interface SpvProof {
@@ -52,8 +51,8 @@ export class SpvHelper {
 			options: { showContent: true },
 		});
 
-		const content = lc.data?.content as { fields?: { height?: string | number } };
-		return content?.fields?.height as number || 0;
+		const content = lc.data?.content as { fields?: { head_height?: string } };
+		return parseInt(content?.fields?.head_height as string) || 0;
 	}
 
 	async syncLightClientToHeight(targetHeight: number, batchSize: number = 30): Promise<void> {
@@ -66,7 +65,7 @@ export class SpvHelper {
 		const blocksToSync = targetHeight - currentHeight;
 		console.log(`🔄 Syncing light client: ${currentHeight} → ${targetHeight} (${blocksToSync} blocks)`);
 
-		for (let batchStart = currentHeight; batchStart < targetHeight; batchStart += batchSize) {
+		for (let batchStart = currentHeight + 1; batchStart <= targetHeight; batchStart += batchSize) {
 			const batchEnd = Math.min(batchStart + batchSize, targetHeight);
 			const blocks = await this.fetchHeadersRange(batchStart, batchEnd);
 
@@ -111,6 +110,7 @@ export class SpvHelper {
 			arguments: [tx.object(this.lcInfo.lcId), headerVec],
 		});
 
+		tx.setGasBudget(500000000);
 		const result = await this.suiClient.signAndExecuteTransaction({
 			transaction: tx,
 			signer: this.signer,
@@ -199,18 +199,15 @@ export class SpvHelper {
 		};
 
 		const indexer = {
-			baseUrl: process.env.INDEXER_URL || "http://localhost:8080/regtest",
+			baseUrl: process.env.INDEXER_URL || "http://localhost:8080/regtest/api",
 		};
-
-		if (!process.env.INDEXER_URL) {
-			throw new Error("INDEXER_URL must be set");
-		}
 
 		console.log(`📋 Loaded deploy info:`);
 		console.log(`   Sui Network: ${deployInfo.sui_network}`);
 		console.log(`   Light Client: ${lcInfo.lcId}`);
 		console.log(`   BTC Deposit: ${deployInfo.btc_address || "N/A"}`);
 		console.log(`   nBTC Contract: ${deployInfo.nbtc_contract}`);
+		console.log(signer.toSuiAddress());
 
 		return new SpvHelper(suiClient, signer, lcInfo, indexer);
 	}
