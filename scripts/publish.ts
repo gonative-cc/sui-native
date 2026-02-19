@@ -1,19 +1,44 @@
 #!/usr/bin/env bun zx
 import { $ } from "zx";
 import { join } from "path";
-import { Network } from "@ika.xyz/sdk";
 import "dotenv/config";
 import { getPublishedPackageId } from "./config";
-import { PROJECT_ROOT, getActiveNetwork, updateNBTCToml, getSuiCommand } from "./utils";
-import type { SuiTransactionBlockResponse } from "@mysten/sui/client";
+import { PROJECT_ROOT, getActiveNetwork, updateNBTCToml, getSuiCommand, loadSigner } from "./utils";
+import { getFullnodeUrl, SuiClient, SuiTransactionBlockResponse } from "@mysten/sui/client";
+import { Transaction } from "@mysten/sui/transactions";
 
 const Packages = ["bitcoin_lib", "bitcoin_spv", "nBTC"];
 
+export interface PublishResult {
+	response: SuiTransactionBlockResponse;
+	packageId: string | undefined;
+	upgradeCap: string | undefined;
+	adminCap: string | undefined;
+}
+
+interface BuildOutput {
+	modules: string[];
+	dependencies: string[];
+	digest: number[];
+}
+
+async function buildPackage(packagePath: string): Promise<BuildOutput> {
+	const suiCommand = getSuiCommand();
+	const result =
+		await $`${suiCommand} move build --path ${packagePath} --dump-bytecode-as-base64`.quiet();
+	const jsonStart = result.stdout.lastIndexOf("{");
+	if (jsonStart === -1) {
+		throw new Error("No JSON found in build output");
+	}
+	return JSON.parse(result.stdout.slice(jsonStart)) as BuildOutput;
+}
+
 export async function publishPackage(
+	client: SuiClient,
 	packageName: string,
-	network: Network,
 	prePublish?: () => void | Promise<void>,
-): Promise<SuiTransactionBlockResponse | null> {
+): Promise<PublishResult | null> {
+	const network = await getActiveNetwork();
 	const publishedId = getPublishedPackageId(packageName, network);
 	if (publishedId) {
 		console.log(`${packageName} already published at ${publishedId}`);
@@ -27,22 +52,61 @@ export async function publishPackage(
 		await prePublish();
 	}
 
-	$.cwd = packagePath;
-	const suiCommand = getSuiCommand();
-	const result =
-		await $`${suiCommand} client publish --gas-budget 1000000000 --json --silence-warnings`;
-	const jsonStart = result.stdout.indexOf("{");
-	if (jsonStart === -1) {
-		throw new Error("No JSON found in publish output");
+	const { modules, dependencies } = await buildPackage(packagePath);
+
+	const signer = loadSigner();
+	const tx = new Transaction();
+
+	const [upgradeCap] = tx.publish({
+		modules,
+		dependencies,
+	});
+	tx.transferObjects([upgradeCap!], signer.toSuiAddress());
+
+	const response = await client.signAndExecuteTransaction({
+		transaction: tx,
+		signer,
+		options: {
+			showEffects: true,
+			showObjectChanges: true,
+		},
+	});
+
+	const objectChanges = response.objectChanges || [];
+	const published = objectChanges.find((c) => c.type === "published") as
+		| { packageId: string }
+		| undefined;
+	const upgradeCapObj = objectChanges.find(
+		(c) => c.type === "created" && "objectType" in c && c.objectType?.includes("UpgradeCap"),
+	) as { objectId: string } | undefined;
+	const adminCapObj = objectChanges.find(
+		(c) =>
+			c.type === "created" &&
+			"objectType" in c &&
+			c.objectType?.includes("AdminCap") &&
+			!c.objectType?.includes("0x2::package"),
+	) as { objectId: string } | undefined;
+
+	console.log(`Package ID: ${published?.packageId}`);
+	console.log(`UpgradeCap: ${upgradeCapObj?.objectId}`);
+	if (adminCapObj) {
+		console.log(`AdminCap: ${adminCapObj.objectId}`);
 	}
-	return JSON.parse(result.stdout.slice(jsonStart)) as SuiTransactionBlockResponse;
+
+	return {
+		response,
+		packageId: published?.packageId,
+		upgradeCap: upgradeCapObj?.objectId,
+		adminCap: adminCapObj?.objectId,
+	};
 }
 
 async function publishWithDependencies(
+	client: SuiClient,
 	packageName: string,
-	network: Network,
 	prePublish?: () => void | Promise<void>,
 ): Promise<void> {
+	const network = await getActiveNetwork();
 	const packageIndex = Packages.indexOf(packageName);
 	if (packageIndex === -1) {
 		throw new Error(
@@ -57,11 +121,11 @@ async function publishWithDependencies(
 			console.log(`Dependency ${dep} already published at ${depId}`);
 		} else {
 			console.log(`Deploying dependency ${dep} first...`);
-			await publishPackage(dep, network);
+			await publishPackage(client, dep);
 		}
 	}
 
-	await publishPackage(packageName, network, prePublish);
+	await publishPackage(client, packageName, prePublish);
 }
 
 async function main(): Promise<void> {
@@ -73,6 +137,10 @@ async function main(): Promise<void> {
 	console.log(`Active network: ${network}`);
 	console.log(`Publishing: ${packagesToPublish.join(", ")}`);
 
+	const client = new SuiClient({
+		url: getFullnodeUrl(network as "mainnet" | "testnet" | "devnet" | "localnet"),
+	});
+
 	try {
 		for (const pkg of packagesToPublish) {
 			const prePublish =
@@ -80,7 +148,7 @@ async function main(): Promise<void> {
 					? () => updateNBTCToml(network)
 					: undefined;
 
-			await publishWithDependencies(pkg, network, prePublish);
+			await publishWithDependencies(client, pkg, prePublish);
 		}
 		console.log("Publishing completed");
 	} catch (error) {
