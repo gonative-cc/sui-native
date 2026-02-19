@@ -1,4 +1,4 @@
-const ElectrsURL = "http://localhost:3002";
+const ElectrsURL = "http://localhost:8080/regtest/api/";
 
 /**
  * Fetches the Unspent Transaction Outputs (UTXOs) for a given Bitcoin address.

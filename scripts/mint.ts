@@ -8,7 +8,7 @@ import * as tinysecp from "tiny-secp256k1";
 import { readDeployInformation } from "./config";
 import { getActiveNetwork } from "./utils";
 import { mint as mintMove } from "../sdk/nBTC/generated/nbtc/nbtc";
-import { BitcoinMerkleTree } from "../nBTC/e2e/merkle";
+import { BitcoinMerkleTree } from "../e2e/merkle";
 import { syncToHeight } from "./sync-light-client";
 import { getTxStatus, getBlockTxs, getBlockHash, getTxHex } from "./indexer";
 
@@ -110,7 +110,7 @@ export async function mintNbtc(params: {
 		params.bitcoinLibPkg,
 		params.spvPkg,
 		params.lcContract,
-		params.height,
+		params.height + 3,
 	);
 	console.log("✓ Light client synced");
 

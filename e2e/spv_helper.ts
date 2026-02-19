@@ -6,7 +6,7 @@ import { Transaction as BtcTransaction } from "bitcoinjs-lib";
 import { BitcoinMerkleTree } from "./merkle";
 import {
 	readDeployInformation,
-} from "../../scripts/config";
+} from "../scripts/config";
 
 export interface SpvProof {
 	proof: string[];
