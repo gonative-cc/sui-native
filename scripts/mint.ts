@@ -73,7 +73,7 @@ async function generateSpvProofLocal(
 	return proof.map((p) => p.toString("hex"));
 }
 
-async function getTxInfo(txid: string): Promise<{ height: number; txIndex: number }> {
+export async function getTxInfo(txid: string): Promise<{ height: number; txIndex: number }> {
 	const status = await getTxStatus(txid);
 	if (!status.confirmed || !status.block_height) {
 		throw new Error(`Transaction ${txid} is not confirmed`);
@@ -87,7 +87,7 @@ async function getTxInfo(txid: string): Promise<{ height: number; txIndex: numbe
 	return { height: status.block_height, txIndex };
 }
 
-async function mintNbtc(params: {
+export async function mintNbtc(params: {
 	nbtcPkg: string;
 	nbtcContract: string;
 	lcContract: string;
@@ -98,15 +98,15 @@ async function mintNbtc(params: {
 	txIndex: number;
 	btcAddress: string;
 	applyFee: boolean;
-}): Promise<string> {
+}, signer?: Ed25519Keypair): Promise<{ digest: string; utxoIdx: number; btcAmount: number }> {
 	const network = await getActiveNetwork();
 	const suiClient = getSuiClient(params.nbtcPkg, network);
-	const signer = getSuiSigner();
+	const txSigner = signer || getSuiSigner();
 
 	console.log(`\nSyncing light client to height ${params.height}...`);
 	await syncToHeight(
 		suiClient,
-		signer,
+		txSigner,
 		params.bitcoinLibPkg,
 		params.spvPkg,
 		params.lcContract,
@@ -141,7 +141,7 @@ async function mintNbtc(params: {
 
 	const result = await suiClient.signAndExecuteTransaction({
 		transaction: tx,
-		signer,
+		signer: txSigner,
 		options: { showEvents: true, showEffects: true },
 	});
 
@@ -150,9 +150,15 @@ async function mintNbtc(params: {
 	const mintEvent = result.events?.find((e) => e.type.includes("MintEvent"));
 	if (mintEvent) {
 		console.log("Mint event:", JSON.stringify(mintEvent.parsedJson, null, 2));
+		const parsed = mintEvent.parsedJson as any;
+		return {
+			digest: result.digest,
+			utxoIdx: parsed.utxo_id,
+			btcAmount: parsed.btc_amount,
+		};
 	}
 
-	return result.digest;
+	throw new Error("MintEvent not found");
 }
 
 async function main() {
