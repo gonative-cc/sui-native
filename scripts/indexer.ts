@@ -80,10 +80,28 @@ export async function getBlockByHeight(height: number): Promise<string> {
 	return await getBlockHash(height);
 }
 
+export async function getBlockHashByTx(txid: string): Promise<string> {
+	const url = getIndexerURL(`/tx/${txid}/block-hash`);
+	const response = await fetch(url);
+	if (!response.ok) {
+		throw new Error(`Failed to fetch block hash for tx ${txid}: ${response.statusText}`);
+	}
+	return response.text();
+}
+
+export async function getBlockHeightByTx(txid: string): Promise<number> {
+	const url = getIndexerURL(`/tx/${txid}/block-height`);
+	const response = await fetch(url);
+	if (!response.ok) {
+		throw new Error(`Failed to fetch block height for tx ${txid}: ${response.statusText}`);
+	}
+	return parseInt(await response.text(), 10);
+}
+
 export async function fetchHeadersRange(startHeight: number, endHeight: number): Promise<string[]> {
 	const headers: string[] = [];
 
-	for (let h = startHeight; h < endHeight; h++) {
+	for (let h = startHeight; h < endHeight + 1; h++) {
 		const blockHash = await getBlockHash(h);
 		const header = await getBlockHeader(blockHash);
 		if (header) {

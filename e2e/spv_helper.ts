@@ -5,6 +5,7 @@ import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction as BtcTransaction } from "bitcoinjs-lib";
 import { BitcoinMerkleTree } from "./merkle";
 import { readDeployInformation } from "../scripts/config";
+import { getBlockHash, getBlockHeader, getTxHex, getBlockHashByTx, getBlockHeightByTx, getBlockTxs, getTipHeight, fetchHeadersRange } from "../scripts/indexer";
 
 export interface SpvProof {
 	proof: string[];
@@ -21,26 +22,19 @@ export interface LightClientInfo {
 	currentHeight: number;
 }
 
-export interface IndexerConfig {
-	baseUrl: string;
-}
-
 export class SpvHelper {
 	private suiClient: SuiClient;
 	private signer: Ed25519Keypair;
-	private indexer: IndexerConfig;
 	private lcInfo: LightClientInfo;
 
 	constructor(
 		suiClient: SuiClient,
 		signer: Ed25519Keypair,
 		lcInfo: LightClientInfo,
-		indexer: IndexerConfig,
 	) {
 		this.suiClient = suiClient;
 		this.signer = signer;
 		this.lcInfo = lcInfo;
-		this.indexer = indexer;
 	}
 
 	async getCurrentLightClientHeight(): Promise<number> {
@@ -70,8 +64,8 @@ export class SpvHelper {
 			batchStart <= targetHeight;
 			batchStart += batchSize
 		) {
-			const batchEnd = Math.min(batchStart + batchSize, targetHeight);
-			const blocks = await this.fetchHeadersRange(batchStart, batchEnd);
+			const batchEnd = Math.min(batchStart + batchSize - 1, targetHeight);
+			const blocks = await fetchHeadersRange(batchStart, batchEnd);
 
 			if (blocks.length > 0) {
 				await this.insertHeaders(blocks);
@@ -80,18 +74,6 @@ export class SpvHelper {
 		}
 
 		console.log(`✓ Light client synced to height ${targetHeight}`);
-	}
-
-	private async fetchHeadersRange(startHeight: number, endHeight: number): Promise<string[]> {
-		const headers: string[] = [];
-
-		for (let h = startHeight; h < endHeight; h++) {
-			const blockHash = await this.indexerCall(`/block-height/${h}`);
-			const header = await this.indexerCall(`/block/${blockHash}/header`);
-			if (header) headers.push(`0x${header.trim()}`);
-		}
-
-		return headers;
 	}
 
 	async insertHeaders(headers: string[]): Promise<void> {
@@ -129,18 +111,14 @@ export class SpvHelper {
 	}
 
 	async generateSpvProof(txId: string, blockHeight?: number): Promise<SpvProof> {
-		const txHex = await this.indexerCall(`/tx/${txId}/hex`);
-		const blockHash = await this.indexerCall(`/tx/${txId}/block-hash`);
-		const height =
-			blockHeight !== undefined
-				? blockHeight
-				: parseInt(await this.indexerCall(`/tx/${txId}/block-height`), 10);
+		const txHex = await getTxHex(txId);
+		const blockHash = await getBlockHashByTx(txId);
+		const height = blockHeight !== undefined ? blockHeight : await getBlockHeightByTx(txId);
 
 		const merkleProof = await this.generateMerkleProof(txId, blockHash);
 
-		const txIds = await this.indexerCall(`/block/${blockHash}/txids`);
-		const allHashes = JSON.parse(txIds);
-		const txIndex = allHashes.indexOf(txId.replace("0x", "").toLowerCase());
+		const txIds = await getBlockTxs(blockHash);
+		const txIndex = txIds.indexOf(txId.replace("0x", "").toLowerCase());
 
 		return {
 			proof: merkleProof,
@@ -152,13 +130,12 @@ export class SpvHelper {
 	}
 
 	private async generateMerkleProof(txId: string, blockHash: string): Promise<string[]> {
-		const txIds = await this.indexerCall(`/block/${blockHash}/txids`);
-		const allTxIds: string[] = JSON.parse(txIds);
+		const allTxIds = await getBlockTxs(blockHash);
 
 		const txs: BtcTransaction[] = [];
 
 		for (const txIdHex of allTxIds) {
-			const txHex = await this.indexerCall(`/tx/${txIdHex}/hex`);
+			const txHex = await getTxHex(txIdHex);
 			const tx = BtcTransaction.fromHex(txHex);
 			txs.push(tx);
 		}
@@ -176,19 +153,9 @@ export class SpvHelper {
 	}
 
 	async syncToLatest(): Promise<number> {
-		const tipHeight = parseInt(await this.indexerCall("/blocks/tip/height"), 10);
+		const tipHeight = await getTipHeight();
 		await this.syncLightClientToHeight(tipHeight);
 		return tipHeight;
-	}
-
-	private async indexerCall(endpoint: string): Promise<any> {
-		if (!this.indexer) throw new Error("Indexer not configured");
-
-		const response = await fetch(`${this.indexer.baseUrl}${endpoint}`);
-		if (!response.ok) {
-			throw new Error(`Indexer error: ${response.statusText}`);
-		}
-		return response.text();
 	}
 
 	static async fromDeployInfo(suiClient: SuiClient, signer: Ed25519Keypair): Promise<SpvHelper> {
@@ -205,10 +172,6 @@ export class SpvHelper {
 			currentHeight: deployInfo.height || 0,
 		};
 
-		const indexer = {
-			baseUrl: process.env.INDEXER_URL || "http://localhost:8080/regtest/api",
-		};
-
 		console.log(`📋 Loaded deploy info:`);
 		console.log(`   Sui Network: ${deployInfo.sui_network}`);
 		console.log(`   Light Client: ${lcInfo.lcId}`);
@@ -216,6 +179,6 @@ export class SpvHelper {
 		console.log(`   nBTC Contract: ${deployInfo.nbtc_contract}`);
 		console.log(signer.toSuiAddress());
 
-		return new SpvHelper(suiClient, signer, lcInfo, indexer);
+		return new SpvHelper(suiClient, signer, lcInfo);
 	}
 }
