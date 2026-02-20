@@ -54,15 +54,12 @@ beforeAll(async () => {
 		lcPkg: deployInfo.lc_pkg,
 	};
 
-	console.log(config.nbtc);
 	suiClient = createSuiClient(config.packageId);
 	signer = mkSigner();
-
 	ikaClient = createIkaClient(suiClient);
 	await ikaClient.initialize();
 
 	btc = new BitcoinCli();
-
 	if (!btc.checkContainer()) {
 		throw new Error(
 			"esplora-regtest container not running. Run: docker-compose -f bitcoin-regtest/docker-compose.yml up -d",
@@ -90,9 +87,7 @@ test("mint nBTC", async () => {
 
 	const output = depositResult.stdout;
 	const depositTxid = output.match(/TXID: (\w+)/)?.[1];
-	console.log(depositTxid);
-	// sleep 5 second for indexer
-	await sleep(5000);
+	await sleep(2000);
 	if (!depositTxid) {
 		throw new Error("Failed to parse deposit TXID");
 	}
@@ -192,7 +187,6 @@ test("redeem nBTC to BTC withdrawal", async () => {
 
 	const parsedEvent = withdrawReadyEvent.parsedJson as any;
 	const btcTxRaw = Buffer.from(parsedEvent.tx_raw);
-	const btcTxId = Buffer.from(parsedEvent.tx_id).reverse().toString("hex");
 
 	const btcTxHex = btcTxRaw.toString("hex");
 	await broadcastBtcTx(btcTxHex);

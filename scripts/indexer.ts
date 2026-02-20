@@ -2,8 +2,8 @@ export const INDEXER_URL = process.env.INDEXER_URL || "http://localhost:8080/reg
 
 export function getIndexerURL(path: string): string {
 	try {
-		const url = INDEXER_URL.concat(path);
-		return url;
+		let url = new URL(INDEXER_URL.concat(path));
+		return url.toString();
 	} catch (error) {
 		throw new Error(`Invalid INDEXER_URL configuration: ${INDEXER_URL}`);
 	}
@@ -59,7 +59,6 @@ export async function getBlockHash(height: number): Promise<string> {
 
 export async function getTipHeight(): Promise<number> {
 	const url = getIndexerURL(`/blocks/tip/height`);
-	console.log(url);
 	const response = await fetch(url);
 	if (!response.ok) {
 		throw new Error(`Failed to fetch tip height: ${response.statusText}`);
