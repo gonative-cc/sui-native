@@ -5,7 +5,16 @@ import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction as BtcTransaction } from "bitcoinjs-lib";
 import { BitcoinMerkleTree } from "./merkle";
 import { readDeployInformation } from "../scripts/config";
-import { getBlockHash, getBlockHeader, getTxHex, getBlockHashByTx, getBlockHeightByTx, getBlockTxs, getTipHeight, fetchHeadersRange } from "../scripts/indexer";
+import {
+	getBlockHash,
+	getBlockHeader,
+	getTxHex,
+	getBlockHashByTx,
+	getBlockHeightByTx,
+	getBlockTxs,
+	getTipHeight,
+	fetchHeadersRange,
+} from "../scripts/indexer";
 
 export interface SpvProof {
 	proof: string[];
@@ -27,11 +36,7 @@ export class SpvHelper {
 	private signer: Ed25519Keypair;
 	private lcInfo: LightClientInfo;
 
-	constructor(
-		suiClient: SuiClient,
-		signer: Ed25519Keypair,
-		lcInfo: LightClientInfo,
-	) {
+	constructor(suiClient: SuiClient, signer: Ed25519Keypair, lcInfo: LightClientInfo) {
 		this.suiClient = suiClient;
 		this.signer = signer;
 		this.lcInfo = lcInfo;
