@@ -231,14 +231,6 @@ export async function verifySignature(
 	signId: string,
 	config: Config,
 ) {
-	console.log({
-		contract: config.nbtc,
-		dwalletCoordinator:
-			"0x4d157b7415a298c56ec2cb1dcab449525fa74aec17ddba376a83a7600f2062fc",
-		redeemId,
-		inputIds: [BigInt(inputId)],
-		signIds: [signId],
-	});
 	const tx = new Transaction();
 	tx.add(
 		nBTCContractModule.recordSignature({
