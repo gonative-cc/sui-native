@@ -41,13 +41,11 @@ function getSuiSigner(): Ed25519Keypair {
 }
 
 async function generateSpvProofLocal(txHex: string, blockHash: string): Promise<string[]> {
-	const txBuffer = Buffer.from(txHex, "hex");
-	const txid = Buffer.from(txBuffer.slice(5, 37)).reverse().toString("hex");
+	const txid = bitcoin.Transaction.fromHex(txHex).getId();
 
 	console.log(`  Fetching all transactions in block...`);
 	const blockTxHexes = await getBlockTransactions(blockHash);
 	console.log(`  Found ${blockTxHexes.length} transactions`);
-
 	console.log(`  Building merkle tree...`);
 	const transactions = blockTxHexes.map((hex) =>
 		bitcoin.Transaction.fromHex(hex.toString("hex")),
