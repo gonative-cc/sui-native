@@ -100,18 +100,21 @@ test("mint nBTC", async () => {
 	const txInfo = await getTxInfo(depositTxid);
 	const txHex = await getTxHex(depositTxid);
 
-	await mintNbtc({
-		nbtcPkg: config.packageId,
-		nbtcContract: config.nbtc,
-		lcContract: config.lcContract,
-		bitcoinLibPkg: config.bitcoinLibPkg,
-		spvPkg: config.lcPkg,
-		btcTxHex: txHex,
-		height: txInfo.height,
-		txIndex: txInfo.txIndex,
-		btcAddress: deployInfo.btc_address,
-		applyFee: false,
-	}, signer);
+	await mintNbtc(
+		{
+			nbtcPkg: config.packageId,
+			nbtcContract: config.nbtc,
+			lcContract: config.lcContract,
+			bitcoinLibPkg: config.bitcoinLibPkg,
+			spvPkg: config.lcPkg,
+			btcTxHex: txHex,
+			height: txInfo.height,
+			txIndex: txInfo.txIndex,
+			btcAddress: deployInfo.btc_address,
+			applyFee: false,
+		},
+		signer,
+	);
 }, 0);
 
 test("redeem nBTC to BTC withdrawal", async () => {
@@ -180,16 +183,18 @@ test("redeem nBTC to BTC withdrawal", async () => {
 
 	const recordResult = await requestAndRecordSignature(redeemId, 0);
 	await suiClient.waitForTransaction({ digest: recordResult.digest });
-	const withdrawReadyEvent = recordResult.events?.find((e: any) => e.type.includes("RedeemWithdrawReadyEvent"));
+	const withdrawReadyEvent = recordResult.events?.find((e: any) =>
+		e.type.includes("RedeemWithdrawReadyEvent"),
+	);
 	if (!withdrawReadyEvent) {
 		throw new Error("RedeemWithdrawReadyEvent not found");
 	}
 
 	const parsedEvent = withdrawReadyEvent.parsedJson as any;
 	const btcTxRaw = Buffer.from(parsedEvent.tx_raw);
-	const btcTxId = Buffer.from(parsedEvent.tx_id).reverse().toString('hex');
+	const btcTxId = Buffer.from(parsedEvent.tx_id).reverse().toString("hex");
 
-	const btcTxHex = btcTxRaw.toString('hex');
+	const btcTxHex = btcTxRaw.toString("hex");
 	await broadcastBtcTx(btcTxHex);
 
 	const btcTx = bitcoin.Transaction.fromHex(btcTxHex);
@@ -220,7 +225,6 @@ test("redeem nBTC to BTC withdrawal", async () => {
 	if (!burnEvent) {
 		throw new Error("BurnEvent not found");
 	}
-
 }, 0);
 
 async function getNextUtxoIndex(): Promise<number> {
@@ -280,10 +284,7 @@ async function getNbtcCoin(): Promise<string> {
 	return coinId;
 }
 
-async function requestAndRecordSignature(
-	redeemId: number,
-	inputId: number,
-): Promise<any> {
+async function requestAndRecordSignature(redeemId: number, inputId: number): Promise<any> {
 	const sighash = await getSignHash(suiClient, redeemId, inputId, config);
 
 	const presignId = await globalPreSign();

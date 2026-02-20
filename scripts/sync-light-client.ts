@@ -6,7 +6,13 @@ import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { fromHex } from "@mysten/sui/utils";
 import { getFullnodeUrl } from "@mysten/sui/client";
 import { readDeployInformation } from "./config";
-import { getBlockByHeight, getBlockHeader, getTipHeight, fetchHeadersRange, INDEXER_URL } from "./indexer";
+import {
+	getBlockByHeight,
+	getBlockHeader,
+	getTipHeight,
+	fetchHeadersRange,
+	INDEXER_URL,
+} from "./indexer";
 import { getActiveNetwork } from "./utils";
 
 export async function getLightClientHeight(
@@ -63,8 +69,6 @@ async function insertHeaders(
 	await suiClient.waitForTransaction({ digest: result.digest });
 }
 
-
-
 export async function syncToHeight(
 	suiClient: SuiClient,
 	signer: Ed25519Keypair,
@@ -81,7 +85,9 @@ export async function syncToHeight(
 	}
 
 	const blocksToSync = targetHeight - currentHeight;
-	console.log(`🔄 Syncing light client: ${currentHeight} → ${targetHeight} (${blocksToSync} blocks)`);
+	console.log(
+		`🔄 Syncing light client: ${currentHeight} → ${targetHeight} (${blocksToSync} blocks)`,
+	);
 
 	for (let batchStart = currentHeight + 1; batchStart <= targetHeight; batchStart += batchSize) {
 		const batchEnd = Math.min(batchStart + batchSize, targetHeight);
@@ -139,14 +145,7 @@ async function main() {
 	const targetHeight = await getTipHeight();
 	console.log(`Syncing to latest tip: ${targetHeight}`);
 
-	await syncToHeight(
-		suiClient,
-		signer,
-		bitcoinLibPkg,
-		spvPkg,
-		lcContract,
-		targetHeight,
-	);
+	await syncToHeight(suiClient, signer, bitcoinLibPkg, spvPkg, lcContract, targetHeight);
 
 	console.log("\n✅ Sync completed successfully!");
 }

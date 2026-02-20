@@ -4,9 +4,7 @@ import { Transaction } from "@mysten/sui/transactions";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction as BtcTransaction } from "bitcoinjs-lib";
 import { BitcoinMerkleTree } from "./merkle";
-import {
-	readDeployInformation,
-} from "../scripts/config";
+import { readDeployInformation } from "../scripts/config";
 
 export interface SpvProof {
 	proof: string[];
@@ -63,9 +61,15 @@ export class SpvHelper {
 		}
 
 		const blocksToSync = targetHeight - currentHeight;
-		console.log(`🔄 Syncing light client: ${currentHeight} → ${targetHeight} (${blocksToSync} blocks)`);
+		console.log(
+			`🔄 Syncing light client: ${currentHeight} → ${targetHeight} (${blocksToSync} blocks)`,
+		);
 
-		for (let batchStart = currentHeight + 1; batchStart <= targetHeight; batchStart += batchSize) {
+		for (
+			let batchStart = currentHeight + 1;
+			batchStart <= targetHeight;
+			batchStart += batchSize
+		) {
 			const batchEnd = Math.min(batchStart + batchSize, targetHeight);
 			const blocks = await this.fetchHeadersRange(batchStart, batchEnd);
 
@@ -97,7 +101,7 @@ export class SpvHelper {
 			tx.moveCall({
 				target: `${this.lcInfo.bitcoinLibPkg}::header::new`,
 				arguments: [tx.pure("vector<u8>", Array.from(fromHex(header)))],
-			})
+			}),
 		);
 
 		const headerVec = tx.makeMoveVec({
@@ -127,7 +131,10 @@ export class SpvHelper {
 	async generateSpvProof(txId: string, blockHeight?: number): Promise<SpvProof> {
 		const txHex = await this.indexerCall(`/tx/${txId}/hex`);
 		const blockHash = await this.indexerCall(`/tx/${txId}/block-hash`);
-		const height = blockHeight !== undefined ? blockHeight : parseInt(await this.indexerCall(`/tx/${txId}/block-height`), 10);
+		const height =
+			blockHeight !== undefined
+				? blockHeight
+				: parseInt(await this.indexerCall(`/tx/${txId}/block-height`), 10);
 
 		const merkleProof = await this.generateMerkleProof(txId, blockHash);
 
@@ -158,14 +165,14 @@ export class SpvHelper {
 
 		const merkleTree = new BitcoinMerkleTree(txs);
 
-		const targetTx = txs.find(t => t.getId() === txId);
+		const targetTx = txs.find((t) => t.getId() === txId);
 		if (!targetTx) {
 			throw new Error(`Transaction ${txId} not found in block`);
 		}
 
 		const proofBuffers = merkleTree.getProof(targetTx);
 
-		return proofBuffers.map(buf => buf.toString("hex"));
+		return proofBuffers.map((buf) => buf.toString("hex"));
 	}
 
 	async syncToLatest(): Promise<number> {

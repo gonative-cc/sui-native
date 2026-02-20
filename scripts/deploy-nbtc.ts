@@ -138,7 +138,8 @@ async function main(): Promise<void> {
 		// Extract NbtcContract from objectChanges
 		const objectChanges = publishResult.response.objectChanges || [];
 		const nbtcContractObj = objectChanges.find(
-			(c) => c.type === "created" && "objectType" in c && c.objectType.includes("NbtcContract"),
+			(c) =>
+				c.type === "created" && "objectType" in c && c.objectType.includes("NbtcContract"),
 		) as { objectId: string } | undefined;
 		nbtcContract = nbtcContractObj?.objectId;
 

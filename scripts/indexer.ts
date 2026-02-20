@@ -3,13 +3,15 @@ export const INDEXER_URL = process.env.INDEXER_URL || "http://localhost:8080/reg
 export function getIndexerURL(path: string): string {
 	try {
 		const url = INDEXER_URL.concat(path);
-		return url
+		return url;
 	} catch (error) {
 		throw new Error(`Invalid INDEXER_URL configuration: ${INDEXER_URL}`);
 	}
 }
 
-export async function getTxStatus(txid: string): Promise<{ confirmed: boolean; block_height?: number }> {
+export async function getTxStatus(
+	txid: string,
+): Promise<{ confirmed: boolean; block_height?: number }> {
 	const url = getIndexerURL(`/tx/${txid}/status`);
 	const response = await fetch(url);
 	if (!response.ok) {

@@ -13,11 +13,9 @@ export class BitcoinCli {
 	];
 
 	run(command: string, ...params: string[]): string {
-		const result = spawnSync(
-			this.docker,
-			[...this.baseArgs, command, ...params],
-			{ encoding: "utf-8" },
-		);
+		const result = spawnSync(this.docker, [...this.baseArgs, command, ...params], {
+			encoding: "utf-8",
+		});
 
 		if (result.status !== 0) {
 			throw new Error(
@@ -41,11 +39,7 @@ export class BitcoinCli {
 	}
 
 	createrawtransaction(inputs: any[], outputs: any): string {
-		return this.run(
-			"createrawtransaction",
-			JSON.stringify(inputs),
-			JSON.stringify(outputs),
-		);
+		return this.run("createrawtransaction", JSON.stringify(inputs), JSON.stringify(outputs));
 	}
 
 	signrawtransactionwithwallet(hex: string): { hex: string; complete: boolean } {
@@ -66,12 +60,9 @@ export class BitcoinCli {
 	}
 
 	checkContainer(): boolean {
-		const result = spawnSync("docker", [
-			"ps",
-			"-q",
-			"-f",
-			`name=${this.container}`,
-		], { encoding: "utf-8" });
+		const result = spawnSync("docker", ["ps", "-q", "-f", `name=${this.container}`], {
+			encoding: "utf-8",
+		});
 
 		return result.stdout.trim() !== "";
 	}

@@ -40,10 +40,7 @@ function getSuiSigner(): Ed25519Keypair {
 	throw new Error("Please set either WALLET_SK or MNEMONIC in .env");
 }
 
-async function generateSpvProofLocal(
-	txHex: string,
-	blockHash: string,
-): Promise<string[]> {
+async function generateSpvProofLocal(txHex: string, blockHash: string): Promise<string[]> {
 	const txBuffer = Buffer.from(txHex, "hex");
 	const txid = Buffer.from(txBuffer.slice(5, 37)).reverse().toString("hex");
 
@@ -52,7 +49,9 @@ async function generateSpvProofLocal(
 	console.log(`  Found ${blockTxHexes.length} transactions`);
 
 	console.log(`  Building merkle tree...`);
-	const transactions = blockTxHexes.map((hex) => bitcoin.Transaction.fromHex(hex.toString("hex")));
+	const transactions = blockTxHexes.map((hex) =>
+		bitcoin.Transaction.fromHex(hex.toString("hex")),
+	);
 	const merkleTree = new BitcoinMerkleTree(transactions);
 
 	const targetTx = bitcoin.Transaction.fromHex(txHex);
@@ -77,18 +76,21 @@ export async function getTxInfo(txid: string): Promise<{ height: number; txIndex
 	return { height: status.block_height, txIndex };
 }
 
-export async function mintNbtc(params: {
-	nbtcPkg: string;
-	nbtcContract: string;
-	lcContract: string;
-	bitcoinLibPkg: string;
-	spvPkg: string;
-	btcTxHex: string;
-	height: number;
-	txIndex: number;
-	btcAddress: string;
-	applyFee: boolean;
-}, signer?: Ed25519Keypair): Promise<{ digest: string; utxoIdx: number; btcAmount: number }> {
+export async function mintNbtc(
+	params: {
+		nbtcPkg: string;
+		nbtcContract: string;
+		lcContract: string;
+		bitcoinLibPkg: string;
+		spvPkg: string;
+		btcTxHex: string;
+		height: number;
+		txIndex: number;
+		btcAddress: string;
+		applyFee: boolean;
+	},
+	signer?: Ed25519Keypair,
+): Promise<{ digest: string; utxoIdx: number; btcAmount: number }> {
 	const network = await getActiveNetwork();
 	const suiClient = getSuiClient(params.nbtcPkg, network);
 	const txSigner = signer || getSuiSigner();
@@ -158,8 +160,12 @@ async function main() {
 		console.log("Usage:");
 		console.log("  bun run scripts/mint.ts info                    - Show deposit address");
 		console.log("  bun run scripts/mint.ts mint <txid>             - Auto-sync and mint");
-		console.log("  bun run scripts/mint.ts mint <txid> <h> <idx>   - Mint with known height/index");
-		console.log("\nFirst, send BTC to the dWallet address with OP_RETURN containing your Sui address");
+		console.log(
+			"  bun run scripts/mint.ts mint <txid> <h> <idx>   - Mint with known height/index",
+		);
+		console.log(
+			"\nFirst, send BTC to the dWallet address with OP_RETURN containing your Sui address",
+		);
 		console.log("OP_RETURN format: 0x00 + 32-byte Sui address (without 0x prefix)");
 		process.exit(1);
 	}
@@ -182,7 +188,9 @@ async function main() {
 	if (command === "info") {
 		console.log("=== Deposit Information ===");
 		console.log(`dWallet BTC Address: ${btcAddress}`);
-		console.log("\nSend BTC to the dWallet address with OP_RETURN containing the recipient's Sui address");
+		console.log(
+			"\nSend BTC to the dWallet address with OP_RETURN containing the recipient's Sui address",
+		);
 		console.log("OP_RETURN format: 0x00 + 32-byte Sui address (without 0x prefix)");
 	} else if (command === "mint") {
 		const txid = args[1];
