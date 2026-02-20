@@ -10,7 +10,7 @@ import { getActiveNetwork } from "./utils";
 import { mint as mintMove } from "../sdk/nBTC/generated/nbtc/nbtc";
 import { BitcoinMerkleTree } from "../e2e/merkle";
 import { syncToHeight } from "./sync-light-client";
-import { getTxStatus, getBlockTxs, getBlockHash, getTxHex } from "./indexer";
+import { getTxStatus, getBlockTxs, getBlockHash, getTxHex, getBlockTransactions } from "./indexer";
 
 bitcoin.initEccLib(tinysecp);
 
@@ -38,16 +38,6 @@ function getSuiSigner(): Ed25519Keypair {
 		return Ed25519Keypair.deriveKeypair(mnemonic);
 	}
 	throw new Error("Please set either WALLET_SK or MNEMONIC in .env");
-}
-
-async function getBlockTransactions(blockHash: string): Promise<Buffer[]> {
-	const txids = await getBlockTxs(blockHash);
-	const transactions: Buffer[] = [];
-	for (const txid of txids) {
-		const txHex = await getTxHex(txid);
-		transactions.push(Buffer.from(txHex, "hex"));
-	}
-	return transactions;
 }
 
 async function generateSpvProofLocal(
