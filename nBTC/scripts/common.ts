@@ -53,12 +53,12 @@ export function createSuiClient(packageId?: string) {
 		url: getFullnodeUrl("testnet"),
 		mvr: packageId
 			? {
-				overrides: {
-					packages: {
-						"@local-pkg/nbtc": packageId,
+					overrides: {
+						packages: {
+							"@local-pkg/nbtc": packageId,
+						},
 					},
-				},
-			}
+				}
 			: undefined,
 	});
 }

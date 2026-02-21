@@ -9,8 +9,7 @@ import {
 	getBlockHash,
 	getBlockHeader,
 	getTxHex,
-	getBlockHashByTx,
-	getBlockHeightByTx,
+	getTxStatus,
 	getBlockTxs,
 	getTipHeight,
 	fetchHeadersRange,
@@ -117,8 +116,17 @@ export class SpvHelper {
 
 	async generateSpvProof(txId: string, blockHeight?: number): Promise<SpvProof> {
 		const txHex = await getTxHex(txId);
-		const blockHash = await getBlockHashByTx(txId);
-		const height = blockHeight !== undefined ? blockHeight : await getBlockHeightByTx(txId);
+
+		// Get transaction status to find block height
+		const status = await getTxStatus(txId);
+		if (!status.confirmed || !status.block_height) {
+			throw new Error(`Transaction ${txId} is not confirmed`);
+		}
+
+		const height = blockHeight !== undefined ? blockHeight : status.block_height;
+
+		// Get block hash by height (standard API)
+		const blockHash = await getBlockHash(height);
 
 		const merkleProof = await this.generateMerkleProof(txId, blockHash);
 

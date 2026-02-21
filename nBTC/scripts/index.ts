@@ -74,8 +74,4 @@ program
 		await broadcastBtcTx(rawTx);
 	});
 
-
 program.parse(process.argv);
-
-
-

@@ -18,13 +18,10 @@ import {
 	getSignHash,
 	requestUtxoSig,
 	verifySignature,
-	getRedeemBtcTx,
 } from "../nBTC/scripts/sign";
 import { broadcastBtcTx } from "../nBTC/scripts/btc-helper";
 import { BitcoinCli } from "./btc-cli";
-import { nBTCContractModule, StorageModule } from "../sdk/nBTC/src";
-import * as NbtcUtxo from "../sdk/nBTC/generated/nbtc/nbtc_utxo";
-import { bcs } from "@mysten/sui/bcs";
+import { nBTCContractModule } from "../sdk/nBTC/src";
 import { mintNbtc, getTxInfo } from "../scripts/mint";
 import { getTxHex } from "../scripts/indexer";
 import { sleep } from "bun";
