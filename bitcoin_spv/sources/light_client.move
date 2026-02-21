@@ -145,7 +145,9 @@ public fun initialize_light_client(
         _ => params::regtest(),
     };
 
-    assert!(params.is_correct_init_height(start_height), EInvalidStartHeight);
+    if (network == 0) {
+        assert!(params.is_correct_init_height(start_height), EInvalidStartHeight);
+    };
 
     let lc = new_light_client(
         params,

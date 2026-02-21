@@ -159,6 +159,8 @@ public fun setup(
         nbtc_bitcoin_addr,
         0,
         vector::empty(),
+        vector::empty(), // control_block (33 bytes for script path)
+        vector::empty(), // tapscript (33 bytes: xonly_key || OP_CHECKSIG)
         vector::empty(),
         string::utf8(b"tb1qtestaddress"),
         scenario.ctx(),

@@ -17,9 +17,11 @@ const ENoDwalletInStore: vector<u8> = b"dwallets list is empty";
 
 public struct BtcDWallet has store {
     cap: DWalletCap,
-    lockscript: vector<u8>, // lock script for this dwallet
-    control_byte: u8, // Taproot control byte for script path spending
-    script_merkle_root: vector<u8>, // Taproot script merkle root (32 bytes)
+    lockscript: vector<u8>, // P2TR lock script for this dwallet
+    control_byte: u8, // Taproot control byte for script path spending (kept for compatibility)
+    script_merkle_root: vector<u8>, // Taproot script merkle root (32 bytes, kept for compatibility)
+    control_block: vector<u8>, // Control block for script path spending (33 bytes: control_byte || internal_pubkey)
+    tapscript: vector<u8>, // Taproot leaf script (34 bytes: OP_PUSHBYTES_32 || xonly_pubkey || OP_CHECKSIG)
     total_deposit: u64, // total deposit balance
     user_key_share: vector<u8>, // "user share" of dwallet
     /// map user address to amount they deposit/mint
@@ -50,6 +52,8 @@ public(package) fun create_dwallet(
     lockscript: vector<u8>,
     control_byte: u8,
     script_merkle_root: vector<u8>,
+    control_block: vector<u8>,
+    tapscript: vector<u8>,
     user_key_share: vector<u8>,
     btcaddr: String,
     ctx: &mut TxContext,
@@ -59,6 +63,8 @@ public(package) fun create_dwallet(
         lockscript,
         control_byte,
         script_merkle_root,
+        control_block,
+        tapscript,
         total_deposit: 0,
         user_key_share,
         inactive_deposits: table::new(ctx),
@@ -102,6 +108,16 @@ public fun control_byte(dw: &BtcDWallet): u8 {
 /// Return Taproot script merkle root (32 bytes)
 public fun script_merkle_root(dw: &BtcDWallet): vector<u8> {
     dw.script_merkle_root
+}
+
+/// Return Taproot control block for script path spending (33 bytes: control_byte || internal_pubkey)
+public fun control_block(dw: &BtcDWallet): vector<u8> {
+    dw.control_block
+}
+
+/// Return Taproot leaf script (<xonly_pubkey> OP_CHECKSIG, 33 bytes)
+public fun tapscript(dw: &BtcDWallet): vector<u8> {
+    dw.tapscript
 }
 
 /// Verifies that a Taproot leaf hash belongs to the dWallet's script merkle tree.

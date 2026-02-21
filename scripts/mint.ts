@@ -137,6 +137,7 @@ export async function mintNbtc(
 
 	console.log("Mint transaction digest:", result.digest);
 
+	await suiClient.waitForTransaction({ digest: result.digest });
 	const mintEvent = result.events?.find((e) => e.type.includes("MintEvent"));
 	if (mintEvent) {
 		console.log("Mint event:", JSON.stringify(mintEvent.parsedJson, null, 2));

@@ -1,5 +1,6 @@
 module bitcoin_lib::script;
 
+use bitcoin_lib::encoding::u64_to_varint_bytes;
 use bitcoin_lib::opcode;
 use bitcoin_lib::vector_utils::vector_slice;
 use std::hash::sha2_256;
@@ -172,11 +173,13 @@ fun tag_hash(tag: vector<u8>, data: vector<u8>): vector<u8> {
 
 /// Computes TapLeaf tagged hash.
 /// Used for leaf nodes in Taproot script merkle trees (MAST).
-/// Formula: tag_hash("TapLeaf", version || script)
+/// Follows BIP-341 specification.
+/// Formula: tag_hash("TapLeaf", version || compactSize(script_length) || script)
 ///
 /// # Returns 32-byte TapLeaf hash
 public fun tap_leaf_hash(version: u8, script: vector<u8>): vector<u8> {
     let mut data = vector[version];
+    data.append(u64_to_varint_bytes(script.length() as u64));
     data.append(script);
     tag_hash(b"TapLeaf", data)
 }

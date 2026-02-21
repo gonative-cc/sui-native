@@ -37,7 +37,7 @@ let btc: BitcoinCli;
 let config: any;
 let deployInfo: any;
 
-const REDEEM_DURATION_MS = 120000;
+const REDEEM_DURATION_MS = 10000;
 
 beforeAll(async () => {
 	deployInfo = readDeployInformation();
@@ -184,7 +184,6 @@ test("redeem nBTC to BTC withdrawal", async () => {
 	if (!withdrawReadyEvent) {
 		throw new Error("RedeemWithdrawReadyEvent not found");
 	}
-
 	const parsedEvent = withdrawReadyEvent.parsedJson as any;
 	const btcTxRaw = Buffer.from(parsedEvent.tx_raw);
 
@@ -196,6 +195,7 @@ test("redeem nBTC to BTC withdrawal", async () => {
 
 	btc.mineBlocks(6);
 
+	await sleep(5000);
 	const redeemSpvProof = await spv.generateSpvProof(redeemTxid);
 
 	const finalizeTx = new Transaction();
@@ -281,6 +281,11 @@ async function getNbtcCoin(): Promise<string> {
 async function requestAndRecordSignature(redeemId: number, inputId: number): Promise<any> {
 	const sighash = await getSignHash(suiClient, redeemId, inputId, config);
 
+	console.log("=== Signature Debug Info ===");
+	console.log("Sighash preimage (hex):", Buffer.from(sighash).toString("hex"));
+	console.log("Sighash preimage length:", sighash.length, "bytes");
+	console.log("===========================");
+
 	const presignId = await globalPreSign();
 
 	const msgCentralSig = await createUserSigMessage(
@@ -299,6 +304,8 @@ async function requestAndRecordSignature(redeemId: number, inputId: number): Pro
 		msgCentralSig,
 		config,
 	);
+
+	console.log("Sign ID:", signId);
 
 	await delay(35000);
 

@@ -53,12 +53,12 @@ export function createSuiClient(packageId?: string) {
 		url: getFullnodeUrl("testnet"),
 		mvr: packageId
 			? {
-					overrides: {
-						packages: {
-							"@local-pkg/nbtc": packageId,
-						},
+				overrides: {
+					packages: {
+						"@local-pkg/nbtc": packageId,
 					},
-				}
+				},
+			}
 			: undefined,
 	});
 }
@@ -180,15 +180,27 @@ export async function createSharedDwallet(ikaClient: IkaClient, suiClient: SuiCl
 }
 
 /**
- * Extracts essential Bitcoin metadata (public key, P2TR address, and lockscript)
- * from a activated shared dWallet object. Uses key path spending (no script paths).
+ * NUMS (Nothing Up My Sleeve) internal key for Taproot script path spending.
+ * This key has no known private key, ensuring funds can only be spent via script path.
+ * Derived from SHA256 of uncompressed secp256k1 generator point G (BIP-341).
+ */
+const NUMS_INTERNAL_KEY = Buffer.from(
+	"50929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0",
+	"hex",
+);
+
+/**
+ * Extracts essential Bitcoin metadata (public key, P2TR address, lockscript, control block, tapscript)
+ * from a activated shared dWallet object. Uses Taproot script path spending.
  *
  * @param dWallet The active shared dWallet
- * @returns An object containing derived P2TR `addr` (string) and `lockscript` (Buffer).
+ * @returns An object containing derived P2TR `addr`, `lockscript`, `controlBlock`, and `tapscript`.
  */
 export async function getDwalletMetadata(dWallet: DWalletWithState<"Active">): Promise<{
 	addr: string;
 	lockscript: Buffer;
+	controlBlock: Buffer;
+	tapscript: Buffer;
 }> {
 	const publicKey = Buffer.from(
 		await publicKeyFromDWalletOutput(
@@ -197,19 +209,37 @@ export async function getDwalletMetadata(dWallet: DWalletWithState<"Active">): P
 		),
 	);
 
-	// Taproot key path spending (no script paths)
-	// Extract the 32-byte x-coordinate from the compressed public key (skip first byte 0x02/0x03)
-	const internalPubkey = publicKey.subarray(1, 33);
+	// Extract 32-byte x-only key from compressed public key (skip first byte 0x02/0x03)
+	// Ika follows BIP-340, so this is always the even-Y version
+	const xOnlyKey = publicKey.subarray(1, 33);
 
+	// Build tapscript: OP_PUSHBYTES_32 <xonly_pubkey> OP_CHECKSIG
+	// OP_PUSHBYTES_32 = 0x20, OP_CHECKSIG = 0xac
+	const tapscript = Buffer.concat([Buffer.from([0x20]), xOnlyKey, Buffer.from([0xac])]);
+	const tapleaf = { output: tapscript, version: 0xc0 };
+
+	// Create P2TR with NUMS internal key + script tree for script path spending
+	// The NUMS key has no known private key, so key path is unspendable
 	const payment = bitcoin.payments.p2tr({
-		internalPubkey,
+		internalPubkey: NUMS_INTERNAL_KEY,
+		scriptTree: tapleaf,
+		redeem: tapleaf, // Specify redeem to get control block in witness
 		network: REGTEST,
 	});
-	const addr = payment.address!;
-	const lockscript = Buffer.from(payment.output!);
+
+	// Extract control block from witness (second element)
+	// Control block = control_byte (1 byte) + internal_pubkey (32 bytes) = 33 bytes
+	const witness = payment.witness;
+	if (!witness || witness.length < 2 || !witness[1]) {
+		throw new Error("Failed to generate control block for taproot script path");
+	}
+	const controlBlock = Buffer.from(witness[1] as Uint8Array);
+
 	return {
-		addr,
-		lockscript,
+		addr: payment.address!,
+		lockscript: Buffer.from(payment.output!),
+		controlBlock,
+		tapscript,
 	};
 }
 

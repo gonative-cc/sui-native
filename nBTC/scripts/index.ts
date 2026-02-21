@@ -3,6 +3,7 @@ import {
 	createIkaClient,
 	createSharedDwallet,
 	createSuiClient,
+	getDwalletMetadata,
 	loadConfig,
 	type Config,
 } from "./common";
@@ -72,4 +73,9 @@ program
 		console.log("Raw redeem tx = ", rawTx);
 		await broadcastBtcTx(rawTx);
 	});
+
+
 program.parse(process.argv);
+
+
+

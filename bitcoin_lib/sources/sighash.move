@@ -382,3 +382,39 @@ fun test_taproot_sighash_preimage() {
 }
 // TODO: add a test case where user spends two UTXOs
 //
+//
+//
+
+#[test]
+fun test_taproot_sighash_preimage_debug() {
+    // data from https://github.com/bitcoinjs/bitcoinjs-lib/blob/13aea8c84236fe14d7260a9ffaaf0a0489ef70b1/test/fixtures/transaction.json#L812
+    let mut r = bitcoin_lib::reader::new(
+        x"020000000001013363706e0716b37d4296336ebf88f4ec80435c4b74cf157e2c979352fa9da8470000000000ffffffff017a260000000000001976a914509a651dd392e1bc125323f629b67d65cca3d4bb88ac0140af2773dfd6fab0b55b7dadbd6aa0437a2de8828b930bf41eb821274ef623c6188b0c95e540abcbe1db40f5d5e42d8fe375a992bf46ebcc1a737b2653790aa72400000000",
+    );
+
+    let txn = tx::deserialize(&mut r);
+
+    let previous_output_pubscripts = vector[
+        x"51200a41a212e325c7444058c732dfd71ba9e63c845deed6c7eb2472b6980ba84760",
+    ];
+
+    let values = vector[9850];
+
+    // vector of (input_idx_to_sign, hash_type)
+    let test_case_inputs = vector[vector[0, 0x00]];
+
+    let input_idx_to_sign = test_case_inputs[0][0] as u32;
+    let hash_type = test_case_inputs[0][1] as u8;
+    let sighash_preimage = taproot_sighash_preimage(
+        &txn,
+        input_idx_to_sign,
+        previous_output_pubscripts,
+        values,
+        hash_type,
+        option::none(),
+        option::none(),
+    );
+
+    std::debug::print(&sighash_preimage);
+    // std::debug::print(&sha256(sighash_preimage));
+}
