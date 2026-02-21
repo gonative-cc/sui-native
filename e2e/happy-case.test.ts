@@ -193,7 +193,10 @@ test("redeem nBTC to BTC withdrawal", async () => {
 	btc.mineBlocks(6);
 
 	await sleep(5000);
+
+	// Sync light client to include the block with redeem tx
 	const redeemSpvProof = await spv.generateSpvProof(redeemTxid);
+	await spv.syncLightClientToHeight(redeemSpvProof.height + 3);
 
 	const finalizeTx = new Transaction();
 	finalizeTx.add(
