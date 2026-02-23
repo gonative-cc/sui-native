@@ -124,7 +124,6 @@ export async function getBlockByHeight(height: number): Promise<string> {
 
 export async function getTipHeight(): Promise<number> {
 	const url = getIndexerURL(`/blocks/tip/height`);
-	console.log(url);
 	const response = await fetch(url);
 	if (!response.ok) {
 		throw new Error(`Failed to fetch tip height: ${response.statusText}`);
