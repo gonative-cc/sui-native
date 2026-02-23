@@ -26,17 +26,15 @@ public fun compose_withdraw_tx(
         let inp = input::new(
             utxo.tx_id(),
             u32_to_le_bytes(utxo.vout()),
-            vector::empty(), // Because utxos is segwit format so script_sig field is empty
+            vector::empty(),
             DEFAULT_SEQUENCE,
         );
         inps.push_back(inp);
     });
 
-    // user cover the fee
     let user_receive_amount = withdraw_amount - fee;
     let remain_amount = total_spend - withdraw_amount;
 
-    // output for for receiver
     let mut outs = vector[output::new(user_receive_amount, recipient_script)];
 
     if (remain_amount > 0) {
