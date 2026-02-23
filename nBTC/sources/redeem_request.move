@@ -31,7 +31,10 @@ const EInvalidSignID: vector<u8> = b"invalid sign ID for input";
 const TAPROOT: u32 = 1;
 // hash function
 const SHA256: u32 = 0;
-const SIGNHASH_ALL: u8 = 0x00;
+// Taproot sighash type: default (covers all, encoded as 0x00 in BIP-341).
+const SIGHASH_DEFAULT: u8 = 0x00;
+// Deprecated alias: in legacy Bitcoin, SIGHASH_ALL is 0x01; here 0x00 follows Taproot semantics.
+const SIGNHASH_ALL: u8 = SIGHASH_DEFAULT;
 // Tapscript leaf version (BIP-342)
 const TAPSCRIPT_LEAF_VERSION: u8 = 0xc0;
 
