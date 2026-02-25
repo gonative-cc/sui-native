@@ -115,7 +115,7 @@ public fun control_block(dw: &BtcDWallet): vector<u8> {
     dw.control_block
 }
 
-/// Return Taproot leaf script (<xonly_pubkey> OP_CHECKSIG, 33 bytes)
+/// Return Taproot leaf script (OP_PUSHBYTES_32 <xonly_pubkey> OP_CHECKSIG, 34 bytes)
 public fun tapscript(dw: &BtcDWallet): vector<u8> {
     dw.tapscript
 }

@@ -29,7 +29,7 @@ export async function initialization(dwalletId: string, config: Config) {
 	let { addr, lockscript, controlBlock, tapscript } = await getDwalletMetadata(dWallet);
 
 	let tx = new Transaction();
-	console.log(lockscript);
+
 	// add dwallet to nbtc
 	tx.add(
 		nBTCContractModule.addDwallet({

@@ -7,11 +7,8 @@ import { fromHex } from "@mysten/sui/utils";
 import { getFullnodeUrl } from "@mysten/sui/client";
 import { readDeployInformation } from "./config";
 import {
-	getBlockByHeight,
-	getBlockHeader,
 	getTipHeight,
 	fetchHeadersRange,
-	INDEXER_URL,
 } from "./indexer";
 import { getActiveNetwork } from "./utils";
 
