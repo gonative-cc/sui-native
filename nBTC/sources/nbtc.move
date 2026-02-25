@@ -31,6 +31,7 @@ use sui::table::{Self, Table};
 const VERSION: u32 = 1;
 
 const MINUTE: u64 = 60_000;
+const SECOND: u64 = 1_000;
 
 /// Coin Metadata
 const DECIMALS: u8 = 8;
@@ -191,7 +192,7 @@ fun init(witness: NBTC, ctx: &mut TxContext) {
         @fallback_addr,
         10, // mint fee, TODO: increase it
         @ika_coordinator.to_id(),
-        2*MINUTE,
+        10 * SECOND,
     );
     let contract = init__(witness, cfg, ctx);
     transfer::public_share_object(contract);
@@ -816,6 +817,8 @@ public fun add_dwallet(
     lockscript: vector<u8>,
     control_byte: u8,
     script_merkle_root: vector<u8>,
+    control_block: vector<u8>,
+    tapscript: vector<u8>,
     user_key_share: vector<u8>,
     btcaddr: String,
     ctx: &mut TxContext,
@@ -831,6 +834,8 @@ public fun add_dwallet(
         lockscript,
         control_byte,
         script_merkle_root,
+        control_block,
+        tapscript,
         user_key_share,
         btcaddr,
         ctx,
@@ -903,7 +908,7 @@ public(package) fun init_for_testing(
     ika_coordinator: ID,
     ctx: &mut TxContext,
 ): NbtcContract {
-    let cfg = config::new(bitcoin_lc.to_id(), fallback_addr, 10, ika_coordinator, 5*MINUTE);
+    let cfg = config::new(bitcoin_lc.to_id(), fallback_addr, 10, ika_coordinator, 10 * SECOND);
     init__(NBTC {}, cfg, ctx)
 }
 

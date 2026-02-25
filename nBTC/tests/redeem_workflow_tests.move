@@ -46,6 +46,8 @@ fun setup_redeem_test(
         lockscript,
         0,
         vector::empty(),
+        vector::empty(), // control_block
+        vector::empty(), // tapscript
         vector::empty(),
         string::utf8(b"tb1qtestaddress"),
         temp_scenario.ctx(),

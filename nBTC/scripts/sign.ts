@@ -149,7 +149,11 @@ export async function getSignHash(
 		transactionBlock: tx,
 		sender: mkSigner().toSuiAddress(),
 	});
+
 	let encoded = ans.results![2]?.returnValues![0]![0]!;
+	if (!encoded) {
+		throw new Error("Failed to get sigHash result");
+	}
 	return bcs.byteVector().parse(Uint8Array.from(encoded));
 }
 
@@ -218,7 +222,7 @@ export async function requestUtxoSig(
  * @param inputId The index of the Bitcoin input being signed (0-indexed).
  * @param signId The object ID of the sign session returned from requestUtxoSig
  * @param config The configuration object containing IDs like `packageId` and `nbtc` object ID.
- * @returns A promise that resolves when the verification transaction is executed successfully (no explicit return value).
+ * @returns A promise that resolves with the transaction result when the verification transaction is executed successfully.
  */
 export async function verifySignature(
 	suiClient: SuiClient,
@@ -241,7 +245,7 @@ export async function verifySignature(
 		}),
 	);
 
-	await executeTransaction(suiClient, tx);
+	return await executeTransaction(suiClient, tx);
 }
 
 /**

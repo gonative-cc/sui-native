@@ -33,7 +33,7 @@
 		"zx": "^8.8.5"
 	},
 	"devDependencies": {
-		"@mysten/codegen": "^0.5.13",
+		"@mysten/codegen": "^0.8.2",
 		"@types/bun": "latest",
 		"@types/node": "^24.10.4",
 		"typescript": "^5.9.3"

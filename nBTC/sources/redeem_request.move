@@ -31,7 +31,12 @@ const EInvalidSignID: vector<u8> = b"invalid sign ID for input";
 const TAPROOT: u32 = 1;
 // hash function
 const SHA256: u32 = 0;
-const SIGNHASH_ALL: u8 = 0x01;
+// Taproot sighash type: default (covers all, encoded as 0x00 in BIP-341).
+const SIGHASH_DEFAULT: u8 = 0x00;
+// Deprecated alias: in legacy Bitcoin, SIGHASH_ALL is 0x01; here 0x00 follows Taproot semantics.
+const SIGNHASH_ALL: u8 = SIGHASH_DEFAULT;
+// Tapscript leaf version (BIP-342)
+const TAPSCRIPT_LEAF_VERSION: u8 = 0xc0;
 
 public enum RedeemStatus has copy, drop, store {
     Resolving, // finding the best UTXOs
@@ -303,7 +308,7 @@ public fun sig_hash_with_leaf_hash(
     let dwallet_id = utxo.dwallet_id();
     let lockscript = storage.dwallet(dwallet_id).lockscript();
     let tx = compose_withdraw_tx(
-        lockscript,
+        r.nbtc_spend_script,
         inputs,
         r.recipient_script,
         r.amount,
@@ -363,12 +368,13 @@ public fun compose_tx(r: &RedeemRequest, storage: &Storage): tx::Transaction {
     inputs.length().do!(|i| {
         let utxo = &inputs[i];
         let dwallet_id = utxo.dwallet_id();
-        let lockscript = storage.dwallet(dwallet_id).lockscript();
+        let dwallet = storage.dwallet(dwallet_id);
+        let lockscript = dwallet.lockscript();
         let ika_signature = r.signatures[i];
-        // Taproot witness expects a 64-byte Schnorr signature, no sighash flag byte.
+        // Taproot script path witness: signature || tapscript || control_block
         let witness = if (script::is_taproot(lockscript)) {
             assert!(ika_signature.length() == 64, EInvalidIkaSchnorrLength);
-            vector[ika_signature]
+            vector[ika_signature, dwallet.tapscript(), dwallet.control_block()]
         } else {
             abort EUnsupportedLockscript
         };
@@ -393,6 +399,7 @@ public(package) fun add_signature(r: &mut RedeemRequest, input_id: u64, ika_sign
 }
 
 /// Returns sighash for input_id-th in redeem transaction.
+/// Uses Taproot script path spending with the dWallet's tapscript.
 ///
 /// Aborts if `input_id` is out of bounds (>= number of inputs).
 public fun sig_hash(r: &RedeemRequest, input_id: u64, storage: &Storage): vector<u8> {
@@ -405,9 +412,10 @@ public fun sig_hash(r: &RedeemRequest, input_id: u64, storage: &Storage): vector
     let inputs = r.utxos();
     let utxo = &inputs[input_id];
     let dwallet_id = utxo.dwallet_id();
-    let lockscript = storage.dwallet(dwallet_id).lockscript();
+    let dwallet = storage.dwallet(dwallet_id);
+    let lockscript = dwallet.lockscript();
     let tx = compose_withdraw_tx(
-        lockscript,
+        r.nbtc_spend_script,
         inputs,
         r.recipient_script,
         r.amount,
@@ -421,15 +429,18 @@ public fun sig_hash(r: &RedeemRequest, input_id: u64, storage: &Storage): vector
         );
         let previous_values = vector::tabulate!(inputs.length(), |i| inputs[i].value());
 
-        return taproot_sighash_preimage(
-                &tx,
-                input_id as u32, // input index
-                previous_pubscripts,
-                previous_values,
-                SIGNHASH_ALL,
-                option::none(),
-                option::none(),
-            )
+        // Compute TapLeaf hash for script path spending
+        let leaf_hash = script::tap_leaf_hash(TAPSCRIPT_LEAF_VERSION, dwallet.tapscript());
+
+        taproot_sighash_preimage(
+            &tx,
+            input_id as u32,
+            previous_pubscripts,
+            previous_values,
+            SIGNHASH_ALL,
+            option::some(leaf_hash),
+            option::none(),
+        )
     } else {
         abort EUnsupportedLockscript
     }

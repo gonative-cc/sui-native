@@ -20,18 +20,15 @@ import {
 	type Config as NbtcConfig,
 } from "../nBTC/scripts/common";
 import { initialization } from "../nBTC/scripts/initialization";
-import type {
-	SuiObjectChange,
-	SuiObjectChangeCreated,
-	SuiObjectChangePublished,
-} from "@mysten/sui/client";
-import * as fs from "node:fs/promises";
-import * as path from "node:path";
+import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
 
 async function main(): Promise<void> {
 	console.log("Starting nBTC deployment...\n");
 
 	const network = await getActiveNetwork();
+	const client = new SuiClient({
+		url: getFullnodeUrl(network as "mainnet" | "testnet" | "devnet" | "localnet"),
+	});
 
 	const deployInfo = readDeployInformation();
 
@@ -46,7 +43,7 @@ async function main(): Promise<void> {
 	// Publish bitcoin_lib if not in Published.toml
 	if (!bitcoinLibPublishedId) {
 		console.log("bitcoin_lib not in Published.toml, deploying...");
-		await publishPackage("bitcoin_lib", network);
+		await publishPackage(client, "bitcoin_lib");
 	} else {
 		console.log(`bitcoin_lib found in Published.toml: ${bitcoinLibPublishedId}`);
 		deployInfo.bitcoin_lib_pkg = bitcoinLibPublishedId;
@@ -55,7 +52,7 @@ async function main(): Promise<void> {
 	// Publish bitcoin_spv if not in Published.toml
 	if (!bitcoinSpvPublishedId) {
 		console.log("bitcoin_spv not in Published.toml, deploying...");
-		await publishPackage("bitcoin_spv", network);
+		await publishPackage(client, "bitcoin_spv");
 	} else {
 		console.log(`bitcoin_spv found in Published.toml: ${bitcoinSpvPublishedId}`);
 		deployInfo.lc_pkg = bitcoinSpvPublishedId;
@@ -127,7 +124,7 @@ async function main(): Promise<void> {
 	} else {
 		console.log("\nPublishing nBTC package...");
 		const fallbackAddr = loadSigner().toSuiAddress();
-		const publishResult = await publishPackage("nBTC", network, () =>
+		const publishResult = await publishPackage(client, "nBTC", () =>
 			updateNBTCTomlWithValues(lcContract!, fallbackAddr),
 		);
 
@@ -135,16 +132,16 @@ async function main(): Promise<void> {
 			throw new Error("nBTC package publish returned no result");
 		}
 
-		const objectChanges: SuiObjectChange[] = publishResult.objectChanges ?? [];
-		const publishedPackage = objectChanges.find(
-			(c): c is SuiObjectChangePublished => c.type === "published",
-		);
-		nbtcPkg = publishedPackage?.packageId;
-		const createdChanges = objectChanges.filter(
-			(c): c is SuiObjectChangeCreated => c.type === "created",
-		);
-		nbtcContract = createdChanges.find((c) => c.objectType.includes("NbtcContract"))?.objectId;
-		nbtcAdminCap = createdChanges.find((c) => c.objectType.includes("AdminCap"))?.objectId;
+		nbtcPkg = publishResult.packageId;
+		nbtcAdminCap = publishResult.adminCap;
+
+		// Extract NbtcContract from objectChanges
+		const objectChanges = publishResult.response.objectChanges || [];
+		const nbtcContractObj = objectChanges.find(
+			(c) =>
+				c.type === "created" && "objectType" in c && c.objectType.includes("NbtcContract"),
+		) as { objectId: string } | undefined;
+		nbtcContract = nbtcContractObj?.objectId;
 
 		if (!nbtcContract || !nbtcAdminCap || !nbtcPkg) {
 			throw new Error("Failed to extract nBTC objects from publish result");

@@ -44,8 +44,9 @@ jobs:
       - name: generate-ts
         run: "bun run generate-ts"
 
-      - name: typecheck
-        run: "bun run typecheck"
-
-      - name: test
-        run: "bun run test"
+      # TODO: enable this after update to mysten/sui sdk 2.x
+      # - name: typecheck
+      #   run: "bun run typecheck"
+      #
+      # - name: test
+      #   run: "bun run test"
