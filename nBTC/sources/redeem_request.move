@@ -308,7 +308,7 @@ public fun sig_hash_with_leaf_hash(
     let dwallet_id = utxo.dwallet_id();
     let lockscript = storage.dwallet(dwallet_id).lockscript();
     let tx = compose_withdraw_tx(
-        lockscript,
+        r.nbtc_spend_script,
         inputs,
         r.recipient_script,
         r.amount,
