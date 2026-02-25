@@ -6,10 +6,7 @@ import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { fromHex } from "@mysten/sui/utils";
 import { getFullnodeUrl } from "@mysten/sui/client";
 import { readDeployInformation } from "./config";
-import {
-	getTipHeight,
-	fetchHeadersRange,
-} from "./indexer";
+import { getTipHeight, fetchHeadersRange } from "./indexer";
 import { getActiveNetwork } from "./utils";
 
 export async function getLightClientHeight(

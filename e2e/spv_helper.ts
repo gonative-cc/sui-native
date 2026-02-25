@@ -4,7 +4,7 @@ import { Transaction } from "@mysten/sui/transactions";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction as BtcTransaction } from "bitcoinjs-lib";
 import { BitcoinMerkleTree } from "./merkle";
-import { readDeployInformation } from "../scripts/config";
+import { readDeployInformation, DeployInformation } from "../scripts/config";
 import {
 	getBlockHash,
 	getBlockHeader,
@@ -23,27 +23,20 @@ export interface SpvProof {
 	txHex: string;
 }
 
-export interface LightClientInfo {
-	lcId: string;
-	bitcoinLibPkg: string;
-	spvPkg: string;
-	currentHeight: number;
-}
-
 export class SpvHelper {
 	private suiClient: SuiClient;
 	private signer: Ed25519Keypair;
-	private lcInfo: LightClientInfo;
+	private deployInfo: DeployInformation;
 
-	constructor(suiClient: SuiClient, signer: Ed25519Keypair, lcInfo: LightClientInfo) {
+	constructor(suiClient: SuiClient, signer: Ed25519Keypair, deployInfo: DeployInformation) {
 		this.suiClient = suiClient;
 		this.signer = signer;
-		this.lcInfo = lcInfo;
+		this.deployInfo = deployInfo;
 	}
 
 	async getCurrentLightClientHeight(): Promise<number> {
 		const lc = await this.suiClient.getObject({
-			id: this.lcInfo.lcId,
+			id: this.deployInfo.lc_contract!,
 			options: { showContent: true },
 		});
 
@@ -85,19 +78,19 @@ export class SpvHelper {
 
 		const headerObjs = headers.map((header) =>
 			tx.moveCall({
-				target: `${this.lcInfo.bitcoinLibPkg}::header::new`,
+				target: `${this.deployInfo.bitcoin_lib_pkg}::header::new`,
 				arguments: [tx.pure("vector<u8>", Array.from(fromHex(header)))],
 			}),
 		);
 
 		const headerVec = tx.makeMoveVec({
-			type: `${this.lcInfo.bitcoinLibPkg}::header::BlockHeader`,
+			type: `${this.deployInfo.bitcoin_lib_pkg}::header::BlockHeader`,
 			elements: headerObjs,
 		});
 
 		tx.moveCall({
-			target: `${this.lcInfo.spvPkg}::light_client::insert_headers`,
-			arguments: [tx.object(this.lcInfo.lcId), headerVec],
+			target: `${this.deployInfo.lc_pkg}::light_client::insert_headers`,
+			arguments: [tx.object(this.deployInfo.lc_contract!), headerVec],
 		});
 
 		tx.setGasBudget(500000000);
@@ -178,20 +171,13 @@ export class SpvHelper {
 			throw new Error("Missing deployment info. Run deploy-nbtc.ts first.");
 		}
 
-		const lcInfo: LightClientInfo = {
-			lcId: deployInfo.lc_contract,
-			bitcoinLibPkg: deployInfo.bitcoin_lib_pkg,
-			spvPkg: deployInfo.lc_pkg,
-			currentHeight: deployInfo.height || 0,
-		};
-
 		console.log(`📋 Loaded deploy info:`);
 		console.log(`   Sui Network: ${deployInfo.sui_network}`);
-		console.log(`   Light Client: ${lcInfo.lcId}`);
+		console.log(`   Light Client: ${deployInfo.lc_contract}`);
 		console.log(`   BTC Deposit: ${deployInfo.btc_address || "N/A"}`);
 		console.log(`   nBTC Contract: ${deployInfo.nbtc_contract}`);
 		console.log(signer.toSuiAddress());
 
-		return new SpvHelper(suiClient, signer, lcInfo);
+		return new SpvHelper(suiClient, signer, deployInfo);
 	}
 }
