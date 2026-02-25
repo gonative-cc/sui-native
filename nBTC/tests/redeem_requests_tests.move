@@ -84,8 +84,11 @@ fun raw_withdraw_tx_signed_tests() {
     let tx = r.compose_tx(&btc_store);
     let outputs = tx.outputs();
     assert_eq!(outputs.length(), 1);
-    // Note: tx_id and serialize_segwit will change due to new witness format with script path spending
-    // The witness now contains 3 elements: signature, tapscript, control_block
+    assert_eq!(tx.tx_id(), x"c148c42fbc5d424a9cce3518f678e86086d801bcd05bff10542fb52c1f09db4e");
+    assert_eq!(
+        tx.serialize_segwit(),
+        x"020000000001019dafd815a150414d02047a22ab806dbd2f43d0e1ea5922dadd5396f6d67769202900000000ffffffff01e11801000000000016001464f9139a4a853b3d5ad1315ceb707386ed343c2c0340b693a0797b24bae12ed0516a2f5ba765618dca89b75e498ba5b745b71644362298a45ca39230d10a02ee6290a91cebf9839600f7e35158a447ea182ea0e022ae22200f0c8db753acbd17343a39c2f3f4e35e4be6da749f9e35137ab220e7b238a667ac21c150929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac000000000",
+    );
     destroy(lc);
     destroy(ctr);
     destroy(r);
