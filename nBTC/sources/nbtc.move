@@ -84,6 +84,8 @@ const ERedeemTxNotConfirmed: vector<u8> = b"Bitcoin redeem tx not confirmed via 
 #[error]
 const EInputSignIdLengthMismatch: vector<u8> =
     b"input_ids and sign_ids vectors must have the same length";
+#[error]
+const ENotMigrationRequest: vector<u8> = b"redeem request is not a migration request";
 
 //
 // Structs
@@ -177,6 +179,22 @@ public struct BurnEvent has copy, drop {
     amount: u64,
     /// Bitcoin withdraw TX ID
     tx_id: vector<u8>,
+}
+
+public struct MigrationRequestEvent has copy, drop {
+    redeem_id: u64,
+    utxo_ids: vector<u64>,
+    amount: u64,
+    fee: u64,
+    created_at: u64,
+    target_dwallet_id: ID,
+}
+
+public struct MigrationFinalizedEvent has copy, drop {
+    redeem_id: u64,
+    tx_id: vector<u8>,
+    migrated_amount: u64,
+    target_dwallet_id: ID,
 }
 
 //
@@ -593,6 +611,7 @@ public fun finalize_redeem(
 
     let mut r = contract.redeem_requests.remove(redeem_id);
     assert!(r.status().is_signed(), ENotSigned);
+    assert!(!r.is_migration(), ENotMigrationRequest);
 
     let tx_id = r.btc_tx_id();
     assert!(light_client.verify_tx(height, tx_id, proof, tx_index), ERedeemTxNotConfirmed);
@@ -847,6 +866,115 @@ public fun deactivate_dwallet(_: &AdminCap, contract: &mut NbtcContract, dwallet
     contract.storage.deactivate_dwallet(dwallet_id);
 }
 
+public fun migrate_utxos(
+    _: &AdminCap,
+    contract: &mut NbtcContract,
+    utxo_ids: vector<u64>,
+    fee: u64,
+    clock: &Clock,
+    ctx: &mut TxContext,
+): u64 {
+    assert!(contract.version == VERSION, EVersionMismatch);
+
+    let mut total_value: u64 = 0;
+    utxo_ids.length().do!(|i| {
+        let idx = utxo_ids[i];
+        let utxo = contract.storage.utxo_store().get_utxo(idx);
+        total_value = total_value + utxo.value();
+    });
+
+    let recommended_dwallet = contract.storage.recommended_dwallet();
+    let target_lockscript = recommended_dwallet.lockscript();
+    let target_dwallet_id = recommended_dwallet.dwallet_id();
+
+    let redeem_id = contract.next_redeem_req;
+    contract.next_redeem_req = redeem_id + 1;
+
+    let mut r = redeem_request::new_migration(
+        target_lockscript,
+        ctx.sender(),
+        total_value,
+        fee,
+        clock.timestamp_ms(),
+        ctx,
+    );
+
+    r.set_utxos(utxo_ids);
+
+    utxo_ids.length().do!(|i| {
+        nbtc_utxo::lock_utxo(
+            contract.storage.utxo_store_mut(),
+            utxo_ids[i],
+            redeem_id,
+        );
+    });
+
+    event::emit(MigrationRequestEvent {
+        redeem_id,
+        utxo_ids,
+        amount: total_value,
+        fee,
+        created_at: r.redeem_created_at(),
+        target_dwallet_id,
+    });
+
+    contract.redeem_requests.add(redeem_id, r);
+
+    redeem_id
+}
+
+public fun finalize_migration(
+    contract: &mut NbtcContract,
+    light_client: &LightClient,
+    redeem_id: u64,
+    proof: vector<vector<u8>>,
+    height: u64,
+    tx_index: u64,
+) {
+    assert!(contract.version == VERSION, EVersionMismatch);
+    contract.assert_light_client(object::id(light_client));
+
+    let mut r = contract.redeem_requests.remove(redeem_id);
+    assert!(r.status().is_signed(), ENotSigned);
+    assert!(r.is_migration(), ENotMigrationRequest);
+
+    let tx_id = r.btc_tx_id();
+    assert!(light_client.verify_tx(height, tx_id, proof, tx_index), ERedeemTxNotConfirmed);
+
+    let spent_utxos_ids = r.utxo_ids();
+
+    spent_utxos_ids.length().do!(|i| {
+        nbtc_utxo::unlock_utxo(
+            contract.storage.utxo_store_mut(),
+            spent_utxos_ids[i],
+        );
+    });
+
+    r.burn_utxos();
+
+    let outputs = r.outputs();
+    let recommended_dwallet_id = contract.storage.recommended_dwallet().dwallet_id();
+    let migrated_amount = r.amount() - r.fee();
+
+    let migration_output = &outputs[0];
+    let migration_utxo = nbtc_utxo::new_utxo(
+        tx_id,
+        0,
+        migration_output.amount(),
+        recommended_dwallet_id,
+    );
+    contract.storage.utxo_store_mut().add(migration_utxo);
+
+    event::emit(MigrationFinalizedEvent {
+        redeem_id,
+        tx_id,
+        migrated_amount,
+        target_dwallet_id: recommended_dwallet_id,
+    });
+
+    r.destroy_confirmed();
+}
+
 public(package) fun add_utxo_to_contract(
     contract: &mut NbtcContract,
     tx_id: vector<u8>,
@@ -987,6 +1115,11 @@ public fun set_dwallet_for_test(contract: &mut NbtcContract, dw: BtcDWallet) {
 }
 
 #[test_only]
+public fun deactivate_dwallet_for_test(contract: &mut NbtcContract, dwallet_id: ID) {
+    contract.storage.deactivate_dwallet(dwallet_id);
+}
+
+#[test_only]
 /// Helper functions to access event fields in tests
 public fun get_redeem_sig_created_event_redeem_id(event: &RedeemSigCreatedEvent): u64 {
     event.redeem_id
@@ -1010,4 +1143,47 @@ public fun get_redeem_withdraw_ready_event_tx_id(event: &RedeemWithdrawReadyEven
 #[test_only]
 public fun get_redeem_withdraw_ready_event_tx_raw(event: &RedeemWithdrawReadyEvent): vector<u8> {
     event.tx_raw
+}
+
+#[test_only]
+public fun create_migration_request_for_testing(
+    contract: &mut NbtcContract,
+    redeem_id: u64,
+    redeemer: address,
+    amount: u64,
+    fee: u64,
+    created_at: u64,
+    ctx: &mut TxContext,
+) {
+    let recommended_dwallet = contract.storage.recommended_dwallet();
+    let target_lockscript = recommended_dwallet.lockscript();
+    let r = redeem_request::new_migration(
+        target_lockscript,
+        redeemer,
+        amount,
+        fee,
+        created_at,
+        ctx,
+    );
+    contract.redeem_requests.add(redeem_id, r);
+}
+
+#[test_only]
+public fun get_migration_finalized_event_redeem_id(event: &MigrationFinalizedEvent): u64 {
+    event.redeem_id
+}
+
+#[test_only]
+public fun get_migration_finalized_event_tx_id(event: &MigrationFinalizedEvent): vector<u8> {
+    event.tx_id
+}
+
+#[test_only]
+public fun get_migration_finalized_event_migrated_amount(event: &MigrationFinalizedEvent): u64 {
+    event.migrated_amount
+}
+
+#[test_only]
+public fun get_migration_finalized_event_target_dwallet_id(event: &MigrationFinalizedEvent): ID {
+    event.target_dwallet_id
 }

@@ -62,6 +62,7 @@ public struct RedeemRequest has store {
     signatures: vector<vector<u8>>,
     created_at: u64,
     signed_input: u64,
+    is_migration: bool,
 }
 
 /// Event emitted when a proposal for redeem request is selected (solved) and we are ready
@@ -485,6 +486,36 @@ public fun new(
         created_at,
         signed_input: 0,
         nbtc_dwallet_id,
+        is_migration: false,
+    }
+}
+
+public(package) fun new_migration(
+    nbtc_spend_script: vector<u8>,
+    redeemer: address,
+    total_value: u64,
+    fee: u64,
+    created_at: u64,
+    ctx: &mut TxContext,
+): RedeemRequest {
+    RedeemRequest {
+        nbtc_spend_script,
+        redeemer,
+        recipient_script: nbtc_spend_script,
+        amount: total_value,
+        sig_hashes: vector::empty(),
+        fee,
+        utxos: vector::empty(),
+        sign_ids: table::new(ctx),
+        signatures: vector::empty(),
+        status: RedeemStatus::Resolving,
+        utxo_ids: vector::empty(),
+        btc_tx_id: vector::empty(),
+        outputs: vector::empty(),
+        created_at,
+        signed_input: 0,
+        nbtc_dwallet_id: @0x0.to_id(),
+        is_migration: true,
     }
 }
 
@@ -496,6 +527,8 @@ public fun utxo_at(r: &RedeemRequest, i: u64): &Utxo {
 }
 
 public fun fee(r: &RedeemRequest): u64 { r.fee }
+
+public fun is_migration(r: &RedeemRequest): bool { r.is_migration }
 
 public(package) fun record_signature(
     r: &mut RedeemRequest,
@@ -549,6 +582,7 @@ public(package) fun destroy_confirmed(r: RedeemRequest) {
         signatures: _,
         created_at: _,
         signed_input: _,
+        is_migration: _,
     } = r;
     utxos.destroy_empty();
     sign_ids.drop();
