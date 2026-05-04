@@ -27,7 +27,7 @@ jobs:
       image: mysten/sui-tools:testnet
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # Install unzip for Bun setup
       - name: Install system dependencies
