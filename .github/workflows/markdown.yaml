@@ -26,7 +26,7 @@ jobs:
         with:
           files: "**/*.md"
           separator: ","
-      - uses: DavidAnson/markdownlint-cli2-action@v20
+      - uses: DavidAnson/markdownlint-cli2-action@v23
         if: steps.changed-files.outputs.any_changed == 'true'
         with:
           globs:  ${{ steps.changed-files.outputs.all_changed_files }},!bitcoin_lib/docs/**.md,!bitcoin_spv/docs/**.md,!bitcoin_executor/**md,
