@@ -24,7 +24,7 @@ jobs:
       image: mysten/sui-tools:testnet
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install system dependencies
         run: apt-get update && apt-get install -y unzip
